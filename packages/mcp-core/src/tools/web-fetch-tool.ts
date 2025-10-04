@@ -102,8 +102,7 @@ export class WebFetchTool implements McpTool<WebFetchInput, WebFetchResult> {
 				allowedProtocols: [url.protocol],
 				allowLocalhost: false,
 				timeout: input.timeout,
-				controller,
-				fetchOptions,
+				fetchOptions: { ...fetchOptions, signal: controller.signal },
 			});
 			const responseTime = Date.now() - startTime;
 

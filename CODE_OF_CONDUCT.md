@@ -1,27 +1,26 @@
 # Contributor Covenant Code of Conduct
 
-<div align="center">
-
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](code_of_conduct.md)
 [![Community](https://img.shields.io/badge/community-inclusive-brightgreen.svg)](#community-standards)
 [![Support](https://img.shields.io/badge/support-welcoming-blue.svg)](#getting-help)
 
-**Building an Inclusive and Welcoming Community**  
+**Building an Inclusive and Welcoming Community**
 _Cortex-OS is committed to providing a safe, inclusive, and harassment-free experience for everyone_
-
-</div>
 
 ---
 
 ## Our Pledge
 
-We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation.
+We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone,
+regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression,
+level of experience, education, socio-economic status, nationality, personal appearance, race, caste, color, religion,
+or sexual identity and orientation.
 
 We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
 
 ## Our Standards
 
-### ✅ Examples of behavior that contributes to a positive environment include:
+### ✅ Examples of behavior that contributes to a positive environment
 
 - **🤝 Being respectful and kind** - Treating all community members with courtesy and respect
 - **🌟 Demonstrating empathy and kindness** - Understanding that everyone is learning and growing
@@ -32,7 +31,7 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 - **🚀 Supporting newcomers** - Helping new contributors feel welcome and valued
 - **🔍 Focusing on what is best for the community** - Prioritizing collective success over individual gain
 
-### ❌ Examples of unacceptable behavior include:
+### ❌ Examples of unacceptable behavior
 
 - **🚫 Harassment and discrimination** - Any form of harassment, discrimination, or exclusionary behavior
 - **💢 Trolling and inflammatory comments** - Deliberately provocative or disruptive behavior
@@ -68,7 +67,9 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 
 ## Enforcement Responsibilities
 
-Community leaders and maintainers are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
+Community leaders and maintainers are responsible for clarifying and enforcing our standards of acceptable behavior and will
+take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive,
+or harmful.
 
 ### Enforcement Actions
 
@@ -111,8 +112,8 @@ This Code of Conduct also applies when an individual is officially representing 
 
 If you experience or witness unacceptable behavior, please report it by contacting the community leaders at:
 
-- **Primary Contact**: conduct@cortex-os.dev
-- **Alternative Contact**: team@cortex-os.dev
+- **Primary Contact**: <conduct@cortex-os.dev>
+- **Alternative Contact**: <team@cortex-os.dev>
 - **For urgent matters**: Include "URGENT" in the subject line
 
 ### What to Include
@@ -161,19 +162,23 @@ Community leaders will determine consequences based on the severity of the viola
 
 **Community Impact**: Use of inappropriate language or other behavior deemed unprofessional.
 
-**Consequence**: A private, written warning providing clarity around the nature of the violation and an explanation of why the behavior was inappropriate. A public apology may be requested.
+**Consequence**: A private, written warning providing clarity around the nature of the violation and an explanation of why
+the behavior was inappropriate. A public apology may be requested.
 
 #### 2. Warning
 
 **Community Impact**: A violation through a single incident or series of actions.
 
-**Consequence**: A warning with consequences for continued behavior. No interaction with involved parties for a specified period. This includes avoiding interactions in community spaces and external channels. Violating these terms may lead to a temporary or permanent ban.
+**Consequence**: A warning with consequences for continued behavior. No interaction with involved parties for a specified period.
+This includes avoiding interactions in community spaces and external channels. Violating these terms may lead to a
+temporary or permanent ban.
 
 #### 3. Temporary Ban
 
 **Community Impact**: A serious violation of community standards, including sustained inappropriate behavior.
 
-**Consequence**: A temporary ban from all community interaction and participation for a specified period. No public or private interaction with involved parties is allowed during this period. Violating these terms may lead to a permanent ban.
+**Consequence**: A temporary ban from all community interaction and participation for a specified period. No public or private
+interaction with involved parties is allowed during this period. Violating these terms may lead to a permanent ban.
 
 #### 4. Permanent Ban
 
@@ -185,7 +190,7 @@ Community leaders will determine consequences based on the severity of the viola
 
 If you believe you have been wrongfully accused or that the consequences are disproportionate:
 
-1. **Submit an appeal** to appeals@cortex-os.dev within 30 days
+1. **Submit an appeal** to <appeals@cortex-os.dev> within 30 days
 2. **Include new evidence** or clarification of the situation
 3. **Request review** by a different set of community leaders
 4. **Await decision** - Appeals will be reviewed within 14 days
@@ -201,10 +206,10 @@ If you believe you have been wrongfully accused or that the consequences are dis
 
 ### Direct Support
 
-- **General Questions**: discussions@cortex-os.dev
-- **Technical Issues**: support@cortex-os.dev
-- **Security Concerns**: security@cortex-os.dev
-- **Community Issues**: conduct@cortex-os.dev
+- **General Questions**: <discussions@cortex-os.dev>
+- **Technical Issues**: <support@cortex-os.dev>
+- **Security Concerns**: <security@cortex-os.dev>
+- **Community Issues**: <conduct@cortex-os.dev>
 
 ### Mentorship and Onboarding
 
@@ -258,11 +263,14 @@ We provide mentorship for new contributors:
 
 ## Attribution
 
-This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1, available at [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1,
+available at [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).
 
 Community Impact Guidelines were inspired by [Mozilla's code of conduct enforcement ladder](https://github.com/mozilla/diversity).
 
-For answers to common questions about this code of conduct, see the FAQ at [https://www.contributor-covenant.org/faq](https://www.contributor-covenant.org/faq). Translations are available at [https://www.contributor-covenant.org/translations](https://www.contributor-covenant.org/translations).
+For answers to common questions about this code of conduct, see the FAQ at
+[https://www.contributor-covenant.org/faq](https://www.contributor-covenant.org/faq).
+Translations are available at [https://www.contributor-covenant.org/translations](https://www.contributor-covenant.org/translations).
 
 ## Updates and Changes
 
@@ -277,8 +285,6 @@ This Code of Conduct may be updated periodically to:
 **Version**: 1.0
 
 ---
-
-<div align="center">
 
 **Building a Better Community Together** 🤝  
 _Your participation helps make Cortex-OS a welcoming place for everyone_

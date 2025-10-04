@@ -1170,7 +1170,8 @@ We recognize contributions in several ways:
 
 ## 📜 License
 
-By contributing to Cortex-OS, you agree that your contributions will be licensed under the same [Apache-2.0 License](./LICENSE) that covers the project.
+By contributing to Cortex-OS, you agree that your contributions will be licensed under the same
+[Apache-2.0 License](./LICENSE) that covers the project.
 
 ---
 

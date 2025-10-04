@@ -1,6 +1,8 @@
 # Changelog
 
-> **⚠️ HISTORICAL NOTE**: This changelog contains references to deleted apps (`apps/api`, `cortex-marketplace`, `cortex-marketplace-api`, `cortex-webui`) which were removed from the codebase in October 2025. Historical entries have been preserved for reference.
+> **⚠️ HISTORICAL NOTE**: This changelog contains references to deleted apps (`apps/api`, `cortex-marketplace`,
+`cortex-marketplace-api`, `cortex-webui`) which were removed from the codebase in October 2025.
+Historical entries have been preserved for reference.
 
 All notable changes to brAInwav Cortex-OS will be documented in this file.
 
@@ -150,6 +152,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **HARDENED**: Replaced direct `fetch` usage across MCP tools, RAG providers, orchestration bridges, analytics collectors,
+and memory adapters with shared `safeFetch`/`safeFetchJson` wrappers to enforce SSRF protections, host allowlists,
+standardized timeouts, and brAInwav-branded error messaging.
 - **MIGRATED**: MCP server to FastMCP v3.18.0 from manual @modelcontextprotocol/sdk
 - **UPGRADED**: Quality gates from 90% to 95% coverage targets with automated ratcheting
 - **IMPROVED**: TDD implementation with real-time validation and watch mode capabilities
@@ -292,14 +297,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `scripts/__tests__/run-tests.test.mjs` - Argument forwarding tests
   - `scripts/__tests__/memory-guard.test.mjs` - Cross-platform compatibility tests
 
-### Added
+### Added (Continued)
 
 #### Multimodal Support Implementation (2025-10-02)
 
-- **NEW**: Comprehensive multimodal AI processing system for Cortex WebUI with support for images, audio, PDFs, and cross-modal search
-- **Image Processing**: OCR text extraction, computer vision analysis, metadata extraction, thumbnail generation for PNG, JPG, JPEG, WebP, GIF (max 50MB)
-- **Audio Processing**: Speech-to-text transcription, speaker diarization, timestamp preservation, waveform generation for MP3, WAV, M4A, OGG, FLAC (max 500MB, max 4 hours)
-- **PDF with Images**: Enhanced text and image extraction, layout preservation, OCR on images, page-by-page content organization for PDFs (max 200MB, max 200 pages)
+- **NEW**: Comprehensive multimodal AI processing system for Cortex WebUI with support for images, audio, PDFs,
+and cross-modal search
+- **Image Processing**: OCR text extraction, computer vision analysis, metadata extraction, thumbnail generation for
+PNG, JPG, JPEG, WebP, GIF (max 50MB)
+- **Audio Processing**: Speech-to-text transcription, speaker diarization, timestamp preservation, waveform generation for
+MP3, WAV, M4A, OGG, FLAC (max 500MB, max 4 hours)
+- **PDF with Images**: Enhanced text and image extraction, layout preservation, OCR on images, page-by-page content
+organization for PDFs (max 200MB, max 200 pages)
 - **Cross-Modal Search**: Unified semantic search across all content types with advanced filtering, citations, and source attribution
 - **RAG Integration**: Extended existing RAG system with unified embeddings for all modalities and comprehensive citation tracking
 - **API Endpoints**: RESTful API with comprehensive endpoints for upload, processing, search, and management of multimodal content
@@ -445,7 +454,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Maintains logical workflow structure in each document
 - Preserves existing phase numbering and organizational patterns
 
-### Changed
+### Changed (Updated)
 
 - Updated all AI agent instruction files to include Phase 6: Reality Filter
 - Enhanced documentation consistency across agent-specific guidelines

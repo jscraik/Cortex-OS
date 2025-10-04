@@ -1,392 +1,512 @@
 {
-  "timestamp": "2025-10-04T13:04:19.377368+00:00",
-  "exitstatus": 1,
+  "timestamp": "2025-10-04T14:52:33.727437+00:00",
+  "exitstatus": 0,
   "summary": {
-    "total": 76,
-    "passed": 70,
-    "failed": 6,
+    "total": 100,
+    "passed": 100,
+    "failed": 0,
     "skipped": 0
   },
   "results": [
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestCLIPModelLoading::test_clip_embedder_initializes",
+      "nodeid": "tests/observability/test_metrics.py::TestMetricsExport::test_metrics_endpoint_exists",
       "outcome": "passed",
-      "duration": 0.0007709169876761734
+      "duration": 0.03452341700904071
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestCLIPModelLoading::test_clip_embedder_with_custom_model",
+      "nodeid": "tests/observability/test_metrics.py::TestMetricsExport::test_metrics_include_brainwav_prefix",
       "outcome": "passed",
-      "duration": 5.308300023898482e-05
+      "duration": 0.002921000006608665
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestCLIPModelLoading::test_clip_embedder_loads_model_lazily",
+      "nodeid": "tests/observability/test_metrics.py::TestPlanningMetrics::test_track_cot_planning_requests",
       "outcome": "passed",
-      "duration": 4.3791020289063454e-05
+      "duration": 5.7666999055072665e-05
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestCLIPModelLoading::test_fast_test_mode_enabled",
+      "nodeid": "tests/observability/test_metrics.py::TestPlanningMetrics::test_track_planning_duration",
       "outcome": "passed",
-      "duration": 4.287500632926822e-05
+      "duration": 6.133399438112974e-05
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_generate_embedding_from_bytes",
-      "outcome": "failed",
-      "duration": 6.641896665998502
-    },
-    {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_generate_embedding_from_pil_image",
+      "nodeid": "tests/observability/test_metrics.py::TestPlanningMetrics::test_track_tot_branches",
       "outcome": "passed",
-      "duration": 4.7679928340076
+      "duration": 8.045797585509717e-05
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_embedding_is_normalized",
-      "outcome": "failed",
-      "duration": 4.673640374996467
-    },
-    {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_reject_invalid_image_data",
+      "nodeid": "tests/observability/test_metrics.py::TestReflectionMetrics::test_track_reflection_requests",
       "outcome": "passed",
-      "duration": 4.7152848330151755
+      "duration": 5.320901982486248e-05
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestImageEmbeddingGeneration::test_reject_empty_image_data",
+      "nodeid": "tests/observability/test_metrics.py::TestReflectionMetrics::test_track_quality_scores",
       "outcome": "passed",
-      "duration": 4.069174332980765
+      "duration": 4.3750012991949916e-05
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestBatchEmbedding::test_generate_batch_embeddings",
-      "outcome": "failed",
-      "duration": 4.094145250011934
-    },
-    {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestBatchEmbedding::test_batch_embeddings_consistent",
-      "outcome": "failed",
-      "duration": 3.6830422500206623
-    },
-    {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestBackendSelection::test_prefer_mlx_on_darwin",
+      "nodeid": "tests/observability/test_metrics.py::TestReflectionMetrics::test_track_improvements_applied",
       "outcome": "passed",
-      "duration": 3.7163504170021042
+      "duration": 4.166699363850057e-05
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestBackendSelection::test_fallback_to_pytorch",
+      "nodeid": "tests/observability/test_metrics.py::TestHealthMetrics::test_track_health_check_duration",
       "outcome": "passed",
-      "duration": 3.661485958000412
+      "duration": 5.2749994210898876e-05
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestModelInfo::test_get_model_info_before_loading",
+      "nodeid": "tests/observability/test_metrics.py::TestHealthMetrics::test_track_component_status",
       "outcome": "passed",
-      "duration": 5.366600817069411e-05
+      "duration": 4.470901330932975e-05
     },
     {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestModelInfo::test_get_model_info_after_loading",
-      "outcome": "failed",
-      "duration": 3.7039405409886967
-    },
-    {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestIntegrationWithValidation::test_validate_then_embed_workflow",
-      "outcome": "failed",
-      "duration": 3.973652625019895
-    },
-    {
-      "nodeid": "tests/multimodal/test_clip_embedder.py::TestIntegrationWithValidation::test_reject_non_image_modality",
-      "outcome": "passed",
-      "duration": 3.822455291985534
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_detect_png_from_magic_number",
-      "outcome": "passed",
-      "duration": 5.8125006034970284e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_detect_jpeg_from_magic_number",
-      "outcome": "passed",
-      "duration": 4.604097921401262e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_detect_mp3_from_magic_number",
-      "outcome": "passed",
-      "duration": 4.049998824484646e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_detect_mp4_from_magic_number",
-      "outcome": "passed",
-      "duration": 3.8749974919483066e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_reject_unknown_file_type",
-      "outcome": "passed",
-      "duration": 5.270799738354981e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileTypeValidation::test_reject_empty_file",
-      "outcome": "passed",
-      "duration": 4.612500197254121e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_accept_image_under_limit",
-      "outcome": "passed",
-      "duration": 4.016701132059097e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_reject_image_over_limit",
-      "outcome": "passed",
-      "duration": 4.7999987145885825e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_accept_audio_under_limit",
-      "outcome": "passed",
-      "duration": 3.8708007195964456e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_reject_audio_over_limit",
-      "outcome": "passed",
-      "duration": 4.7250010538846254e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFileSizeValidation::test_reject_video_over_limit",
-      "outcome": "passed",
-      "duration": 4.1791005060076714e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.jpg-True]",
-      "outcome": "passed",
-      "duration": 4.125002305954695e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.jpeg-True]",
-      "outcome": "passed",
-      "duration": 3.875000402331352e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.png-True]",
-      "outcome": "passed",
-      "duration": 3.745901631191373e-05
-    },
-    {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.gif-True]",
+      "nodeid": "tests/observability/test_metrics.py::TestMemoryMetrics::test_track_memory_operations",
       "outcome": "passed",
       "duration": 3.8541998947039247e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.webp-True]",
+      "nodeid": "tests/observability/test_metrics.py::TestMemoryMetrics::test_track_memory_size",
       "outcome": "passed",
-      "duration": 4.0166982216760516e-05
+      "duration": 3.4249998861923814e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.bmp-True]",
+      "nodeid": "tests/observability/test_metrics.py::TestHTTPMetrics::test_track_http_requests",
       "outcome": "passed",
-      "duration": 3.7708989111706614e-05
+      "duration": 4.775001434609294e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.tiff-True]",
+      "nodeid": "tests/observability/test_metrics.py::TestMetricsRegistry::test_get_all_metrics",
       "outcome": "passed",
-      "duration": 3.795800148509443e-05
+      "duration": 2.979201963171363e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.exe-False]",
+      "nodeid": "tests/observability/test_metrics.py::TestMetricsRegistry::test_metrics_have_help_text",
       "outcome": "passed",
-      "duration": 6.508402293547988e-05
+      "duration": 2.8791982913389802e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.pdf-False]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestStructuredLogging::test_log_event_as_json",
       "outcome": "passed",
-      "duration": 5.633299588225782e-05
+      "duration": 8.575001265853643e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_image_extensions[.doc-False]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestStructuredLogging::test_logger_includes_brainwav_context",
       "outcome": "passed",
-      "duration": 4.641700070351362e-05
+      "duration": 4.816701402887702e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.mp3-True]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestStructuredLogging::test_log_levels_supported",
       "outcome": "passed",
-      "duration": 4.1624996811151505e-05
+      "duration": 0.00012129198876209557
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.wav-True]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestEventLogging::test_log_planning_event",
       "outcome": "passed",
-      "duration": 3.9457983803004026e-05
+      "duration": 5.529099144041538e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.ogg-True]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestEventLogging::test_log_reflection_event",
       "outcome": "passed",
-      "duration": 3.820800338871777e-05
+      "duration": 5.116598913446069e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.flac-True]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestEventLogging::test_log_error_event",
       "outcome": "passed",
-      "duration": 4.2625004425644875e-05
+      "duration": 0.00046666699927300215
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.m4a-True]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestContextPropagation::test_bind_context_to_logger",
       "outcome": "passed",
-      "duration": 3.9207981899380684e-05
+      "duration": 7.666699821129441e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.aac-True]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestContextPropagation::test_context_inheritance",
       "outcome": "passed",
-      "duration": 4.0915998397395015e-05
+      "duration": 6.53750030323863e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.mp4-False]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestLogFormatting::test_json_output_parseable",
       "outcome": "passed",
-      "duration": 4.837499000132084e-05
+      "duration": 4.854198778048158e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_audio_extensions[.avi-False]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestLogFormatting::test_timestamp_included",
       "outcome": "passed",
-      "duration": 4.5958993723616004e-05
+      "duration": 0.00011904101120308042
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.mp4-True]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestLogFormatting::test_level_included",
       "outcome": "passed",
-      "duration": 3.9708014810457826e-05
+      "duration": 4.600000102072954e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.avi-True]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestPerformanceLogging::test_log_operation_duration",
       "outcome": "passed",
-      "duration": 3.9000005926936865e-05
+      "duration": 5.5209005950018764e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.mov-True]",
+      "nodeid": "tests/observability/test_structured_logging.py::TestPerformanceLogging::test_log_slow_operation_warning",
       "outcome": "passed",
-      "duration": 4.154100315645337e-05
+      "duration": 0.025330375006888062
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.mkv-True]",
+      "nodeid": "tests/agents/test_cot_planning.py::TestCoTPlanGeneration::test_generate_simple_cot_plan",
       "outcome": "passed",
-      "duration": 3.820800338871777e-05
+      "duration": 0.0036507920012809336
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.webm-True]",
+      "nodeid": "tests/agents/test_cot_planning.py::TestCoTPlanGeneration::test_cot_steps_have_dependencies",
       "outcome": "passed",
-      "duration": 3.920801100321114e-05
+      "duration": 7.091599400155246e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.jpg-False]",
+      "nodeid": "tests/agents/test_cot_planning.py::TestCoTPlanGeneration::test_cot_reasoning_stored",
       "outcome": "passed",
-      "duration": 4.512499435804784e-05
+      "duration": 5.400000372901559e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestFormatValidation::test_validate_video_extensions[.mp3-False]",
+      "nodeid": "tests/agents/test_cot_planning.py::TestCoTPlanGeneration::test_plan_includes_metadata",
       "outcome": "passed",
-      "duration": 4.325000918470323e-05
+      "duration": 0.0001312500098720193
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestIntegratedValidation::test_validate_complete_image_file",
+      "nodeid": "tests/agents/test_cot_planning.py::TestTaskComplexityAssessment::test_simple_task_generates_few_steps",
       "outcome": "passed",
-      "duration": 5.8542005717754364e-05
+      "duration": 5.4500007536262274e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestIntegratedValidation::test_reject_mismatched_modality",
+      "nodeid": "tests/agents/test_cot_planning.py::TestTaskComplexityAssessment::test_complex_task_generates_more_steps",
       "outcome": "passed",
-      "duration": 5.7249999372288585e-05
+      "duration": 5.1291019190102816e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestIntegratedValidation::test_reject_corrupt_file",
+      "nodeid": "tests/agents/test_cot_planning.py::TestPlanValidation::test_validate_executable_plan",
       "outcome": "passed",
-      "duration": 4.0709011955186725e-05
+      "duration": 5.220802268013358e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestIntegratedValidation::test_validate_returns_metadata",
+      "nodeid": "tests/agents/test_cot_planning.py::TestPlanValidation::test_detect_circular_dependencies",
+      "outcome": "passed",
+      "duration": 9.812501957640052e-05
+    },
+    {
+      "nodeid": "tests/agents/test_cot_planning.py::TestPlanStorage::test_store_plan_in_memory",
+      "outcome": "passed",
+      "duration": 0.0001206250162795186
+    },
+    {
+      "nodeid": "tests/agents/test_cot_planning.py::TestPlanStorage::test_retrieve_plan_from_memory",
+      "outcome": "passed",
+      "duration": 9.804198634810746e-05
+    },
+    {
+      "nodeid": "tests/agents/test_self_reflection.py::TestOutputCritique::test_critique_low_quality_output",
+      "outcome": "passed",
+      "duration": 5.6416000006720424e-05
+    },
+    {
+      "nodeid": "tests/agents/test_self_reflection.py::TestOutputCritique::test_critique_high_quality_output",
+      "outcome": "passed",
+      "duration": 4.083302337676287e-05
+    },
+    {
+      "nodeid": "tests/agents/test_self_reflection.py::TestOutputCritique::test_critique_includes_improvement_suggestions",
       "outcome": "passed",
       "duration": 4.68340003862977e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestEdgeCases::test_exact_size_limit_accepted",
+      "nodeid": "tests/agents/test_self_reflection.py::TestFeedbackGeneration::test_generate_feedback_for_incomplete_output",
       "outcome": "passed",
-      "duration": 3.2082985853776336e-05
+      "duration": 4.687500768341124e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestEdgeCases::test_one_byte_over_limit_rejected",
+      "nodeid": "tests/agents/test_self_reflection.py::TestFeedbackGeneration::test_feedback_includes_priority_levels",
       "outcome": "passed",
-      "duration": 4.3791980715468526e-05
+      "duration": 0.00012316700303927064
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestEdgeCases::test_case_insensitive_extension_matching",
+      "nodeid": "tests/agents/test_self_reflection.py::TestIterativeImprovement::test_improve_output_with_feedback",
       "outcome": "passed",
-      "duration": 5.516698001883924e-05
+      "duration": 4.0332990465685725e-05
     },
     {
-      "nodeid": "tests/multimodal/test_file_validation.py::TestEdgeCases::test_extension_without_leading_dot",
+      "nodeid": "tests/agents/test_self_reflection.py::TestIterativeImprovement::test_max_iterations_limit",
       "outcome": "passed",
-      "duration": 6.187500548548996e-05
+      "duration": 5.0000002374872565e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestModalityEnum::test_text_modality_is_default",
+      "nodeid": "tests/agents/test_self_reflection.py::TestIterativeImprovement::test_retry_logic_for_low_quality",
       "outcome": "passed",
-      "duration": 4.516699118539691e-05
+      "duration": 3.837500116787851e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestModalityEnum::test_all_modalities_defined",
+      "nodeid": "tests/agents/test_self_reflection.py::TestIterativeImprovement::test_no_retry_for_high_quality",
       "outcome": "passed",
-      "duration": 4.658300895243883e-05
+      "duration": 3.48330067936331e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestModalityEnum::test_modality_enum_is_exhaustive",
+      "nodeid": "tests/agents/test_self_reflection.py::TestSuccessTracking::test_track_improvement_history",
       "outcome": "passed",
-      "duration": 0.00011995798558928072
+      "duration": 3.9417005609720945e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryContentField::test_memory_has_content_field",
+      "nodeid": "tests/agents/test_self_reflection.py::TestSuccessTracking::test_measure_improvement_success_rate",
       "outcome": "passed",
-      "duration": 4.195800283923745e-05
+      "duration": 3.5834003938362e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryContentField::test_memory_has_content_type_field",
+      "nodeid": "tests/agents/test_self_reflection.py::TestReflectionStorage::test_store_reflection_in_memory",
       "outcome": "passed",
-      "duration": 5.3750001825392246e-05
+      "duration": 7.770798401907086e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryContentField::test_memory_has_content_size_field",
+      "nodeid": "tests/agents/test_self_reflection.py::TestReflectionStorage::test_retrieve_reflection_history",
       "outcome": "passed",
-      "duration": 4.762501339428127e-05
+      "duration": 9.337501251138747e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryContentField::test_memory_has_modality_field",
+      "nodeid": "tests/agents/test_tot_planning.py::TestToTBranchGeneration::test_generate_multiple_branches",
       "outcome": "passed",
-      "duration": 3.654201282188296e-05
+      "duration": 5.924998549744487e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_with_modality[TEXT]",
+      "nodeid": "tests/agents/test_tot_planning.py::TestToTBranchGeneration::test_branches_have_unique_ids",
       "outcome": "passed",
-      "duration": 4.845901275984943e-05
+      "duration": 5.495900404639542e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_with_modality[IMAGE]",
+      "nodeid": "tests/agents/test_tot_planning.py::TestToTBranchGeneration::test_branches_have_descriptions",
       "outcome": "passed",
-      "duration": 5.6541990488767624e-05
+      "duration": 6.204101373441517e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_with_modality[AUDIO]",
+      "nodeid": "tests/agents/test_tot_planning.py::TestToTBranchGeneration::test_branches_have_steps",
       "outcome": "passed",
-      "duration": 4.116701893508434e-05
+      "duration": 5.6249991757795215e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_with_modality[VIDEO]",
+      "nodeid": "tests/agents/test_tot_planning.py::TestBranchScoring::test_branches_have_scores",
+      "outcome": "passed",
+      "duration": 5.4208008805289865e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestBranchScoring::test_score_based_on_criteria",
+      "outcome": "passed",
+      "duration": 4.3167005060240626e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestBranchScoring::test_branches_sorted_by_score",
+      "outcome": "passed",
+      "duration": 5.70000265724957e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestBranchPruning::test_prune_low_scoring_branches",
+      "outcome": "passed",
+      "duration": 3.7124991649761796e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestBranchPruning::test_keep_minimum_branches",
+      "outcome": "passed",
+      "duration": 3.0834024073556066e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestBranchPruning::test_keep_top_n_branches",
+      "outcome": "passed",
+      "duration": 3.491700044833124e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestBestPathSelection::test_select_highest_scoring_branch",
+      "outcome": "passed",
+      "duration": 6.275001214817166e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestBestPathSelection::test_tie_breaking_logic",
+      "outcome": "passed",
+      "duration": 3.479100996628404e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestToTPlanStorage::test_store_tot_plan_in_memory",
+      "outcome": "passed",
+      "duration": 0.00010837498120963573
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestToTPlanStorage::test_retrieve_tot_plan_from_memory",
+      "outcome": "passed",
+      "duration": 9.995899745263159e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestToTMetadata::test_plan_has_strategy_marker",
+      "outcome": "passed",
+      "duration": 4.6083005145192146e-05
+    },
+    {
+      "nodeid": "tests/agents/test_tot_planning.py::TestToTMetadata::test_plan_includes_branch_count",
+      "outcome": "passed",
+      "duration": 4.108401481062174e-05
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestSignalHandling::test_register_sigterm_handler",
+      "outcome": "passed",
+      "duration": 5.0000002374872565e-05
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestSignalHandling::test_register_sigint_handler",
+      "outcome": "passed",
+      "duration": 3.3625023206695914e-05
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestSignalHandling::test_shutdown_event_created",
+      "outcome": "passed",
+      "duration": 3.5667006159201264e-05
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestCleanupRegistration::test_register_cleanup_function",
+      "outcome": "passed",
+      "duration": 3.966700751334429e-05
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestCleanupRegistration::test_register_multiple_cleanup_tasks",
+      "outcome": "passed",
+      "duration": 3.21249826811254e-05
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestCleanupRegistration::test_cleanup_tasks_ordered",
+      "outcome": "passed",
+      "duration": 3.087500226683915e-05
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestShutdownExecution::test_execute_cleanup_tasks",
+      "outcome": "passed",
+      "duration": 0.00031370800570584834
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestShutdownExecution::test_shutdown_sets_event",
+      "outcome": "passed",
+      "duration": 0.0001720000000204891
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestShutdownExecution::test_shutdown_timeout_enforced",
+      "outcome": "passed",
+      "duration": 1.0022220000100788
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestShutdownExecution::test_cleanup_task_error_handling",
+      "outcome": "passed",
+      "duration": 0.0005515420052688569
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestShutdownState::test_is_shutting_down_false_initially",
+      "outcome": "passed",
+      "duration": 0.0002810829901136458
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestShutdownState::test_is_shutting_down_true_during_shutdown",
+      "outcome": "passed",
+      "duration": 0.0003917499852832407
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestShutdownState::test_shutdown_includes_metadata",
+      "outcome": "passed",
+      "duration": 0.00018804098363034427
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestResourceCleanup::test_close_database_connections",
+      "outcome": "passed",
+      "duration": 0.0003450419753789902
+    },
+    {
+      "nodeid": "tests/operational/test_graceful_shutdown.py::TestResourceCleanup::test_drain_request_queue",
+      "outcome": "passed",
+      "duration": 0.00033379197702743113
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestHealthEndpoint::test_health_endpoint_exists",
+      "outcome": "passed",
+      "duration": 0.01971779199084267
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestHealthEndpoint::test_health_returns_healthy_status",
+      "outcome": "passed",
+      "duration": 0.0030654580041300505
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestHealthEndpoint::test_health_includes_version",
+      "outcome": "passed",
+      "duration": 0.0023403750092256814
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestHealthEndpoint::test_health_includes_component_checks",
+      "outcome": "passed",
+      "duration": 0.0026419170026201755
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestReadinessEndpoint::test_readiness_endpoint_exists",
+      "outcome": "passed",
+      "duration": 0.0028384170145727694
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestReadinessEndpoint::test_readiness_returns_503_when_not_ready",
+      "outcome": "passed",
+      "duration": 0.0027623750211205333
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestReadinessEndpoint::test_readiness_checks_dependencies",
+      "outcome": "passed",
+      "duration": 0.005093999992823228
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestLivenessEndpoint::test_liveness_endpoint_exists",
+      "outcome": "passed",
+      "duration": 0.0027622499910648912
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestLivenessEndpoint::test_liveness_simple_check",
+      "outcome": "passed",
+      "duration": 0.003358665999257937
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestLivenessEndpoint::test_liveness_fast_response",
+      "outcome": "passed",
+      "duration": 0.004358791979029775
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestComponentHealthChecks::test_memory_health_check",
       "outcome": "passed",
       "duration": 7.700000423938036e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestMemoryCreationWithModality::test_create_memory_defaults_to_text",
+      "nodeid": "tests/operational/test_health_endpoints.py::TestComponentHealthChecks::test_embeddings_health_check",
       "outcome": "passed",
-      "duration": 4.370900569483638e-05
+      "duration": 4.704098682850599e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestBinaryContentStorage::test_store_image_content_as_bytes",
+      "nodeid": "tests/operational/test_health_endpoints.py::TestComponentHealthChecks::test_database_health_check",
       "outcome": "passed",
-      "duration": 4.0000013541430235e-05
+      "duration": 4.104201798327267e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestBinaryContentStorage::test_content_field_is_optional",
+      "nodeid": "tests/operational/test_health_endpoints.py::TestHealthServiceIntegration::test_health_service_aggregate_checks",
       "outcome": "passed",
-      "duration": 4.033400909975171e-05
+      "duration": 5.245799547992647e-05
     },
     {
-      "nodeid": "tests/multimodal/test_schema_extension.py::TestBackwardCompatibility::test_existing_memory_without_modality_still_valid",
+      "nodeid": "tests/operational/test_health_endpoints.py::TestHealthServiceIntegration::test_health_service_degraded_state",
       "outcome": "passed",
-      "duration": 3.700001980178058e-05
+      "duration": 4.25000034738332e-05
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestHealthServiceIntegration::test_health_service_includes_metadata",
+      "outcome": "passed",
+      "duration": 4.466602695174515e-05
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestHealthResponseFormat::test_response_has_required_fields",
+      "outcome": "passed",
+      "duration": 0.0031578749767504632
+    },
+    {
+      "nodeid": "tests/operational/test_health_endpoints.py::TestHealthResponseFormat::test_timestamp_is_iso_format",
+      "outcome": "passed",
+      "duration": 0.0033031670027412474
     }
   ]
 }

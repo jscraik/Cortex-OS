@@ -1,3 +1,4 @@
+import { safeFetch } from '@cortex-os/utils';
 import { resolveStoreKindFromEnv } from '../config/store-from-env.js';
 
 export interface HealthStatus {
@@ -34,9 +35,12 @@ export class HealthMonitor {
 				};
 			}
 
-			const response = await fetch(`${baseUrl.replace(/\/$/, '')}/health`, {
-				method: 'GET',
-				signal: AbortSignal.timeout(5000),
+			const url = new URL('/health', baseUrl);
+			const response = await safeFetch(url.toString(), {
+				allowedHosts: [url.hostname.toLowerCase()],
+				allowedProtocols: [url.protocol],
+				allowLocalhost: true,
+				timeout: 5000,
 			});
 
 			if (!response.ok) {
@@ -69,9 +73,12 @@ export class HealthMonitor {
 
 		try {
 			const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-			const response = await fetch(`${baseUrl}/api/tags`, {
-				method: 'GET',
-				signal: AbortSignal.timeout(5000),
+			const url = new URL('/api/tags', baseUrl);
+			const response = await safeFetch(url.toString(), {
+				allowedHosts: [url.hostname.toLowerCase()],
+				allowedProtocols: [url.protocol],
+				allowLocalhost: true,
+				timeout: 5000,
 			});
 
 			if (!response.ok) {

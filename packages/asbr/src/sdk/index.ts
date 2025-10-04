@@ -260,7 +260,8 @@ export class ASBRClient {
 
 		eventSource.onmessage = (event) => {
 			try {
-				const data: AsbrEvent = JSON.parse(event.data);
+				const raw = typeof event.data === 'string' ? event.data : String(event.data);
+				const data: AsbrEvent = JSON.parse(raw);
 				this.dispatchEvent(data);
 			} catch (error) {
 				// Prefer structured logger when available

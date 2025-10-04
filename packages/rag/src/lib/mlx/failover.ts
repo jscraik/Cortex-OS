@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from 'node:events';
+import { safeFetch } from '@cortex-os/utils';
 
 /**
  * Circuit breaker states
@@ -423,8 +424,12 @@ export function createMLXFailoverSystem(): FailoverSystem {
 			healthCheck: async () => {
 				// Check if Ollama is available
 				try {
-					const response = await fetch('http://localhost:11434/api/version', {
-						signal: AbortSignal.timeout(3000),
+					const endpoint = new URL('http://localhost:11434/api/version');
+					const response = await safeFetch(endpoint.toString(), {
+						allowedHosts: [endpoint.hostname],
+						allowedProtocols: [endpoint.protocol],
+						allowLocalhost: true,
+						timeout: 3000,
 					});
 					return response.ok;
 				} catch {

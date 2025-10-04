@@ -50,6 +50,14 @@ except ImportError:
     HealthService = None  # type: ignore
     get_shutdown_manager = None  # type: ignore
 
+# Phase 6: Observability and metrics
+try:
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    from src.observability.metrics import get_metrics_registry
+    PROMETHEUS_AVAILABLE = True
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
+
 
 class EmbedRequest(BaseModel):
     """Request payload used by both single and batch embedding endpoints."""
@@ -420,5 +428,17 @@ def create_app(
             """FastAPI shutdown event handler"""
             logger.info("brAInwav: FastAPI shutdown event received")
             await shutdown_manager.shutdown()
+    
+    # Phase 6.1: Prometheus metrics endpoint
+    if PROMETHEUS_AVAILABLE:
+        from fastapi import Response
+        
+        @app.get("/metrics")
+        def metrics():
+            """Prometheus metrics endpoint for monitoring"""
+            return Response(
+                content=generate_latest(get_metrics_registry()),
+                media_type=CONTENT_TYPE_LATEST
+            )
     
     return app

@@ -150,7 +150,7 @@ describe('brAInwav Memory REST API Operations - Phase 1.2', () => {
 				importance: 1.5, // Invalid importance > 1
 			};
 
-			await expect(store.store(invalidInput as any)).rejects.toThrow(
+			await expect(store.store(invalidInput as unknown)).rejects.toThrow(
 				expect.stringMatching(/brAInwav.*Invalid memory input/),
 			);
 

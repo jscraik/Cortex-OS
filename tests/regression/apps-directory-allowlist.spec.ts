@@ -103,7 +103,9 @@ describe('Apps Directory Placeholder Regression - Phase 9 Production Readiness',
 						}
 					}
 				});
-			} catch (_error) {}
+			} catch {
+				// Ignore file read errors
+			}
 		}
 
 		if (violations.length > 0) {
@@ -144,7 +146,7 @@ All placeholder implementations must be completed for production readiness.`,
 
 			try {
 				await readFile(filePath, 'utf-8');
-			} catch (_error) {
+			} catch {
 				missingComponents.push(`${check.app}/${check.file} - ${check.description}`);
 			}
 		}
@@ -227,7 +229,9 @@ All placeholder implementations must be completed for production readiness.`,
 							: 'Contains system outputs without brAInwav branding',
 					});
 				}
-			} catch (_error) {}
+			} catch {
+				// Ignore file read errors
+			}
 		}
 
 		// This is informational - not all files need branding

@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { safeFetchJson } from '@cortex-os/utils';
 import { EMBEDDER_ENV, getEnvWithFallback } from '../config/constants.js';
 import { ConfigurationError } from '../errors.js';
 import type { Embedder } from '../ports/Embedder.js';
@@ -85,25 +86,23 @@ export class MLXEmbedder implements Embedder {
 			{ context: 'MLX embedding service URL' },
 		);
 		if (!base) throw new ConfigurationError('MLX service URL not configured');
-		const response = await fetch(`${base.replace(/\/$/, '')}/embed`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			// Provide both fields for compatibility with various servers
-			body: JSON.stringify({
-				texts,
-				input: texts,
-				model: this.modelName,
-			}),
-			signal: AbortSignal.timeout(30000),
+		const url = new URL('/embed', base);
+		const data = await safeFetchJson<EmbeddingResponse>(url.toString(), {
+			allowedHosts: [url.hostname.toLowerCase()],
+			allowedProtocols: [url.protocol],
+			allowLocalhost: true,
+			timeout: 30000,
+			fetchOptions: {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				// Provide both fields for compatibility with various servers
+				body: JSON.stringify({
+					texts,
+					input: texts,
+					model: this.modelName,
+				}),
+			},
 		});
-
-		if (!response.ok) {
-			throw new ConfigurationError(
-				`MLX service request failed: HTTP ${response.status} ${response.statusText}`,
-			);
-		}
-
-		const data: EmbeddingResponse = await response.json();
 
 		// Accept either {embeddings: number[][]} or single {embedding: number[]}
 		if (Array.isArray(data.embeddings)) {

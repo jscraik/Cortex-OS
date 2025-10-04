@@ -57,13 +57,13 @@ export function parseInsightsResponse(answer: string) {
 
 function extractSection(response: string, sectionName: string): string {
 	const sectionPattern = new RegExp(`${sectionName}[:\\s]*\\n([^#]+)`, 'gi');
-	const match = response.match(sectionPattern);
+	const match = sectionPattern.exec(response);
 	return match ? match[0].replace(new RegExp(`${sectionName}[:\\s]*\\n`, 'gi'), '').trim() : '';
 }
 
 function extractList(response: string, listName: string): string[] {
 	const listPattern = new RegExp(`${listName}[:\\s]*\\n((?:[-*•\\d.]\\s*[^\\n]+\\n?)+)`, 'gi');
-	const match = response.match(listPattern);
+	const match = listPattern.exec(response);
 	if (!match) return [];
 	return match[0]
 		.split('\\n')

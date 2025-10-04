@@ -12,4 +12,8 @@ export default defineConfig({
 			include: ['../../packages/**/src/**'],
 		},
 	},
+	resolve: {
+		preserveSymlinks: true,
+	},
+	tsconfig: path.resolve(__dirname, '../tsconfig.json'),
 });

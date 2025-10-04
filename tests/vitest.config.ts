@@ -6,4 +6,5 @@ export default defineConfig({
 		include: ['tests/**/*.spec.ts', 'tests/**/*.test.ts'],
 		exclude: ['**/node_modules/**', '**/dist/**'],
 	},
+	tsconfig: './tsconfig.json',
 });

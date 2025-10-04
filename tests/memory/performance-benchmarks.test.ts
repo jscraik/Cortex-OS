@@ -33,7 +33,10 @@ describe('brAInwav Memory Performance Benchmarks - Phase 1.2', () => {
 					new Response(
 						JSON.stringify({
 							success: true,
-							data: { id: `bulk_${Math.random().toString(36).substr(2, 9)}`, vectorIndexed: true },
+							data: {
+								id: `bulk_${Math.random().toString(36).substring(2, 11)}`,
+								vectorIndexed: true,
+							},
 						}),
 						{ status: 201 },
 					),
@@ -276,13 +279,11 @@ describe('brAInwav Memory Performance Benchmarks - Phase 1.2', () => {
 			const { LocalMemoryStore } = await import('@cortex-os/memories');
 			const store = new LocalMemoryStore();
 
-			let uniqueRequests = 0;
 			const seenRequests = new Set<string>();
 
 			const mockFetch = vi.spyOn(global, 'fetch').mockImplementation((url, options) => {
 				const requestKey = `${url}-${options?.body}`;
 				if (!seenRequests.has(requestKey)) {
-					uniqueRequests++;
 					seenRequests.add(requestKey);
 				}
 

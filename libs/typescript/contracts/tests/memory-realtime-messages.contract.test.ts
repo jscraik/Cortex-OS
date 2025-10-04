@@ -53,7 +53,9 @@ describe('Realtime memory message contracts', () => {
 		});
 
 		expect(outbound.type).toBe('change');
-		expect(queued.payload.namespace).toBe(outbound.namespace);
+		expect((queued.payload as unknown as { namespace?: string }).namespace).toBe(
+			(outbound as unknown as { namespace?: string }).namespace,
+		);
 	});
 
 	it('rejects outbound messages with missing timestamps', () => {

@@ -4,7 +4,7 @@ export interface NodeEventSourceInit {
 	headers?: Record<string, string>;
 }
 
-export type MessageEventLike = { data: string };
+export type MessageEventLike = { data: unknown };
 export type EventHandler = (event: MessageEventLike) => void;
 export type ErrorHandler = (error: unknown) => void;
 
@@ -27,8 +27,10 @@ export class NodeEventSource {
 			},
 		});
 
-		this.es.addEventListener('message', (event: { data: unknown }) => {
-			this.onmessage?.({ data: String(event.data) });
+		this.es.addEventListener('message', (event: Event) => {
+			// event is MessageEvent in browser-like environments; cast safely
+			const me = event as MessageEvent | { data?: unknown };
+			this.onmessage?.({ data: String(me.data) });
 		});
 
 		this.es.addEventListener('error', (err: unknown) => {

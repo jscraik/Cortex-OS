@@ -9,15 +9,6 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-// Mock implementations for testing validation logic
-const mockToolsPath = '/mock/tools/path';
-const mockAgentToolkit = {
-	search: vi.fn(),
-	multiSearch: vi.fn(),
-	codemod: vi.fn(),
-	validate: vi.fn(),
-};
-
 // Mock AgentToolkitMCPTools class for testing
 class MockAgentToolkitMCPTools {
 	private circuitBreaker: Map<string, { failures: number; lastFailure: number; isOpen: boolean }> =
@@ -33,7 +24,12 @@ class MockAgentToolkitMCPTools {
 		];
 	}
 
-	async executeTool(toolName: string, _params: any) {
+	async executeTool(
+		toolName: string,
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		_params: Record<string, unknown>,
+	) {
+		// Parameters are intentionally unused for this mock implementation
 		// Simulate brAInwav error handling
 		if (!toolName || typeof toolName !== 'string') {
 			throw new Error('brAInwav Cortex-OS: Tool name is required and must be a string');
@@ -154,7 +150,7 @@ describe('brAInwav Phase 2.4: Comprehensive Toolkit Validation', () => {
 			);
 
 			// Validate each tool has required properties
-			allTools.forEach((tool: any) => {
+			allTools.forEach((tool: { name: string; type: string }) => {
 				expect(tool).toHaveProperty('name');
 				expect(tool).toHaveProperty('type');
 				expect(typeof tool.name).toBe('string');
@@ -182,7 +178,7 @@ describe('brAInwav Phase 2.4: Comprehensive Toolkit Validation', () => {
 				'brAInwav Cortex-OS: Tool name is required and must be a string',
 			);
 
-			await expect(mcpTools.executeTool(null as any, {})).rejects.toThrow(
+			await expect(mcpTools.executeTool(null as unknown as string, {})).rejects.toThrow(
 				'brAInwav Cortex-OS: Tool name is required and must be a string',
 			);
 		});
@@ -266,7 +262,7 @@ describe('brAInwav Phase 2.4: Comprehensive Toolkit Validation', () => {
 			try {
 				await mcpTools.executeTool('', {});
 				expect.fail('Should have thrown error');
-			} catch (error: any) {
+			} catch (error) {
 				expect(error.message).toContain('brAInwav Cortex-OS:');
 			}
 

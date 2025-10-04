@@ -51,13 +51,13 @@ let cacheCleanupTimer: NodeJS.Timeout | null = null;
 function createWorkflowHash(workflow: Workflow): string {
 	const structureData = JSON.stringify({
 		entry: workflow.entry,
-		steps: Object.keys(workflow.steps).sort(),
+		steps: Object.keys(workflow.steps).sort((a, b) => a.localeCompare(b)),
 		connections: Object.fromEntries(
 			Object.entries(workflow.steps).map(([id, step]: [string, WorkflowStep]) => [
 				id,
 				{
 					next: step.next,
-					branches: step.branches?.map((b) => b.to).sort(),
+					branches: step.branches?.map((b) => b.to).sort((a, b) => a.localeCompare(b)),
 				},
 			]),
 		),

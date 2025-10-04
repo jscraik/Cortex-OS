@@ -169,7 +169,13 @@ async function runSecurityTests() {
 		execSync(`rm -rf ${testDir}`, { stdio: 'ignore' });
 
 		logSuccess('✅ All security verification tests passed');
-		return true;
+		// Cleanup
+		try {
+			process.chdir('../../');
+			execSync('rm -rf temp-security-tests', { stdio: 'ignore' });
+		} catch {
+			logWarning('⚠️  Failed to clean up temporary files');
+		}
 	} catch (error) {
 		logError(`❌ Security verification tests failed: ${error.message}`);
 
@@ -181,22 +187,17 @@ async function runSecurityTests() {
 			logWarning('⚠️  Failed to clean up temporary files');
 		}
 
-		return false;
+		throw error; // Re-throw to be caught by the catch handler
 	}
 }
 
 // Run the verification
 runSecurityTests()
-	.then((success) => {
-		if (success) {
-			logHeader('\n🎉 Security verification completed successfully!');
-			process.exit(0);
-		} else {
-			logHeader('\n💥 Security verification failed!');
-			process.exit(1);
-		}
+	.then(() => {
+		logHeader('\n🎉 Security verification completed successfully!');
+		process.exit(0);
 	})
-	.catch((error) => {
-		logError(`Unexpected error: ${error.message}`);
+	.catch(() => {
+		logHeader('\n💥 Security verification failed!');
 		process.exit(1);
 	});

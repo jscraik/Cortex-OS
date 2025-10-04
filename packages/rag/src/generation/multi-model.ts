@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { safeFetchJson } from '@cortex-os/utils';
 import { runProcess } from '../lib/run-process.js';
 import type { ChatMessage, GenerationConfig, Generator } from './index.js';
 
@@ -132,29 +133,29 @@ export class MultiModelGenerator implements Generator {
 		config: Partial<GenerationConfig>,
 	): Promise<string> {
 		try {
-			const response = await fetch('http://localhost:11434/api/generate', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					model: model.model,
-					prompt,
-					stream: false,
-					options: {
-						temperature: config.temperature,
-						top_p: config.topP,
-						num_predict: config.maxTokens,
+			const endpoint = new URL('http://localhost:11434/api/generate');
+			const result = await safeFetchJson<{ response?: string }>(endpoint.toString(), {
+				allowedHosts: [endpoint.hostname],
+				allowedProtocols: [endpoint.protocol],
+				allowLocalhost: true,
+				timeout: this.timeout,
+				fetchOptions: {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
 					},
-				}),
-				signal: AbortSignal.timeout(this.timeout),
+					body: JSON.stringify({
+						model: model.model,
+						prompt,
+						stream: false,
+						options: {
+							temperature: config.temperature,
+							top_p: config.topP,
+							num_predict: config.maxTokens,
+						},
+					}),
+				},
 			});
-
-			if (!response.ok) {
-				throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
-			}
-
-			const result = await response.json();
 			return result.response || '';
 		} catch (error) {
 			throw new Error(`Ollama generation failed: ${error}`);
@@ -170,29 +171,29 @@ export class MultiModelGenerator implements Generator {
 		config: Partial<GenerationConfig>,
 	): Promise<string> {
 		try {
-			const response = await fetch('http://localhost:11434/api/chat', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					model: model.model,
-					messages,
-					stream: false,
-					options: {
-						temperature: config.temperature,
-						top_p: config.topP,
-						num_predict: config.maxTokens,
+			const endpoint = new URL('http://localhost:11434/api/chat');
+			const result = await safeFetchJson<{ message?: { content?: string } }>(endpoint.toString(), {
+				allowedHosts: [endpoint.hostname],
+				allowedProtocols: [endpoint.protocol],
+				allowLocalhost: true,
+				timeout: this.timeout,
+				fetchOptions: {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
 					},
-				}),
-				signal: AbortSignal.timeout(this.timeout),
+					body: JSON.stringify({
+						model: model.model,
+						messages,
+						stream: false,
+						options: {
+							temperature: config.temperature,
+							top_p: config.topP,
+							num_predict: config.maxTokens,
+						},
+					}),
+				},
 			});
-
-			if (!response.ok) {
-				throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
-			}
-
-			const result = await response.json();
 			return result.message?.content || '';
 		} catch (error) {
 			throw new Error(`Ollama chat failed: ${error}`);

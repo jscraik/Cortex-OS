@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from 'node:events';
+import { safeFetch, safeFetchJson } from '@cortex-os/utils';
 import { z } from 'zod';
 import { CircuitBreaker } from '../lib/circuit-breaker.js';
 import { selectMLXModel, selectOllamaModel } from '../lib/model-selection.js';
@@ -238,20 +239,10 @@ class OllamaProvider implements ModelProvider {
 			const startTime = Date.now();
 
 			// Use nomic-embed-text for embeddings
-			const response = await fetch(`${this.baseUrl}/api/embeddings`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					model: request.model || 'nomic-embed-text',
-					prompt: request.texts[0], // Ollama only supports single text embeddings
-				}),
+			const data = await this.postJson<{ embedding: number[]; model: string }>('/api/embeddings', {
+				model: request.model || 'nomic-embed-text',
+				prompt: request.texts[0], // Ollama only supports single text embeddings
 			});
-
-			if (!response.ok) {
-				throw new Error(`Ollama embedding failed: ${response.statusText}`);
-			}
-
-			const data = await response.json();
 			const processingTime = Date.now() - startTime;
 
 			return {
@@ -270,25 +261,20 @@ class OllamaProvider implements ModelProvider {
 			// Select model based on task or use default
 			const model = request.model || (await this.selectModelForTask(request.task || 'chat'));
 
-			const response = await fetch(`${this.baseUrl}/api/generate`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					model,
-					prompt: this.formatMessages(request.messages),
-					stream: false,
-					options: {
-						temperature: request.temperature ?? 0.7,
-						num_predict: request.maxTokens,
-					},
-				}),
+			const data = await this.postJson<{
+				response: string;
+				model: string;
+				prompt_eval_count?: number;
+				eval_count?: number;
+			}>('/api/generate', {
+				model,
+				prompt: this.formatMessages(request.messages),
+				stream: false,
+				options: {
+					temperature: request.temperature ?? 0.7,
+					num_predict: request.maxTokens,
+				},
 			});
-
-			if (!response.ok) {
-				throw new Error(`Ollama chat failed: ${response.statusText}`);
-			}
-
-			const data = await response.json();
 			const processingTime = Date.now() - startTime;
 
 			return {
@@ -328,6 +314,21 @@ class OllamaProvider implements ModelProvider {
 			})
 			.join('\n\n');
 	}
+
+	private async postJson<T>(path: string, payload: unknown): Promise<T> {
+		const url = new URL(path, this.baseUrl);
+		return safeFetchJson<T>(url.toString(), {
+			allowedHosts: [url.hostname.toLowerCase()],
+			allowedProtocols: [url.protocol],
+			allowLocalhost: true,
+			timeout: 30000,
+			fetchOptions: {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload),
+			},
+		});
+	}
 }
 
 /**
@@ -353,8 +354,15 @@ class OpenAIProvider implements ModelProvider {
 	async isAvailable(): Promise<boolean> {
 		try {
 			await this.circuitBreaker.execute(async () => {
-				const response = await fetch(`${this.baseUrl}/models`, {
-					headers: { Authorization: `Bearer ${this.apiKey}` },
+				const url = new URL('/models', this.baseUrl);
+				const response = await safeFetch(url.toString(), {
+					allowedHosts: [url.hostname.toLowerCase()],
+					allowedProtocols: [url.protocol],
+					allowLocalhost: false,
+					timeout: 10000,
+					fetchOptions: {
+						headers: { Authorization: `Bearer ${this.apiKey}` },
+					},
 				});
 				if (!response.ok) {
 					throw new Error(`OpenAI API unavailable: ${response.statusText}`);
@@ -370,24 +378,14 @@ class OpenAIProvider implements ModelProvider {
 		return this.circuitBreaker.execute(async () => {
 			const startTime = Date.now();
 
-			const response = await fetch(`${this.baseUrl}/embeddings`, {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${this.apiKey}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					model: request.model || 'text-embedding-3-small',
-					input: request.texts,
-				}),
+			const data = await this.postJson<{
+				data: OpenAIEmbeddingItem[];
+				model: string;
+				usage: { total_tokens: number };
+			}>('/embeddings', {
+				model: request.model || 'text-embedding-3-small',
+				input: request.texts,
 			});
-
-			if (!response.ok) {
-				const error = await response.text();
-				throw new Error(`OpenAI embedding failed: ${error}`);
-			}
-
-			const data = await response.json();
 			const processingTime = Date.now() - startTime;
 
 			return {
@@ -406,35 +404,25 @@ class OpenAIProvider implements ModelProvider {
 
 			const model = this.selectModelForTask(request.task || 'chat');
 
-			const response = await fetch(`${this.baseUrl}/chat/completions`, {
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${this.apiKey}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					model,
-					messages: request.messages,
-					max_tokens: request.maxTokens,
-					temperature: request.temperature,
-				}),
+			const data = await this.postJson<{
+				choices: Array<{ message: { content: string }; finish_reason?: string }>;
+				model: string;
+				usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+			}>('/chat/completions', {
+				model,
+				messages: request.messages,
+				max_tokens: request.maxTokens,
+				temperature: request.temperature,
 			});
-
-			if (!response.ok) {
-				const error = await response.text();
-				throw new Error(`OpenAI chat failed: ${error}`);
-			}
-
-			const data = await response.json();
 			const processingTime = Date.now() - startTime;
 
 			return {
-				content: data.choices[0].message.content,
+				content: data.choices[0]?.message?.content ?? '',
 				model: data.model,
 				provider: this.name,
 				processingTime,
 				tokensUsed: data.usage,
-				finishReason: data.choices[0].finish_reason,
+				finishReason: data.choices[0]?.finish_reason,
 			};
 		});
 	}
@@ -448,6 +436,24 @@ class OpenAIProvider implements ModelProvider {
 		};
 
 		return modelMap[task] || modelMap.chat;
+	}
+
+	private async postJson<T>(path: string, payload: unknown): Promise<T> {
+		const url = new URL(path, this.baseUrl);
+		return safeFetchJson<T>(url.toString(), {
+			allowedHosts: [url.hostname.toLowerCase()],
+			allowedProtocols: [url.protocol],
+			allowLocalhost: false,
+			timeout: 30000,
+			fetchOptions: {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${this.apiKey}`,
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(payload),
+			},
+		});
 	}
 }
 

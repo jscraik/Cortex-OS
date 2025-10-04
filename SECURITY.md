@@ -1,21 +1,16 @@
 # Security Policy
 
-<div align="center">
+[![Vulnerability Reporting](https://img.shields.io/badge/vulnerability-reporting-available-blue.svg)](#-reporting-vulnerabilities)
 
-[![Security](https://img.shields.io/badge/security-OWASP%20compliant-green.svg)](#owasp-compliance)
-[![Vulnerability Reporting](https://img.shields.io/badge/vulnerability-reporting-available-blue.svg)](#reporting-vulnerabilities)
-[![Response Time](https://img.shields.io/badge/response%20time-72h-brightgreen.svg)](#response-timeline)
-
-**Security-First AI Agent Development Platform**  
+**Security-First AI Agent Development Platform**
 _We take security seriously and appreciate responsible disclosure of vulnerabilities_
-
-</div>
 
 ---
 
 ## 🛡️ Security Overview
 
-Cortex-OS is built with security as a fundamental principle. Our Autonomous Software Behavior Reasoning (ASBR) runtime implements comprehensive security measures to protect against common vulnerabilities and emerging AI/ML specific threats.
+Cortex-OS is built with security as a fundamental principle. Our Autonomous Software Behavior Reasoning (ASBR) runtime implements
+comprehensive security measures to protect against common vulnerabilities and emerging AI/ML specific threats.
 
 ### Security Frameworks We Follow
 
@@ -455,14 +450,9 @@ Our security team conducts regular manual testing:
 
 ---
 
-<div align="center">
-
-**Security is Everyone's Responsibility** 🛡️  
+**Security is Everyone's Responsibility** 🛡️
 _Help us keep Cortex-OS secure for everyone_
 
 [![Report Vulnerability](https://img.shields.io/badge/report-vulnerability-red.svg)](mailto:security@cortex-os.dev)
-[![Security Documentation](https://img.shields.io/badge/security-documentation-blue.svg)](#security-overview)
 
 **Last Updated**: September 1, 2025 | **Version**: 1.0
-
-</div>

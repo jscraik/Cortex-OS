@@ -13,7 +13,7 @@ describe('TypeScript libs barrel exports', () => {
 
 	it('contracts exports TOKENS and Token type', () => {
 		expect(Object.keys(TOKENS)).toContain('Memories');
-		expectTypeOf(Symbol.for('Memories')).toMatchTypeOf<Token>();
+		expectTypeOf(Symbol.for('Memories')).toEqualTypeOf<Token>();
 	});
 
 	it('telemetry tracer creates span with name', () => {

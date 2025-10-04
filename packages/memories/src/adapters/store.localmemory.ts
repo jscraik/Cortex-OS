@@ -1,3 +1,4 @@
+import { safeFetch } from '@cortex-os/utils';
 import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
 
@@ -94,96 +95,64 @@ export class LocalMemoryStore implements MemoryStore {
 	async upsert(m: Memory, namespace?: string): Promise<Memory> {
 		const ns = namespace ?? this.defaultNs;
 		const doc = toLocalDoc(m, ns);
-		const ctrl = new AbortController();
-		const to = setTimeout(() => ctrl.abort(), this.timeoutMs);
-		try {
-			// Use PUT to upsert by id when available
-			const res = await fetch(`${this.baseUrl}/memories/${encodeURIComponent(m.id)}`, {
-				method: 'PUT',
-				headers: toHeaders(this.apiKey),
-				body: JSON.stringify(doc),
-				signal: ctrl.signal,
-			});
-			if (!res.ok) throw new Error(`local-memory: upsert failed: ${res.status}`);
-			const raw: unknown = await res.json().catch(() => ({}));
-			const parsed = (raw ?? {}) as LocalDocEnvelope;
-			return fromLocalDoc(parsed.data ?? parsed) ?? m;
-		} finally {
-			clearTimeout(to);
-		}
+		const url = new URL(`${this.baseUrl}/memories/${encodeURIComponent(m.id)}`);
+		const res = await this.request(url, {
+			method: 'PUT',
+			headers: toHeaders(this.apiKey),
+			body: JSON.stringify(doc),
+		});
+		const raw: unknown = await res.json().catch(() => ({}));
+		const parsed = (raw ?? {}) as LocalDocEnvelope;
+		return fromLocalDoc(parsed.data ?? parsed) ?? m;
 	}
 
 	async get(id: string, namespace?: string): Promise<Memory | null> {
-		const ctrl = new AbortController();
-		const to = setTimeout(() => ctrl.abort(), this.timeoutMs);
-		try {
-			const url = new URL(`${this.baseUrl}/memories/${encodeURIComponent(id)}`);
-			if (namespace ?? this.defaultNs)
-				url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
-			const res = await fetch(url, {
-				headers: toHeaders(this.apiKey),
-				signal: ctrl.signal,
-			});
-			if (res.status === 404) return null;
-			if (!res.ok) throw new Error(`local-memory: get failed: ${res.status}`);
-			const raw: unknown = await res.json().catch(() => ({}));
-			const parsed = (raw ?? {}) as LocalDocEnvelope;
-			return fromLocalDoc(parsed.data ?? parsed);
-		} finally {
-			clearTimeout(to);
-		}
+		const url = new URL(`${this.baseUrl}/memories/${encodeURIComponent(id)}`);
+		if (namespace ?? this.defaultNs)
+			url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
+		const res = await this.request(url, { headers: toHeaders(this.apiKey) }, { allow404: true });
+		if (res.status === 404) return null;
+		const raw: unknown = await res.json().catch(() => ({}));
+		const parsed = (raw ?? {}) as LocalDocEnvelope;
+		return fromLocalDoc(parsed.data ?? parsed);
 	}
 
 	async delete(id: string, namespace?: string): Promise<void> {
-		const ctrl = new AbortController();
-		const to = setTimeout(() => ctrl.abort(), this.timeoutMs);
-		try {
-			const url = new URL(`${this.baseUrl}/memories/${encodeURIComponent(id)}`);
-			if (namespace ?? this.defaultNs)
-				url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
-			const res = await fetch(url, {
+		const url = new URL(`${this.baseUrl}/memories/${encodeURIComponent(id)}`);
+		if (namespace ?? this.defaultNs)
+			url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
+		const res = await this.request(
+			url,
+			{
 				method: 'DELETE',
 				headers: toHeaders(this.apiKey),
-				signal: ctrl.signal,
-			});
-			if (!res.ok && res.status !== 404)
-				throw new Error(`local-memory: delete failed: ${res.status}`);
-		} finally {
-			clearTimeout(to);
-		}
+			},
+			{ allow404: true },
+		);
+		if (res.status === 404) return;
 	}
 
 	async searchByText(q: TextQuery, namespace?: string): Promise<Memory[]> {
-		const ctrl = new AbortController();
-		const to = setTimeout(() => ctrl.abort(), this.timeoutMs);
-		try {
-			const url = new URL(`${this.baseUrl}/memories/search`);
-			url.searchParams.set('text', q.text);
-			url.searchParams.set('topK', String(q.topK));
-			if (q.filterTags?.length) url.searchParams.set('tags', q.filterTags.join(','));
-			if (namespace ?? this.defaultNs)
-				url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
-			const res = await fetch(url, {
-				headers: toHeaders(this.apiKey),
-				signal: ctrl.signal,
-			});
-			if (!res.ok) throw new Error(`local-memory: searchByText failed: ${res.status}`);
-			const raw: unknown = await res.json().catch(() => ({}));
-			const parsed = (raw ?? {}) as LocalDocEnvelope | LocalDocEnvelope[];
-			let list: LocalDocEnvelope[] = [];
-			if (Array.isArray(parsed)) {
-				list = parsed;
-			} else if (Array.isArray(parsed.items)) {
-				list = parsed.items;
-			} else if (Array.isArray(parsed.data)) {
-				list = parsed.data;
-			} else if (parsed) {
-				list = [parsed];
-			}
-			return list.map(fromLocalDoc).filter(Boolean) as Memory[];
-		} finally {
-			clearTimeout(to);
+		const url = new URL(`${this.baseUrl}/memories/search`);
+		url.searchParams.set('text', q.text);
+		url.searchParams.set('topK', String(q.topK));
+		if (q.filterTags?.length) url.searchParams.set('tags', q.filterTags.join(','));
+		if (namespace ?? this.defaultNs)
+			url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
+		const res = await this.request(url, { headers: toHeaders(this.apiKey) });
+		const raw: unknown = await res.json().catch(() => ({}));
+		const parsed = (raw ?? {}) as LocalDocEnvelope | LocalDocEnvelope[];
+		let list: LocalDocEnvelope[] = [];
+		if (Array.isArray(parsed)) {
+			list = parsed;
+		} else if (Array.isArray(parsed.items)) {
+			list = parsed.items;
+		} else if (Array.isArray(parsed.data)) {
+			list = parsed.data;
+		} else if (parsed) {
+			list = [parsed];
 		}
+		return list.map(fromLocalDoc).filter(Boolean) as Memory[];
 	}
 
 	async searchByVector(
@@ -212,26 +181,44 @@ export class LocalMemoryStore implements MemoryStore {
 	}
 
 	async list(namespace?: string, limit?: number, offset?: number): Promise<Memory[]> {
-		const ctrl = new AbortController();
-		const to = setTimeout(() => ctrl.abort(), this.timeoutMs);
-		try {
-			const url = new URL(`${this.baseUrl}/memories`);
-			if (namespace ?? this.defaultNs)
-				url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
-			if (typeof limit === 'number') url.searchParams.set('limit', String(limit));
-			if (typeof offset === 'number') url.searchParams.set('offset', String(offset));
-			const res = await fetch(url, { headers: toHeaders(this.apiKey), signal: ctrl.signal });
-			if (!res.ok) throw new Error(`local-memory: list failed: ${res.status}`);
-			const raw: unknown = await res.json().catch(() => ({}));
-			const parsed = (raw ?? {}) as LocalDocEnvelope | LocalDocEnvelope[];
-			let list: LocalDocEnvelope[] = [];
-			if (Array.isArray(parsed)) list = parsed;
-			else if (Array.isArray(parsed.items)) list = parsed.items;
-			else if (Array.isArray(parsed.data)) list = parsed.data;
-			else if (parsed) list = [parsed];
-			return list.map(fromLocalDoc).filter(Boolean) as Memory[];
-		} finally {
-			clearTimeout(to);
+		const url = new URL(`${this.baseUrl}/memories`);
+		if (namespace ?? this.defaultNs)
+			url.searchParams.set('namespace', String(namespace ?? this.defaultNs));
+		if (typeof limit === 'number') url.searchParams.set('limit', String(limit));
+		if (typeof offset === 'number') url.searchParams.set('offset', String(offset));
+		const res = await this.request(url, { headers: toHeaders(this.apiKey) });
+		const raw: unknown = await res.json().catch(() => ({}));
+		const parsed = (raw ?? {}) as LocalDocEnvelope | LocalDocEnvelope[];
+		let list: LocalDocEnvelope[] = [];
+		if (Array.isArray(parsed)) list = parsed;
+		else if (Array.isArray(parsed.items)) list = parsed.items;
+		else if (Array.isArray(parsed.data)) list = parsed.data;
+		else if (parsed) list = [parsed];
+		return list.map(fromLocalDoc).filter(Boolean) as Memory[];
+	}
+
+	private async request(
+		url: URL,
+		init: RequestInit,
+		opts: { allow404?: boolean } = {},
+	): Promise<Response> {
+		const response = await safeFetch(url.toString(), {
+			allowedHosts: [url.hostname.toLowerCase()],
+			allowedProtocols: [url.protocol],
+			allowLocalhost: true,
+			timeout: this.timeoutMs,
+			fetchOptions: init,
+		});
+
+		if (!response.ok) {
+			if (opts.allow404 && response.status === 404) {
+				return response;
+			}
+			throw new Error(
+				`local-memory: ${init.method ?? 'GET'} ${url.pathname} failed: ${response.status} ${response.statusText}`,
+			);
 		}
+
+		return response;
 	}
 }

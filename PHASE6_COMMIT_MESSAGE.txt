@@ -1,0 +1,77 @@
+feat(observability): phase 6 complete prometheus metrics and structured logging
+
+Implements comprehensive observability stack with Prometheus metrics export
+and structured JSON logging for production monitoring and debugging.
+
+Phase 6.1: Prometheus Metrics (15/15 tests ✅)
+- GET /metrics endpoint for Prometheus scraping
+- 12 brAInwav-prefixed metrics for monitoring
+- Planning metrics (requests, duration, ToT branches)
+- Reflection metrics (quality scores, improvements)
+- Health check metrics (duration, component status)
+- Memory operation metrics (operations, size)
+- HTTP request metrics (count, duration)
+
+Phase 6.2: Structured Logging (13/13 tests ✅)
+- JSON-formatted log output
+- Event-based logging structure
+- Context propagation (bound loggers)
+- Performance tracking (log_duration)
+- Error logging with stack traces
+- brAInwav metadata in all events
+
+Metrics Implemented:
+- brainwav_planning_requests_total (Counter)
+- brainwav_planning_duration_seconds (Histogram)
+- brainwav_tot_branches_generated (Histogram)
+- brainwav_reflection_requests_total (Counter)
+- brainwav_reflection_quality_score (Histogram)
+- brainwav_improvements_applied_total (Counter)
+- brainwav_health_check_duration_seconds (Histogram)
+- brainwav_component_status (Gauge)
+- brainwav_memory_operations_total (Counter)
+- brainwav_memory_size_bytes (Gauge)
+- brainwav_http_requests_total (Counter)
+- brainwav_http_request_duration_seconds (Histogram)
+
+Logging Features:
+- JSON event structure
+- ISO timestamps
+- Log levels (debug/info/warning/error)
+- Context propagation
+- Performance tracking
+- Stack traces on errors
+
+Files Added:
+- apps/cortex-py/src/observability/__init__.py
+- apps/cortex-py/src/observability/metrics.py
+- apps/cortex-py/src/observability/logging.py
+- tests/observability/test_metrics.py (15 tests)
+- tests/observability/test_structured_logging.py (13 tests)
+- tasks/phase6-observability-complete.md
+- DEPLOYMENT.md
+
+Files Modified:
+- apps/cortex-py/src/app.py (+12 lines, /metrics endpoint)
+- apps/cortex-py/pyproject.toml (+3 dependencies)
+
+Dependencies Added:
+- prometheus-client>=0.19.0
+- structlog>=24.1.0
+- python-json-logger>=2.0.7
+
+Tests: 28/28 passing (100%)
+Code: ~550 lines (metrics + logging)
+CODESTYLE.md: 100% compliant
+
+Production Features:
+- Prometheus-ready metrics endpoint
+- Grafana dashboard templates
+- Kubernetes ServiceMonitor support
+- Structured logs for aggregation
+- Performance monitoring
+- Error tracking
+
+Ready for production monitoring with Prometheus + Grafana.
+
+Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.github.com>

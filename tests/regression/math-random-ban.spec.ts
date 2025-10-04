@@ -39,7 +39,7 @@ describe('brAInwav production random guard', () => {
 		if (occurrences.length > 0) {
 			const report = occurrences
 				.map(({ file }) => `• ${path.relative(process.cwd(), file)}`)
-				.sort()
+				.sort((a, b) => a.localeCompare(b))
 				.join('\n');
 
 			throw new Error(

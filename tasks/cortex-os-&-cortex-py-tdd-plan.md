@@ -79,6 +79,31 @@ This plan structures the upgrade and refactor of `apps/cortex-os` (Node/TypeScri
 
 ---
 
+## Phase 0.0: Dependencies & Install (One-time Setup)
+
+**Goal**: Ensure all Node/Python deps and local services are installed for the new v1.1 capabilities (RAG HTTP surfaces, Self‑RAG, KV‑tap interface, run bundles, purge/legal‑hold, privacy deny rules, connectors bridge, SLOs, eval pipelines).
+
+**Node (workspace‑wide)**
+- Required: `@langchain/langgraph`, `@langchain/core`, `fastify`, `@fastify/cors`, `zod`, `zod-openapi`, `prom-client`, `@qdrant/js-client-rest`, `@lancedb/lancedb`.
+- Install (scripted): `pnpm run setup:deps`
+- Verify: `pnpm run check:deps`
+
+**Python (apps/cortex-py)**
+- Required: `mlx` (already present), `codecarbon` (energy/CO₂), `deepeval` (RAG robustness). Optional: `ragas`.
+- Install via uv (scripted): `pnpm run setup:deps` (runs `uv sync` in apps/cortex-py)
+
+**Local Services (dev)**
+- Qdrant (vector db): `docker run -p 6333:6333 qdrant/qdrant:latest`
+- Neo4j (optional KG): `docker run -p7474:7474 -p7687:7687 -e NEO4J_AUTH=neo4j/secret neo4j:latest`
+
+**Smoke checks**
+- Qdrant: `curl -sf http://127.0.0.1:6333/collections || echo 'Qdrant not running'`
+- Neo4j: `cypher-shell -a bolt://localhost:7687 -u neo4j -p secret "RETURN 1"`
+
+**Outcome**: All deps installed; plan sections 3.3, 3.4, 4.3, 4.4, 5.4, 5.5, 6.3, 6.4, 7.3, 9.3 executable.
+
+---
+
 ## Phase 0: Foundation & Baseline [Week 1]
 
 ### 0.1 Quality Gate Infrastructure
@@ -123,6 +148,34 @@ describe('Quality Gate Enforcement', () => {
 **Dependencies**: None
 
 ---
+
+### 0.1 Prompt Library & Guardrails
+
+**Goal**: Centralize system prompts and tool templates with versioning, ownership, and tests; capture prompt provenance in run bundles.
+
+**Tasks**:
+
+- [ ] Create `packages/prompts/` with:
+  - `src/schema.ts`: Zod schema for prompt entries `{ id, name, version, role, template, variables[], riskLevel, owners[] }`
+  - `src/index.ts`: typed registry + loader `getPrompt(id, version?)` with checks (owners present, variables declared, length bounds)
+  - Tests: `src/__tests__/schema.spec.ts`, `src/__tests__/loader.spec.ts` (variable coverage, banned phrases, max length)
+- [ ] Add prompt usage capture to run bundle (see Phase 5.4): write `prompts.json` with `{ id, version, sha256, variables }` for each used prompt
+- [ ] Block inline ad‑hoc system prompts in production: planner/agents must reference prompt ids
+- [ ] Add “Prompt Change Approval” doc (`docs/runbooks/prompt-approval.md`) mapping risk levels (L1–L4) → HIL for L3/L4
+
+**Tests**:
+
+```ts
+// packages/prompts/src/__tests__/schema.spec.ts
+it('rejects undeclared variables', () => {
+  expect(() => validatePrompt({ id:'p', name:'t', version:'1', role:'system', template:'Hello {{user}}', variables:[], riskLevel:'L2', owners:['eng@'] })).toThrow(/undeclared/i);
+});
+```
+
+**Evidence**: prompts pass schema; run bundle contains `prompts.json` per run.
+
+**Dependencies**: zod (already in workspace); no network egress.
+
 
 ### 0.2 Current State Assessment
 
@@ -659,6 +712,83 @@ describe('Hybrid Search', () => {
 
 ---
 
+### 3.3 RAG HTTP Surfaces (Hierarchical/Graph/Multimodal)
+
+**Goal**: Expose plan-aligned RAG endpoints with hierarchical spans, graph walk, and optional multimodal retrieval.
+
+**CODESTYLE.md Requirements**:
+
+- Functional-first HTTP handlers; ≤40-line functions with guard clauses
+- TypeScript: explicit types for request/response DTOs and citations format
+- Constants: UPPER_SNAKE_CASE for defaults (TOP_K, MAX_HOPS, CITE_MIN)
+- brAInwav branding in logs, error messages, and headers
+
+**Tasks**:
+
+- [ ] Add `packages/rag-http/src/server.ts` with:
+  - `POST /rag/ingest` (hierarchical parsing; multimodal optional; PQ/int8 flags)
+  - `POST /rag/hier-query` (hybrid + graph_walk + self_rag flags; returns answer + citations)
+- [ ] Wire to existing GraphRAG orchestrator: `packages/memory-core/src/services/GraphRAGService.ts`
+- [ ] Reuse chunkers: `packages/rag/src/chunkers/{hierarchical,semantic,late}.ts`
+- [ ] Add Zod schemas for endpoints (DTOs + validation)
+- [ ] Generate OpenAPI 3.1 doc in `apps/cortex-os/docs/api/openapi.rag.yaml` and validate in CI
+
+**Tests**:
+
+```typescript
+// tests/rag/http-surface.test.ts
+it('returns hierarchical spans with ≥3 citations (AT-HRAG-01)', async () => {
+  const res = await request(app).post('/rag/hier-query').send({ query: 'termination clauses', top_k: 24 });
+  expect(res.status).toBe(200);
+  expect(res.body.citations?.length ?? 0).toBeGreaterThanOrEqual(3);
+});
+
+it('traverses vendor→KPI edges when graph_walk=true (AT-GRAPH-02)', async () => {
+  const res = await request(app).post('/rag/hier-query').send({ query: 'Which vendors impact SLO breach risk?', graph_walk: true });
+  expect(res.status).toBe(200);
+  expect(res.body.citations?.some((c:any) => c.graph?.edges_traversed >= 1)).toBe(true);
+});
+
+it('answers a table+image question when multimodal=true (AT-MM-03)', async () => {
+  const res = await request(app).post('/rag/hier-query').send({ query: 'What does the chart on page 3 imply?', multimodal: true });
+  expect(res.status).toBe(200);
+  expect(String(res.body.answer)).toMatch(/chart|figure|table/i);
+});
+```
+
+**Evidence**:
+
+- Response contains `{ answer, citations[], provider }` with hierarchical levels in metadata
+- Latency under SLOs (see Phase 7 SLOs)
+
+**Dependencies**: 1.3 complete; 3.2 complete
+
+---
+
+### 3.4 External Graph Bridge (Optional)
+
+**Goal**: Optional Neo4j/Graph endpoints feeding GraphRAG nodes/edges with policy filters.
+
+**Tasks**:
+
+- [ ] Enable docker services for Neo4j (`docker/docker-compose.prod.yml`) and configure connection envs
+- [ ] Add adapter in `packages/memory-core/src/services/GraphRAGService.ts` to enrich nodes/edges when `EXTERNAL_KG_ENABLED=true`
+- [ ] Contract tests: verify provenance fields preserved when KG contributes nodes
+
+**Tests**:
+
+```typescript
+it('enriches GraphRAG context with KG nodes when enabled', async () => {
+  process.env.EXTERNAL_KG_ENABLED = 'true';
+  const res = await graphRag.query({ query: 'vendor risk' });
+  expect(res.citations.some(c => c.source?.includes('neo4j'))).toBe(true);
+});
+```
+
+**Dependencies**: 3.3 complete
+
+---
+
 ## Phase 4: Autonomous Agents & Reasoning [Week 6]
 
 ### 4.1 Planning Module with CoT/ToT
@@ -761,6 +891,51 @@ async def test_reflection_improves_output():
 
 ---
 
+### 4.3 Self‑RAG Decision Policy
+
+**Goal**: Add Self‑RAG controller that can skip retrieval, critique, and re‑query.
+
+**Tasks**:
+
+- [ ] Implement controller `packages/rag/src/self-rag/controller.ts` with policy: {enabled, critique, max_rounds}
+- [ ] Integrate into `/rag/hier-query` when `self_rag=true`
+
+**Tests**:
+
+```typescript
+it('skips retrieval when answer is in memory (AT-SRAG-04)', async () => {
+  const res = await request(app).post('/rag/hier-query').send({ query: 'What is our company name? (in memory)', self_rag: true });
+  expect(res.body.metrics?.retrieval_calls ?? 1).toBe(0);
+});
+```
+
+**Dependencies**: 3.3 complete
+
+---
+
+### 4.4 AttentionBridge / KV‑Tap (Feature‑Gated)
+
+**Goal**: Pluggable KV‑cache tap (RetroInfer/RetrievalAttention) with budget logging. OFF by default.
+
+**Tasks**:
+
+- [ ] Add `packages/model-gateway/src/kv/attention-bridge.ts` with engines: `retroinfer|retrievalattention|none`
+- [ ] Gate by env `ATTENTION_KV_TAP=1` and log receipts to run bundle
+
+**Tests**:
+
+```typescript
+it('emits attention_taps.json when KV‑tap enabled (AT-ATTN-05)', async () => {
+  process.env.ATTENTION_KV_TAP = '1';
+  const run = await simulateChatRun();
+  const files = await readBundle(run.id);
+  expect(files).toContain('attention_taps.json');
+});
+```
+
+**Dependencies**: 4.3 complete
+
+---
 ## Phase 5: Operational Readiness [Week 7]
 
 ### 5.1 Health, Readiness, Liveness Endpoints
@@ -920,6 +1095,54 @@ describe('Observability', () => {
 
 ---
 
+### 5.4 Run Bundle Export & Provenance
+
+**Goal**: Emit `.pbrun` run bundles with inputs, messages, citations, policy decisions, and energy samples.
+
+**Tasks**:
+
+- [ ] Add bundle writer `apps/cortex-os/src/run-bundle/writer.ts` (files: run.json, messages.jsonl, citations.json, policy_decisions.json, energy.jsonl)
+- [ ] Expose `GET /v1/runs/:id/bundle` in `apps/cortex-os/src/http/runtime-server.ts`
+
+**Tests**:
+
+```typescript
+it('produces a complete run bundle archive', async () => {
+  const run = await startRun();
+  await finishRun(run.id);
+  const zip = await request(server).get(`/v1/runs/${run.id}/bundle`);
+  expect(zip.status).toBe(200);
+  expect(list(zip)).toEqual(expect.arrayContaining(['run.json','messages.jsonl','citations.json']));
+});
+```
+
+**Dependencies**: 5.3 complete
+
+---
+
+### 5.5 Right‑to‑be‑Forgotten (Purge + Legal Hold)
+
+**Goal**: Purge client‑scoped data across Local‑Memory, RAG indices, and run logs; respect legal hold.
+
+**Tasks**:
+
+- [ ] Add `POST /memory/purge` in `apps/cortex-os/packages/local-memory/src/server.ts` with `{ client_vault, legal_hold }`
+- [ ] Erase vectors (Qdrant) + rows (SQLite) + bundle artifacts; skip when `legal_hold=true`
+
+**Tests**:
+
+```typescript
+it('purges data and respects legal hold (AT-PURGE-10)', async () => {
+  const res = await request(app).post('/memory/purge').send({ client_vault: 'AcmeCo', legal_hold: false });
+  expect(res.status).toBe(202);
+  expect(res.body.deletions).toEqual(expect.arrayContaining(['LocalMemory','RAG','runs']));
+});
+```
+
+**Dependencies**: 1.2 complete
+
+---
+
 ## Phase 6: Security & Compliance [Week 8]
 
 ### 6.1 Input Validation & Injection Prevention
@@ -968,6 +1191,52 @@ describe('Injection Prevention', () => {
 - Fuzz testing with 10k inputs, zero crashes
 
 **Dependencies**: None
+
+---
+
+### 6.3 Privacy Mode & Cloud Deny Rules
+
+**Goal**: Enforce deny‑by‑default for cloud egress when `offline=true` or `pii=true`.
+
+**Tasks**:
+
+- [ ] Extend model‑gateway policy router to read flags and deny `openai/*`, `copilot/*` when set
+- [ ] Tests cover `chat`, `embeddings`, `rerank` routes under privacy mode
+
+**Tests**:
+
+```typescript
+it('denies cloud egress in Private/Offline (AT-PRIV-09)', async () => {
+  await setPrivacyMode(true);
+  const res = await request(app).post('/chat').send({ msgs: [{ role:'user', content:'hi'}], model:'openai/chatgpt-latest' });
+  expect(res.status).toBe(403);
+});
+```
+
+**Dependencies**: 5.3 complete
+
+---
+
+### 6.4 Connectors Bridge (HIL‑Gated)
+
+**Goal**: Optional ChatGPT Connectors dispatcher; denied when privacy or PII flags active; requires HIL.
+
+**Tasks**:
+
+- [ ] Add `POST /connectors/chatgpt/bridge` in model‑gateway with explicit `assistant_id` and `enable_connectors=true`
+- [ ] Record policy decisions to run bundle; require HIL flag in tests
+
+**Tests**:
+
+```typescript
+it('accepts HIL‑gated connector dispatch (AT-CONNECT-12)', async () => {
+  const res = await request(app).post('/connectors/chatgpt/bridge').send({ assistant_id:'asst_123', enable_connectors:true, messages:[] });
+  expect(res.status).toBe(202);
+  expect(res.body.require_hil).toBe(true);
+});
+```
+
+**Dependencies**: 6.3 complete
 
 ---
 
@@ -1123,6 +1392,26 @@ def test_low_power_mode_reduces_consumption():
 - Low-power mode tested on representative hardware
 
 **Dependencies**: 7.1 complete
+
+---
+
+### 7.3 Plan‑Specific SLOs
+
+**Goal**: Add plan SLOs to baseline.
+
+**SLO Targets**:
+
+- RAG retrieval: top_k=24 on 50k chunks ≤ 2000 ms (local LanceDB/Qdrant)
+- Chat: first token ≤ 1500 ms local (MLX/Ollama), ≤ 3000 ms cloud
+
+**Tasks**:
+
+- [ ] Add k6/scenario for hierarchical retrieval @50k chunks; assert p95 ≤ 2000 ms
+- [ ] Add chat warm/cold start probes per provider class and assert first‑token SLOs
+
+**Tests**: k6 JSON exports parsed in `ops/slo/check-k6.mjs`
+
+**Dependencies**: 3.3 complete
 
 ---
 
@@ -1297,6 +1586,29 @@ describe('Runbook Validation', () => {
 
 ---
 
+### 9.3 Continuous RAG Evaluation (Ragas / DeepEval)
+
+**Goal**: Automate RAG quality, robustness, and regression gates.
+
+**Tasks**:
+
+- [ ] Integrate Ragas pipelines for `answer_correctness`, `faithfulness`, `context_precision/recall`
+- [ ] Add adversarial/robustness suites via DeepEval (injection, perturbations)
+- [ ] Fail PR if overall <80% or hallucination >3% or latency/cost regress >10%
+
+**Tests**:
+
+```bash
+pnpm -w run eval:ragas --report reports/eval/scoreboard.json
+pnpm -w run eval:depeval --report reports/eval/robustness.json
+```
+
+**Evidence**: `reports/eval/scoreboard.json` attached to PR
+
+**Dependencies**: 3.3 complete
+
+---
+
 ## Success Metrics
 
 **Quality Gates** (all must pass):
@@ -1377,3 +1689,20 @@ scripts/ci/enforce-gates.js
 ---
 
 **Status**: Ready for Implementation
+
+---
+
+## Appendix D — Acceptance Test Matrix (v1.1)
+
+- AT‑HRAG‑01: Hierarchical spans with ≥3 citations → `/rag/hier-query`
+- AT‑GRAPH‑02: Graph walk vendor→KPI edges → `/rag/hier-query?graph_walk=true`
+- AT‑MM‑03: Multimodal Q&A (table+image) → `/rag/hier-query` with `multimodal=true`
+- AT‑SRAG‑04: Self‑RAG skip retrieval → `/rag/hier-query` with `self_rag=true`
+- AT‑ATTN‑05: KV‑tap receipts in bundle → AttentionBridge enabled, bundle contains `attention_taps.json`
+- AT‑PLAN‑06: Planner re‑plans on partial failure → LangGraph checkpoints, assert ≥1 replan
+- AT‑TEAM‑07: Supervisor orchestrates ≥3 agents → A2A events show ≥2 handoffs
+- AT‑HEAL‑08: Self‑healing retries/backoff → Simulate 429, assert retries exponential
+- AT‑PRIV‑09: Private/Offline denies cloud → Privacy mode true, cloud calls 0
+- AT‑PURGE‑10: Right‑to‑be‑forgotten → `/memory/purge` reports deletions; legal hold respected
+- AT‑ENERGY‑11: Energy log present → bundle contains `energy.jsonl`
+- AT‑CONNECT‑12: HIL‑gated connectors dispatch → `/connectors/chatgpt/bridge` accepted with `require_hil`

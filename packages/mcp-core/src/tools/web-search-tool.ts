@@ -1,3 +1,4 @@
+import { safeFetch } from '@cortex-os/utils';
 import { z } from 'zod';
 import type { McpTool, ToolExecutionContext } from '../tools.js';
 import { ToolExecutionError } from '../tools.js';
@@ -122,9 +123,25 @@ export class WebSearchTool implements McpTool<unknown, WebSearchToolResult> {
 	}
 
 	private async fetchHtml(url: string, context?: ToolExecutionContext): Promise<string> {
-		const res = await fetch(url, {
-			headers: { 'User-Agent': 'Cortex-OS MCP WebSearch Tool/1.0' },
-			signal: context?.signal,
+		const urlObj = new URL(url);
+		const controller = new AbortController();
+		if (context?.signal) {
+			if (context.signal.aborted) {
+				controller.abort();
+			} else {
+				context.signal.addEventListener('abort', () => controller.abort(), { once: true });
+			}
+		}
+
+		const res = await safeFetch(url, {
+			allowedHosts: [urlObj.hostname.toLowerCase()],
+			allowedProtocols: [urlObj.protocol],
+			allowLocalhost: false,
+			timeout: undefined,
+			fetchOptions: {
+				headers: { 'User-Agent': 'Cortex-OS MCP WebSearch Tool/1.0' },
+				signal: controller.signal,
+			},
 		});
 		if (!res.ok) {
 			throw new ToolExecutionError(`Search provider error: ${res.status} ${res.statusText}`, {

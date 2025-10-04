@@ -125,8 +125,8 @@ describe('brAInwav Memory Integration Tests - Phase 1.2', () => {
 				}),
 			});
 
-			const memory1 = await memory1Response.json();
-			const memory2 = await memory2Response.json();
+			await memory1Response.json();
+			await memory2Response.json();
 
 			// Wait for processing
 			await new Promise((resolve) => setTimeout(resolve, 1000));

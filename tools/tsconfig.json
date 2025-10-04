@@ -2,7 +2,8 @@
     "extends": "../tsconfig.json",
     "compilerOptions": {
         "composite": true,
-        "outDir": "../dist/tools"
+        "outDir": "../dist/tools",
+        "tsBuildInfoFile": "../dist/tools/.tsbuildinfo"
     },
     "include": [
         "./**/*.ts"

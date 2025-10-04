@@ -93,6 +93,14 @@
       "@cortex-os/rag-store/*": [
         "packages/rag/src/store/*"
       ],
+      "@cortex-os/utils": [
+        "libs/typescript/utils/dist/index.d.ts",
+        "libs/typescript/utils/src/index.ts"
+      ],
+      "@cortex-os/utils/*": [
+        "libs/typescript/utils/dist/*",
+        "libs/typescript/utils/src/*"
+      ],
       "@cortex-os/*": [
         "packages/*/dist/index.d.ts",
         "packages/*/src/index.ts"

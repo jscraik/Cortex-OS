@@ -53,7 +53,7 @@ describe('tool dispatch allow-list guard', () => {
 		if (hits.length > 0) {
 			const report = hits
 				.map(({ file, token }) => `• ${path.relative(process.cwd(), file)} :: ${token}`)
-				.sort()
+				.sort((a, b) => a.localeCompare(b))
 				.join('\n');
 			throw new Error(
 				'tool_dispatch references leaked outside sanctioned contexts. Ensure slash command metadata and dispatch wrappers enforce allow-lists.\n' +

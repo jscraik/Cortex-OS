@@ -23,6 +23,7 @@ export default tseslint.config(
 			'tests/mlx.spec.ts',
 			'tests/security/vitest.config.ts',
 			'tests/setup/types.d.ts',
+			'src/__tests__/vitest.setup.ts',
 		],
 	},
 	js.configs.recommended,

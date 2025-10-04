@@ -1,7 +1,5 @@
 # Cortex-OS
 
-<div align="center">
-
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
 [![Package Manager](https://img.shields.io/badge/pnpm-10.17.1-blue)](https://pnpm.io/)
@@ -12,7 +10,7 @@
 [![Coverage](https://img.shields.io/codecov/c/github/jamiescottcraik/Cortex-OS?token=YOUR_TOKEN)](https://codecov.io/gh/jamiescottcraik/Cortex-OS)
 [![Quality Gate](https://img.shields.io/badge/quality%20gate-passing-brightgreen)](https://github.com/jamiescottcraik/Cortex-OS/actions)
 
-**Autonomous Software Behavior Reasoning (ASBR) Runtime**
+## Autonomous Software Behavior Reasoning (ASBR) Runtime
 
 Governed AI agent orchestration platform with event-driven architecture and MCP integration
 
@@ -20,8 +18,6 @@ Governed AI agent orchestration platform with event-driven architecture and MCP 
 > Semantic search and embeddings require configuring an external MLX or Ollama embedding service. Without it, Cortex-OS falls back to keyword-only retrieval and disables vector indexing.
 
 [Website](https://docs.cortex-os.dev) • [Documentation](./docs) • [Quick Start](./docs/quick-start.md) • [API Reference](https://api.cortex-os.dev)
-
-</div>
 
 ---
 
@@ -36,32 +32,25 @@ Governed AI agent orchestration platform with event-driven architecture and MCP 
 - Disabled features with `console.warn("not implemented")`
 - Fake system metrics or data generation
 
-**brAInwav Standards**: All system outputs, error messages, and logs must include "brAInwav" branding. Status claims must be verified against actual code implementation.
+**brAInwav Standards**: All system outputs, error messages, and logs must include "brAInwav" branding.
+Status claims must be verified against actual code implementation.
 
 **Reference**: See `.cortex/rules/RULES_OF_AI.md` for complete production standards.
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Key Features](#-key-features)
-- [Quick Start](#-quick-start)
-- [Architecture](#-architecture)
-- [Documentation](#-documentation)
-- [Packages](#-packages)
-- [Development](#-development)
-- [Quality Gates](#-quality-gates)
-- [Security](#-security)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Support](#-support)
-
----
-
 ## Overview
 
+Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) Runtime** enabling AI agents
+to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations.
+The system implements strict governance boundaries, comprehensive testing, and security practices.
+>>>>>>> 3ee42ccf8 (chore: remove external/openai-codex submodule and clean tmp/external directories)
 Cortex-OS is an actively developed **Autonomous Software Behavior Reasoning (ASBR) Runtime** enabling AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations. The system implements strict governance boundaries, comprehensive testing, and transparent security practices that are still evolving.
+=======
+Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) Runtime** enabling AI agents
+to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations.
+The system implements strict governance boundaries, comprehensive testing, and security practices.
+>>>>>>> 3ee42ccf8 (chore: remove external/openai-codex submodule and clean tmp/external directories)
 
 ### 🎯 Key Features
 
@@ -128,7 +117,7 @@ pnpm structure:validate
 
 Cortex-OS follows a governed monorepo architecture with strict boundaries:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    Clients                                  │
 ├──────────┬──────────┬──────────┬──────────┬───────────────┤
@@ -295,6 +284,11 @@ Shell interface:
 - **Dependency Scanning** – Automated vulnerability assessment
 - **SBOM Generation** – Software Bill of Materials
 
+### Network Safety
+
+- **Safe Fetch Utilities** – All backend HTTP requests must use the shared `safeFetch` and `safeFetchJson` wrappers located in
+`libs/typescript/utils/src/safe-fetch.ts` to enforce SSRF protections, request allowlists, timeouts, and brAInwav-branded error messaging.
+
 ### CI/CD Pipeline
 
 - **Pre-commit** – Fast formatting and linting
@@ -345,7 +339,7 @@ We welcome contributions! See our [Contributing Guide](./CONTRIBUTING.md) for de
 
 This project is licensed under the Apache License 2.0 – see the [LICENSE](./LICENSE) file for details.
 
-```
+```text
 Copyright 2024 Cortex-OS Contributors
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -384,13 +378,9 @@ limitations under the License.
 
 ---
 
-<div align="center">
-
-**Built with ❤️ by the Cortex-OS Team**
+## Built with ❤️ by the Cortex-OS Team
 
 [![GitHub stars](https://img.shields.io/github/stars/jamiescottcraik/Cortex-OS?style=social)](https://github.com/jamiescottcraik/Cortex-OS/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/jamiescottcraik/Cortex-OS?style=social)](https://github.com/jamiescottcraik/Cortex-OS/network)
 [![GitHub issues](https://img.shields.io/github/issues/jamiescottcraik/Cortex-OS)](https://github.com/jamiescottcraik/Cortex-OS/issues)
 [![GitHub license](https://img.shields.io/github/license/jamiescottcraik/Cortex-OS)](https://github.com/jamiescottcraik/Cortex-OS/blob/main/LICENSE)
-
-</div>

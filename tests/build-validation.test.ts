@@ -147,7 +147,8 @@ describe('brAInwav Build Validation Suite', () => {
 							const isInCommand = line.includes('"command":') && line.includes('{workspaceRoot}');
 
 							if (isInCommand) {
-								const commandMatch = line.match(/"command":\s*"([^"]+)"/);
+								const commandPattern = /"command":\s*"([^"]+)"/;
+								const commandMatch = commandPattern.exec(line);
 								if (
 									commandMatch?.[1].includes(' ') &&
 									commandMatch[1].includes('{workspaceRoot}')

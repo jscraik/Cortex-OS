@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { isPrivateHostname, safeFetch, safeFetchJson } from '@cortex-os/utils';
+import { safeFetch } from '@cortex-os/utils';
 import type WebSocket from 'ws';
 import { z } from 'zod';
 import type { ServerInfo } from './contracts.js';
@@ -77,19 +77,22 @@ export async function createEnhancedClient(
 			}
 			const endpoint = server.endpoint; // safe after guard
 			const parsed = new URL(endpoint);
+			// minimal local/private hostname check to avoid depending on utils exports
+			const isPrivate =
+				['localhost', '::1'].includes(parsed.hostname) || /^127\./.test(parsed.hostname);
 			const baseOptions = {
 				allowedHosts: [parsed.hostname.toLowerCase()],
 				allowedProtocols: [parsed.protocol],
-				allowLocalhost: isPrivateHostname(parsed.hostname),
-				timeout: server.requestTimeoutMs ?? si.requestTimeoutMs,
+				allowLocalhost: isPrivate,
+				timeout: si.requestTimeoutMs,
 			};
 			return {
 				async callTool(input) {
 					if (closed) throw new ClientClosedError();
 					const payload = ToolRequestSchema.parse(input);
 					return await withTimeout(
-						(async () =>
-							safeFetchJson(endpoint, {
+						(async () => {
+							const res = await safeFetch(endpoint, {
 								...baseOptions,
 								fetchOptions: {
 									method: 'POST',
@@ -99,7 +102,10 @@ export async function createEnhancedClient(
 									},
 									body: JSON.stringify(payload),
 								},
-							}))(),
+							});
+							if (!res.ok) throw new Error(`HTTP ${res.status}`);
+							return res.json();
+						})(),
 						si.requestTimeoutMs,
 						'HTTP tool call',
 					);
@@ -118,6 +124,7 @@ export async function createEnhancedClient(
 										...(server.headers ?? {}),
 									},
 									body: JSON.stringify({ name: 'ping' }),
+									signal: undefined,
 								},
 							});
 							if (!res.ok) throw new Error(`HTTP ${res.status}`);

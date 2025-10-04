@@ -23,6 +23,13 @@ import {
 	type KernelToolBinding,
 } from '@cortex-os/kernel';
 import {
+	capturePromptUsage,
+	getPrompt,
+	loadDefaultPrompts,
+	type PromptCapture,
+	renderPrompt,
+} from '@cortex-os/prompts';
+import {
 	AIMessage,
 	type BaseMessage,
 	HumanMessage,
@@ -40,6 +47,10 @@ import {
 	type ToolDispatchJob,
 	type ToolDispatchResult,
 } from './tool-dispatch.js';
+
+loadDefaultPrompts();
+
+const DEFAULT_SYSTEM_PROMPT_ID = 'sys.n0-master';
 
 export const N0Annotation = Annotation.Root({
 	...MessagesAnnotation.spec,
@@ -131,7 +142,8 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
 	const hooks = await ensureHooks(options.hooks, options.hookLoadOptions);
 	const logger = options.logger ?? console;
 	const runSlashImpl = options.runSlash ?? defaultRunSlash;
-	const systemPrompt = options.systemPrompt ?? defaultSystemPrompt();
+	const systemPromptInfo = resolveSystemPrompt(options.systemPrompt);
+	const systemPrompt = systemPromptInfo.prompt;
 	const planResolver = options.planResolver ?? defaultPlanResolver;
 	const compactionConfig = options.compaction ?? {};
 	const dispatchHooks = options.toolHooks ?? createToolHookAdapter(hooks);
@@ -180,7 +192,8 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
 
 	const graph = new StateGraph(N0Annotation)
 		.addNode('parse_or_command', async (state: N0State) => {
-			const ctxPatch: Record<string, unknown> = { sessionStarted: true };
+			const promptCaptures = mergePromptCaptures(state.ctx, systemPromptInfo.capture);
+			const ctxPatch: Record<string, unknown> = { sessionStarted: true, promptCaptures };
 			if (kernelBinding?.metadata) {
 				ctxPatch.kernelToolkit = kernelBinding.metadata;
 			}
@@ -192,9 +205,6 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
 			if (!parsed) {
 				return { messages: baseMessages, ctx };
 			}
-			const commandMetadata = extractCommandMetadata(result.metadata);
-			const commandModel = extractString(commandMetadata?.['model']) ?? 'inherit';
-			const commandAllowedTools = extractStringArray(commandMetadata?.['allowedTools']);
 
 			const slashOptions: RunSlashOptions = {
 				...options.runSlashOptions,
@@ -213,6 +223,9 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
 				},
 			};
 			const result = await runSlashImpl(parsed, slashOptions);
+			const commandMetadata = extractCommandMetadata(result.metadata);
+			const commandModel = extractString(commandMetadata?.['model']) ?? 'inherit';
+			const commandAllowedTools = extractStringArray(commandMetadata?.['allowedTools']);
 			const outputText = typeof result.text === 'string' ? result.text : '';
 			const response = new AIMessage({ content: outputText });
 			if (outputText) {
@@ -1007,6 +1020,22 @@ async function ensureHooks(
 		return undefined;
 	}
 
+	function mergePromptCaptures(
+		ctx: Record<string, unknown> | undefined,
+		capture?: PromptCapture,
+	): PromptCapture[] {
+		const existing = Array.isArray(ctx?.promptCaptures)
+			? [...(ctx!.promptCaptures as PromptCapture[])]
+			: [];
+		if (capture) {
+			const already = existing.some(
+				(entry) => entry.id === capture.id && entry.version === capture.version,
+			);
+			if (!already) existing.push(capture);
+		}
+		return existing;
+	}
+
 	function _tryParseSlash(input: string): SlashParseResult | null {
 		try {
 			return parseSlash(input);
@@ -1031,7 +1060,21 @@ async function ensureHooks(
 			: { strategy: 'direct', rationale: 'Prompt is concise; direct execution preferred.' };
 	}
 
-	function _defaultSystemPrompt(): string {
+	function resolveSystemPrompt(custom?: string): { prompt: string; capture?: PromptCapture } {
+		if (custom) {
+			return { prompt: custom };
+		}
+		const record = getPrompt(DEFAULT_SYSTEM_PROMPT_ID);
+		if (record) {
+			return {
+				prompt: renderPrompt(record, {}),
+				capture: capturePromptUsage(record),
+			};
+		}
+		return { prompt: fallbackSystemPrompt() };
+	}
+
+	function fallbackSystemPrompt(): string {
 		return [
 			'You are brAInwav n0, the master orchestration loop for Cortex-OS.',
 			'Coordinate kernel tools, workspace commands, and subagents to produce accurate, secure results.',

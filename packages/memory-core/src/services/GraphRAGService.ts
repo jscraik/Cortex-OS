@@ -73,18 +73,18 @@ interface ChunkRef {
 // Prisma client placeholder - would be replaced with actual client
 const prisma = {
 	chunkRef: {
-		findMany: async (query: any) => [] as ChunkRef[],
+		findMany: async (_query: any) => [] as ChunkRef[],
 		count: async () => 0,
 	},
 	graphNode: {
-		findMany: async (query: any) => [] as GraphNode[],
-		groupBy: async (query: any) => [] as any[],
+		findMany: async (_query: any) => [] as GraphNode[],
+		groupBy: async (_query: any) => [] as any[],
 	},
 	graphEdge: {
-		findMany: async (query: any) => [] as GraphEdge[],
-		groupBy: async (query: any) => [] as any[],
+		findMany: async (_query: any) => [] as GraphEdge[],
+		groupBy: async (_query: any) => [] as any[],
 	},
-	$queryRaw: async (query: any) => [{ '?column?': 1 }],
+	$queryRaw: async (_query: any) => [{ '?column?': 1 }],
 	$disconnect: async () => {},
 };
 
@@ -215,7 +215,7 @@ export class GraphRAGService {
 		embedDenseFunc: (text: string) => Promise<number[]>,
 		embedSparseFunc: (text: string) => Promise<{ indices: number[]; values: number[] }>,
 	): Promise<void> {
-		await this.lancedb.initialize(embedDenseFunc, embedSparseFunc);
+		await this.qdrant.initialize(embedDenseFunc, embedSparseFunc);
 
 		if (this.config.branding.enabled) {
 			console.log('brAInwav GraphRAG service initialized successfully');
@@ -226,7 +226,7 @@ export class GraphRAGService {
 	 * Main query method - orchestrates the entire GraphRAG pipeline
 	 */
 	async query(params: GraphRAGQueryRequest): Promise<GraphRAGResult> {
-		const queryId = `query_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const queryId = `query_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 		const startTime = Date.now();
 
 		// Rate limiting
@@ -323,17 +323,17 @@ export class GraphRAGService {
 			filters: params.filters,
 		};
 
-		return await this.lancedb.hybridSearch(lancedbParams);
+		return await this.qdrant.hybridSearch(lancedbParams);
 	}
 
 	/**
 	 * Step 2: Map vector search results to graph nodes
 	 */
 	private async liftToGraphNodes(seedResults: GraphRAGSearchResult[]): Promise<string[]> {
-		const lancedbIds = seedResults.map((r) => r.id);
+		const qdrantIds = seedResults.map((r) => r.id);
 
 		const chunkRefs = await prisma.chunkRef.findMany({
-			where: { lancedbId: { in: lancedbIds } },
+			where: { qdrantId: { in: qdrantIds } },
 			select: { nodeId: true },
 		});
 
@@ -345,7 +345,7 @@ export class GraphRAGService {
 	 */
 	private async expandGraph(
 		nodeIds: string[],
-		maxHops: number,
+		_maxHops: number,
 	): Promise<{
 		neighborIds: string[];
 		edgesTraversed: number;
@@ -468,13 +468,13 @@ export class GraphRAGService {
 	async healthCheck(): Promise<{
 		status: 'healthy' | 'unhealthy';
 		components: {
-			lancedb: boolean;
+			qdrant: boolean;
 			postgres: boolean;
 		};
 		brainwavSource: string;
 	}> {
 		try {
-			const lancedbHealthy = await this.lancedb.healthCheck();
+			const qdrantHealthy = await this.qdrant.healthCheck();
 			let postgresHealthy = false;
 
 			try {
@@ -484,21 +484,21 @@ export class GraphRAGService {
 				postgresHealthy = false;
 			}
 
-			const allHealthy = lancedbHealthy && postgresHealthy;
+			const allHealthy = qdrantHealthy && postgresHealthy;
 
 			return {
 				status: allHealthy ? 'healthy' : 'unhealthy',
 				components: {
-					lancedb: lancedbHealthy,
+					qdrant: qdrantHealthy,
 					postgres: postgresHealthy,
 				},
 				brainwavSource: this.config.branding.sourceAttribution,
 			};
-		} catch (error) {
+		} catch (_error) {
 			return {
 				status: 'unhealthy',
 				components: {
-					lancedb: false,
+					qdrant: false,
 					postgres: false,
 				},
 				brainwavSource: this.config.branding.sourceAttribution,
@@ -554,7 +554,7 @@ export class GraphRAGService {
 	 * Close the service and cleanup resources
 	 */
 	async close(): Promise<void> {
-		await this.lancedb.close();
+		await this.qdrant.close();
 		await prisma.$disconnect();
 
 		if (this.config.branding.enabled) {
@@ -568,12 +568,12 @@ export class GraphRAGService {
  */
 export function createGraphRAGService(config?: Partial<GraphRAGServiceConfig>): GraphRAGService {
 	const defaultConfig: GraphRAGServiceConfig = {
-		lancedbConfig: {
-			uri: process.env.LANCEDB_URI || './data/lancedb',
-			tableName: 'cortex_graphrag',
-			dimensions: 1024,
-			hybridMode: 'rrf',
-			densityWeight: 0.7,
+		qdrantConfig: {
+			url: process.env.QDRANT_URL || 'qdrant:6333',
+			collection: 'cortex_graphrag',
+			timeout: 30000,
+			maxRetries: 3,
+			brainwavBranding: true,
 		},
 		expansion: {
 			allowedEdges: [
@@ -604,7 +604,7 @@ export function createGraphRAGService(config?: Partial<GraphRAGServiceConfig>): 
 	const mergedConfig = {
 		...defaultConfig,
 		...config,
-		lancedbConfig: { ...defaultConfig.lancedbConfig, ...config?.lancedbConfig },
+		qdrantConfig: { ...defaultConfig.qdrantConfig, ...config?.qdrantConfig },
 		expansion: { ...defaultConfig.expansion, ...config?.expansion },
 		limits: { ...defaultConfig.limits, ...config?.limits },
 		branding: { ...defaultConfig.branding, ...config?.branding },

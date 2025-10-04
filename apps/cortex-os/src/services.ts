@@ -1,4 +1,10 @@
-import { provideOrchestration as coreProvideOrchestration } from '@cortex-os/orchestration';
+import os from 'node:os';
+import { join } from 'node:path';
+import {
+	provideOrchestration as coreProvideOrchestration,
+	type OrchestrationFacade,
+} from '@cortex-os/orchestration';
+import type { PromptCapture } from '@cortex-os/prompts';
 import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import { trace } from '@opentelemetry/api';
 import { createMcpGateway, type McpGateway, type MemoriesLike } from './mcp/gateway.js';
@@ -6,8 +12,10 @@ import { ArtifactRepository } from './persistence/artifact-repository.js';
 import { EvidenceRepository } from './persistence/evidence-repository.js';
 import { ProfileRepository } from './persistence/profile-repository.js';
 import { TaskRepository } from './persistence/task-repository.js';
+import { initRunBundle } from './run-bundle/writer.js';
 
 const DEFAULT_IMPORTANCE = 5;
+const RUNS_ROOT = process.env.CORTEX_RUNS_DIR ?? join(os.homedir(), '.Cortex-OS', 'runs');
 
 type NormalizedMemoryResponse = { data?: unknown };
 
@@ -181,8 +189,26 @@ export function provideMemories(): MemoryService {
 	return createRemoteMemoryService(baseUrl, fetchImpl, process.env.LOCAL_MEMORY_API_KEY);
 }
 
-export function provideOrchestration() {
-	return coreProvideOrchestration();
+export function provideOrchestration(): OrchestrationFacade {
+	const facade = coreProvideOrchestration();
+	return {
+		...facade,
+		run: async (task, agents, context = {}, neurons = []) => {
+			const runId =
+				task.id ?? `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+			const bundle = await initRunBundle({ id: runId, rootDir: RUNS_ROOT });
+			const result = (await facade.run(task, agents, context, neurons)) as {
+				ctx?: { promptCaptures?: PromptCapture[] };
+			};
+			const promptCaptures = Array.isArray(result.ctx?.promptCaptures)
+				? (result.ctx!.promptCaptures as PromptCapture[])
+				: [];
+			if (promptCaptures.length > 0) {
+				await bundle.writePrompts(promptCaptures);
+			}
+			return result;
+		},
+	};
 }
 
 export function provideTaskRepository(): TaskRepository {

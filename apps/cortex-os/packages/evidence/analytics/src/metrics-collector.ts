@@ -10,6 +10,7 @@
  */
 
 import { EventEmitter } from 'node:events';
+import { safeFetchJson } from '@cortex-os/utils';
 import pino from 'pino';
 import { safeErrorMessage } from './utils/error-utils.js';
 
@@ -116,7 +117,8 @@ export class MetricsCollector extends EventEmitter {
 	 * Initialize the metrics collection system
 	 */
 	private initializeCollection(): void {
-		this.logger.info('Initializing orchestration metrics collection', {
+		this.logger.info({
+			msg: 'Initializing orchestration metrics collection',
 			enabled: this.config.collection.enabled,
 			interval: this.config.collection.interval,
 			batchSize: this.config.collection.batchSize,
@@ -404,12 +406,9 @@ export class MetricsCollector extends EventEmitter {
 				if (!agentInfo.telemetryEndpoint?.startsWith('https://')) {
 					throw new Error('Invalid telemetry endpoint: must use HTTPS');
 				}
-				const response = await fetch(`${agentInfo.telemetryEndpoint}/metrics`, {
-					redirect: 'manual',
-					referrerPolicy: 'no-referrer',
-					signal: AbortSignal.timeout(15000),
-				});
-				const telemetryData = (await response.json()) as TelemetryData;
+				const telemetryData = await this.fetchTelemetryJson<TelemetryData>(
+					`${agentInfo.telemetryEndpoint}/metrics`,
+				);
 
 				executionTime = telemetryData.execution_time || 0;
 				taskCount = telemetryData.task_count || 0;
@@ -577,15 +576,9 @@ export class MetricsCollector extends EventEmitter {
 				if (!agentInfo.monitoringEndpoint?.startsWith('https://')) {
 					throw new Error('Invalid monitoring endpoint: must use HTTPS');
 				}
-				const response = await fetch(
+				const telemetryData = await this.fetchTelemetryJson<TelemetryData>(
 					`${agentInfo.monitoringEndpoint}/agent/${agentInfo.id}/metrics`,
-					{
-						redirect: 'manual',
-						referrerPolicy: 'no-referrer',
-						signal: AbortSignal.timeout(15000),
-					},
 				);
-				const telemetryData = (await response.json()) as TelemetryData;
 
 				executionTime = telemetryData.execution_time || 0;
 				taskCount = telemetryData.completed_tasks || 0;
@@ -752,15 +745,9 @@ export class MetricsCollector extends EventEmitter {
 				if (!agentInfo.conversationEndpoint?.startsWith('https://')) {
 					throw new Error('Invalid conversation endpoint: must use HTTPS');
 				}
-				const response = await fetch(
+				const telemetryData = await this.fetchTelemetryJson<TelemetryData>(
 					`${agentInfo.conversationEndpoint}/agent/${agentInfo.id}/stats`,
-					{
-						redirect: 'manual',
-						referrerPolicy: 'no-referrer',
-						signal: AbortSignal.timeout(15000),
-					},
 				);
-				const telemetryData = (await response.json()) as TelemetryData;
 
 				executionTime = telemetryData.conversation_time || 0;
 				taskCount = telemetryData.messages_sent || 0;
@@ -797,6 +784,22 @@ export class MetricsCollector extends EventEmitter {
 	private async collectCustomAgentMetrics(_timestamp: Date): Promise<AgentMetrics[]> {
 		// Handle custom agent implementations
 		return [];
+	}
+
+	private async fetchTelemetryJson<T>(endpoint: string): Promise<T> {
+		const url = new URL(endpoint);
+		const hostname = url.hostname.toLowerCase();
+		const allowLocalhost = ['localhost', '127.0.0.1', '::1'].includes(hostname);
+		return safeFetchJson<T>(url.toString(), {
+			allowedHosts: [hostname],
+			allowedProtocols: [url.protocol],
+			allowLocalhost,
+			timeout: 15000,
+			fetchOptions: {
+				redirect: 'manual',
+				referrerPolicy: 'no-referrer',
+			},
+		});
 	}
 
 	/**
