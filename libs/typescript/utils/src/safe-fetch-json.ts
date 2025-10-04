@@ -24,6 +24,7 @@ function hasHeader(headersInit: HeadersInit | undefined, key: string): boolean {
 	return headers.has(key);
 }
 
+// eslint-disable-next-line sonarjs/function-return-type
 function mergeHeaders(
 	existing: HeadersInit | undefined,
 	additions: Record<string, string | undefined>,
