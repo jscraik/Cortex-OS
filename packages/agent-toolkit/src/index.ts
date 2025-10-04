@@ -255,10 +255,11 @@ export {
 } from './semantics/TreeSitterBoundary.js';
 // Session management (Phase 1)
 export {
-	createSessionContextManager,
-	type SessionContextManager,
-	type SessionContextOptions,
-	type ToolCallRecord,
+        createSessionContextManager,
+        type SessionContextManager,
+        type SessionContextOptions,
+        type SessionSnapshot,
+        type ToolCallRecord,
 } from './session/SessionContextManager.js';
 // Session persistence (Phase 3.3)
 export {
