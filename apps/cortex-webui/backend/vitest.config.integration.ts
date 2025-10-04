@@ -1,13 +1,20 @@
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
+import { vitestCommonEnv } from './vitest.env';
+
+const projectRoot = dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
+	root: projectRoot,
 	test: {
 		globals: true,
 		environment: 'node',
 		include: ['src/__tests__/**/*.{test,spec}.{ts,tsx}'],
 		exclude: ['node_modules', 'dist', '**/*.e2e.{test,spec}.{ts,tsx}'],
-		setupFiles: ['./src/test/setup.ts'],
+		setupFiles: [resolve(projectRoot, 'src/test/setup.ts')],
+		env: vitestCommonEnv,
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'json', 'html'],
@@ -35,10 +42,10 @@ export default defineConfig({
 	},
 	resolve: {
 		alias: {
-			'@': resolve(__dirname, 'src'),
-			'@/test': resolve(__dirname, 'src/test'),
-			'@/db': resolve(__dirname, 'src/db'),
-			'@cortex-os/telemetry': resolve(__dirname, 'src/__tests__/mocks/telemetry.ts'),
+			'@': resolve(projectRoot, 'src'),
+			'@/test': resolve(projectRoot, 'src/test'),
+			'@/db': resolve(projectRoot, 'src/db'),
+			'@cortex-os/telemetry': resolve(projectRoot, 'src/__tests__/mocks/telemetry.ts'),
 		},
 	},
 });
