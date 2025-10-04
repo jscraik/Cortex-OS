@@ -31,11 +31,7 @@ This directory contains the main applications and user-facing components of the 
 ## Directory Structure
 
 - `/apps/api/` - REST API server for Cortex-OS services
-- `/apps/cortex-cli/` - Command-line interface for Cortex-OS operations
-- `/apps/cortex-code/` - Visual Studio Code extension for Cortex-OS integration
-- `/apps/cortex-code-backup/` - Backup of the VS Code extension
-- `/apps/cortex-code-broken/` - Deprecated/broken VS Code extension version
-- `/apps/cortex-codex/` - Code analysis and documentation generation tool
+- `/apps/cortex-code/` - Rust Codex workspace providing the CLI, TUI, and supporting tooling
 - `/apps/cortex-marketplace/` - Frontend for the Cortex-OS marketplace
 - `/apps/cortex-marketplace-api/` - API backend for the marketplace
 - `/apps/cortex-os/` - **Main ASBR Runtime** - Coordinates feature packages and provides CLI/HTTP/UI interfaces
@@ -60,13 +56,9 @@ Modern web-based interface for interacting with Cortex-OS, featuring real-time m
 
 ### Development Tools
 
-#### VS Code Extension (`cortex-code`)
+#### Codex Workspace (`cortex-code`)
 
-Integration with Visual Studio Code providing IDE features like intelligent code completion, agent integration, and development workflow automation.
-
-#### Codex (`cortex-codex`)
-
-Advanced code analysis and documentation generation tool that leverages Cortex-OS agents for understanding and documenting codebases.
+Rust-based workspace that packages the Codex CLI/TUI along with shared crates for sandboxing, providers, and integrations.
 
 ### Integration & APIs
 

@@ -1,4 +1,4 @@
-name: cortex-codex CI
+name: cortex-code CI
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            apps/cortex-codex
+            apps/cortex-code
 
       - name: Install Rust (nightly)
         uses: dtolnay/rust-toolchain@nightly
@@ -25,23 +25,23 @@ jobs:
           components: clippy, rustfmt
 
       - name: fmt
-        working-directory: apps/cortex-codex
+        working-directory: apps/cortex-code
         run: cargo fmt --all -- --check
 
       - name: clippy
-        working-directory: apps/cortex-codex
+        working-directory: apps/cortex-code
         run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: test (core)
-        working-directory: apps/cortex-codex
+        working-directory: apps/cortex-code
         env:
           RUST_TEST_THREADS: 1
         run: cargo test -p codex-core --all-features
 
       - name: test (cli)
-        working-directory: apps/cortex-codex
+        working-directory: apps/cortex-code
         run: cargo test -p codex-cli --all-features
 
       - name: test (tui)
-        working-directory: apps/cortex-codex
+        working-directory: apps/cortex-code
         run: cargo test -p codex-tui --lib --features vt100-tests

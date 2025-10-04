@@ -16,7 +16,7 @@ This guide will help you set up and start using Cortex Code, the terminal-based 
 ```bash
 # Clone the repository
 git clone https://github.com/cortex-os/cortex-os.git
-cd cortex-os/apps/cortex-codex
+cd cortex-os/apps/cortex-code
 
 # Build the project
 cargo build --release
