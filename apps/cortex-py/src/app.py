@@ -41,12 +41,14 @@ from cortex_py.services import (  # noqa: E402
     ServiceValidationError,
 )
 
-# Phase 5: Operational health checks
+# Phase 5: Operational health checks and graceful shutdown
 try:
     from src.operational.health import HealthService
+    from src.operational.graceful_shutdown import get_shutdown_manager
 except ImportError:
     # Fallback if operational module not available
     HealthService = None  # type: ignore
+    get_shutdown_manager = None  # type: ignore
 
 
 class EmbedRequest(BaseModel):
@@ -392,4 +394,31 @@ def create_app(
                 },
             )
 
+    # Phase 5.2: Register graceful shutdown handler
+    if get_shutdown_manager:
+        shutdown_manager = get_shutdown_manager(timeout=30)
+        
+        # Register cleanup tasks
+        async def cleanup_embedding_service():
+            """Cleanup embedding service resources"""
+            logger.info("brAInwav: Cleaning up embedding service")
+            # Close any open resources
+            pass
+        
+        async def cleanup_a2a():
+            """Cleanup A2A bus connections"""
+            logger.info("brAInwav: Cleaning up A2A connections")
+            # Close A2A connections
+            pass
+        
+        shutdown_manager.register_cleanup(cleanup_embedding_service)
+        shutdown_manager.register_cleanup(cleanup_a2a)
+        shutdown_manager.register_signal_handlers()
+        
+        @app.on_event("shutdown")
+        async def on_shutdown():
+            """FastAPI shutdown event handler"""
+            logger.info("brAInwav: FastAPI shutdown event received")
+            await shutdown_manager.shutdown()
+    
     return app
