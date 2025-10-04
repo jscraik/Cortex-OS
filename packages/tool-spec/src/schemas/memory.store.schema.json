@@ -39,6 +39,37 @@
     },
     "metadata": {
       "type": "object",
+      "properties": {
+        "sourceUri": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048,
+          "description": "Source URI for provenance"
+        },
+        "contentSha": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128,
+          "description": "Content hash or checksum for provenance"
+        },
+        "tenant": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Tenant namespace for access control"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "maxItems": 32,
+          "uniqueItems": true,
+          "description": "Label-based access filters"
+        }
+      },
       "additionalProperties": {
         "type": ["string", "number", "boolean", "array", "object", "null"]
       },
