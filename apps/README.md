@@ -66,6 +66,14 @@ Rust-based workspace that packages the Codex CLI/TUI along with shared crates fo
 
 RESTful API server exposing Cortex-OS functionality to external applications and services.
 
+> **Why it lives outside `cortex-os`**: The API is an Express gateway that boots its own
+> HTTP stack, authentication middleware, and CloudEvents bridge. It depends on Prisma and
+> Better Auth, publishes onto the A2A bus, and exposes MCP tooling entrypoints. Folding
+> that server into the `cortex-os` runtime would co-locate web concerns with the ASBR
+> orchestrator, forcing the runtime process to host HTTP listeners, auth state, and
+> database connections it currently does not manage. Keep it as an independently deployable
+> service and communicate with the runtime over the existing event bus boundaries.
+
 #### Marketplace (`cortex-marketplace` & `cortex-marketplace-api`)
 
 Platform for discovering, sharing, and managing Cortex-OS agents, tools, and extensions.
