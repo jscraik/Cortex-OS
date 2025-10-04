@@ -20,18 +20,21 @@ import type {
 
 export interface CbomEmitterOptions {
 	redactor?: CbomRedactor;
+	reportsDirectory?: string;
 }
-
-const reportsDirectory = path.resolve('reports/cbom');
 
 export class CbomEmitter {
 	private readonly document: CbomDocument;
 	private readonly evidence = new Map<string, CbomEvidenceEnvelope>();
 	private readonly redactor: CbomRedactor;
+	private readonly reportsDirectory: string;
 
 	constructor(document: CbomDocument, options: CbomEmitterOptions = {}) {
 		this.document = document;
 		this.redactor = options.redactor ?? new CbomRedactor();
+		this.reportsDirectory = options.reportsDirectory
+			? path.resolve(options.reportsDirectory)
+			: path.resolve('reports/cbom');
 		this.registerSpanProcessor();
 	}
 
