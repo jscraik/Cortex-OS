@@ -196,10 +196,13 @@ describe('MCP HTTP security integration', () => {
 
 		vi.resetModules();
 
-		const { createServer } = await import('../src/server');
-		const { __testHooks } = await import('../src/controllers/mcpController');
-		const serverComponents = createServer();
-		app = serverComponents.app;
+		const expressModule = await import('express');
+		const expressApp = expressModule.default;
+		const expressJson = expressModule.json;
+		const { executeTool, __testHooks } = await import('../src/controllers/mcpController');
+		app = expressApp();
+		app.use(expressJson());
+		app.post('/api/v1/mcp/tools/:id/execute', executeTool);
 		toolRegistry = __testHooks.toolRegistry;
 
 		const tool = createTestTool();
