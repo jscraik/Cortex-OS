@@ -253,8 +253,8 @@ function detectGitContext(): CbomEnvironment['git'] {
 		if (commit && branch) {
 			return { commit: commit.trim(), branch: branch.trim() };
 		}
-	} catch (error) {
-		void error;
+	} catch (_error) {
+		// intentionally ignored
 	}
 	return undefined;
 }
