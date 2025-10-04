@@ -14,6 +14,7 @@ Welcome to the Cortex-OS documentation hub. Cortex-OS is an **Autonomous Softwar
 ### 🚀 Getting Started
 - [Installation & Setup](guides/getting-started/development-setup.md)
 - [Cortex CLI Upgrade Guide](guides/getting-started/README-CORTEX-CLI-UPGRADE.md)
+- [OpenAI Agents Session Primer](guides/getting-started/openai-agents-sessions.md)
 - [Docker Configuration](guides/configuration/docker-setup.md)
 - [TDD Enforcement Guide](guides/tdd/tdd-enforcement-guide.md)
 
