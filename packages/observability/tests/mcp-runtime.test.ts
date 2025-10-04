@@ -157,6 +157,7 @@ describe('observability MCP runtime', () => {
 			tags: { env: 'prod' },
 			startTime: start,
 			endTime: '2024-01-01T00:00:40.000Z',
+			limit: 50,
 		});
 
 		expect(result.totalMatches).toBe(1);
@@ -185,6 +186,7 @@ describe('observability MCP runtime', () => {
 		const result = await runtime.getMetrics({
 			name: 'latency_ms',
 			aggregation: 'avg',
+			limit: 100,
 		});
 
 		expect(result.totalMatches).toBe(1);
@@ -218,6 +220,7 @@ describe('observability MCP runtime', () => {
 				start,
 				end: '2024-01-01T00:00:40.000Z',
 			},
+			limit: 25,
 		});
 
 		expect(dashboard.traces.total).toBe(2);
@@ -227,9 +230,13 @@ describe('observability MCP runtime', () => {
 		expect(latencySummary?.avg).toBeCloseTo((120 + 340) / 2);
 		expect(dashboard.alerts[0]?.triggered).toBe(true);
 		const sanitizedLogs = dashboard.logs.latest.map((entry) => entry.metadata ?? {});
-		const redactedToken = sanitizedLogs.some(
-			(metadata) => (metadata as Record<string, unknown>)?.token === '[REDACTED]',
-		);
+		function tokenIsRedacted(m?: unknown): boolean {
+			if (!m || typeof m !== 'object') return false;
+			const t = (m as Record<string, unknown>)['token'];
+			return t === '[REDACTED]';
+		}
+
+		const redactedToken = sanitizedLogs.some((metadata) => tokenIsRedacted(metadata));
 		expect(redactedToken).toBe(true);
 	});
 });

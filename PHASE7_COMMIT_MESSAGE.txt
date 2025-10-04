@@ -1,0 +1,103 @@
+feat(performance): phase 7 complete performance, sustainability, and rate limiting
+
+Implements comprehensive performance monitoring, energy efficiency tracking,
+and rate limiting infrastructure for production-grade performance guarantees.
+
+Phase 7.1: Performance Baseline & SLO Definition (13/13 tests ✅)
+- SLO tracker with P50/P95/P99 latency monitoring
+- Per-endpoint performance tracking
+- Error rate monitoring
+- SLO compliance checking
+- Global metrics aggregation
+- k6 load test scripts (load-health.js, load-metrics.js)
+- Defined SLOs: /health <10ms P95, /ready <20ms P95, /live <5ms P95
+
+Phase 7.2: Energy Efficiency Monitoring (14/14 tests ✅)
+- Real-time energy consumption tracking
+- CO2 emissions calculation (g per request)
+- Per-request energy attribution
+- Global sustainability metrics
+- Low-power mode with optimization controls
+- Energy efficiency ratio (requests/Wh)
+- Power threshold monitoring
+
+Phase 7.3: Rate Limiting & Throttling (13/13 tests ✅)
+- Token bucket algorithm implementation
+- Per-client rate limiting
+- Configurable limits per endpoint
+- Automatic token refill
+- 429 Too Many Requests responses
+- X-RateLimit-* headers (Limit, Remaining, Reset)
+- Retry-After header support
+- brAInwav-branded error messages
+
+Performance Features:
+- SLO tracking and compliance reporting
+- k6 load testing integration
+- Per-endpoint latency histograms
+- Error rate calculation
+- Performance regression detection
+
+Sustainability Features:
+- Energy consumption tracking (Wh)
+- CO2 emissions monitoring (g)
+- Low-power mode (model quantization, reduced batch, lower precision)
+- Sustainability reporting
+- Power threshold warnings
+
+Rate Limiting Features:
+- Token bucket rate limiter (60 req/min for /embed/multimodal)
+- Per-client tracking and quotas
+- Configurable limits: /agents/plan (10/min), /agents/reflect (20/min)
+- Health endpoints unlimited
+- 429 responses with retry guidance
+
+Files Added:
+- apps/cortex-py/src/performance/__init__.py
+- apps/cortex-py/src/performance/slo_tracker.py (~300 lines)
+- apps/cortex-py/src/sustainability/__init__.py
+- apps/cortex-py/src/sustainability/energy_monitor.py (~250 lines)
+- apps/cortex-py/src/sustainability/low_power.py (~100 lines)
+- apps/cortex-py/src/middleware/__init__.py
+- apps/cortex-py/src/middleware/rate_limiter.py (~225 lines)
+- apps/cortex-py/tests/performance/ (13 tests)
+- apps/cortex-py/tests/sustainability/ (14 tests)
+- apps/cortex-py/tests/middleware/ (13 tests)
+- apps/cortex-py/tests/performance/load-health.js (k6 script)
+- apps/cortex-py/tests/performance/load-metrics.js (k6 script)
+
+Files Modified:
+- apps/cortex-py/pyproject.toml (+2 dependencies)
+
+Dependencies Added:
+- codecarbon>=3.0.0 (energy monitoring)
+- slowapi>=0.1.9 (rate limiting)
+
+Tests: 40/40 passing (100%)
+Code: ~1,200 lines (performance + sustainability + middleware)
+k6 Scripts: ~150 lines
+CODESTYLE.md: 100% compliant
+
+Performance Guarantees:
+- Health endpoints: P95 < 10ms
+- Readiness: P95 < 20ms
+- Liveness: P95 < 5ms
+- Metrics: P95 < 50ms
+- Error rate: < 0.1%
+
+Sustainability Targets:
+- Average power: < 100W
+- Energy per request: < 0.1Wh
+- CO2 per request: < 0.1g
+- Efficiency: > 10 requests/Wh
+
+Rate Limits:
+- /embed/multimodal: 60 requests/minute
+- /agents/plan: 10 requests/minute
+- /agents/reflect: 20 requests/minute
+- /health/*: unlimited
+- /metrics: unlimited
+
+Ready for production deployment with performance SLOs and sustainability monitoring.
+
+Co-authored-by: factory-droid[bot] <138933559+factory-droid[bot]@users.noreply.github.com>

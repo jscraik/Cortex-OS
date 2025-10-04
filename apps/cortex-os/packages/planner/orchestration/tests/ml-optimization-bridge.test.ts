@@ -342,6 +342,13 @@ describe('MLOptimizationBridge', () => {
 			const context = {
 				task_type: TASK_TYPES.CONVERSATION,
 				priority: 'normal' as const,
+				min_quality_score: 0.7,
+				security_level: SECURITY_LEVELS.STANDARD,
+				user_preferences: {
+					privacy_mode: false,
+					latency_preference: 'balanced',
+					cost_optimization: false,
+				},
 			};
 
 			await bridge.selectOptimalModel(context);

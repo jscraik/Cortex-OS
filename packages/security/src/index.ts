@@ -11,9 +11,6 @@ export * from './events/security-event.js';
 export * from './events/security-events.js';
 // MCP Tools for external AI agent integration
 export {
-	SecurityTool,
-	SecurityToolError,
-	SecurityToolResponse,
 	securityAccessControlTool,
 	securityAccessControlToolSchema,
 	securityAuditTool,
@@ -26,6 +23,11 @@ export {
 	securityThreatDetectionTool,
 	securityThreatDetectionToolSchema,
 	securityToolSchemas,
+} from './mcp/tools.js';
+export type {
+	SecurityTool,
+	SecurityToolError,
+	SecurityToolResponse,
 } from './mcp/tools.js';
 // mTLS Implementation
 export * from './mtls/index.js';

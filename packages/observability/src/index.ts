@@ -66,3 +66,4 @@ export type TraceQueryInput = import('./mcp/tools.js').QueryTracesInput;
 export type MetricRetrievalInput = import('./mcp/tools.js').GetMetricsInput;
 export type AlertQueryInput = import('./mcp/tools.js').EvaluateAlertInput;
 export type DashboardRequestInput = import('./mcp/tools.js').GenerateDashboardInput;
+export type LogSearchInput = import('./mcp/tools.js').SearchLogsInput;

@@ -43,14 +43,20 @@ describe('Observability A2A bus', () => {
 	it('rejects invalid payloads', async () => {
 		const bus = createObservabilityBus();
 
-		const invalidPayload = {
-			name: 'latency',
-			value: 42,
-			type: 'gauge',
-			// Missing required timestamp should fail validation
-		} as unknown as { name: string; value: number; type: 'gauge' };
-		await expect(
-			bus.publish(OBSERVABILITY_EVENT_TYPES.METRIC_RECORDED, invalidPayload),
-		).rejects.toThrow();
+			type LocalMetricPayload = { name: string; value: number; type: 'gauge' };
+
+			const invalidPayload: LocalMetricPayload = {
+				name: 'latency',
+				value: 42,
+				type: 'gauge',
+				// Missing required timestamp should fail validation
+			};
+			await expect(
+				// intentionally bypass compile-time types to test runtime validation by narrowing to a minimal publish signature
+				(bus as unknown as { publish: (type: string, payload: unknown) => Promise<unknown> }).publish(
+					OBSERVABILITY_EVENT_TYPES.METRIC_RECORDED,
+					invalidPayload,
+				),
+			).rejects.toThrow();
 	});
 });

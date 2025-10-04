@@ -4,5 +4,6 @@ export * from './envelope.js';
 export * from './events.js';
 export * from './evidence.js';
 export * from './outbox-types.js';
+export * from './schema-registry-types.js';
 export * from './topic-acl.js';
 export * from './trace-context.js';
