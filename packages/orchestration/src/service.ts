@@ -67,6 +67,9 @@ export function provideOrchestration(
                 },
                 shutdown: async () => {
                         await router.close();
+                        if (typeof bus.close === 'function') {
+                                await bus.close();
+                        }
                 },
         };
 }
