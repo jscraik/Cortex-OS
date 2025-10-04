@@ -96,6 +96,8 @@ export class CbomSigner {
 				publicKey: crypto.createPublicKey(pubPem),
 			};
 		} catch (_error) {
+			// Log the error; file not found is expected on first run, but other errors may indicate a problem.
+			console.warn(`Failed to read key files at ${resolved}:`, _error);
 			const pair = crypto.generateKeyPairSync('ed25519');
 			await fs.mkdir(path.dirname(resolved), { recursive: true });
 			await fs.writeFile(
