@@ -165,7 +165,7 @@ export class CheckpointManager {
 
                 return {
                         items: records,
-                        nextCursor: hasMore ? slice[slice.length - 1]?.createdAt : undefined,
+                        nextCursor: hasMore && rows[limit] ? rows[limit].created_at : undefined,
                 };
         }
 
