@@ -7,6 +7,8 @@ export {
 	agentsAgent,
 	createAgentsAgent,
 } from './AgentsAgent.js';
+export { runAgent, type AgentRunContext } from './base/runAgent.js';
+export { assertPromptMeta } from './contracts/assertPromptMeta.js';
 export {
 	AgentsBusIntegration,
 	createAgentsBusIntegration,

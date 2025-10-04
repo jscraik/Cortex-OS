@@ -1,3 +1,4 @@
+import { AgentResultSchema } from '@cortex-os/protocol';
 import { z } from 'zod';
 
 // Request schema for agent execution
@@ -11,20 +12,21 @@ export const executeAgentSchema = z.object({
 export type ExecuteAgentRequest = z.infer<typeof executeAgentSchema>;
 
 // Response schema for agent execution
+const agentExecutionMetadataSchema = z.object({
+	executionTime: z.number(),
+	specialization: z.string(),
+	selectedAgent: z.string(),
+	error: z.string().optional(),
+});
+
 export const executeAgentResponseSchema = z.object({
 	agentId: z.string(),
 	response: z.string(),
 	timestamp: z.string(),
 	status: z.enum(['completed', 'failed', 'pending']),
 	error: z.string().optional(),
-	metadata: z
-		.object({
-			executionTime: z.number(),
-			specialization: z.string(),
-			selectedAgent: z.string(),
-			error: z.string().optional(),
-		})
-		.optional(),
+	metadata: agentExecutionMetadataSchema.optional(),
+	result: AgentResultSchema,
 });
 
 export type ExecuteAgentResponse = z.infer<typeof executeAgentResponseSchema>;

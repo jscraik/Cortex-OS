@@ -2,6 +2,7 @@
  * @fileoverview Structured logging with redaction and ULID linking
  */
 
+import type { AgentResult } from '@cortex-os/protocol';
 import pino from 'pino';
 import type { LogEntry, LogLevel, TraceContext, ULID } from '../types.js';
 
@@ -97,6 +98,30 @@ function redactSensitiveData(obj: Record<string, unknown>): Record<string, unkno
 	}
 
 	return result;
+}
+
+function summarize(value: unknown): unknown {
+	if (typeof value === 'string') {
+		return value.length > 256 ? `${value.slice(0, 256)}…` : value;
+	}
+	if (value && typeof value === 'object') {
+		return '[object payload]';
+	}
+	return value;
+}
+
+export function logAgentResult(event: {
+	name: string;
+	result: AgentResult;
+	extras?: Record<string, unknown>;
+}): void {
+	const { name, result, extras } = event;
+	console.info('agent_result', {
+		name,
+		meta: result.meta,
+		preview: summarize(result.data),
+		...extras,
+	});
 }
 
 /**

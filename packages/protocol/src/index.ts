@@ -1,4 +1,6 @@
 export {
+	AgentResultMetaSchema,
+	AgentResultSchema,
 	BudgetMeterSchema,
 	BudgetSchema,
 	EnvelopeSchema,
@@ -15,6 +17,8 @@ export {
 	ToolResultSchema,
 } from './schemas.js';
 export type {
+	AgentResult,
+	AgentResultMeta,
 	Budget,
 	BudgetMeter,
 	BudgetMeterKind,

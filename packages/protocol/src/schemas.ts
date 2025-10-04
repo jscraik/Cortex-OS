@@ -209,3 +209,17 @@ export const SessionSnapshotSchema = z.object({
 	metadata: z.record(z.unknown()).optional(),
 	parentId: z.string().optional(),
 });
+
+export const AgentResultMetaSchema = z.object({
+	prompt_id: z.string().min(1),
+	prompt_version: z.string().optional(),
+	prompt_hash: z.string().optional(),
+	run_id: z.string().optional(),
+	model: z.string().optional(),
+	ts: z.string().datetime({ offset: true }).optional(),
+});
+
+export const AgentResultSchema = z.object({
+	data: z.unknown(),
+	meta: AgentResultMetaSchema,
+});
