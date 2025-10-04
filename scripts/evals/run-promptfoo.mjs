@@ -140,8 +140,10 @@ async function runCompareMode() {
         const challenger = process.env.PROMPTFOO_CHALLENGER ?? '';
         await appendSummaryRow(
                 'prompt-compare',
-                baseline && challenger ? 'SKIP' : 'SKIP',
-                'A/B comparison requires PROMPTFOO_BASELINE and PROMPTFOO_CHALLENGER configs.',
+                baseline && challenger ? 'READY' : 'SKIP',
+                baseline && challenger
+                        ? 'A/B comparison ready to run.'
+                        : 'A/B comparison requires PROMPTFOO_BASELINE and PROMPTFOO_CHALLENGER configs.',
         );
 }
 
