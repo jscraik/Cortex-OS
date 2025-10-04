@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys as _sys
+from datetime import datetime, timezone
 from pathlib import Path as _Path
 from typing import Any
 
@@ -39,6 +40,13 @@ from cortex_py.services import (  # noqa: E402
     ServiceError,
     ServiceValidationError,
 )
+
+# Phase 5: Operational health checks
+try:
+    from src.operational.health import HealthService
+except ImportError:
+    # Fallback if operational module not available
+    HealthService = None  # type: ignore
 
 
 class EmbedRequest(BaseModel):
@@ -222,9 +230,17 @@ def create_app(
             return _handle_service_error(exc)
         return {"embeddings": result.embeddings}
 
+    # Phase 5.1: Health/Readiness/Liveness Endpoints
+    health_service = HealthService(version="1.0.0") if HealthService else None
+
     @app.get("/health")
     def health():
-        """Health endpoint with hybrid configuration info"""
+        """Comprehensive health check with component validation"""
+        if health_service:
+            # Use Phase 5 comprehensive health check
+            return health_service.check_health()
+        
+        # Fallback to original hybrid health check
         health_info = hybrid_config.get_health_info()
         embedding_config = hybrid_config.get_embedding_config()
 
@@ -237,6 +253,33 @@ def create_app(
             "mlx_first_priority": hybrid_config.mlx_priority,
             "deployment_ready": health_info["status"] in ["healthy", "degraded"],
         }
+
+    @app.get("/health/ready")
+    def readiness():
+        """Kubernetes readiness probe - service ready for traffic"""
+        if not health_service:
+            return {"status": "healthy", "ready": True, "message": "brAInwav: Health service not available"}
+        
+        readiness_result = health_service.check_readiness()
+        
+        # Return 503 if not ready
+        if not readiness_result.get("ready", False):
+            from fastapi import Response
+            return Response(
+                content=str(readiness_result),
+                status_code=503,
+                media_type="application/json"
+            )
+        
+        return readiness_result
+
+    @app.get("/health/live")
+    def liveness():
+        """Kubernetes liveness probe - service not deadlocked"""
+        if not health_service:
+            return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+        
+        return health_service.check_liveness()
 
     @app.get("/models")
     def models():
