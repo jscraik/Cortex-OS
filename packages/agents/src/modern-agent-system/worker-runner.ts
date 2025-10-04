@@ -42,7 +42,7 @@ const ensureApproval = async (
         if (!decision.approved) {
                         throw new Error(
                         `brAInwav modern-agent-system: approval denied for capability "${capability}"`,
-                );
+        );
         }
 };
 
