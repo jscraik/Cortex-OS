@@ -108,85 +108,109 @@ export class QdrantHybridSearch {
 	/**
 	 * Perform hybrid search using Qdrant's multi-vector capabilities
 	 */
-	async hybridSearch(params: GraphRAGQueryParams): Promise<GraphRAGSearchResult[]> {
-		if (!this.client || !this.embedDense || !this.embedSparse) {
-			throw new Error('brAInwav Qdrant GraphRAG not initialized');
-		}
+        async hybridSearch(params: GraphRAGQueryParams): Promise<GraphRAGSearchResult[]> {
+                if (!this.client || !this.embedDense || !this.embedSparse) {
+                        throw new Error('brAInwav Qdrant GraphRAG not initialized');
+                }
 
-		const startTime = Date.now();
+                const startTime = Date.now();
 
-		try {
-			// Generate embeddings
-			const denseVector = await this.embedDense(params.question);
-			// Note: sparse vector support to be added in future iteration
+                try {
+                        const denseVector = await this.embedDense(params.question);
+                        const sparseVector = await this.embedSparse(params.question);
 
-			// Prepare search request with hybrid scoring
-			const searchRequest = {
-				vector: denseVector,
-				limit: params.k,
-				with_payload: true,
-				with_vector: params.includeVectors,
-				score_threshold: params.threshold,
-				filter: this._buildFilter(params.filters, params.namespace),
-			};
+                        const queryRequest: Record<string, unknown> = {
+                                query: {
+                                        must: [
+                                                {
+                                                        vector: {
+                                                                name: 'dense',
+                                                                vector: denseVector,
+                                                                limit: params.k,
+                                                        },
+                                                },
+                                        ],
+                                },
+                                with_payload: true,
+                                with_vector: params.includeVectors,
+                                limit: params.k,
+                                score_threshold: params.threshold,
+                                filter: this._buildFilter(params.filters, params.namespace),
+                        };
 
-			// Execute search on existing collection
-			const response = await this.client.search(this.config.collection, searchRequest);
+                        if (sparseVector.indices.length > 0 && sparseVector.values.length > 0) {
+                                (queryRequest.query as { must: Array<Record<string, unknown>> }).must.push({
+                                        sparse_vector: {
+                                                name: 'sparse',
+                                                indices: sparseVector.indices,
+                                                values: sparseVector.values,
+                                                limit: params.k,
+                                        },
+                                });
+                        }
 
-			// Transform results to GraphRAG format
-			const transformedResults: GraphRAGSearchResult[] = response.map((result) => ({
-				id: String(result.id),
-				score: result.score,
-				nodeId: (result.payload?.node_id as string) || '',
-				chunkContent: (result.payload?.chunk_content as string) || '',
-				metadata: {
-					path: (result.payload?.path as string) || '',
-					nodeType: (result.payload?.node_type as string) || '',
-					nodeKey: (result.payload?.node_key as string) || '',
-					lineStart: result.payload?.line_start as number,
-					lineEnd: result.payload?.line_end as number,
-					brainwavSource: this.config.brainwavBranding
-						? 'brAInwav Cortex-OS GraphRAG'
-						: (result.payload?.brainwav_source as string) || 'Unknown',
-					relevanceScore: result.score,
-					retrievalDurationMs: Date.now() - startTime,
-					...result.payload,
-				},
-				vector: params.includeVectors ? (result.vector as number[]) : undefined,
-			}));
+                        const response = await this.client.query(this.config.collection, queryRequest);
+                        const points = response.points ?? [];
 
-			console.log(
-				`brAInwav GraphRAG Qdrant search completed: ${transformedResults.length} results in ${Date.now() - startTime}ms`,
-			);
+                        const transformedResults: GraphRAGSearchResult[] = points.map((point) => ({
+                                id: String(point.id),
+                                score: point.score ?? 0,
+                                nodeId: (point.payload?.node_id as string) || '',
+                                chunkContent: (point.payload?.chunk_content as string) || '',
+                                metadata: {
+                                        path: (point.payload?.path as string) || '',
+                                        nodeType: (point.payload?.node_type as string) || '',
+                                        nodeKey: (point.payload?.node_key as string) || '',
+                                        lineStart: point.payload?.line_start as number,
+                                        lineEnd: point.payload?.line_end as number,
+                                        brainwavSource: this.config.brainwavBranding
+                                                ? 'brAInwav Cortex-OS GraphRAG'
+                                                : (point.payload?.brainwav_source as string) || 'Unknown',
+                                        relevanceScore: point.score ?? 0,
+                                        retrievalDurationMs: Date.now() - startTime,
+                                        ...point.payload,
+                                },
+                                vector: params.includeVectors ? (point.vector as number[]) : undefined,
+                        }));
 
-			return transformedResults;
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			throw new Error(`brAInwav GraphRAG Qdrant search failed: ${errorMessage}`);
-		}
-	}
+                        console.log(
+                                `brAInwav GraphRAG Qdrant search completed: ${transformedResults.length} results in ${Date.now() - startTime}ms`,
+                        );
+
+                        return transformedResults;
+                } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        throw new Error(`brAInwav GraphRAG Qdrant search failed: ${errorMessage}`);
+                }
+        }
 
 	/**
 	 * Add chunks to the existing Qdrant collection
 	 */
-	async addChunks(
-		chunks: {
-			id: string;
-			nodeId: string;
-			content: string;
-			vector: number[];
-			sparseVector: SparseVector;
-			metadata: Record<string, any>;
-		}[],
-	): Promise<void> {
-		if (!this.client) throw new Error('Qdrant client not initialized');
+        async addChunks(
+                chunks: {
+                        id: string;
+                        nodeId: string;
+                        content: string;
+                        vector: number[];
+                        sparseVector: SparseVector;
+                        metadata: Record<string, any>;
+                }[],
+        ): Promise<void> {
+                if (!this.client) throw new Error('Qdrant client not initialized');
 
-		const points = chunks.map((chunk) => ({
-			id: chunk.id,
-			vector: chunk.vector,
-			payload: {
-				node_id: chunk.nodeId,
-				chunk_content: chunk.content,
+                const points = chunks.map((chunk) => ({
+                        id: chunk.id,
+                        vectors: {
+                                dense: chunk.vector,
+                                sparse: {
+                                        indices: chunk.sparseVector.indices,
+                                        values: chunk.sparseVector.values,
+                                },
+                        },
+                        payload: {
+                                node_id: chunk.nodeId,
+                                chunk_content: chunk.content,
 				path: chunk.metadata.path,
 				node_type: chunk.metadata.nodeType,
 				node_key: chunk.metadata.nodeKey,

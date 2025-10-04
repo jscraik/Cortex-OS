@@ -1,0 +1,16 @@
+expansion:
+  allowed_edges:
+    - IMPORTS
+    - DEPENDS_ON
+    - IMPLEMENTS_CONTRACT
+    - CALLS_TOOL
+    - EMITS_EVENT
+    - EXPOSES_PORT
+    - REFERENCES_DOC
+    - DECIDES_WITH
+  max_hops: 1
+  max_neighbors_per_node: 20
+limits:
+  max_ctx_chunks: 24
+ranking:
+  hybrid: qdrant-query-api

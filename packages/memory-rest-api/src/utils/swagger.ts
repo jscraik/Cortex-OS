@@ -86,10 +86,10 @@ export const openApiDocument = {
 				},
 			},
 		},
-		'/memory/search': {
-			get: {
-				tags: ['Memory'],
-				summary: 'Search memories',
+                '/memory/search': {
+                        get: {
+                                tags: ['Memory'],
+                                summary: 'Search memories',
 				description: 'Search memories using semantic, keyword, or hybrid search',
 				parameters: [
 					{
@@ -405,10 +405,112 @@ export const openApiDocument = {
 						},
 					},
 				},
-			},
-		},
-	},
-	components: {
+                        },
+                },
+                '/graphrag/query': {
+                        post: {
+                                tags: ['GraphRAG'],
+                                summary: 'Execute GraphRAG retrieval',
+                                description: 'Runs hybrid Qdrant search with graph expansion and returns citations.',
+                                requestBody: {
+                                        required: true,
+                                        content: {
+                                                'application/json': {
+                                                        schema: {
+                                                                type: 'object',
+                                                                properties: {
+                                                                        question: { type: 'string', minLength: 1 },
+                                                                        k: { type: 'integer', minimum: 1, maximum: 50, default: 8 },
+                                                                        maxHops: { type: 'integer', minimum: 1, maximum: 3, default: 1 },
+                                                                        maxChunks: { type: 'integer', minimum: 1, maximum: 100, default: 24 },
+                                                                        includeCitations: { type: 'boolean', default: true },
+                                                                        includeVectors: { type: 'boolean', default: false },
+                                                                        threshold: { type: 'number', minimum: 0, maximum: 1 },
+                                                                        namespace: { type: 'string' },
+                                                                        filters: { type: 'object' },
+                                                                },
+                                                        },
+                                                },
+                                        },
+                                },
+                                responses: {
+                                        '200': {
+                                                description: 'GraphRAG result with sources and citations',
+                                                content: {
+                                                        'application/json': {
+                                                                schema: {
+                                                                        type: 'object',
+                                                                        properties: {
+                                                                                success: { type: 'boolean' },
+                                                                                data: {
+                                                                                        type: 'object',
+                                                                                        properties: {
+                                                                                                sources: { type: 'array', items: { type: 'object' } },
+                                                                                                graphContext: { type: 'object' },
+                                                                                                metadata: { type: 'object' },
+                                                                                                citations: { type: 'array', items: { type: 'object' } },
+                                                                                        },
+                                                                                },
+                                                                                timestamp: { type: 'string', format: 'date-time' },
+                                                                        },
+                                                                },
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                },
+                '/graphrag/health': {
+                        get: {
+                                tags: ['GraphRAG'],
+                                summary: 'GraphRAG health check',
+                                description: 'Returns health status for Qdrant and Prisma graph stores.',
+                                responses: {
+                                        '200': {
+                                                description: 'Service health status',
+                                                content: {
+                                                        'application/json': {
+                                                                schema: {
+                                                                        type: 'object',
+                                                                        properties: {
+                                                                                success: { type: 'boolean' },
+                                                                                data: { type: 'object' },
+                                                                        },
+                                                                },
+                                                        },
+                                                },
+                                        },
+                                        '503': {
+                                                description: 'GraphRAG unhealthy',
+                                        },
+                                },
+                        },
+                },
+                '/graphrag/stats': {
+                        get: {
+                                tags: ['GraphRAG'],
+                                summary: 'GraphRAG graph statistics',
+                                description: 'Aggregated node, edge, and chunk counts for observability.',
+                                responses: {
+                                        '200': {
+                                                description: 'Graph statistics',
+                                                content: {
+                                                        'application/json': {
+                                                                schema: {
+                                                                        type: 'object',
+                                                                        properties: {
+                                                                                success: { type: 'boolean' },
+                                                                                data: { type: 'object' },
+                                                                        },
+                                                                },
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                },
+        },
+        components: {
 		schemas: {
 			Error: {
 				type: 'object',

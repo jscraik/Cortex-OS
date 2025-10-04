@@ -1,4 +1,9 @@
-import { createMemoryProviderFromEnv, type MemoryProvider } from '@cortex-os/memory-core';
+import {
+  createGraphRAGService,
+  createMemoryProviderFromEnv,
+  type GraphRAGService,
+  type MemoryProvider,
+} from '@cortex-os/memory-core';
 import cors from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
@@ -9,6 +14,7 @@ import swaggerUi from 'swagger-ui-express';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { memoryRoutes } from './routes/memory.js';
+import { graphragRoutes } from './routes/graphrag.js';
 import { openApiDocument } from './utils/swagger.js';
 
 const logger = pino({ level: 'info' });
@@ -29,6 +35,8 @@ class MemoryRestApi {
   private provider: MemoryProvider;
   private config: RestApiConfig;
   private server?: any;
+  private graphService: GraphRAGService;
+  private graphReady: Promise<void>;
 
   constructor(config: RestApiConfig = {}) {
     this.config = {
@@ -45,6 +53,8 @@ class MemoryRestApi {
 
     this.app = express();
     this.provider = createMemoryProviderFromEnv();
+    this.graphService = createGraphRAGService();
+    this.graphReady = this.graphService.initialize(defaultDenseEmbedding, defaultSparseEmbedding);
     this.setupMiddleware();
     this.setupRoutes();
     this.setupErrorHandling();
@@ -124,6 +134,7 @@ class MemoryRestApi {
 
     // API routes
     this.app.use(`${basePath}/memory`, memoryRoutes(this.provider));
+    this.app.use(`${basePath}/graphrag`, graphragRoutes(this.graphService));
 
     // OpenAPI documentation
     if (this.config.enableSwagger) {
@@ -158,6 +169,11 @@ class MemoryRestApi {
     const port = this.config.port!;
     const host = this.config.host!;
 
+    await this.graphReady.catch((error) => {
+      logger.error('Failed to initialize GraphRAG service', { error: (error as Error).message });
+      throw error;
+    });
+
     this.server = this.app.listen(port, host, () => {
       logger.info(`Memory REST API server listening on http://${host}:${port}`);
       logger.info(`API documentation available at http://${host}:${port}/api-docs`);
@@ -178,7 +194,10 @@ class MemoryRestApi {
       });
     }
 
-    await this.provider.close?.();
+    await Promise.allSettled([
+      this.provider.close?.(),
+      this.graphService.close(),
+    ]);
     logger.info('REST API server stopped');
     process.exit(0);
   }
@@ -186,6 +205,40 @@ class MemoryRestApi {
   getApp(): express.Application {
     return this.app;
   }
+}
+
+function defaultDenseEmbedding(text: string): Promise<number[]> {
+  const dimension = 128;
+  const vector = new Array<number>(dimension).fill(0);
+  for (let i = 0; i < text.length; i += 1) {
+    vector[text.charCodeAt(i) % dimension] += 1;
+  }
+  const norm = Math.hypot(...vector) || 1;
+  return Promise.resolve(vector.map((value) => value / norm));
+}
+
+function defaultSparseEmbedding(
+  text: string,
+): Promise<{ indices: number[]; values: number[] }> {
+  const tokens = text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  const bucketSize = 2048;
+  const counts = new Map<number, number>();
+  for (const token of tokens) {
+    let hash = 0;
+    for (let i = 0; i < token.length; i += 1) {
+      hash = (hash * 31 + token.charCodeAt(i)) >>> 0;
+    }
+    const index = hash % bucketSize;
+    counts.set(index, (counts.get(index) ?? 0) + 1);
+  }
+  const total = tokens.length || 1;
+  const indices: number[] = [];
+  const values: number[] = [];
+  for (const [index, value] of counts.entries()) {
+    indices.push(index);
+    values.push(value / total);
+  }
+  return Promise.resolve({ indices, values });
 }
 
 // Start the server if run directly
