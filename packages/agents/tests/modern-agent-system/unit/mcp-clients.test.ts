@@ -28,7 +28,7 @@ beforeAll(async () => {
         await new Promise<void>((resolve) => server.listen(0, resolve));
         const address = server.address();
         if (typeof address === 'object' && address) {
-                        url = `http://127.0.0.1:${address.port}`;
+                url = `http://127.0.0.1:${address.port}`;
         }
 });
 
