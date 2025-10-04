@@ -199,3 +199,18 @@ export interface JsonSchemaDefinition {
 	maximum?: number;
 	pattern?: string;
 }
+
+export interface AgentResultMeta {
+	prompt_id: string;
+	prompt_version?: string;
+	prompt_hash?: string;
+	run_id?: string;
+	model?: string;
+	ts?: string;
+	[key: string]: unknown;
+}
+
+export interface AgentResult<T = unknown> {
+	data: T;
+	meta: AgentResultMeta;
+}

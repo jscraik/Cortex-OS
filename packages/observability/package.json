@@ -50,7 +50,8 @@
     "ulid": "^2.3.0",
     "zod": "^3.25.76",
     "@cortex-os/a2a-contracts": "workspace:*",
-    "@cortex-os/a2a-core": "workspace:*"
+    "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/protocol": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.18.1",
