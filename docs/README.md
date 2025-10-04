@@ -16,6 +16,7 @@ Welcome to the Cortex-OS documentation hub. Cortex-OS is an **Autonomous Softwar
 - [Cortex CLI Upgrade Guide](guides/getting-started/README-CORTEX-CLI-UPGRADE.md)
 - [Docker Configuration](guides/configuration/docker-setup.md)
 - [TDD Enforcement Guide](guides/tdd/tdd-enforcement-guide.md)
+- [Context Engineering Primer](guides/context/context-engineering-primer.md) — Selection → Compression → Provenance playbook.
 
 ### 🏗️ Architecture
 - [System Architecture Overview](architecture/README.md)
