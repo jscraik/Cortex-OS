@@ -1,17 +1,30 @@
 export { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 export { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';
+export { CheckpointManager, createCheckpointManager } from './checkpoints/index.js';
+export {
+        ensureCheckpointSchema,
+        resolveCheckpointPolicy,
+        type CheckpointRuntimePolicy,
+        type CheckpointManagerOptions,
+} from './checkpoints/index.js';
 export type {
-	Memory,
-	MemoryAnalysisResult,
-	MemoryCoreConfig,
-	MemoryGraph,
-	MemoryProvider,
-	MemoryProviderError,
-	MemoryRelationship,
-	MemorySearchResult,
-	MemoryStats,
-	QdrantConfig,
-	RelationshipType,
+        Memory,
+        MemoryAnalysisResult,
+        MemoryCoreConfig,
+        MemoryGraph,
+        MemoryProvider,
+        MemoryProviderError,
+        MemoryRelationship,
+        MemorySearchResult,
+        MemoryStats,
+        QdrantConfig,
+        RelationshipType,
+        CheckpointConfig,
+        CheckpointSnapshot,
+        CheckpointListPage,
+        CheckpointContext,
+        CheckpointBranchRequest,
+        CheckpointBranchResult,
 } from './types.js';
 
 import { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';

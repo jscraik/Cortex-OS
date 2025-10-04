@@ -23,6 +23,7 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
+    "@cortex-os/contracts": "workspace:*",
     "@cortex-os/tool-spec": "workspace:*",
     "@cortex-os/utils": "workspace:*",
     "@langchain/langgraph": "^0.4.9",

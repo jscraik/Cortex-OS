@@ -4,6 +4,7 @@ export * from './bash-tool.js';
 export * from './coordination-tools.js';
 export * from './echo-tool.js';
 export * from './edit-tool.js';
+export * from './checkpoint-tools.js';
 // File discovery and search tools
 export * from './glob-tool.js';
 export * from './grep-tool.js';
@@ -41,9 +42,17 @@ import { multiEditTool } from './multiedit-tool.js';
 import { notebookEditTool } from './notebook-edit-tool.js';
 import { notebookReadTool } from './notebook-read-tool.js';
 import {
-	createPlanningSessionTool,
-	executePlanningPhaseTool,
-	getPlanningStatusTool,
+        checkpointBranchTool,
+        checkpointListTool,
+        checkpointLoadTool,
+        checkpointPruneTool,
+        checkpointRollbackTool,
+        checkpointSaveTool,
+} from './checkpoint-tools.js';
+import {
+        createPlanningSessionTool,
+        executePlanningPhaseTool,
+        getPlanningStatusTool,
 } from './planning-tools.js';
 import { readTool } from './read-tool.js';
 import { taskTool } from './task-tool.js';
@@ -94,16 +103,24 @@ export const toolCategories = {
 		workspaceRead: workspaceReadTool,
 		workspaceWrite: workspaceWriteTool,
 	},
-	planning: {
-		createPlanningSession: createPlanningSessionTool,
-		executePlanningPhase: executePlanningPhaseTool,
-		getPlanningStatus: getPlanningStatusTool,
-	},
-	coordination: {
-		createCoordinationSession: createCoordinationSessionTool,
-		registerAgent: registerAgentTool,
-		assignTask: assignTaskTool,
-	},
+        planning: {
+                createPlanningSession: createPlanningSessionTool,
+                executePlanningPhase: executePlanningPhaseTool,
+                getPlanningStatus: getPlanningStatusTool,
+        },
+        memory: {
+                checkpointSave: checkpointSaveTool,
+                checkpointLoad: checkpointLoadTool,
+                checkpointList: checkpointListTool,
+                checkpointRollback: checkpointRollbackTool,
+                checkpointBranch: checkpointBranchTool,
+                checkpointPrune: checkpointPruneTool,
+        },
+        coordination: {
+                createCoordinationSession: createCoordinationSessionTool,
+                registerAgent: registerAgentTool,
+                assignTask: assignTaskTool,
+        },
 } as const;
 
 /**
@@ -145,48 +162,62 @@ export const allTools: ReadonlyArray<McpTool<any, any>> = [
 	// Planning tools (DSP integration)
 	createPlanningSessionTool,
 	executePlanningPhaseTool,
-	getPlanningStatusTool,
+        getPlanningStatusTool,
 
-	// Coordination tools (security controls)
-	createCoordinationSessionTool,
-	registerAgentTool,
-	assignTaskTool,
+        // Coordination tools (security controls)
+        createCoordinationSessionTool,
+        registerAgentTool,
+        assignTaskTool,
+
+        // Memory checkpoint tools
+        checkpointSaveTool,
+        checkpointLoadTool,
+        checkpointListTool,
+        checkpointRollbackTool,
+        checkpointBranchTool,
+        checkpointPruneTool,
 ];
 
 /**
  * Tools that require permissions (marked as "Yes" in the original request)
  */
 export const permissionRequiredTools: ReadonlyArray<McpTool<any, any>> = [
-	bashTool, // Shell execution
-	writeTool, // File creation/overwriting
-	editTool, // File modification
-	multiEditTool, // Multi-file modification
-	notebookEditTool, // Notebook modification
-	webFetchTool, // HTTP requests
-	webSearchTool, // Web access
-	workspaceCreateTool, // Workspace creation
-	workspaceWriteTool, // Workspace file writing
-	createPlanningSessionTool, // Planning session creation
-	executePlanningPhaseTool, // Planning phase execution
-	createCoordinationSessionTool, // Coordination session creation
-	registerAgentTool, // Agent registration
-	assignTaskTool, // Task assignment
+        bashTool, // Shell execution
+        writeTool, // File creation/overwriting
+        editTool, // File modification
+        multiEditTool, // Multi-file modification
+        notebookEditTool, // Notebook modification
+        webFetchTool, // HTTP requests
+        webSearchTool, // Web access
+        workspaceCreateTool, // Workspace creation
+        workspaceWriteTool, // Workspace file writing
+        createPlanningSessionTool, // Planning session creation
+        executePlanningPhaseTool, // Planning phase execution
+        createCoordinationSessionTool, // Coordination session creation
+        registerAgentTool, // Agent registration
+        assignTaskTool, // Task assignment
+        checkpointSaveTool, // Persist checkpoints
+        checkpointBranchTool, // Branch creation
+        checkpointPruneTool, // Pruning operations
 ];
 
 /**
  * Tools that don't require permissions (marked as "No" in the original request)
  */
 export const noPermissionTools: ReadonlyArray<McpTool<any, any>> = [
-	readTool, // File reading
-	globTool, // Pattern matching
-	grepTool, // Content search
-	notebookReadTool, // Notebook reading
-	taskTool, // Sub-agent tasks
-	todoWriteTool, // Task list management
-	echoTool, // Echo utility
-	workspaceListTool, // Workspace listing
-	workspaceReadTool, // Workspace file reading
-	getPlanningStatusTool, // Planning status retrieval
+        readTool, // File reading
+        globTool, // Pattern matching
+        grepTool, // Content search
+        notebookReadTool, // Notebook reading
+        taskTool, // Sub-agent tasks
+        todoWriteTool, // Task list management
+        echoTool, // Echo utility
+        workspaceListTool, // Workspace listing
+        workspaceReadTool, // Workspace file reading
+        getPlanningStatusTool, // Planning status retrieval
+        checkpointLoadTool, // Retrieve checkpoints
+        checkpointListTool, // Enumerate checkpoints
+        checkpointRollbackTool, // Prepare rollback state
 ];
 
 /**

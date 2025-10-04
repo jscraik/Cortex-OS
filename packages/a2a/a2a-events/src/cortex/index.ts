@@ -2,6 +2,7 @@
 export const CORTEX_A2A_EVENTS_VERSION = '1.0.0';
 
 export * from './agent-events';
+export * from './checkpoint-events.js';
 // Core Event Types
 export * from './api-events.js';
 export * from './mcp-events.js';
@@ -11,10 +12,17 @@ export * from './rag-events';
 export * from './routing';
 
 import type {
-	AgentStateChangedEvent,
-	AgentTaskCompletedEvent,
-	AgentTaskCreatedEvent,
+        AgentStateChangedEvent,
+        AgentTaskCompletedEvent,
+        AgentTaskCreatedEvent,
 } from './agent-events';
+import type {
+        CheckpointBranchCompletedEvent,
+        CheckpointBranchStartedEvent,
+        CheckpointPrunedEvent,
+        CheckpointRolledBackEvent,
+        CheckpointSavedEvent,
+} from './checkpoint-events.js';
 import type {
 	ApiJobCreatedEvent,
 	ApiRequestReceivedEvent,
@@ -36,21 +44,26 @@ import type {
 
 // Union type for all Cortex-OS events
 export type CortexEvent =
-	| ApiRequestReceivedEvent
-	| ApiRequestRoutedEvent
-	| ApiResponseGeneratedEvent
-	| ApiWebhookReceivedEvent
-	| ApiJobCreatedEvent
-	| McpToolExecutionEvent
-	| McpToolResponseEvent
-	| McpContextCreatedEvent
-	| McpErrorEvent
-	| RagDocumentIndexedEvent
-	| RagQueryProcessedEvent
-	| RagEmbeddingGeneratedEvent
-	| AgentTaskCreatedEvent
-	| AgentTaskCompletedEvent
-	| AgentStateChangedEvent;
+        | ApiRequestReceivedEvent
+        | ApiRequestRoutedEvent
+        | ApiResponseGeneratedEvent
+        | ApiWebhookReceivedEvent
+        | ApiJobCreatedEvent
+        | McpToolExecutionEvent
+        | McpToolResponseEvent
+        | McpContextCreatedEvent
+        | McpErrorEvent
+        | RagDocumentIndexedEvent
+        | RagQueryProcessedEvent
+        | RagEmbeddingGeneratedEvent
+        | AgentTaskCreatedEvent
+        | AgentTaskCompletedEvent
+        | AgentStateChangedEvent
+        | CheckpointSavedEvent
+        | CheckpointRolledBackEvent
+        | CheckpointPrunedEvent
+        | CheckpointBranchStartedEvent
+        | CheckpointBranchCompletedEvent;
 
 // Comprehensive event type guard
 export function isCortexEvent(data: unknown): data is CortexEvent {
@@ -94,11 +107,17 @@ export type {
 	// RAG Events
 	RagDocumentIndexedEvent,
 	RagQueryProcessedEvent,
-	RagEmbeddingGeneratedEvent,
-	// Agent Events
-	AgentTaskCreatedEvent,
-	AgentTaskCompletedEvent,
-	AgentStateChangedEvent,
-	// Union type
-	CortexEvent,
+        RagEmbeddingGeneratedEvent,
+        // Agent Events
+        AgentTaskCreatedEvent,
+        AgentTaskCompletedEvent,
+        AgentStateChangedEvent,
+        // Checkpoint Events
+        CheckpointSavedEvent,
+        CheckpointRolledBackEvent,
+        CheckpointPrunedEvent,
+        CheckpointBranchStartedEvent,
+        CheckpointBranchCompletedEvent,
+        // Union type
+        CortexEvent,
 };
