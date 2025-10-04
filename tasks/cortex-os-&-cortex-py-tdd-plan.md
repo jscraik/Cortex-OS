@@ -149,6 +149,22 @@ This plan structures the upgrade and refactor of `apps/cortex-os` (Node/TypeScri
 
 ---
 
+### Phase 0.2: Dependency Currency & Live Integration (Ongoing)
+
+**Goal**: Keep runtime dependencies current and ensure only RED-factor tests use mocks.
+
+**Tasks**:
+
+- [ ] Run `pnpm outdated --long` and upgrade via `pnpm up --latest` (document any skips in dependency log).
+- [ ] Run `uv pip list --outdated` and upgrade with `uv add <pkg>@latest` as compatible.
+- [ ] Re-run `pnpm run setup:deps` after upgrades; capture results in `docs/runbooks/dependency-currency.md`.
+- [ ] Tagged RED specs only (`describe('[RED] ...)`); replace remaining mocks in other tests with live LangGraph/MCP/MLX/Ollama/API integrations.
+- [ ] CI guard: `pnpm run test:live` (skips `[RED]` suites) to enforce live integrations; `pnpm run test:red` for RED runs when needed.
+
+**Evidence**: Updated lockfiles, dependency log entries, and `pnpm run test:live` output showing success without mocks.
+
+---
+
 ## Phase 0: Foundation & Baseline [Week 1] - ✅ COMPLETED
 
 ### 0.1 Quality Gate Infrastructure - ✅ COMPLETED
