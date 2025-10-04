@@ -65,6 +65,22 @@ synthesize → verify` described in the agent template.
   (`simlab`). Their actions are typically constrained to the simulated world, and
   they are used for testing and evaluating the behavior of other agents.
 
+## Modern planner ⇄ worker architecture
+
+- **Planner**: A deterministic orchestrator that validates goals with Zod schemas,
+  loads short-term session state, and fans out capability-specific work packages.
+- **Worker registry**: A brAInwav-governed index that enforces unique worker names
+  and capability ownership for planner lookups.
+- **Tool router**: Normalizes local utilities with MCP transports (stdio +
+  Streamable HTTP) and records brAInwav telemetry in the shared session context
+  manager.
+- **Memory coordinator**: Bridges bounded session memory and optional RAG
+  retrievers to supply deterministic context while persisting completed steps.
+- **Approval gate**: Wraps the HITL approval loop, surfacing
+  `RunToolApprovalItem` requests before executing risky capabilities.
+- **Worker runner**: Applies approvals, executes handlers, and updates session
+  state with structured evidence for observability.
+
 Model Gateway APIs
 • POST /embeddings {model,texts[]} → vectors
 • POST /rerank {model,query,docs[]} → [idx,score]

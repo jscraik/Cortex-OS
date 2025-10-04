@@ -86,10 +86,19 @@ export {
 // Export brAInwav TDD Plan Implementation Components
 // Testing Infrastructure
 export {
-	MockAgent,
-	MockTool,
-	PerformanceTestRunner,
-	TestAssertions,
-	TestEnvironment,
-	TestSuiteRunner,
+        MockAgent,
+        MockTool,
+        PerformanceTestRunner,
+        TestAssertions,
+        TestEnvironment,
+        TestSuiteRunner,
 } from './testing/test-utilities.js';
+// Modern agent system
+export {
+        createModernAgentSystem,
+        type ModernAgentSystem,
+        type ModernAgentSystemConfig,
+        type Planner,
+        type PlannerExecutionResult,
+        type PlannerGoal,
+} from './modern-agent-system/index.js';
