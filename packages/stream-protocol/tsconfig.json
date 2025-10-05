@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
-    "module": "esnext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "es2020",
     "outDir": "./dist",
@@ -13,7 +13,7 @@
     "noEmit": false,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": [
     "src/**/*.ts"

@@ -1,0 +1,43 @@
+name: "brAInwav: Validate tsconfig"
+
+on:
+    pull_request:
+        paths:
+            - "**/tsconfig*.json"
+            - "scripts/ci/**"
+
+jobs:
+    validate-tsconfig:
+        name: "brAInwav: tsconfig validator"
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node 20
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Enable corepack
+              run: corepack enable
+
+            - name: Install dependencies (pnpm)
+              run: pnpm install --frozen-lockfile
+
+            - name: Run tsconfig validator
+              run: node ./scripts/ci/validate-tsconfig.mjs
+
+            - name: Upload validator log
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: tsconfig-validator-report
+                  path: reports/logs/tsconfig-validator.txt
+
+            - name: Upload validator patch (if produced)
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: tsconfig-validator-patch
+                  path: reports/logs/tsconfig-validator.patch

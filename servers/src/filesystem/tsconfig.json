@@ -9,7 +9,7 @@
       "node",
       "vitest"
     ],
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": [
     "./**/*.ts"

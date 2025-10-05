@@ -81,6 +81,14 @@ This plan structures the upgrade and refactor of `apps/cortex-os` (Node/TypeScri
 
 ## 📊 Current Implementation Status
 
+### 2025-10-05 Audit Snapshot
+
+- Coverage baseline remains **29.98% line / 63.23% branch** (`reports/baseline/summary.json`); the 95/95 target is still unmet.  
+- `pnpm baseline:refresh` currently fails because multiple TypeScript projects compile with mismatched `module`/`moduleResolution` settings and failing suites (e.g., `@cortex-os/mcp-core`, `asbr`, `simple-tests`).  
+- Production prompt guard is present in the prompt library but not enforced by the N0 orchestrator; inline system prompts still bypass governance.  
+- Multimodal embedding and hybrid search code paths remain partially mocked—`/embed/multimodal` only supports IMAGE and ranking functions return empty results.  
+- Large-scale NodeNext toolchain alignment is required across `tsconfig*.json` to unblock builds; see updated Phase 0.2 tasks.
+
 ### 📋 Status Key
 
 - ✅ **COMPLETED**: Implementation finished, tested, and operational
@@ -91,13 +99,13 @@ This plan structures the upgrade and refactor of `apps/cortex-os` (Node/TypeScri
 
 ### ✅ COMPLETED PHASES
 
-- **Phase 0**: Foundation & Baseline - Complete with brAInwav compliance
-- **Phase 1**: Memory System Consolidation - Complete with Qdrant integration
-- **Phase 2**: Agent Toolkit & Tool Resolution - Complete with MCP registration
+- **Phase 0**: Foundation & Baseline – Base assets exist; remediation items remain.
+- **Phase 1**: Memory System Consolidation – REST migration verified; no new gaps surfaced.
 
 ### ⚠️ IN PROGRESS PHASES  
 
-- **Phase 3**: Multimodal AI & Hybrid Search - Core functionality implemented, optimization ongoing
+- **Phase 2**: Agent Toolkit & Tool Resolution – MCP tooling and tests still incomplete (see updated checklist).
+- **Phase 3**: Multimodal AI & Hybrid Search – Core scaffolding exists; production readiness depends on outstanding work below.
 
 ### 🔄 PLANNED PHASES
 
@@ -254,6 +262,7 @@ it('rejects undeclared variables', () => {
 **Tasks**:
 
 - [ ] Run coverage analysis on both codebases *(current baseline `reports/baseline/coverage.json` from 2025-10-02 shows 29.98% line / 63.23% branch after gate-suite dry run; full smart-suite refresh still pending)*
+- [ ] Align all `tsconfig*.json` files with `module: "NodeNext"` and `ignoreDeprecations: "5.0"`; rerun `pnpm install --frozen-lockfile` + targeted Nx builds to confirm. *(See `tasks/node-next-toolchain-hardening-plan.md`.)*
 - [x] Generate code structure maps (codemaps) following CODESTYLE.md naming
 - [x] Execute package audit on high-risk modules *(ingest JSON export into baseline report)*
 - [x] Document current flake rate and test durations *(baseline JSON includes `flakeRate`/`testRuns` fields)*
@@ -571,7 +580,13 @@ describe('Multimodal Memory', () => {
 
 ---
 
-## Phase 2: Agent Toolkit & Tool Resolution [Week 4] - ✅ FOUNDATION COMPLETED
+## Phase 2: Agent Toolkit & Tool Resolution [Week 4] - ⚠️ IN PROGRESS
+
+> **Outstanding steps (2025-10-05):**
+>
+> 1. Finish MCP tool metadata (branding, circuit breaker, token budget) and restore passing tests in `packages/agent-toolkit` (currently 8/14 passing).
+> 2. Enforce prompt guard usage inside orchestrator flows (see Phase 0.1 updates).
+> 3. Rerun `pnpm baseline:refresh` once builds succeed to capture updated artifacts.
 
 ### 2.1 Tool Path Resolver - ✅ COMPLETED
 
@@ -700,6 +715,12 @@ describe('MCP Tool Registration', () => {
 ---
 
 ## Phase 3: Multimodal AI & Hybrid Search [Week 5] - ⚠️ IN PROGRESS
+
+> **Outstanding steps (2025-10-05):**
+>
+> 1. Implement a real `MultimodalEmbeddingService` covering IMAGE/AUDIO/TEXT plus timeout limits; align RED tests in `apps/cortex-py/tests/embeddings`.
+> 2. Replace placeholder logic in `apps/cortex-py/src/multimodal/hybrid_search.py` with production ranking + performance tests (10k dataset, <250 ms target).
+> 3. Back the `/embed/multimodal` FastAPI endpoint with the service above and record new coverage artifacts.
 
 ### 3.1 Multimodal Embedding Service - ⚠️ IN PROGRESS
 

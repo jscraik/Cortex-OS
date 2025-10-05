@@ -7,9 +7,9 @@
     "declaration": true,
     "declarationMap": true,
     "moduleResolution": "NodeNext",
-    "module": "esnext",
+    "module": "NodeNext",
     "target": "es2022",
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": [
     "src/**/*.ts"

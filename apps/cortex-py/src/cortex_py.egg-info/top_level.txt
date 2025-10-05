@@ -1,3 +1,11 @@
+agents
 app
 cortex_py
+middleware
 mlx
+multimodal
+observability
+operational
+performance
+sustainability
+thermal

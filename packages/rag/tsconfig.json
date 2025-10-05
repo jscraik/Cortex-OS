@@ -4,12 +4,12 @@
     "rootDir": ".",
     "outDir": "dist",
     "composite": true,
-    "module": "ESNext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "noEmit": false,
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": [
     "src",

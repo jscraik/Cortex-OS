@@ -17,7 +17,7 @@
     "sourceMap": true,
     "rootDir": "../..",
     "outDir": "dist",
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": [
     "src/**/*"

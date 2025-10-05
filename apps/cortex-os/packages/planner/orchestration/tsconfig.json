@@ -3,7 +3,8 @@
   "compilerOptions": {
     "composite": false,
     "moduleResolution": "NodeNext",
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0",
+    "module": "NodeNext"
   },
   "include": [
     "src"

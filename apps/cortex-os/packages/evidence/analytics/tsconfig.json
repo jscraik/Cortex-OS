@@ -4,7 +4,7 @@
     "lib": [
       "ES2022"
     ],
-    "module": "ESNext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "useUnknownInCatchVariables": false,
     "esModuleInterop": true,
@@ -16,7 +16,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "downlevelIteration": true,
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": [
     "src/**/*",

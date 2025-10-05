@@ -6,7 +6,7 @@
     "declaration": true,
     "composite": true,
     "noEmit": false,
-    "module": "esnext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "es2022",
     "lib": [
@@ -14,7 +14,7 @@
     ],
     "strict": true,
     "skipLibCheck": true,
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": [
     "src/**/*"
