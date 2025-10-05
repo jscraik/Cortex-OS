@@ -18,6 +18,7 @@
     "rootDir": "../..",
     "outDir": "dist",
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@cortex-os/contracts": [
         "../../libs/typescript/contracts/dist/src/index.d.ts"
