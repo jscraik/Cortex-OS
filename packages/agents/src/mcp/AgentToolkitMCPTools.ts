@@ -323,9 +323,16 @@ export class AgentToolkitMCPTools {
 						},
 					};
 				} catch (error) {
+					const brandedError = this.createBrandedError('agent_toolkit_search', error as Error);
+					this.executionHistory.set(correlationId, {
+						timestamp: new Date(),
+						input,
+						result: null,
+						success: false,
+					});
 					return {
 						success: false,
-						error: error instanceof Error ? error.message : 'Unknown search error',
+						error: brandedError,
 						metadata: {
 							correlationId,
 							timestamp,
@@ -435,9 +442,19 @@ export class AgentToolkitMCPTools {
 						},
 					};
 				} catch (error) {
+					const brandedError = this.createBrandedError(
+						'agent_toolkit_multi_search',
+						error as Error,
+					);
+					this.executionHistory.set(correlationId, {
+						timestamp: new Date(),
+						input,
+						result: null,
+						success: false,
+					});
 					return {
 						success: false,
-						error: error instanceof Error ? error.message : 'Unknown multi-search error',
+						error: brandedError,
 						metadata: {
 							correlationId,
 							timestamp,
@@ -529,9 +546,16 @@ export class AgentToolkitMCPTools {
 						},
 					};
 				} catch (error) {
+					const brandedError = this.createBrandedError('agent_toolkit_codemod', error as Error);
+					this.executionHistory.set(correlationId, {
+						timestamp: new Date(),
+						input,
+						result: null,
+						success: false,
+					});
 					return {
 						success: false,
-						error: error instanceof Error ? error.message : 'Unknown codemod error',
+						error: brandedError,
 						metadata: {
 							correlationId,
 							timestamp,
@@ -640,9 +664,16 @@ export class AgentToolkitMCPTools {
 						},
 					};
 				} catch (error) {
+					const brandedError = this.createBrandedError('agent_toolkit_validate', error as Error);
+					this.executionHistory.set(correlationId, {
+						timestamp: new Date(),
+						input,
+						result: null,
+						success: false,
+					});
 					return {
 						success: false,
-						error: error instanceof Error ? error.message : 'Unknown validation error',
+						error: brandedError,
 						metadata: {
 							correlationId,
 							timestamp,

@@ -1,0 +1,33 @@
+{
+  "timestamp": "2025-10-05T22:58:05.638Z",
+  "branding": "brAInwav Emergency TypeScript Language Service Crash Recovery",
+  "crashDetails": {
+    "frequency": "5 crashes in 5 minutes",
+    "suspectedExtensions": [
+      "github.copilot-chat",
+      "nrwl.angular-console"
+    ],
+    "severity": "CRITICAL"
+  },
+  "actions": [
+    "Emergency killed process 48958",
+    "Emergency killed process 48883",
+    "Emergency killed process 48882",
+    "Disabled problematic extensions",
+    "Cleared cache: /Users/jamiecraik/Library/Caches/com.microsoft.VSCode",
+    "Cleared cache: /Users/jamiecraik/.Cortex-OS/.nx/cache",
+    "Created emergency restart script"
+  ],
+  "nextSteps": [
+    "Restart VS Code using the emergency script",
+    "Re-enable extensions one by one",
+    "Monitor for stability",
+    "Consider permanent removal of problematic extensions"
+  ],
+  "recommendations": [
+    "Disable nrwl.angular-console permanently in large monorepos",
+    "Use GitHub Copilot without chat extension if possible",
+    "Increase TypeScript server memory limit",
+    "Enable TypeScript server logging for debugging"
+  ]
+}

@@ -15,19 +15,21 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Load .env.local early so MLX/HF paths are available to tests
-try {
-	const dotenv = await import('dotenv');
-	const cwd = process.cwd();
-	const localPath = join(cwd, '.env.local');
-	const envFile = fs.existsSync(localPath) ? localPath : join(cwd, '.env');
-	dotenv.config({ path: envFile });
-	// eslint-disable-next-line no-console
-	if (process.env.VITEST_SAFE_DEBUG_ENV === '1')
-		console.error('[vitest-safe] env loaded:', envFile);
-} catch {
-	// optional
-}
+import { loadDotenv } from './utils/dotenv-loader.mjs';
+
+await loadDotenv({
+	logger: {
+		info: (message) => {
+			if (process.env.VITEST_SAFE_DEBUG_ENV === '1') {
+				console.error(`[vitest-safe] ${message}`);
+			}
+		},
+		warn: (message) => {
+			console.error(`[vitest-safe] ${message}`);
+		},
+	},
+	candidates: ['.env.local', '.env'],
+});
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const _rootDir = join(__dirname, '..');

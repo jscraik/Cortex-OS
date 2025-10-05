@@ -1,0 +1,65 @@
+{
+  "timestamp": "2025-10-05T22:11:20.446Z",
+  "processCount": 4,
+  "totalMemoryMB": 1866,
+  "maxMemoryMB": 1264,
+  "status": "critical",
+  "issues": [
+    "Nx Console plugin detected in 4 processes (known to cause crashes)"
+  ],
+  "warnings": [
+    "Multiple TypeScript processes detected (4). Monitor memory usage"
+  ],
+  "processes": [
+    {
+      "pid": "39110",
+      "cpu": 2.1,
+      "memory": 3.4,
+      "memoryMB": 1264,
+      "isPartialSemantic": false,
+      "hasNxPlugin": true,
+      "hasCopilotPlugin": false,
+      "memoryLimit": "8192",
+      "command": "/Applications/Qoder.app/Contents/Frameworks/Qoder Helper (Plugin).app/Contents/MacOS/Qoder Helper (P..."
+    },
+    {
+      "pid": "39136",
+      "cpu": 1.1,
+      "memory": 1.3,
+      "memoryMB": 485,
+      "isPartialSemantic": false,
+      "hasNxPlugin": true,
+      "hasCopilotPlugin": true,
+      "memoryLimit": "8192",
+      "command": "/Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Cod..."
+    },
+    {
+      "pid": "39135",
+      "cpu": 0,
+      "memory": 0.2,
+      "memoryMB": 60,
+      "isPartialSemantic": true,
+      "hasNxPlugin": true,
+      "hasCopilotPlugin": true,
+      "memoryLimit": "8192",
+      "command": "/Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Cod..."
+    },
+    {
+      "pid": "39109",
+      "cpu": 0,
+      "memory": 0.2,
+      "memoryMB": 57,
+      "isPartialSemantic": true,
+      "hasNxPlugin": true,
+      "hasCopilotPlugin": false,
+      "memoryLimit": "8192",
+      "command": "/Applications/Qoder.app/Contents/Frameworks/Qoder Helper (Plugin).app/Contents/MacOS/Qoder Helper (P..."
+    }
+  ],
+  "recommendations": [
+    "Run: pnpm ts:server:recovery",
+    "Restart your IDE",
+    "Disable nrwl.angular-console extension",
+    "Disable Nx Console extension to prevent crashes"
+  ]
+}

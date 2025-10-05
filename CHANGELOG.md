@@ -224,6 +224,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+#### MCP Diagnostics Remediation (2025-10-06)
+
+- Strengthened `scripts/mcp/guard_port_3024.sh` with LaunchAgent bootout,
+  optional `--restart`, JSON output, and configurable label/domain overrides so
+  `--force` reliably frees port 3024 without manual intervention.
+- Rebuilt `scripts/mcp/validate_cloudflare_tunnel.sh` to auto-start quick
+  Cloudflare tunnels, expose structured JSON statuses, and downgrade missing
+  dependencies to `skipped` results consumed by `pnpm mcp:diagnose`.
+- Updated `tools/validators/mcp-status.mjs` and `scripts/mcp/mcp_diagnose.sh`
+  for JSON-RPC compliant `ping`, `tools/list`, and `tools/call` checks, storing
+  validator payloads so `pnpm ci:mcp:status` avoids HTTP 400 errors.
+
 - **HARDENED**: Replaced direct `fetch` usage across MCP tools, RAG providers, orchestration bridges, analytics collectors,
 and memory adapters with shared `safeFetch`/`safeFetchJson` wrappers to enforce SSRF protections, host allowlists,
 standardized timeouts, and brAInwav-branded error messaging.

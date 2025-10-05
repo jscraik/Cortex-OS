@@ -2,7 +2,7 @@ import { Qwen3Embedder } from './embed/qwen3.js';
 import { type ModelSpec, MultiModelGenerator } from './generation/multi-model.js';
 import { enhancedRAGConfigSchema, validateConfig } from './lib/config-validation.js';
 import { embedQuery } from './lib/embed-query.js';
-import { generateAnswer } from './lib/generate-answer.js';
+import { type GenerateAnswerOptions, generateAnswer } from './lib/generate-answer.js';
 import { rerankDocs } from './lib/rerank-docs.js';
 import { retrieveDocs } from './lib/retrieve-docs.js';
 import type { Document } from './lib/types.js';
@@ -53,10 +53,7 @@ export function createEnhancedRAGPipeline(config: EnhancedRAGConfig) {
 			retrieveDocs(embedder, queryEmbedding, docs, finalConfig.topK ?? 10),
 		rerankDocs: (query: string, docs: Document[]) =>
 			rerankDocs(reranker, query, docs, finalConfig.rerank?.topK ?? 5),
-		generateAnswer: (
-			query: string,
-			docs: Document[],
-			options?: { contextPrompt?: string; maxContextLength?: number },
-		) => generateAnswer(generator, query, docs, options),
+		generateAnswer: (query: string, docs: Document[], options?: GenerateAnswerOptions) =>
+			generateAnswer(generator, query, docs, options),
 	};
 }

@@ -175,7 +175,7 @@ console.log(response.provider); // 'mlx'
 ```typescript
 // For long-running queries
 const result = await pipeline.query(query, documents, {
-  contextPrompt: 'Custom system prompt...',
+  contextPromptId: 'sys.a2a.rag-default',
   maxContextLength: 4000, // Longer context for complex queries
 });
 ```
@@ -221,7 +221,7 @@ const docs = [
 ];
 
 const result = await techPipeline.query('How do I configure TypeScript for React?', docs, {
-  contextPrompt: 'You are a senior developer assistant.',
+  contextPromptId: 'sys.a2a.rag-default',
 });
 ```
 

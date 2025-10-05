@@ -12,3 +12,5 @@ export const mcpVitestConfig = defineConfig({
 		environment: 'node',
 	},
 });
+
+export default mcpVitestConfig;

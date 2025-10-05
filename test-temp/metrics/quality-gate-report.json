@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-10-05T23:11:08.238Z",
+  "brainwav_quality_gate_version": "2025.10.05",
+  "gates_passed": false,
+  "violations_count": 2,
+  "warnings_count": 2,
+  "violations": [
+    "Line coverage 94% < required 95%",
+    "brAInwav standard"
+  ],
+  "warnings": [
+    "Mutation metrics not provided – brAInwav recommends mutation testing to prevent vacuous tests",
+    "Security scan metrics not provided – brAInwav security policy enforcement skipped"
+  ],
+  "contract_path": "/Users/jamiecraik/.Cortex-OS/test-temp/quality_gate.json",
+  "metrics_dir": "/Users/jamiecraik/.Cortex-OS/test-temp/metrics",
+  "brainwav_compliance": false
+}

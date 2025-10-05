@@ -97,7 +97,7 @@ export interface BaseEventPayload {
 export interface EventListener {
 	emitter: EventEmitter;
 	event: string;
-	listener: (...args: any[]) => void;
+	listener: (...args: unknown[]) => void;
 }
 
 // Event listener manager class
@@ -107,7 +107,7 @@ export class EventListenerManager {
 	/**
 	 * Add an event listener and track it for cleanup
 	 */
-	addListener(emitter: EventEmitter, event: string, listener: (...args: any[]) => void): void {
+	addListener(emitter: EventEmitter, event: string, listener: (...args: unknown[]) => void): void {
 		emitter.on(event, listener);
 		this.listeners.push({ emitter, event, listener });
 	}
@@ -115,7 +115,11 @@ export class EventListenerManager {
 	/**
 	 * Remove a specific event listener
 	 */
-	removeListener(emitter: EventEmitter, event: string, listener: (...args: any[]) => void): void {
+	removeListener(
+		emitter: EventEmitter,
+		event: string,
+		listener: (...args: unknown[]) => void,
+	): void {
 		emitter.removeListener(event, listener);
 		const index = this.listeners.findIndex(
 			(l) => l.emitter === emitter && l.event === event && l.listener === listener,
@@ -161,7 +165,7 @@ export class ConsistentEventEmitter extends EventEmitter {
 	/**
 	 * Add event listener with tracking
 	 */
-	addTrackedListener(event: string, listener: (...args: any[]) => void): void {
+	addTrackedListener(event: string, listener: (...args: unknown[]) => void): void {
 		this.addListener(event, listener);
 	}
 
@@ -197,7 +201,9 @@ export const createErrorEventPayload = (
 } & Record<string, unknown> => ({
 	timestamp: new Date().toISOString(),
 	error: error instanceof Error ? error.message : String(error),
-	...(error instanceof Error && (error as any).code ? { code: (error as any).code } : {}),
+	...(error instanceof Error && 'code' in error
+		? { code: (error as Error & { code: string }).code }
+		: {}),
 	...additionalData,
 });
 
@@ -230,7 +236,7 @@ export const validateEventPayload = <T>(
 
 // Event naming validator
 export const isValidEventName = (eventName: string): boolean => {
-	return Object.values(EVENT_TYPES).includes(eventName as any);
+	return (Object.values(EVENT_TYPES) as string[]).includes(eventName);
 };
 
 // Event prefix extractor

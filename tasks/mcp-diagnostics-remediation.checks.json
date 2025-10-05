@@ -1,0 +1,30 @@
+{
+  "brand": "brAInwav",
+  "timestamp": "2025-10-05T22:10:00Z",
+  "commands": [
+    {
+      "command": "pnpm mcp:smoke",
+      "status": "pass",
+      "exitCode": 0,
+      "notes": "Smoke check located guard and health scripts; JSON fallback triggered because stringify helper unavailable."
+    },
+    {
+      "command": "pnpm mcp:test",
+      "status": "pass",
+      "exitCode": 0,
+      "notes": "Vitest ran with --passWithNoTests; harness output branded and logs to logs/mcp-test.log."
+    },
+    {
+      "command": "pnpm mcp:diagnose",
+      "status": "blocked",
+      "exitCode": 1,
+      "notes": "Port 3024 held by LaunchAgent-managed node process; health probe attempted restart and reported actionable failure; tunnel validator requires active cloudflared session."
+    },
+    {
+      "command": "LOCAL_MEMORY_BASE_URL=http://127.0.0.1:3024 pnpm ci:mcp:status",
+      "status": "blocked",
+      "exitCode": 1,
+      "notes": "HTTP 400 from MCP endpoint; server rejected ping payload."
+    }
+  ]
+}

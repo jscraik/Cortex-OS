@@ -2,9 +2,10 @@ import { spawn } from 'node:child_process';
 import { expect, test } from 'vitest';
 
 test('kernel package builds without invalid flag errors', async () => {
-	const buildProcess = spawn('npx', ['tsc'], {
+	const buildProcess = spawn('pnpm', ['exec', 'tsc'], {
 		cwd: './packages/kernel',
 		stdio: 'pipe',
+		env: { ...process.env, FORCE_COLOR: '0' },
 	});
 
 	let stderr = '';
@@ -25,7 +26,6 @@ test('kernel package builds without invalid flag errors', async () => {
 	expect(exitCode).toBe(0);
 
 	// Should not have invalid flag errors
-	expect(stderr).not.toContain('Unknown option');
-	expect(stderr).not.toContain('Unknown compiler option');
+	expect(stderr).not.toMatch(/unknown (?:option|compiler option)/i);
 	expect(stdout).not.toContain('error TS');
 });

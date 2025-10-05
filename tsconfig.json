@@ -50,7 +50,12 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"downlevelIteration": true,
-		"ignoreDeprecations": "6.0"
+		"ignoreDeprecations": "5.0",
+		"composite": false,
+		"disableSourceOfProjectReferenceRedirect": true,
+		"disableSolutionSearching": true,
+		"disableReferencedProjectLoad": true,
+		"assumeChangesOnlyAffectDirectDependencies": true
 	},
 	"exclude": [
 		"node_modules",
@@ -59,8 +64,20 @@
 		"coverage",
 		"external/**",
 		"vendor/**",
-		"**/*.config.js",
-		"**/*.config.ts",
+		"**/eslint.config.js",
+		"**/eslint.config.ts",
+		"**/vite.config.ts",
+		"**/webpack.config.ts",
+		"**/rollup.config.ts",
+		"**/jest.config.ts",
+		"**/tailwind.config.ts",
+		"**/postcss.config.ts",
+		"**/next.config.ts",
+		"**/nuxt.config.ts",
+		"**/svelte.config.ts",
+		"**/astro.config.ts",
+		"**/biome.json",
+		"**/biome.jsonc",
 		"scripts/**/*.mjs",
 		"scripts/**/*.js",
 		"scripts/**/*template*.ts",
@@ -73,7 +90,15 @@
 		"**/test/**",
 		"security_backups/**",
 		"**/__*/**",
-		"apps/cortex-os/brain/**"
+		"apps/cortex-os/brain/**",
+		"**/temp/**",
+		"**/tmp/**",
+		"**/.cache/**",
+		"**/.nx/**",
+		"**/.turbo/**",
+		"reports/**",
+		"data/**",
+		"logs/**"
 	],
 	"references": [
 		{
@@ -82,5 +107,9 @@
 		{
 			"path": "scripts/ci/tsconfig.json"
 		}
-	]
+	],
+	"ts-node": {
+		"esm": true,
+		"experimentalSpecifierResolution": "node"
+	}
 }

@@ -16,5 +16,5 @@ export interface GitHubEventData {
 		id: number;
 	};
 	// Additional event-specific data
-	[key: string]: any;
+	[key: string]: unknown;
 }

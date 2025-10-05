@@ -65,8 +65,12 @@ fi
 
 if [[ $TUNNEL -eq 1 ]]; then
   if [[ $JSON_OUTPUT -eq 0 ]]; then echo "[diagnose] Validating tunnel"; fi
-  if output_tunnel=$(./scripts/mcp/validate_cloudflare_tunnel.sh 2>&1); then
-    results_tunnel="ok"
+  if output_tunnel=$(./scripts/mcp/validate_cloudflare_tunnel.sh --json 2>&1); then
+    if [[ $output_tunnel == *'"status":"skipped"'* ]]; then
+      results_tunnel="skipped"
+    else
+      results_tunnel="ok"
+    fi
   else
     code_tunnel=$?
     results_tunnel="fail"
@@ -81,12 +85,19 @@ overall=0
 if [[ $JSON_OUTPUT -eq 1 ]]; then
   # Compose JSON. Escape health_json quotes.
   health_payload=${health_json:-""}
-  printf '{"guard":{"status":"%s","exitCode":%d},"health":{"status":"%s","exitCode":%d,"payload":%s},"tunnel":{"status":"%s","exitCode":%d},"overallExitCode":%d}\n' \
-    "$results_guard" "$code_guard" "$results_health" "$code_health" "${health_payload:-null}" "$results_tunnel" "$code_tunnel" "$overall"
+  tunnel_payload="null"
+  if [[ -n ${output_tunnel:-} ]]; then
+    tunnel_payload="$output_tunnel"
+  fi
+  printf '{"guard":{"status":"%s","exitCode":%d},"health":{"status":"%s","exitCode":%d,"payload":%s},"tunnel":{"status":"%s","exitCode":%d,"payload":%s},"overallExitCode":%d}\n' \
+    "$results_guard" "$code_guard" "$results_health" "$code_health" "${health_payload:-null}" "$results_tunnel" "$code_tunnel" "$tunnel_payload" "$overall"
 else
   echo "Guard:   $results_guard (code=$code_guard)"
   echo "Health:  $results_health (code=$code_health)"
   echo "Tunnel:  $results_tunnel (code=$code_tunnel)"
+  if [[ -n ${output_tunnel:-} ]]; then
+    echo "Tunnel JSON: $output_tunnel"
+  fi
   echo "Overall exit code: $overall"
   [[ -n ${health_json:-} ]] && echo "Health JSON: $health_json"
 fi

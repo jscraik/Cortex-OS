@@ -108,8 +108,7 @@ async function demonstrateMLXFirstRAG() {
 			console.log('⏳ Processing...');
 
 			const result = await pipeline.query(query, sampleDocuments, {
-				contextPrompt:
-					'You are a technical AI assistant. Provide accurate and helpful information based on the context.',
+				contextPromptId: 'sys.a2a.rag-default',
 				maxContextLength: 2000,
 			});
 

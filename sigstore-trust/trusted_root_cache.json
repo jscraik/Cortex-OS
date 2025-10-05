@@ -1,0 +1,39 @@
+{
+  "trustedRoot": {
+    "mediaType": "application/vnd.dev.sigstore.trustedroot+json;version=0.1",
+    "tlogs": [
+      {
+        "baseUrl": "https://rekor.sigstore.dev",
+        "hashAlgorithm": "SHA2_256",
+        "publicKey": {
+          "rawBytes": "LS0tLS1CRUdJTi...",
+          "keyDetails": "PKCS1_RSA_PKCS1V15",
+          "validFor": {
+            "start": "2021-01-01T00:00:00Z"
+          }
+        },
+        "logId": {
+          "keyId": "wNI9atQGlz+VWfO..."
+        }
+      }
+    ],
+    "certificateAuthorities": [
+      {
+        "subject": {
+          "organization": "sigstore.dev",
+          "commonName": "sigstore"
+        },
+        "uri": "https://fulcio.sigstore.dev",
+        "certChain": {
+          "certificates": []
+        },
+        "validFor": {
+          "start": "2021-01-01T00:00:00Z"
+        }
+      }
+    ],
+    "timestampAuthorities": []
+  },
+  "fetchedAt": "2025-10-05T21:05:16.172Z",
+  "expiresAt": "2025-10-06T21:05:16.172Z"
+}

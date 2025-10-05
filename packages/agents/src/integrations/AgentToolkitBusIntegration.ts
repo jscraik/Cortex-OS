@@ -1,5 +1,14 @@
 /**
- * Agent Toolkit A2A Bus Integration
+ * Agent Too	return {
+		publish: async (envelope: unknown) => {
+			const env = envelope as { type?: string; data?: unknown };
+			const eventHandlers = handlers.get(env.type || 'unknown') || [];
+			for (const handler of eventHandlers) {
+				try {
+					handler(env.data || env);
+				} catch (error) {
+					console.error(`Error in event handler for ${env.type || 'unknown'}:`, error);
+				}Bus Integration
  *
  * Provides A2A event integration for agent-toolkit events following the
  * brAInwav Cortex-OS Agent-to-Agent communication patterns.
@@ -15,13 +24,14 @@ const createMockBus = () => {
 	const handlers = new Map<string, Array<(data: unknown) => void>>();
 
 	return {
-		publish: async (envelope: any) => {
-			const eventHandlers = handlers.get(envelope.type) || [];
+		publish: async (envelope: unknown) => {
+			const env = envelope as { type?: string; data?: unknown };
+			const eventHandlers = handlers.get(env.type || 'unknown') || [];
 			for (const handler of eventHandlers) {
 				try {
-					handler(envelope.data || envelope);
+					handler(env.data || env);
 				} catch (error) {
-					console.error(`Error in event handler for ${envelope.type}:`, error);
+					console.error(`Error in event handler for ${env.type || 'unknown'}:`, error);
 				}
 			}
 		},
@@ -210,13 +220,14 @@ export class AgentToolkitBusIntegration extends EventEmitter {
 	private initializeHandlers(): void {
 		const handlers = Object.values(AGENT_TOOLKIT_EVENT_TYPES).map((eventType) => ({
 			type: eventType,
-			handle: async (envelope: any) => {
-				this.handleIncomingEvent(eventType, envelope.data || envelope);
+			handle: async (envelope: unknown) => {
+				const env = envelope as { data?: unknown };
+				this.handleIncomingEvent(eventType, env.data || env);
 			},
 		}));
 
 		// Bind handlers to bus
-		this.bus.bind(handlers).catch((error: any) => {
+		this.bus.bind(handlers).catch((error: unknown) => {
 			this.emit('bus:error', error);
 			console.error('Failed to bind Agent Toolkit event handlers:', error);
 		});

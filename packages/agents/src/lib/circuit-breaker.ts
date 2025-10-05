@@ -337,104 +337,111 @@ export class CircuitBreaker {
 /**
  * Circuit breaker factory for creating pre-configured instances
  */
-export class CircuitBreakerFactory {
-	private static instances = new Map<string, CircuitBreaker>();
+const circuitBreakerInstances = new Map<string, CircuitBreaker>();
 
-	/**
-	 * Get or create a named circuit breaker instance
-	 */
-	static getInstance(name: string, options?: Partial<CircuitBreakerOptions>): CircuitBreaker {
-		if (!CircuitBreakerFactory.instances.has(name)) {
-			CircuitBreakerFactory.instances.set(name, new CircuitBreaker(options));
-		}
-		return CircuitBreakerFactory.instances.get(name)!;
+/**
+ * Get or create a named circuit breaker instance
+ */
+export function getCircuitBreakerInstance(
+	name: string,
+	options?: Partial<CircuitBreakerOptions>,
+): CircuitBreaker {
+	if (!circuitBreakerInstances.has(name)) {
+		circuitBreakerInstances.set(name, new CircuitBreaker(options));
 	}
+	const instance = circuitBreakerInstances.get(name);
+	if (!instance) {
+		throw new Error(`Failed to create circuit breaker instance: ${name}`);
+	}
+	return instance;
+}
 
-	/**
-	 * Create a circuit breaker for HTTP services
-	 */
-	static createHttpCircuitBreaker(options?: Partial<CircuitBreakerOptions>): CircuitBreaker {
-		return new CircuitBreaker({
-			failureThreshold: 5,
-			successThreshold: 3,
-			resetTimeout: 30000, // 30 seconds
-			maxRetries: 3,
-			retryDelay: 1000,
-			customErrorFilter: (error) => {
-				// Don't count client errors (4xx) as circuit breaker failures
-				if (error && typeof error === 'object' && 'status' in error) {
-					const status = (error as { status: number }).status;
-					return status >= 500; // Only count server errors
-				}
-				return true;
-			},
-			...options,
-		});
-	}
+/**
+ * Create a circuit breaker for HTTP services
+ */
+export function createHttpCircuitBreaker(options?: Partial<CircuitBreakerOptions>): CircuitBreaker {
+	return new CircuitBreaker({
+		failureThreshold: 5,
+		successThreshold: 3,
+		resetTimeout: 30000, // 30 seconds
+		maxRetries: 3,
+		retryDelay: 1000,
+		customErrorFilter: (error) => {
+			// Don't count client errors (4xx) as circuit breaker failures
+			if (error && typeof error === 'object' && 'status' in error) {
+				const status = (error as { status: number }).status;
+				return status >= 500; // Only count server errors
+			}
+			return true;
+		},
+		...options,
+	});
+}
 
-	/**
-	 * Create a circuit breaker for database operations
-	 */
-	static createDatabaseCircuitBreaker(options?: Partial<CircuitBreakerOptions>): CircuitBreaker {
-		return new CircuitBreaker({
-			failureThreshold: 3,
-			successThreshold: 2,
-			resetTimeout: 60000, // 1 minute
-			maxRetries: 2,
-			retryDelay: 2000,
-			customErrorFilter: (error) => {
-				// Don't count syntax errors as circuit breaker failures
-				if (error && typeof error === 'object' && 'code' in error) {
-					const code = (error as { code: string }).code;
-					return !code.startsWith('SYNTAX_ERROR');
-				}
-				return true;
-			},
-			...options,
-		});
-	}
+/**
+ * Create a circuit breaker for database operations
+ */
+export function createDatabaseCircuitBreaker(
+	options?: Partial<CircuitBreakerOptions>,
+): CircuitBreaker {
+	return new CircuitBreaker({
+		failureThreshold: 3,
+		successThreshold: 2,
+		resetTimeout: 60000, // 1 minute
+		maxRetries: 2,
+		retryDelay: 2000,
+		customErrorFilter: (error) => {
+			// Don't count syntax errors as circuit breaker failures
+			if (error && typeof error === 'object' && 'code' in error) {
+				const code = (error as { code: string }).code;
+				return !code.startsWith('SYNTAX_ERROR');
+			}
+			return true;
+		},
+		...options,
+	});
+}
 
-	/**
-	 * Create a circuit breaker for external API calls
-	 */
-	static createApiCircuitBreaker(options?: Partial<CircuitBreakerOptions>): CircuitBreaker {
-		return new CircuitBreaker({
-			failureThreshold: 10,
-			successThreshold: 5,
-			resetTimeout: 120000, // 2 minutes
-			maxRetries: 5,
-			retryDelay: 1500,
-			...options,
-		});
-	}
+/**
+ * Create a circuit breaker for external API calls
+ */
+export function createApiCircuitBreaker(options?: Partial<CircuitBreakerOptions>): CircuitBreaker {
+	return new CircuitBreaker({
+		failureThreshold: 10,
+		successThreshold: 5,
+		resetTimeout: 120000, // 2 minutes
+		maxRetries: 5,
+		retryDelay: 1500,
+		...options,
+	});
+}
 
-	/**
-	 * Destroy all circuit breaker instances
-	 */
-	static destroyAll(): void {
-		for (const [name, instance] of CircuitBreakerFactory.instances) {
-			instance.destroy();
-			CircuitBreakerFactory.instances.delete(name);
-		}
+/**
+ * Destroy all circuit breaker instances
+ */
+export function destroyAllCircuitBreakers(): void {
+	for (const [name, instance] of circuitBreakerInstances) {
+		instance.destroy();
+		circuitBreakerInstances.delete(name);
 	}
+}
 
-	/**
-	 * Get all instance names
-	 */
-	static getInstanceNames(): string[] {
-		return Array.from(CircuitBreakerFactory.instances.keys());
-	}
+/**
+ * Get all instance names
+ */
+export function getCircuitBreakerInstanceNames(): string[] {
+	return Array.from(circuitBreakerInstances.keys());
+}
 
-	/**
-	 * Get metrics for all instances
-	 */
-	static getAllMetrics(): Record<string, CircuitBreakerMetrics> {
-		const metrics: Record<string, CircuitBreakerMetrics> = {};
-		for (const [name, instance] of CircuitBreakerFactory.instances) {
-			metrics[name] = instance.getMetrics();
-		}
-		return metrics;
+/**
+ * Get metrics for all instances
+ */
+export function getAllCircuitBreakerMetrics(): Record<string, CircuitBreakerMetrics> {
+	const metrics: Record<string, CircuitBreakerMetrics> = {};
+	for (const [name, instance] of circuitBreakerInstances) {
+		metrics[name] = instance.getMetrics();
 	}
+	return metrics;
 }
 
 /**

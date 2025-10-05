@@ -59,7 +59,7 @@ export class FeatureFlags extends EventEmitter {
 
 		// Check user overrides first
 		if (config.overrides && userContext.userId in config.overrides) {
-			return config.overrides[userContext.userId]!;
+			return config.overrides[userContext.userId];
 		}
 
 		// If flag is disabled, return false

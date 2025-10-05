@@ -106,7 +106,6 @@ export interface AgentConfig {
 	toolConfig?: ToolConfig;
 	memoryConfig?: MemoryConfig;
 	systemPromptId?: string;
-	systemPrompt?: string;
 	mcpEndpoint?: string;
 	// Add tools property that was missing
 	tools?: Tool[] | string[];

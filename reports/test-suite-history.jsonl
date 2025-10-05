@@ -1,0 +1,2 @@
+{"timestamp":"2025-10-05T22:20:57.489Z","passed":0,"failed":0,"skipped":0,"total":0,"duration":72676,"passRate":0,"status":"red","failurePatterns":[],"errors":["declare -- rg_error=\"\"\n"]}
+{"timestamp":"2025-10-05T22:22:27.517Z","passed":0,"failed":0,"skipped":0,"total":0,"duration":74248,"passRate":0,"status":"red","failurePatterns":[],"errors":["declare -- rg_error=\"\"\n"]}

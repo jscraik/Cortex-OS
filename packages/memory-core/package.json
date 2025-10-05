@@ -28,7 +28,7 @@
     "@cortex-os/tool-spec": "workspace:*",
     "@cortex-os/utils": "workspace:*",
     "@langchain/langgraph": "^0.4.9",
-    "@prisma/client": "5.22.0",
+    "@prisma/client": "^6.0.0",
     "@qdrant/js-client-rest": "^1.15.1",
     "better-sqlite3": "^12.2.0",
     "circuit-breaker-js": "^0.0.1",

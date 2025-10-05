@@ -70,7 +70,7 @@ export interface BudgetReconciliationResult {
 export const SpiffeIdSchema = z
 	.string()
 	.regex(
-		/^spiffe:\/\/[^/]+\/[^/]+.*$/,
+		/^spiffe:\/\/[^/]+\/[^/]+(?:\/.*)?$/,
 		'SPIFFE ID must be in format spiffe://trust-domain/workload-path',
 	);
 
@@ -169,7 +169,7 @@ export const TrustDomainConfigSchema = z.object({
 	name: z.string(),
 	spireServerAddress: z.string(),
 	spireServerPort: z.number().default(8081),
-	workloadSocketPath: z.string().default('/tmp/spire-agent/public/api.sock'),
+	workloadSocketPath: z.string().default('/tmp/spire-agent/public/api.sock'), // eslint-disable-line sonarjs/publicly-writable-directories
 	certificateFile: z.string().optional(),
 	keyFile: z.string().optional(),
 	caBundleFile: z.string().optional(),

@@ -6,7 +6,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { getHooksSingleton } from '@cortex-os/hooks';
+import { getHooksSingleton, type HookContext } from '@cortex-os/hooks';
 import {
 	createMLXAdapter,
 	createOllamaAdapter,
@@ -112,7 +112,13 @@ export const createMasterAgentGraph = (config: {
 		const hookAdapter = hooks
 			? {
 					run: async (event: 'PreToolUse' | 'PostToolUse', ctx: Record<string, unknown>) => {
-						const hookResults = await hooks.run(event, ctx as any);
+						const hookContext: HookContext = {
+							event,
+							cwd: process.cwd(),
+							user: process.env.USER || 'unknown',
+							...ctx,
+						};
+						const hookResults = await hooks.run(event, hookContext);
 						// Return the results directly since they're already HookResult[]
 						return hookResults;
 					},
@@ -371,37 +377,4 @@ export type MasterAgentGraph = ReturnType<typeof createMasterAgentGraph>;
 // type OllamaConfig = {
 // 	chat_models: Record<string, { ollama_model?: string }>;
 // 	performance_tiers: Record<string, { models: string[] }>;
-// };
-
-// const loadOllamaConfig = (): OllamaConfig | null => {
-// 	try {
-// 		const cfgDir = process.env.CORTEX_CONFIG_DIR || path.resolve(process.cwd(), 'config');
-// 		const cfgPath = path.resolve(cfgDir, 'ollama-models.json');
-// 		const raw = fs.readFileSync(cfgPath, 'utf8');
-// 		return JSON.parse(raw) as OllamaConfig;
-// 	} catch {
-// 		return null;
-// 	}
-// };
-
-// const specializationToTier = (spec: string): 'ultra_fast' | 'balanced' | 'high_performance' => {
-// 	switch (spec) {
-// 		case 'documentation':
-// 			return 'balanced';
-// 		case 'security':
-// 			return 'high_performance';
-// 		default:
-// 			return 'ultra_fast';
-// 	}
-// };
-
-// const _selectOllamaModelBySpecializationTier = (
-// 	_specialization: string,
-// ): { modelKey: string; modelTag: string } => {
-// 	const cfg = loadOllamaConfig();
-// 	const tier = specializationToTier(_specialization);
-// 	const models = cfg?.performance_tiers?.[tier]?.models ?? [];
-// 	const firstKey = models[0] || 'deepseek-coder';
-// 	const tag = cfg?.chat_models?.[firstKey]?.ollama_model || firstKey;
-// 	return { modelKey: firstKey, modelTag: tag };
 // };

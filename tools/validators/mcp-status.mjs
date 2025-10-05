@@ -62,33 +62,57 @@ function collectEndpointCandidates() {
 	return Array.from(new Set(list.filter(Boolean)));
 }
 
-async function postJson(url, body, headers = {}) {
-	const res = await fetch(url, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...headers },
-		body: JSON.stringify(body),
-	});
-	if (!res.ok) throw new Error(`HTTP ${res.status}`);
-	const text = await res.text();
-	try {
-		return JSON.parse(text || '{}');
-	} catch {
-		return { raw: text };
+let sequence = 0;
+function createCallId(prefix) {
+	sequence += 1;
+	return `${prefix}-${Date.now()}-${sequence}`;
+}
+
+async function sendJsonRpc(endpoint, method, params = undefined) {
+	const payload = {
+		jsonrpc: '2.0',
+		id: createCallId('mcp-status'),
+		method,
+	};
+	if (typeof params !== 'undefined') {
+		payload.params = params;
 	}
+
+	const res = await fetch(endpoint, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Accept: 'application/json',
+		},
+		body: JSON.stringify(payload),
+	});
+
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	const data = await res.json();
+	if (data?.error) {
+		const message = typeof data.error.message === 'string' ? data.error.message : 'unknown error';
+		const codeSuffix = typeof data.error.code !== 'undefined' ? ` ${data.error.code}` : '';
+		throw new Error(`RPC error${codeSuffix}: ${message}`);
+	}
+	return data?.result;
 }
 
 async function tryPing(endpoint) {
 	try {
-		const result = await postJson(endpoint, { name: 'ping' });
+		const result = await sendJsonRpc(endpoint, 'ping', {});
 		return { ok: true, result };
 	} catch (error) {
 		return { ok: false, error };
 	}
 }
 
-async function tryCallTool(endpoint, toolName, args) {
+
+async function tryCallTool(endpoint, toolName, args = {}) {
 	try {
-		const result = await postJson(endpoint, { name: toolName, arguments: args });
+		const result = await sendJsonRpc(endpoint, 'tools/call', {
+			name: toolName,
+			arguments: args,
+		});
 		return { ok: true, result };
 	} catch (error) {
 		return { ok: false, error };
@@ -110,9 +134,14 @@ function includesTool(list, name) {
 	return false;
 }
 
+
 async function listTools(endpoint) {
-	const listed = await tryCallTool(endpoint, 'tools.list');
-	return listed.ok ? listed.result : null;
+	try {
+		return await sendJsonRpc(endpoint, 'tools/list', {});
+	} catch (error) {
+		warn(`tools/list failed on ${endpoint}: ${error instanceof Error ? error.message : error}`);
+		return null;
+	}
 }
 
 function validateExpectedFromListed(listResult, validateTool, expected) {

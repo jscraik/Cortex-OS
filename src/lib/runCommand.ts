@@ -11,6 +11,8 @@ export async function runCommand(
 ): Promise<{ stdout: string; stderr: string; code: number }> {
 	const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
+	let completed = false;
+
 	const execPromise = new Promise<{
 		stdout: string;
 		stderr: string;
@@ -27,32 +29,45 @@ export async function runCommand(
 		});
 
 		child.on('error', (err) => {
+			completed = true;
 			reject(err);
 		});
 
 		child.on('close', (code) => {
+			completed = true;
 			resolve({ stdout, stderr, code: code ?? 0 });
 		});
 	});
 
 	const timeoutPromise = new Promise<never>((_, reject) => {
 		const timer = setTimeout(() => {
-			// Wait for a grace period before sending SIGKILL
+			if (completed) {
+				return;
+			}
+
+			const timeoutError = new Error(`Process timed out after ${timeoutMs}ms and was terminated`);
+
 			const GRACE_PERIOD_MS = 5000;
-			const graceTimer = setTimeout(() => {
-				// If the process is still running, send SIGKILL
-				if (!child.killed) {
-					child.kill('SIGKILL');
-				}
-				reject(
-					new Error(
-						`Process timed out after ${timeoutMs}ms (SIGTERM), and was forcefully killed after ${GRACE_PERIOD_MS}ms`,
-					),
-				);
-			}, GRACE_PERIOD_MS);
-			// If the process exits during the grace period, clear the grace timer
-			child.once('exit', () => clearTimeout(graceTimer));
+			let killTimer: NodeJS.Timeout | undefined;
+
+			if (child.exitCode === null && child.signalCode === null) {
+				child.kill('SIGTERM');
+				killTimer = setTimeout(() => {
+					if (!child.killed) {
+						child.kill('SIGKILL');
+					}
+				}, GRACE_PERIOD_MS);
+				child.once('exit', () => {
+					if (killTimer) {
+						clearTimeout(killTimer);
+					}
+				});
+			}
+
+			completed = true;
+			reject(timeoutError);
 		}, timeoutMs);
+
 		execPromise.finally(() => clearTimeout(timer));
 	});
 

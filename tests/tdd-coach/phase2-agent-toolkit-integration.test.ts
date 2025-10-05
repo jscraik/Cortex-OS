@@ -9,7 +9,104 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentToolkitMCPTools } from '../../packages/agents/src/mcp/AgentToolkitMCPTools.js';
 
-describe('brAInwav Agent Toolkit Integration - Phase 2.3', () => {
+type DeterministicToolkit = {
+	search: ReturnType<typeof vi.fn>;
+	multiSearch: ReturnType<typeof vi.fn>;
+	multiSearchWithContext: ReturnType<typeof vi.fn>;
+	codemod: ReturnType<typeof vi.fn>;
+	validate: ReturnType<typeof vi.fn>;
+	validateProjectSmart: ReturnType<typeof vi.fn>;
+};
+
+const createDeterministicToolkit = (): DeterministicToolkit => {
+	const makeSearchResult = (tool: string, pattern: string, targetPath: string) => ({
+		tool,
+		op: 'search',
+		inputs: { pattern, path: targetPath },
+		results: [
+			{
+				file: `${targetPath}/${tool}.txt`,
+				line: 42,
+				text: `${tool} hit for ${pattern}`,
+			},
+		],
+	});
+
+	const search = vi.fn(async (pattern: string, targetPath: string) => {
+		if (!pattern || !targetPath) {
+			throw new Error('brAInwav search validation failed: pattern and path required');
+		}
+		return makeSearchResult('ripgrep', pattern, targetPath);
+	});
+
+	const multiSearch = vi.fn(async (pattern: string, targetPath: string) => [
+		makeSearchResult('ripgrep', pattern, targetPath),
+		makeSearchResult('semgrep', pattern, targetPath),
+		makeSearchResult('ast-grep', pattern, targetPath),
+	]);
+
+	const multiSearchWithContext = vi.fn(async (pattern: string, targetPath: string) => ({
+		results: await multiSearch(pattern, targetPath),
+		context: {
+			totalTokens: 180,
+			chunks: [{ file: `${targetPath}/ripgrep.txt`, tokens: 180 }],
+		},
+	}));
+
+	const codemod = vi.fn(async (find: string, replace: string, targetPath: string) => {
+		if (!find || !targetPath) {
+			throw new Error('brAInwav codemod validation failed: find pattern and path required');
+		}
+		return {
+			tool: 'comby',
+			op: 'rewrite',
+			inputs: { find, replace, path: targetPath },
+			results: [
+				{
+					file: targetPath,
+					changes: 2,
+					preview: `${replace} // applied`,
+				},
+			],
+		};
+	});
+
+	const validate = vi.fn(async (files: string[]) => {
+		if (!files || files.length === 0) {
+			throw new Error('brAInwav validation error: no files provided');
+		}
+		return {
+			tool: 'multi-validator',
+			op: 'validate',
+			inputs: { files },
+			results: files.map((file, index) => ({
+				file,
+				severity: 'info',
+				message: `brAInwav lint OK ${index}`,
+			})),
+			summary: {
+				total: files.length,
+				errors: 0,
+				warnings: 0,
+			},
+		};
+	});
+
+	const validateProjectSmart = vi.fn(async (files: string[]) => ({
+		context: files.map((file) => ({ file, totalTokens: 64 })),
+	}));
+
+	return {
+		search,
+		multiSearch,
+		multiSearchWithContext,
+		codemod,
+		validate,
+		validateProjectSmart,
+	};
+};
+
+describe('[RED] brAInwav Agent Toolkit Integration - Phase 2.3', () => {
 	let agentToolkit: AgentToolkitMCPTools;
 	let mockEventBus: { emit: ReturnType<typeof vi.fn> };
 
@@ -18,6 +115,9 @@ describe('brAInwav Agent Toolkit Integration - Phase 2.3', () => {
 			emit: vi.fn(),
 		};
 		agentToolkit = new AgentToolkitMCPTools(undefined, mockEventBus);
+		const deterministicToolkit = createDeterministicToolkit();
+		(agentToolkit as unknown as { agentToolkit: DeterministicToolkit }).agentToolkit =
+			deterministicToolkit;
 	});
 
 	afterEach(() => {
@@ -31,9 +131,11 @@ describe('brAInwav Agent Toolkit Integration - Phase 2.3', () => {
 			const input = { pattern: 'function', path: './src' };
 
 			const result = await searchTool.handler(input);
+			const data = result.data as { results?: unknown[] };
 
 			expect(result.success).toBe(true);
-			expect(result.data).toBeDefined();
+			expect(Array.isArray(data?.results)).toBe(true);
+			expect(data?.results?.length || 0).toBeGreaterThan(0);
 			expect(result.metadata?.tool).toBe('agent_toolkit_search');
 			expect(result.metadata?.correlationId).toBeDefined();
 
@@ -54,14 +156,13 @@ describe('brAInwav Agent Toolkit Integration - Phase 2.3', () => {
 			const input = { pattern: 'brAInwav', path: './packages' };
 
 			const result = await multiSearchTool.handler(input);
+			const data = result.data as { results?: Array<{ tool: string }> };
 
 			expect(result.success).toBe(true);
-			expect(result.data).toBeDefined();
-			expect(Array.isArray(result.data)).toBe(true);
+			expect(Array.isArray(data?.results)).toBe(true);
 
 			// Should use multiple search tools (ripgrep, semgrep, ast-grep)
-			const searchResults = result.data as Array<{ tool: string }>;
-			const toolNames = searchResults.map((r) => r.tool);
+			const toolNames = (data?.results ?? []).map((r) => r.tool);
 			expect(toolNames).toContain('ripgrep');
 			expect(toolNames).toContain('semgrep');
 			expect(toolNames).toContain('ast-grep');
@@ -76,9 +177,10 @@ describe('brAInwav Agent Toolkit Integration - Phase 2.3', () => {
 			};
 
 			const result = await codemodTool.handler(input);
+			const data = result.data as { results?: Array<{ file: string; changes: number }> };
 
 			expect(result.success).toBe(true);
-			expect(result.data).toBeDefined();
+			expect(data?.results?.[0]?.changes ?? 0).toBeGreaterThan(0);
 			expect(result.metadata?.tool).toBe('agent_toolkit_codemod');
 
 			// Verify code modification event
@@ -86,7 +188,7 @@ describe('brAInwav Agent Toolkit Integration - Phase 2.3', () => {
 				expect.objectContaining({
 					type: 'agent_toolkit.code.modified',
 					data: expect.objectContaining({
-						modificationType: 'pattern_replacement',
+						modificationType: 'transform',
 					}),
 				}),
 			);
@@ -97,9 +199,10 @@ describe('brAInwav Agent Toolkit Integration - Phase 2.3', () => {
 			const input = { files: ['./src/example.ts', './src/example.js'] };
 
 			const result = await validateTool.handler(input);
+			const data = result.data as { summary?: { total: number } };
 
 			expect(result.success).toBe(true);
-			expect(result.data).toBeDefined();
+			expect(data?.summary?.total).toBe(input.files.length);
 			expect(result.metadata?.tool).toBe('agent_toolkit_validate');
 
 			// Verify validation report event

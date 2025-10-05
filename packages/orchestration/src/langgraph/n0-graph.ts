@@ -1150,7 +1150,9 @@ function resolveSystemPrompt(config: SystemPromptConfig): {
 	}
 
 	// Fall back to a minimal safe prompt when no record metadata is available
-	return { prompt: fallbackSystemPrompt() };
+	const fallback = fallbackSystemPrompt();
+	validatePromptUsage(fallback);
+	return { prompt: fallback };
 }
 
 function fallbackSystemPrompt(): string {

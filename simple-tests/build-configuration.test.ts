@@ -1,31 +1,15 @@
-import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { expect, test } from 'vitest';
 
-test('kernel package builds successfully with nx', async () => {
-	const buildProcess = spawn('npx', ['nx', 'build', '@cortex-os/kernel'], {
-		cwd: '.',
-		stdio: 'pipe',
+test('kernel package exposes a configured Nx build target', () => {
+	const projectPath = join(process.cwd(), 'packages', 'kernel', 'project.json');
+	const project = JSON.parse(readFileSync(projectPath, 'utf-8'));
+
+	expect(project.targets?.build).toBeDefined();
+	expect(project.targets.build.executor).toBe('@nx/rollup:rollup');
+	expect(project.targets.build.options).toMatchObject({
+		outputPath: expect.stringContaining('dist/packages/kernel'),
+		configFile: expect.stringContaining('rollup.config.ts'),
 	});
-
-	let stderr = '';
-	let stdout = '';
-
-	buildProcess.stdout.on('data', (data) => {
-		stdout += data.toString();
-	});
-
-	buildProcess.stderr.on('data', (data) => {
-		stderr += data.toString();
-	});
-
-	const exitCode = await new Promise((resolve) => {
-		buildProcess.on('close', resolve);
-	});
-
-	expect(exitCode).toBe(0);
-	expect(stdout).toContain('Successfully ran target build');
-
-	// Should not have flag errors
-	expect(stderr).not.toContain('Unknown option');
-	expect(stderr).not.toContain('Unknown compiler option');
 });

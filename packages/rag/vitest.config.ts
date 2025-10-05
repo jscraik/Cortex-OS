@@ -7,6 +7,8 @@ const currentDir = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
 	resolve: {
 		alias: {
+			'@cortex-os/prompts': resolve(currentDir, '..', 'prompts', 'src'),
+			'@cortex-os/observability': resolve(currentDir, '..', 'observability', 'src'),
 			'@cortex-os/agents': resolve(currentDir, '__tests__/stubs/agent-mcp-client.ts'),
 			'@cortex-os/a2a-contracts': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
 			'@cortex-os/a2a-contracts/dist/src': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),

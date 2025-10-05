@@ -35,18 +35,36 @@ export const AgentStateDataSchema = z.object({
 /**
  * Schema for agent configuration
  */
-export const AgentConfigSchema = z.object({
-	model: z.string().optional(),
-	temperature: z.number().min(0).max(2).optional(),
-	maxTokens: z.number().positive().optional(),
-	topP: z.number().min(0).max(1).optional(),
-	frequencyPenalty: z.number().min(-2).max(2).optional(),
-	presencePenalty: z.number().min(-2).max(2).optional(),
-	stop: z.array(z.string()).optional(),
-	tools: z.array(z.string()).optional(),
-	systemPromptId: z.string().optional(),
-	systemPrompt: z.string().optional(),
-});
+export const AgentConfigSchema = z
+	.object({
+		model: z.string().optional(),
+		temperature: z.number().min(0).max(2).optional(),
+		maxTokens: z.number().int().positive().optional(),
+		topP: z.number().min(0).max(1).optional(),
+		frequencyPenalty: z.number().min(-2).max(2).optional(),
+		presencePenalty: z.number().min(-2).max(2).optional(),
+		stop: z.array(z.string()).optional(),
+		tools: z.array(z.string()).optional(),
+		systemPromptId: z
+			.string()
+			.regex(/^sys\./, 'systemPromptId must reference a registered prompt')
+			.optional(),
+		systemPrompt: z
+			.never({
+				message:
+					'brAInwav agents: inline system prompts are blocked. Register the prompt and reference it with systemPromptId.',
+			})
+			.optional(),
+		timeout: z.number().int().positive().optional(),
+		retryAttempts: z.number().int().min(0).max(5).optional(),
+		securityLevel: z.enum(['low', 'medium', 'high']).optional(),
+		enableLogging: z.boolean().optional(),
+		streamingMode: z.enum(['updates', 'values']).optional(),
+		toolConfig: z.record(z.unknown()).optional(),
+		memoryConfig: z.record(z.unknown()).optional(),
+		mcpEndpoint: z.string().url().optional(),
+	})
+	.passthrough();
 
 /**
  * Schema for creating a new agent state

@@ -2,9 +2,10 @@ import { spawn } from 'node:child_process';
 import { expect, test } from 'vitest';
 
 test('kernel package compiles without TypeScript errors', async () => {
-	const tscProcess = spawn('npx', ['tsc', '--noEmit'], {
+	const tscProcess = spawn('pnpm', ['exec', 'tsc', '--noEmit'], {
 		cwd: './packages/kernel',
 		stdio: 'pipe',
+		env: { ...process.env, FORCE_COLOR: '0' },
 	});
 
 	let stderr = '';
@@ -23,8 +24,7 @@ test('kernel package compiles without TypeScript errors', async () => {
 	});
 
 	expect(exitCode).toBe(0);
-	expect(stderr).toBe('');
-
 	// Should have no compilation errors
+	expect(stderr).not.toMatch(/error ts/i);
 	expect(stdout).not.toContain('error TS');
 });

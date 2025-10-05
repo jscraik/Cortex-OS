@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { defineConfig } from 'vitest/config';
-import { resolveCoverageThresholds } from './vitest.config';
+import { resolveCoverageThresholds } from './vitest.config.js';
 
 const coverageThresholds = resolveCoverageThresholds();
 
@@ -12,13 +12,14 @@ export default defineConfig({
 		environment: 'node',
 		include: [
 			'simple-tests/**/*.test.ts',
+			'tests/dependencies/**/*.test.ts', // brAInwav dependency upgrade tests
 			'libs/typescript/contracts/tests/**/*.contract.test.ts',
 			'services/orchestration/tests/**/*.spec.ts',
 			'services/memories/tests/**/*.spec.ts',
 			'services/agents/tests/**/*.spec.ts',
 			'scripts/ci/__tests__/**/*.test.ts',
-                        'tests/tdd-coach/**/*.test.ts',
-                        'tests/scripts/**/*.test.ts',
+			'tests/tdd-coach/**/*.test.ts',
+			'tests/scripts/**/*.test.ts',
 		],
 		globals: true,
 		name: 'simple-tests',

@@ -67,6 +67,19 @@ describe('brAInwav Quality Gate Enforcer', () => {
 			const enforcer = new QualityGateEnforcer(contractPath, metricsDir);
 			const result = await enforcer.enforce();
 
+			// DEBUG: Let's see what we actually get
+			console.log('DEBUG violations:', JSON.stringify(result.violations, null, 2));
+			console.log(
+				'DEBUG regex test:',
+				/Line coverage.*94.*%.*< required 95.*%/.test('Line coverage 94% < required 95%'),
+			);
+			console.log(
+				'DEBUG stringMatching test:',
+				result.violations.some((v) =>
+					expect.stringMatching(/Line coverage.*94.*%.*< required 95.*%/).asymmetricMatch(v),
+				),
+			);
+
 			// Assert: Should fail due to insufficient line coverage
 			expect(result.passed).toBe(false);
 			expect(result.violations).toContain(

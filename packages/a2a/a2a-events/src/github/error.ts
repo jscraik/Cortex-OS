@@ -366,7 +366,8 @@ export function calculateRetryDelay(error: GitHubError, baseDelayMs: number = 10
 
 	// Exponential backoff with jitter
 	const exponentialDelay = baseDelayMs * 2 ** error.context.retry_count;
-	const jitter = Math.random() * 0.1 * exponentialDelay;
+	const jitter =
+		(crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff) * 0.1 * exponentialDelay;
 	return exponentialDelay + jitter;
 }
 

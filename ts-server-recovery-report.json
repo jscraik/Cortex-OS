@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-10-05T22:54:28.767Z",
+  "workspace": "/Users/jamiecraik/.Cortex-OS",
+  "branding": "brAInwav TypeScript Server Recovery",
+  "summary": {
+    "errors": 1,
+    "warnings": 2,
+    "actionsPerformed": 11
+  },
+  "details": {
+    "errors": [
+      "Failed to analyze tsconfig.json: Expected double-quoted property name in JSON at position 1255 (line 55 column 3)"
+    ],
+    "warnings": [
+      "Problematic extension detected: nrwl.angular-console-18.70.0",
+      "Consider disabling extension: nrwl.angular-console"
+    ],
+    "actions": [
+      "Terminated process 39110",
+      "Terminated process 72298",
+      "Terminated process 72387",
+      "Terminated process 72297",
+      "Terminated process 39231",
+      "Terminated process 39109",
+      "Cleared cache: /Users/jamiecraik/Library/Caches/typescript",
+      "Cleared cache: /Users/jamiecraik/.Cortex-OS/node_modules/.cache",
+      "Cleared cache: /Users/jamiecraik/.Cortex-OS/dist",
+      "Validated TypeScript: Version 5.9.3",
+      "Verified TSServer connection"
+    ]
+  },
+  "recommendations": [
+    "Restart VS Code after recovery",
+    "Monitor memory usage with Activity Monitor",
+    "Consider disabling non-essential extensions",
+    "Use incremental builds for large projects"
+  ]
+}

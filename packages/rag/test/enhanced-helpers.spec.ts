@@ -45,4 +45,37 @@ describe('enhanced pipeline helpers', () => {
 		expect(result.answer).toBe('ans');
 		expect(generator.generate).toHaveBeenCalled();
 	});
+
+	it('throws when contextPrompt is provided', async () => {
+		const generator = {
+			generate: vi.fn(async () => ({
+				content: 'ans',
+				provider: 'test',
+				usage: {},
+			})),
+		} as any;
+		const docs: Document[] = [{ id: '1', content: 'doc' }];
+
+		await expect(
+			generateAnswer(generator, 'q', docs, { contextPrompt: 'inline system prompt' }),
+		).rejects.toThrow(/contextPrompt is deprecated/);
+	});
+
+	it('renders registered context prompt when contextPromptId provided', async () => {
+		const generator = {
+			generate: vi.fn(async () => ({
+				content: 'ans',
+				provider: 'test',
+				usage: {},
+			})),
+		} as any;
+		const docs: Document[] = [{ id: '1', content: 'doc' }];
+
+		await generateAnswer(generator, 'q', docs, { contextPromptId: 'sys.a2a.rag-default' });
+
+		expect(generator.generate).toHaveBeenCalledTimes(1);
+		const [prompt] = generator.generate.mock.calls[0];
+		expect(prompt).toMatch(/You are a brAInwav assistant\./);
+		expect(prompt).toMatch(/Question: q/);
+	});
 });

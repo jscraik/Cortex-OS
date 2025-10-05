@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "brAInwav MCP Diagnostics Payloads",
+  "type": "object",
+  "properties": {
+    "healthProbe": {
+      "type": "object",
+      "required": ["brand", "healthy", "attemptedRestart", "port"],
+      "properties": {
+        "brand": {
+          "const": "brAInwav"
+        },
+        "healthy": {
+          "type": "boolean"
+        },
+        "recovered": {
+          "type": "boolean"
+        },
+        "attemptedRestart": {
+          "type": "boolean"
+        },
+        "restartMethod": {
+          "type": "string",
+          "enum": ["kickstart", "unload-load"],
+          "description": "LaunchAgent recovery path executed by health probe"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "raw": {
+          "type": ["string", "null"],
+          "description": "Raw response body from MCP endpoint"
+        }
+      }
+    },
+    "smokeCheck": {
+      "type": "object",
+      "required": ["brand", "checks", "timestamp"],
+      "properties": {
+        "brand": {
+          "const": "brAInwav"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["label", "status", "path"],
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["ok", "fail"]
+              },
+              "path": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "testHarness": {
+      "type": "object",
+      "required": ["brand", "status", "exitCode"],
+      "properties": {
+        "brand": {
+          "const": "brAInwav"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ok", "fail"]
+        },
+        "exitCode": {
+          "type": "integer"
+        },
+        "reporter": {
+          "type": "string"
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "logFile": {
+          "type": "string"
+        },
+        "rawOutput": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

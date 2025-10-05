@@ -1,0 +1,43 @@
+{
+  "lastUpdate": "2025-10-05T22:22:27.517Z",
+  "current": {
+    "timestamp": "2025-10-05T22:22:27.517Z",
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "total": 0,
+    "duration": 74248,
+    "passRate": 0,
+    "status": "red",
+    "failurePatterns": [],
+    "errors": [
+      "declare -- rg_error=\"\"\n"
+    ]
+  },
+  "upgradeReadiness": {
+    "isReady": false,
+    "criteria": {
+      "passRate": {
+        "value": 0,
+        "threshold": 90,
+        "met": false
+      },
+      "stability": {
+        "value": 0,
+        "threshold": 3,
+        "met": false
+      },
+      "knownIssues": {
+        "value": 0,
+        "threshold": 5,
+        "met": true
+      }
+    },
+    "blockers": [
+      "Pass rate 0.0% below threshold 90%",
+      "Only 0/3 recent runs were stable"
+    ],
+    "recommendation": "❌ Test suite requires significant fixes before dependency upgrades"
+  },
+  "nextCheck": "2025-10-05T23:22:27.518Z"
+}
