@@ -17,10 +17,6 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
-    "paths": {
-      "@cortex-os/policy": [
-        "packages/policy/src/index.ts"
-      ]
-    }
+    "ignoreDeprecations": "6.0"
   }
 }

@@ -1,24 +1,25 @@
 {
-	"extends": "../../tsconfig.json",
-	"compilerOptions": {
-		"outDir": "dist",
-		"composite": true,
-		"noEmit": false,
-		"module": "esnext",
-		"target": "es2022",
-		"moduleResolution": "bundler",
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
-		"strict": true
-	},
-	"include": [
-		"src/**/*"
-	],
-	"exclude": [
-		"dist",
-		"node_modules",
-		"**/*.test.ts",
-		"**/*.spec.ts",
-		"tests/**/*"
-	]
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "composite": true,
+    "noEmit": false,
+    "module": "esnext",
+    "target": "es2022",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "tests/**/*"
+  ]
 }

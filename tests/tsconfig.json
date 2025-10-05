@@ -5,7 +5,9 @@
     "outDir": "../dist/tests",
     "tsBuildInfoFile": "../dist/tests/.tsbuildinfo",
     "allowJs": true,
-    "checkJs": false
+    "checkJs": false,
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "../**/*.spec.ts",

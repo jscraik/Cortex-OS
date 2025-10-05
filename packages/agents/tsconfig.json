@@ -5,16 +5,8 @@
     "rootDir": "../..",
     "noEmit": false,
     "composite": true,
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@cortex-os/hooks": [
-        "../../packages/hooks/src/index.ts",
-        "../../packages/hooks/dist/index.d.ts"
-      ]
-    }
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"

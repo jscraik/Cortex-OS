@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from 'node:crypto';
 import type {
 	MemoryAnalysisInput,
 	MemoryRelationshipsInput,
@@ -9,7 +10,6 @@ import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import Database from 'better-sqlite3';
 import CircuitBreaker from 'circuit-breaker-js';
-import { createHash, randomUUID } from 'node:crypto';
 import PQueue from 'p-queue';
 import { pino } from 'pino';
 import type { CheckpointManager } from '../checkpoints/index.js';
@@ -120,8 +120,8 @@ function normalizeMetadata(
 
 	const labels = Array.isArray(candidate.labels)
 		? candidate.labels
-			.map((label) => (typeof label === 'string' ? label.trim() : ''))
-			.filter((label) => label.length > 0)
+				.map((label) => (typeof label === 'string' ? label.trim() : ''))
+				.filter((label) => label.length > 0)
 		: [];
 	if (labels.length > 0) {
 		normalized.labels = Array.from(new Set(labels));
@@ -300,8 +300,8 @@ export class LocalMemoryProvider implements MemoryProvider {
 	private normalizeStoreInput(input: MemoryStoreInput): NormalizedStoreInput {
 		const tags = Array.isArray(input.tags)
 			? input.tags
-				.map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
-				.filter((tag) => tag.length > 0)
+					.map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+					.filter((tag) => tag.length > 0)
 			: undefined;
 		const metadata = normalizeMetadata(input.metadata);
 
@@ -508,7 +508,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 			} as const;
 			const mappedDistance =
 				(distanceMap as Record<string, 'Cosine' | 'Dot' | 'Euclid' | 'Manhattan'>)[
-				this.qdrantConfig.similarity
+					this.qdrantConfig.similarity
 				] ?? 'Cosine';
 
 			type CreateCollectionOptions = Parameters<QdrantClient['createCollection']>[1];

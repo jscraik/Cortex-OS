@@ -3,8 +3,9 @@
   "compilerOptions": {
     "noEmit": true,
     "rootDir": ".",
-    "moduleResolution": "Bundler",
-    "skipLibCheck": true
+    "moduleResolution": "NodeNext",
+    "skipLibCheck": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src",

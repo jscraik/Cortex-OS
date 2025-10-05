@@ -69,3 +69,9 @@ export function loadDefaultPrompts(): void {
 loadDefaultPrompts();
 
 export { PromptEntrySchema, validatePrompt };
+export {
+	getSafePrompt,
+	ProductionPromptGuard,
+	promptGuard,
+	validatePromptUsage,
+} from './production-guard.js';

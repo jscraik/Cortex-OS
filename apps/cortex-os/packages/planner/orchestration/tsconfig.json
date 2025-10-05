@@ -1,7 +1,11 @@
 {
-	"extends": "../../../../../tsconfig.json",
-	"compilerOptions": {
-		"composite": false
-	},
-	"include": ["src"]
+  "extends": "../../../../../tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src"
+  ]
 }

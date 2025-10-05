@@ -1,23 +1,34 @@
 {
-	"extends": "../../tsconfig.json",
-	"compilerOptions": {
-		"outDir": "./dist",
-		"composite": true,
-		"module": "ES2022",
-		"target": "ES2022",
-		"moduleResolution": "node",
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"types": ["node", "vitest"],
-		"strict": false,
-		"noImplicitAny": false,
-		"skipLibCheck": true,
-		"noImplicitReturns": false,
-		"noImplicitThis": false,
-		"alwaysStrict": false,
-		"noUnusedLocals": false,
-		"noUnusedParameters": false
-	},
-        "include": ["src/**/*", "vitest.config.ts"],
-        "exclude": ["node_modules", "dist", "test"]
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "composite": true,
+    "module": "ES2022",
+    "target": "ES2022",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": [
+      "node",
+      "vitest"
+    ],
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "noImplicitReturns": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*",
+    "vitest.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test"
+  ]
 }

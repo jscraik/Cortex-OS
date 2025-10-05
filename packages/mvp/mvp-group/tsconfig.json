@@ -4,7 +4,7 @@
     "outDir": "dist",
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "NodeNext",
     "strict": true,
     "resolveJsonModule": true,
     "declaration": true,
@@ -13,7 +13,8 @@
     "allowImportingTsExtensions": true,
     "types": [
       "node"
-    ]
+    ],
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src",

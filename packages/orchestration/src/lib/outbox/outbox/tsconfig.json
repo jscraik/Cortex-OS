@@ -1,42 +1,48 @@
 {
-	"compilerOptions": {
-		"outDir": "dist",
-		"module": "es2022",
-		"target": "es2022",
-		"lib": ["es2022", "dom", "dom.iterable"],
-		"moduleResolution": "node",
-		"esModuleInterop": true,
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
-		"strict": false,
-		"noImplicitAny": false,
-		"strictNullChecks": false,
-		"strictFunctionTypes": false,
-		"strictBindCallApply": false,
-		"strictPropertyInitialization": false,
-		"noImplicitReturns": false,
-		"noImplicitThis": false,
-		"alwaysStrict": false,
-		"types": ["node", "vitest/globals"],
-		"jsx": "react-jsx",
-		"experimentalDecorators": true,
-		"declaration": false,
-		"declarationMap": false,
-		"sourceMap": true,
-		"allowJs": true,
-		"allowSyntheticDefaultImports": true,
-		"allowImportingTsExtensions": false,
-		"forceConsistentCasingInFileNames": true,
-		"isolatedModules": true,
-		"noFallthroughCasesInSwitch": true,
-		"noUnusedLocals": false,
-		"noUnusedParameters": false,
-		"downlevelIteration": true,
-		"baseUrl": ".",
-		"paths": {
-			"@cortex-os/a2a-contracts/*": ["../../a2a/a2a-contracts/src/*"],
-			"@cortex-os/a2a-core/*": ["../../a2a/a2a-core/src/*"]
-		}
-	},
-	"include": ["src", "tests"]
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "es2022",
+    "target": "es2022",
+    "lib": [
+      "es2022",
+      "dom",
+      "dom.iterable"
+    ],
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictBindCallApply": false,
+    "strictPropertyInitialization": false,
+    "noImplicitReturns": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false,
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
+    "jsx": "react-jsx",
+    "experimentalDecorators": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": true,
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": false,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "downlevelIteration": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src",
+    "tests"
+  ]
 }

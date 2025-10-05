@@ -15,7 +15,7 @@ import {
 	type SlashParseResult,
 } from '@cortex-os/commands';
 import { CortexHooks, type HookContext, type HookEvent, type HookResult } from '@cortex-os/hooks';
-import type { LoadOptions as HookLoadOptions } from '@cortex-os/hooks/src/loaders.js';
+import type { LoadOptions as HookLoadOptions } from '@cortex-os/hooks/loaders';
 import {
 	type BindKernelToolsOptions,
 	bindKernelTools,

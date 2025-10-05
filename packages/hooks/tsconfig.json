@@ -6,7 +6,9 @@
     "composite": true,
     "declaration": true,
     "emitDeclarationOnly": false,
-    "noEmit": false
+    "noEmit": false,
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*.ts",

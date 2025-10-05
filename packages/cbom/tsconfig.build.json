@@ -5,8 +5,16 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "composite": true
+    "composite": true,
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   },
-  "include": ["src/**/*.ts", "cli/**/*.ts"],
-  "exclude": ["tests/**/*", "examples/**/*"]
+  "include": [
+    "src/**/*.ts",
+    "cli/**/*.ts"
+  ],
+  "exclude": [
+    "tests/**/*",
+    "examples/**/*"
+  ]
 }

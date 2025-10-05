@@ -14,6 +14,8 @@
       "./node_modules/@types",
       "../../node_modules/@types"
     ],
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   }
 }

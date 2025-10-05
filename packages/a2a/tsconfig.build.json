@@ -1,21 +1,23 @@
 {
-	"extends": "./tsconfig.json",
-	"compilerOptions": {
-		"noEmit": false,
-		"declaration": true,
-		"emitDeclarationOnly": false,
-		"rootDir": "src",
-		"outDir": "dist"
-	},
-	"include": [
-		"src/**/*"
-	],
-	"exclude": [
-		"node_modules",
-		"dist",
-		"a2a-core/src",
-		"a2a-contracts/src",
-		"a2a-transport/src",
-		"**/*.test.ts"
-	]
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "rootDir": "src",
+    "outDir": "dist",
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "a2a-core/src",
+    "a2a-contracts/src",
+    "a2a-transport/src",
+    "**/*.test.ts"
+  ]
 }

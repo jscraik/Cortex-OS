@@ -1,27 +1,28 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "module": "ESNext",
-        "moduleResolution": "node",
-        "outDir": "../../dist/packages/a2a",
-        "declaration": true,
-        "types": [
-            "node"
-        ]
-    },
-    "include": [
-        "src/**/*",
-        "a2a-contracts/src/**/*.ts",
-        "a2a-core/src/**/*.ts"
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "../../dist/packages/a2a",
+    "declaration": true,
+    "types": [
+      "node"
     ],
-    "exclude": [
-        "jest.config.ts",
-        "src/**/*.spec.ts",
-        "src/**/*.test.ts",
-        "a2a-core/src/**/*.spec.ts",
-        "a2a-core/src/**/*.test.ts",
-        "a2a-core/src/**/__tests__/**",
-        "tests/**/*",
-        "vitest.config.ts"
-    ]
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*",
+    "a2a-contracts/src/**/*.ts",
+    "a2a-core/src/**/*.ts"
+  ],
+  "exclude": [
+    "jest.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "a2a-core/src/**/*.spec.ts",
+    "a2a-core/src/**/*.test.ts",
+    "a2a-core/src/**/__tests__/**",
+    "tests/**/*",
+    "vitest.config.ts"
+  ]
 }

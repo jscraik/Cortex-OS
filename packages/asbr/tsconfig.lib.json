@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "noEmit": false,
     "outDir": "../../dist/packages/asbr",
@@ -13,7 +13,8 @@
     "typeRoots": [
       "./node_modules/@types",
       "../../node_modules/@types"
-    ]
+    ],
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"

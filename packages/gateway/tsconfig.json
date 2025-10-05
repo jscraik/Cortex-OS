@@ -1,14 +1,15 @@
 {
-	"extends": "../../tsconfig.base.json",
-	"compilerOptions": {
-		"rootDir": "src",
-		"outDir": "dist",
-		"composite": true,
-		"noEmit": false,
-		"paths": {}
-	},
-	"include": [
-		"src",
-		"scripts"
-	]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "composite": true,
+    "noEmit": false,
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src",
+    "scripts"
+  ]
 }

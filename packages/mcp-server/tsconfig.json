@@ -7,12 +7,24 @@
     "declarationMap": true,
     "noEmit": false,
     "skipLibCheck": true,
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts"
+  ],
   "references": [
-    { "path": "../memory-core" },
-    { "path": "../tool-spec" }
+    {
+      "path": "../memory-core"
+    },
+    {
+      "path": "../tool-spec"
+    }
   ]
 }

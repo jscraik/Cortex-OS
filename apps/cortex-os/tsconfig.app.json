@@ -1,29 +1,30 @@
 {
-    "extends": "../../tsconfig.base.json",
-    "compilerOptions": {
-        "module": "esnext",
-        "moduleResolution": "bundler",
-        "outDir": "../../dist/apps/cortex-os",
-        "declaration": true,
-        "types": [
-            "node",
-            "react",
-            "react-dom"
-        ],
-        "jsx": "react-jsx",
-        "typeRoots": [
-            "./node_modules/@types",
-            "../../node_modules/@types"
-        ]
-    },
-    "include": [
-        "src/**/*"
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "NodeNext",
+    "outDir": "../../dist/apps/cortex-os",
+    "declaration": true,
+    "types": [
+      "node",
+      "react",
+      "react-dom"
     ],
-    "exclude": [
-        "jest.config.ts",
-        "src/**/*.spec.ts",
-        "src/**/*.test.ts",
-        "tests/**/*",
-        "vitest.config.ts"
-    ]
+    "jsx": "react-jsx",
+    "typeRoots": [
+      "./node_modules/@types",
+      "../../node_modules/@types"
+    ],
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "jest.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "tests/**/*",
+    "vitest.config.ts"
+  ]
 }

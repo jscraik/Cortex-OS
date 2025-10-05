@@ -5,10 +5,11 @@
     "rootDir": "src",
     "module": "esnext",
     "target": "es2022",
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"

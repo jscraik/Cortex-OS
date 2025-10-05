@@ -1,20 +1,21 @@
 {
-	"extends": "../../../tsconfig.base.json",
-	"compilerOptions": {
-		"module": "ESNext",
-		"moduleResolution": "bundler",
-		"outDir": "../../../dist/packages/a2a/a2a-events",
-		"declaration": true,
-		"types": [
-			"node"
-		]
-	},
-	"include": [
-		"src/**/*.ts"
-	],
-	"exclude": [
-		"jest.config.ts",
-		"src/**/*.spec.ts",
-		"src/**/*.test.ts"
-	]
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "../../../dist/packages/a2a/a2a-events",
+    "declaration": true,
+    "types": [
+      "node"
+    ],
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "jest.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ]
 }

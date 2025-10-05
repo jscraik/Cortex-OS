@@ -7,7 +7,7 @@
       "DOM"
     ],
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowJs": true,
@@ -25,7 +25,8 @@
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"

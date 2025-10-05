@@ -3,10 +3,20 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "module": "esnext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
-    "types": ["vite/client", "vitest"]
+    "types": [
+      "vite/client",
+      "vitest"
+    ],
+    "ignoreDeprecations": "6.0"
   },
-  "include": ["src", "vite.config.ts"],
-  "exclude": ["dist", "node_modules"]
+  "include": [
+    "src",
+    "vite.config.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

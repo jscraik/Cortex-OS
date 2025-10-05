@@ -3,26 +3,12 @@
   "compilerOptions": {
     "composite": true,
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "declaration": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "emitDeclarationOnly": false,
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@cortex-os/a2a-contracts": [
-        "../../packages/a2a/a2a-contracts/dist"
-      ],
-      "@cortex-os/utils": [
-        "../../libs/typescript/utils/dist"
-      ],
-      "@cortex-os/telemetry": [
-        "../../libs/typescript/telemetry/dist"
-      ]
-    },
     "types": [
       "node"
     ]

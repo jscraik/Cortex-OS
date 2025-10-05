@@ -1,29 +1,30 @@
 {
-	"compilerOptions": {
-		"target": "ES2022",
-		"lib": [
-			"ES2022"
-		],
-		"module": "ESNext",
-		"moduleResolution": "node",
-		"useUnknownInCatchVariables": false,
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"strict": true,
-		"skipLibCheck": true,
-		"forceConsistentCasingInFileNames": true,
-		"declaration": true,
-		"outDir": "dist",
-		"rootDir": "src",
-		"downlevelIteration": true
-	},
-	"include": [
-		"src/**/*",
-		"src/types/**/*.d.ts"
-	],
-	"exclude": [
-		"node_modules",
-		"dist",
-		"tests"
-	]
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
+    "useUnknownInCatchVariables": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "downlevelIteration": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*",
+    "src/types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
 }

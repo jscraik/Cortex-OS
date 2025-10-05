@@ -66,7 +66,7 @@ export function createDefaultAdapters(sessionId = 'default', modelStore?: ModelS
 		setModel: async (model: string) => sessionStore.setModel(sessionId, model),
 		systemStatus: async () => {
 			try {
-				const { stdout: branch } = await execFile('git', ['rev-parse', '--abbrev-ref', HEAD']);
+				const { stdout: branch } = await execFile('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
 				return {
 					cwd: process.cwd(),
 					model: sessionStore.getModel(sessionId),

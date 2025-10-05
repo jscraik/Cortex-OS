@@ -3,9 +3,17 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "types": ["vitest/globals"],
-    "moduleResolution": "bundler"
+    "types": [
+      "vitest/globals"
+    ],
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
-  "exclude": ["dist"]
+  "include": [
+    "src/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "dist"
+  ]
 }

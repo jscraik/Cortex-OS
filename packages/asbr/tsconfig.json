@@ -11,7 +11,7 @@
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "strict": true,
@@ -31,7 +31,8 @@
     "typeRoots": [
       "./node_modules/@types",
       "../../node_modules/@types"
-    ]
+    ],
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*",

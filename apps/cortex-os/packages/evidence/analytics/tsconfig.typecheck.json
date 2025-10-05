@@ -1,24 +1,24 @@
 {
-	"compilerOptions": {
-		"module": "es2022",
-		"target": "es2015",
-		"moduleResolution": "bundler",
-		"esModuleInterop": true,
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
-		"strict": true,
-		"useUnknownInCatchVariables": false,
-		"types": [
-			"node"
-		],
-		"baseUrl": ".",
-		"downlevelIteration": true
-	},
-	"include": [
-		"src/**/*"
-	],
-	"exclude": [
-		"**/*.test.ts",
-		"**/*.spec.ts"
-	]
+  "compilerOptions": {
+    "module": "es2022",
+    "target": "es2015",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "useUnknownInCatchVariables": false,
+    "types": [
+      "node"
+    ],
+    "downlevelIteration": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }

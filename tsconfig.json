@@ -10,7 +10,7 @@
 			"dom",
 			"dom.iterable"
 		],
-		"moduleResolution": "bundler",
+		"moduleResolution": "NodeNext",
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
@@ -41,68 +41,7 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"downlevelIteration": true,
-		"baseUrl": ".",
-		"paths": {
-			"@cortex-os/*": [
-				"packages/*/dist/index.d.ts",
-				"packages/*/src/index.ts"
-			],
-			"@cortex-os/agents": [
-				"packages/agents/dist/index.d.ts",
-				"packages/agents/src/index.ts"
-			],
-			"@cortex-os/agents/*": [
-				"packages/agents/dist/*",
-				"packages/agents/src/*"
-			],
-			"@cortex-os/kernel": [
-				"packages/kernel/dist/index.d.ts",
-				"packages/kernel/src/index.ts"
-			],
-			"@cortex-os/kernel/*": [
-				"packages/kernel/dist/*",
-				"packages/kernel/src/*"
-			],
-			"@cortex-os/prp-runner": [
-				"packages/prp-runner/dist/index.d.ts",
-				"packages/prp-runner/src/index.ts"
-			],
-			"@cortex-os/prp-runner/*": [
-				"packages/prp-runner/dist/*",
-				"packages/prp-runner/src/*"
-			],
-			"@cortex-os/cortex-sec": [
-				"packages/cortex-sec/dist/index.d.ts",
-				"packages/cortex-sec/src/index.ts"
-			],
-			"@cortex-os/cortex-sec/*": [
-				"packages/cortex-sec/dist/*",
-				"packages/cortex-sec/src/*"
-			],
-			"@cortex-os/a2a-core": [
-				"packages/a2a/a2a-core/dist/index.d.ts",
-				"packages/a2a/a2a-core/src/index.ts"
-			],
-			"@cortex-os/a2a-core/*": [
-				"packages/a2a/a2a-core/dist/*",
-				"packages/a2a/a2a-core/src/*"
-			],
-			"@cortex-os/utils": [
-				"libs/typescript/utils/dist/index.d.ts",
-				"libs/typescript/utils/src/index.ts"
-			],
-			"@cortex-os/utils/*": [
-				"libs/typescript/utils/dist/*",
-				"libs/typescript/utils/src/*"
-			],
-			"@cortex-os/hooks/src/loaders.js": [
-				"packages/hooks/dist/loaders.d.ts"
-			],
-			"@cortex-os/hooks/*": [
-				"packages/hooks/dist/*",
-				"packages/hooks/src/*"
-			]
-		}
+		"ignoreDeprecations": "6.0"
 	},
 	"exclude": [
 		"node_modules",

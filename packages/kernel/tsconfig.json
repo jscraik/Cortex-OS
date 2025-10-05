@@ -1,57 +1,46 @@
 {
-	"compilerOptions": {
-		"target": "ES2022",
-		"module": "ESNext",
-		"moduleResolution": "node",
-		"allowSyntheticDefaultImports": true,
-		"esModuleInterop": true,
-		"allowJs": false,
-		"strict": true,
-		"noImplicitAny": true,
-		"noEmit": false,
-		"composite": true,
-		"declaration": true,
-		"declarationMap": true,
-		"sourceMap": true,
-		"outDir": "./dist",
-		"rootDir": "./src",
-		"resolveJsonModule": true,
-		"isolatedModules": true,
-		"skipLibCheck": true,
-		"forceConsistentCasingInFileNames": true,
-		"lib": [
-			"ES2022"
-		],
-		"types": [
-			"node",
-			"vitest/globals"
-		],
-		"baseUrl": ".",
-		"paths": {
-			"@/*": [
-				"./src/*"
-			],
-			"@cortex-os/hooks": [
-				"../hooks/dist/index.d.ts"
-			],
-			"@cortex-os/*": [
-				"../*/dist/index.d.ts"
-			]
-		}
-	},
-	"include": [
-		"src/**/*",
-		"tests/**/*"
-	],
-	"exclude": [
-		"node_modules",
-		"dist",
-		"**/*.test.ts",
-		"**/*.spec.ts"
-	],
-	"references": [
-		{
-			"path": "../../packages/hooks"
-		}
-	]
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "NodeNext",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowJs": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "noEmit": false,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/**/*",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "references": [
+    {
+      "path": "../../packages/hooks"
+    }
+  ]
 }

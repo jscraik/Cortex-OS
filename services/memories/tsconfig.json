@@ -6,8 +6,15 @@
     "composite": false,
     "declaration": true,
     "declarationMap": true,
-    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["dist", "node_modules"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

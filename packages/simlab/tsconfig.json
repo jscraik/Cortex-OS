@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowJs": false,
@@ -26,15 +26,7 @@
       "node",
       "vitest/globals"
     ],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@cortex-os/*": [
-        "../*/dist/index.d.ts"
-      ]
-    }
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"

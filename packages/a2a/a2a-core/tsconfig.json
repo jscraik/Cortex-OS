@@ -1,12 +1,14 @@
 {
-	"extends": "../../../tsconfig.json",
-	"include": [
-		"src",
-		"**/*.test.ts",
-		"**/*.spec.ts"
-	],
-	"compilerOptions": {
-		"outDir": "dist",
-		"declaration": true
-	}
+  "extends": "../../../tsconfig.json",
+  "include": [
+    "src",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "compilerOptions": {
+    "outDir": "dist",
+    "declaration": true,
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
+  }
 }

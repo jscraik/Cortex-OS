@@ -1,16 +1,18 @@
 {
-	"extends": "../../../tsconfig.json",
-	"include": [
-		"src/**/*"
-	],
-	"exclude": [
-		"node_modules",
-		"dist"
-	],
-	"compilerOptions": {
-		"outDir": "dist",
-		"rootDir": ".",
-		"declaration": true,
-		"composite": true
-	}
+  "extends": "../../../tsconfig.json",
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": ".",
+    "declaration": true,
+    "composite": true,
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
+  }
 }

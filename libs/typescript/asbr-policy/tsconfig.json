@@ -1,11 +1,17 @@
 {
   "extends": "../../../tsconfig.json",
-  "include": ["src"],
-  "exclude": ["tests"],
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "tests"
+  ],
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   }
 }

@@ -5,19 +5,11 @@
     "outDir": "dist",
     "composite": true,
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "NodeNext",
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "noEmit": false,
-    "paths": {
-      "fast-glob": [
-        "src/stubs/fast-glob.ts"
-      ],
-      "micromatch": [
-        "src/stubs/micromatch.ts"
-      ]
-    }
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src",

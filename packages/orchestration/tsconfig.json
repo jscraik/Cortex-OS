@@ -21,7 +21,8 @@
     "composite": true,
     "skipLibCheck": true,
     "noEmitOnError": false,
-    "baseUrl": "../../"
+    "moduleResolution": "NodeNext",
+    "ignoreDeprecations": "6.0"
   },
   "references": [
     {

@@ -1,24 +1,27 @@
 {
-	"compilerOptions": {
-		"outDir": "dist",
-		"module": "es2022",
-		"target": "es2022",
-		"moduleResolution": "node",
-		"esModuleInterop": true,
-		"resolveJsonModule": true,
-		"skipLibCheck": true,
-		"strict": true,
-		"types": ["node", "vitest/globals"],
-		"experimentalDecorators": true,
-		"sourceMap": true,
-		"allowSyntheticDefaultImports": true,
-		"forceConsistentCasingInFileNames": true,
-		"isolatedModules": true,
-		"noFallthroughCasesInSwitch": true,
-		"baseUrl": ".",
-		"paths": {
-			"@cortex-os/a2a-contracts/*": ["../../a2a/a2a-contracts/src/*"]
-		}
-	},
-	"include": ["src", "tests"]
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "es2022",
+    "target": "es2022",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
+    "experimentalDecorators": true,
+    "sourceMap": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "noFallthroughCasesInSwitch": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src",
+    "tests"
+  ]
 }

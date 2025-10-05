@@ -17,29 +17,7 @@
     "sourceMap": true,
     "rootDir": "../..",
     "outDir": "dist",
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
-    "paths": {
-      "@cortex-os/contracts": [
-        "../../libs/typescript/contracts/dist/src/index.d.ts"
-      ],
-      "@cortex-os/a2a-transport/stdio": [
-        "a2a-transport/dist/stdio.d.ts"
-      ],
-      "@cortex-os/a2a-transport/stdio.js": [
-        "a2a-transport/dist/stdio.d.ts"
-      ],
-      "@cortex-os/a2a-transport/*": [
-        "a2a-transport/dist/*"
-      ],
-      "@cortex-os/observability": [
-        "../observability/dist/index.d.ts",
-        "../observability/src/index.ts"
-      ],
-      "@cortex-os/telemetry": [
-        "../../libs/typescript/telemetry/dist/index.d.ts"
-      ]
-    }
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"
