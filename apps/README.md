@@ -39,9 +39,39 @@ This directory contains the main applications and user-facing components of the 
 
 #### ASBR Runtime (`cortex-os`)
 
-The main application that coordinates feature packages and provides the primary interfaces
-for Cortex-OS. This is the central orchestrator that mounts feature packages via dependency
-injection.
+The main application that coordinates feature packages and provides the primary interfaces for Cortex-OS. This is the central orchestrator that mounts feature packages via dependency injection.
+
+#### CLI (`cortex-cli`)
+
+Command-line interface providing direct access to Cortex-OS functionality, including agent management, memory operations, and system administration.
+
+#### Web UI (`cortex-webui`)
+
+Modern web-based interface for interacting with Cortex-OS, featuring real-time monitoring, agent configuration, and system management capabilities.
+
+### Development Tools
+
+#### Codex Workspace (`cortex-code`)
+
+Rust-based workspace that packages the Codex CLI/TUI along with shared crates for sandboxing, providers, and integrations.
+
+### Integration & APIs
+
+#### REST API (`api`)
+
+RESTful API server exposing Cortex-OS functionality to external applications and services.
+
+> **Why it lives outside `cortex-os`**: The API is an Express gateway that boots its own
+> HTTP stack, authentication middleware, and CloudEvents bridge. It depends on Prisma and
+> Better Auth, publishes onto the A2A bus, and exposes MCP tooling entrypoints. Folding
+> that server into the `cortex-os` runtime would co-locate web concerns with the ASBR
+> orchestrator, forcing the runtime process to host HTTP listeners, auth state, and
+> database connections it currently does not manage. Keep it as an independently deployable
+> service and communicate with the runtime over the existing event bus boundaries.
+
+#### Marketplace (`cortex-marketplace` & `cortex-marketplace-api`)
+
+Platform for discovering, sharing, and managing Cortex-OS agents, tools, and extensions.
 
 #### Python Bindings (`cortex-py`)
 
