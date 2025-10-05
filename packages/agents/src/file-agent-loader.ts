@@ -5,6 +5,7 @@ import fg from 'fast-glob';
 import * as yaml from 'yaml';
 import { ZodError } from 'zod';
 import { type SubagentConfig, SubagentConfigSchema } from './nO/contracts.js';
+import { ensureAgentPromptRegistered } from './prompt-registry.js';
 
 const TEMPLATE_GLOB = '**/*.{md,markdown,yaml,yml,json}';
 const PROJECT_DIR = '.cortex/agents';
@@ -205,7 +206,7 @@ function buildConfigInput(args: {
 	path: string;
 	name: string;
 	scope: TemplateScope;
-	systemPrompt: string;
+	systemPromptId: string;
 	description: string;
 } {
 	const { filePath, scope, name, data, prompt } = args;
@@ -213,16 +214,18 @@ function buildConfigInput(args: {
 	const tools = extractStringArray(data.tools);
 	const capabilities = extractStringArray(data.capabilities);
 
+	const promptId = ensureAgentPromptRegistered(name, scope, prompt);
+
 	const input: Partial<SubagentConfig> & {
 		path: string;
 		name: string;
 		scope: TemplateScope;
-		systemPrompt: string;
+		systemPromptId: string;
 		description: string;
 	} = {
 		name,
 		description,
-		systemPrompt: prompt,
+		systemPromptId: promptId,
 		scope,
 		path: filePath,
 	};

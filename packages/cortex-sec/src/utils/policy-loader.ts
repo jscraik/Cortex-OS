@@ -15,6 +15,7 @@ export const SecurityStandardSchema = z.enum([
 ]);
 
 export type SecurityStandard = z.infer<typeof SecurityStandardSchema>;
+const SECURITY_STANDARDS: readonly SecurityStandard[] = SecurityStandardSchema.options;
 
 export interface PolicyThresholds {
 	maxRiskScore: number;
@@ -152,7 +153,60 @@ export interface AggregateRiskResult {
 	aggregateRisk: number;
 	highestRiskStandard: SecurityStandard | null;
 	standardScores: Map<SecurityStandard, number>;
-	complianceStatus: Record<SecurityStandard, 'compliant' | 'non-compliant' | 'warning'>;
+	complianceStatus: Record<SecurityStandard, ComplianceState>;
+}
+
+type ComplianceState = 'compliant' | 'non-compliant' | 'warning';
+
+function createInitialComplianceStatus(): Record<SecurityStandard, ComplianceState> {
+	return SECURITY_STANDARDS.reduce<Record<SecurityStandard, ComplianceState>>(
+		(status, standard) => {
+			status[standard] = 'compliant';
+			return status;
+		},
+		{} as Record<SecurityStandard, ComplianceState>,
+	);
+}
+
+function calculateCadencePenalty(
+	lastScanAt: Date | undefined,
+	threshold: PolicyThresholds,
+): number {
+	if (!lastScanAt) {
+		return 0.5;
+	}
+
+	const elapsedHours = (Date.now() - lastScanAt.getTime()) / (1000 * 60 * 60);
+	if (elapsedHours <= threshold.scanCadenceHours) {
+		return 0;
+	}
+
+	return Math.min(1, (elapsedHours - threshold.scanCadenceHours) / threshold.scanCadenceHours);
+}
+
+function determineComplianceStatus(risk: number, threshold: PolicyThresholds): ComplianceState {
+	if (risk > threshold.escalationThreshold) {
+		return 'non-compliant';
+	}
+	if (risk > threshold.maxRiskScore) {
+		return 'warning';
+	}
+	return 'compliant';
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+	return Math.min(Math.max(value, minimum), maximum);
+}
+
+function calculateCompositeRisk(signal: RiskSignal, threshold: PolicyThresholds): number {
+	const riskComponent = clamp(signal.riskScore, 0, 1);
+	const violationComponent = Math.min(
+		signal.outstandingViolations / Math.max(1, threshold.maxOutstandingViolations),
+		1,
+	);
+	const cadencePenalty = calculateCadencePenalty(signal.lastScanAt, threshold);
+
+	return riskComponent * 0.6 + violationComponent * 0.3 + cadencePenalty * 0.1;
 }
 
 export async function computeAggregateRisk(
@@ -161,8 +215,7 @@ export async function computeAggregateRisk(
 ): Promise<AggregateRiskResult> {
 	const policies = await loadSecurityPolicies(policyPath);
 	const standardScores = new Map<SecurityStandard, number>();
-	const complianceStatus: Record<SecurityStandard, 'compliant' | 'non-compliant' | 'warning'> =
-		{} as any;
+	const complianceStatus = createInitialComplianceStatus();
 
 	let aggregateRisk = 0;
 	let highestRiskStandard: SecurityStandard | null = null;
@@ -175,40 +228,10 @@ export async function computeAggregateRisk(
 		}
 
 		const threshold = policy.thresholds;
-
-		// Compute composite risk score
-		const riskComponent = Math.min(Math.max(signal.riskScore, 0), 1);
-		const violationComponent = Math.min(
-			signal.outstandingViolations / Math.max(1, threshold.maxOutstandingViolations),
-			1,
-		);
-
-		// Add cadence penalty
-		let cadencePenalty = 0;
-		if (signal.lastScanAt) {
-			const elapsedHours = (Date.now() - signal.lastScanAt.getTime()) / (1000 * 60 * 60);
-			if (elapsedHours > threshold.scanCadenceHours) {
-				cadencePenalty = Math.min(
-					1,
-					(elapsedHours - threshold.scanCadenceHours) / threshold.scanCadenceHours,
-				);
-			}
-		} else {
-			cadencePenalty = 0.5; // No scan yet
-		}
-
-		const compositeRisk = riskComponent * 0.6 + violationComponent * 0.3 + cadencePenalty * 0.1;
+		const compositeRisk = calculateCompositeRisk(signal, threshold);
 
 		standardScores.set(signal.standard, compositeRisk);
-
-		// Determine compliance status
-		if (compositeRisk > threshold.escalationThreshold) {
-			complianceStatus[signal.standard] = 'non-compliant';
-		} else if (compositeRisk > threshold.maxRiskScore) {
-			complianceStatus[signal.standard] = 'warning';
-		} else {
-			complianceStatus[signal.standard] = 'compliant';
-		}
+		complianceStatus[signal.standard] = determineComplianceStatus(compositeRisk, threshold);
 
 		aggregateRisk += compositeRisk;
 
@@ -230,67 +253,125 @@ export async function computeAggregateRisk(
 
 // YAML parser fallback (simple implementation for basic YAML)
 const YAML = {
-	parse(content: string): any {
-		// Simple YAML parser for policy files
-		// In production, use js-yaml or similar
-		const lines = content.split('\n');
-		const result: any = {
-			policy: {},
-			thresholds: {},
-			remediation: {},
-			ruleset_mapping: {},
-			risk_weights: {},
-		};
-		let currentSection: string | null = null;
-		let currentKey: string | null = null;
-
-		for (const line of lines) {
-			const trimmed = line.trim();
-
-			if (trimmed.startsWith('#') || !trimmed) continue;
-
-			if (trimmed.endsWith(':')) {
-				currentSection = trimmed.slice(0, -1);
-				currentKey = null;
-				if (!result[currentSection]) {
-					result[currentSection] = {};
-				}
-				continue;
-			}
-
-			if (trimmed.includes(':')) {
-				const [key, ...valueParts] = trimmed.split(':');
-				const value = valueParts.join(':').trim();
-
-				// Convert YAML to JS values
-				let parsedValue: any = value;
-
-				if (value === 'true') parsedValue = true;
-				else if (value === 'false') parsedValue = false;
-				else if (value === 'null') parsedValue = null;
-				else if (/^\d+$/.test(value)) parsedValue = parseInt(value, 10);
-				else if (/^\d+\.\d+$/.test(value)) parsedValue = parseFloat(value);
-				else if (value.startsWith('"') && value.endsWith('"')) parsedValue = value.slice(1, -1);
-				else if (value.startsWith("'") && value.endsWith("'")) parsedValue = value.slice(1, -1);
-				else if (value.startsWith('[') && value.endsWith(']')) {
-					parsedValue = value
-						.slice(1, -1)
-						.split(',')
-						.map((v: string) => v.trim().replace(/['"]/g, ''));
-				}
-
-				if (currentSection && currentKey === null) {
-					result[currentSection][key.trim()] = parsedValue;
-					currentKey = key.trim();
-				} else if (currentKey) {
-					if (!result[currentSection][currentKey]) {
-						result[currentSection][currentKey] = {};
-					}
-					result[currentSection][currentKey][key.trim()] = parsedValue;
-				}
-			}
+	parse(content: string): unknown {
+		const state = createInitialParserState();
+		for (const rawLine of content.split('\n')) {
+			processLine(rawLine.trim(), state);
 		}
-
-		return result;
+		return state.result;
 	},
 };
+interface YAMLParserState {
+	result: Record<string, unknown>;
+	currentSection: string | null;
+	currentKey: string | null;
+}
+
+const INITIAL_SECTIONS = ['policy', 'thresholds', 'remediation', 'ruleset_mapping', 'risk_weights'];
+
+function createInitialParserState(): YAMLParserState {
+	const result: Record<string, unknown> = {};
+	for (const section of INITIAL_SECTIONS) {
+		result[section] = {};
+	}
+	return {
+		result,
+		currentSection: null,
+		currentKey: null,
+	};
+}
+
+function shouldSkipLine(line: string): boolean {
+	return line.length === 0 || line.startsWith('#');
+}
+
+function isSectionHeader(line: string): boolean {
+	return line.endsWith(':');
+}
+
+function startNewSection(line: string, state: YAMLParserState): void {
+	const section = line.slice(0, -1);
+	state.currentSection = section;
+	state.currentKey = null;
+	if (!state.result[section]) {
+		state.result[section] = {};
+	}
+}
+
+function parsePrimitiveValue(value: string): unknown {
+	const trimmed = value.trim();
+	if (trimmed === 'true') return true;
+	if (trimmed === 'false') return false;
+	if (trimmed === 'null') return null;
+	if (/^-?\d+$/.test(trimmed)) return parseInt(trimmed, 10);
+	if (/^-?\d+\.\d+$/.test(trimmed)) return parseFloat(trimmed);
+	if (trimmed.startsWith('"') && trimmed.endsWith('"')) return trimmed.slice(1, -1);
+	if (trimmed.startsWith("'") && trimmed.endsWith("'")) return trimmed.slice(1, -1);
+	if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+		return trimmed
+			.slice(1, -1)
+			.split(',')
+			.map((item) => item.trim().replace(/['"]/g, ''))
+			.filter((item) => item.length > 0);
+	}
+	return trimmed;
+}
+
+function shouldTrackSubkeys(value: unknown): boolean {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function ensureSection(state: YAMLParserState): Record<string, unknown> | null {
+	if (!state.currentSection) {
+		return null;
+	}
+	const existing = state.result[state.currentSection];
+	if (existing && typeof existing === 'object') {
+		return existing as Record<string, unknown>;
+	}
+	const fresh: Record<string, unknown> = {};
+	state.result[state.currentSection] = fresh;
+	return fresh;
+}
+
+function ensureSubSection(section: Record<string, unknown>, key: string): Record<string, unknown> {
+	const current = section[key];
+	if (typeof current === 'object' && current !== null && !Array.isArray(current)) {
+		return current as Record<string, unknown>;
+	}
+	const fresh: Record<string, unknown> = {};
+	section[key] = fresh;
+	return fresh;
+}
+
+function handleKeyValue(line: string, state: YAMLParserState): void {
+	const [rawKey, ...valueParts] = line.split(':');
+	const normalizedKey = rawKey.trim();
+	const parsedValue = parsePrimitiveValue(valueParts.join(':'));
+	const section = ensureSection(state);
+	if (!section) {
+		return;
+	}
+
+	if (state.currentKey === null) {
+		section[normalizedKey] = parsedValue;
+		state.currentKey = shouldTrackSubkeys(parsedValue) ? normalizedKey : null;
+		return;
+	}
+
+	const bucket = ensureSubSection(section, state.currentKey);
+	bucket[normalizedKey] = parsedValue;
+}
+
+function processLine(line: string, state: YAMLParserState): void {
+	if (shouldSkipLine(line)) {
+		return;
+	}
+	if (isSectionHeader(line)) {
+		startNewSection(line, state);
+		return;
+	}
+	if (line.includes(':')) {
+		handleKeyValue(line, state);
+	}
+}

@@ -268,9 +268,7 @@ export class ASBRAIIntegration {
 			// Use RAG to find supporting/contradicting information
 			const ragResult = await this.aiCapabilities.ragQuery({
 				query: `Fact-check this claim: ${evidence.claim}`,
-				systemPrompt: `You are a fact-checker. Analyze the claim for factual accuracy and consistency.
-                       Identify any potential issues, contradictions, or areas that need verification.
-                       Provide a confidence score from 0.0 to 1.0 for factual consistency.`,
+				systemPromptId: 'sys.asbr.fact-checker',
 			});
 
 			// Parse the AI response to extract insights
@@ -445,8 +443,7 @@ export class ASBRAIIntegration {
 					{
 						temperature: this.config.temperature,
 						maxTokens: this.config.maxTokens,
-						systemPrompt:
-							'You are an evidence analyst. Provide additional context, validation, and insights for the given claim.',
+						systemPromptId: 'sys.asbr.evidence-analyst',
 					},
 				);
 
@@ -526,8 +523,7 @@ export class ASBRAIIntegration {
 			try {
 				gapsAnalysis = await this.aiCapabilities.ragQuery({
 					query: `What additional evidence would strengthen this claim: "${context.claim}"?`,
-					systemPrompt:
-						'Identify evidence gaps and suggest specific additional evidence that would strengthen or validate the claim.',
+					systemPromptId: 'sys.asbr.evidence-gap',
 				});
 			} catch (err) {
 				console.warn('ragQuery for additional evidence failed (continuing):', err);

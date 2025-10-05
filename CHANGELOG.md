@@ -13,6 +13,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### brAInwav Policy Enforcement Pack (2025-01-21)
+
+- **Semgrep Rule Pack**: 10 production-grade rules in `semgrep/brainwav.yml`
+  - Production code prohibitions: Math.random(), mock responses, TODO comments, "not implemented" warnings
+  - brAInwav branding enforcement: [brAInwav] prefix in logs, errors, prompts
+  - Development hygiene: Smart Nx wrapper enforcement, no interactive prompts in CI
+  - Agent-toolkit requirement: Mandate @cortex-os/agent-toolkit for unified tooling
+  - MCP port drift detection: Track configuration changes
+  
+- **AST-Grep Rule Pack**: 3 auto-fixable rules in `ast-grep/brainwav.yml`
+  - `brand-in-throw`: Ensure `throw new Error()` includes [brAInwav] prefix
+  - `brand-in-logger`: Ensure console.log/error/warn includes [brAInwav] prefix
+  - `no-not-implemented-warn`: Convert console.warn("not implemented") to throws
+  - Auto-fix support via `pnpm lint:ast-grep:fix`
+
+- **CI Integration**: GitHub Actions workflow `security-modern.yml`
+  - New `brainwav-policy` job with diff-based Semgrep scanning
+  - Automatic PR comments with first 10 violations + summary
+  - AST-Grep validation with artifact uploads (30-day retention)
+  - Baseline comparison for incremental policy enforcement
+
+- **Development Tooling**:
+  - `scripts/guard-nx-smart.sh`: Pre-commit guard preventing raw `nx run-many` usage
+  - `tools/agent-checks/brainwavChecks.ts`: Agent-toolkit integration for prohibition scanning
+  - 5 new package.json scripts: `security:scan:brainwav*`, `lint:ast-grep:*`
+  - `.husky/pre-commit` updated with AST-Grep soft-fail checks
+
+- **Documentation**:
+  - `docs/brainwav-policy-pack.md`: Comprehensive guide with usage examples
+  - `examples/policy-violations.example.ts`: Demonstration file with violations and correct patterns
+  - Updated `.semgrepignore` with test/docs exclusions
+
+**Impact**: Automated enforcement of brAInwav production standards preventing placeholder implementations, ensuring brand consistency, and mandating Smart Nx wrapper usage across the monorepo.
+
 #### Complete TDD Implementation Plan - All Phases Delivered (2025-10-02)
 
 - ✅ **PHASE 1 COMPLETE**: Foundation & Security Infrastructure

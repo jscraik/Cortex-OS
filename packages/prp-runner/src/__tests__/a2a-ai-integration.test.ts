@@ -193,7 +193,7 @@ describe('🤖 A2A AI Agent Integration Tests', () => {
 				action: 'ai_rag_query',
 				params: {
 					query: 'What is artificial intelligence?',
-					systemPrompt: 'You are a helpful AI assistant',
+					systemPromptId: 'sys.a2a.rag-query',
 				},
 			};
 

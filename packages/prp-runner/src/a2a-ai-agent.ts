@@ -14,6 +14,7 @@ import type {
 	AgentCard,
 	AgentSkill,
 } from '@cortex-os/a2a-contracts/agents';
+import { getPrompt, validatePromptUsage } from '@cortex-os/prompts';
 import { type AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
 import { type ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
 
@@ -26,6 +27,11 @@ export class A2AAIAgent {
 	private asbrIntegration: ASBRAIIntegration;
 	private agentId: string;
 	private agentCard: AgentCard;
+
+	private static readonly DEFAULT_PROMPTS = {
+		generateText: 'sys.a2a.generate-text',
+		ragQuery: 'sys.a2a.rag-query',
+	};
 
 	constructor(agentId: string = 'asbr-ai-agent') {
 		this.agentId = agentId;
@@ -51,9 +57,9 @@ export class A2AAIAgent {
 							type: 'string',
 							description: 'The text prompt to generate from',
 						},
-						systemPrompt: {
+						systemPromptId: {
 							type: 'string',
-							description: 'Optional system prompt to guide generation',
+							description: 'Registered prompt ID (sys.*) to guide generation',
 						},
 						temperature: {
 							type: 'number',
@@ -139,9 +145,9 @@ export class A2AAIAgent {
 							type: 'string',
 							description: 'Query to answer using RAG',
 						},
-						systemPrompt: {
+						systemPromptId: {
 							type: 'string',
-							description: 'Optional system prompt for generation',
+							description: 'Registered prompt ID (sys.*) guiding the RAG response',
 						},
 					},
 					required: ['query'],
@@ -329,8 +335,20 @@ export class A2AAIAgent {
 	 * Skill implementations
 	 */
 	private async handleGenerateText(params: any): Promise<any> {
+		if (params.systemPrompt) {
+			throw new Error(
+				'brAInwav A2A agent: systemPrompt is deprecated. Supply a registered systemPromptId (sys.*).',
+			);
+		}
+
+		const promptConfig = this.resolveSystemPromptConfig({
+			promptId: params.systemPromptId,
+			fallbackId: A2AAIAgent.DEFAULT_PROMPTS.generateText,
+		});
+
 		const result = await this.aiCapabilities.generate(params.prompt, {
-			systemPrompt: params.systemPrompt,
+			systemPromptId: promptConfig.id,
+			systemPromptVariables: promptConfig.variables,
 			temperature: params.temperature,
 			maxTokens: params.maxTokens,
 		});
@@ -357,9 +375,21 @@ export class A2AAIAgent {
 	}
 
 	private async handleRAGQuery(params: any): Promise<any> {
+		if (params.systemPrompt) {
+			throw new Error(
+				'brAInwav A2A agent: systemPrompt is deprecated. Supply a registered systemPromptId (sys.*).',
+			);
+		}
+
+		const promptConfig = this.resolveSystemPromptConfig({
+			promptId: params.systemPromptId,
+			fallbackId: A2AAIAgent.DEFAULT_PROMPTS.ragQuery,
+		});
+
 		const result = await this.aiCapabilities.ragQuery({
 			query: params.query,
-			systemPrompt: params.systemPrompt,
+			systemPromptId: promptConfig.id,
+			systemPromptVariables: promptConfig.variables,
 		});
 
 		return {
@@ -401,6 +431,46 @@ export class A2AAIAgent {
 			insights: result.insights,
 			confidence: result.aiMetadata.confidence || 0.8,
 		};
+	}
+
+	private resolveSystemPromptConfig({
+		promptId,
+		fallbackId,
+		variables = {},
+	}: {
+		promptId?: string;
+		fallbackId?: string;
+		variables?: Record<string, unknown>;
+	}): { id: string; variables: Record<string, unknown> } {
+		const id = promptId ?? fallbackId;
+		if (!id) {
+			throw new Error('brAInwav A2A agent: A systemPromptId is required for this operation.');
+		}
+
+		if (!id.startsWith('sys.')) {
+			throw new Error(
+				`brAInwav A2A agent: Invalid prompt identifier '${id}'. Register the prompt and reference it with a sys.* id.`,
+			);
+		}
+
+		validatePromptUsage('', id);
+		const record = getPrompt(id);
+		if (!record) {
+			throw new Error(
+				`brAInwav A2A agent: Prompt '${id}' is not registered in the prompt library.`,
+			);
+		}
+
+		const missingVariables = (record.variables ?? []).filter(
+			(variable) => variables[variable] === undefined,
+		);
+		if (missingVariables.length > 0) {
+			throw new Error(
+				`brAInwav A2A agent: Missing prompt variables ${missingVariables.join(', ')} for prompt '${id}'.`,
+			);
+		}
+
+		return { id, variables };
 	}
 
 	/**

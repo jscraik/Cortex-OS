@@ -27,6 +27,15 @@
 		"types": [
 			"node"
 		],
+		"baseUrl": ".",
+		"paths": {
+			"@cortex-os/prompts": [
+				"packages/prompts/src/index.ts"
+			],
+			"@cortex-os/prompts/*": [
+				"packages/prompts/src/*"
+			]
+		},
 		"jsx": "react-jsx",
 		"experimentalDecorators": true,
 		"declaration": true,

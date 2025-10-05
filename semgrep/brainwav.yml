@@ -1,0 +1,160 @@
+# semgrep/brainwav.yml
+# Cortex-OS / brAInwav production standards
+# Severity levels are calibrated for PR gates.
+rules:
+  # ────────────────────────────────────────────────────────────────────────────
+  # HARD PROHIBITIONS (high)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  - id: brainwav.math-random-in-prod
+    message: >
+      [brAInwav] Math.random() found in production path. Fake data patterns are prohibited.
+    severity: ERROR
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: Math.random(...)
+      - pattern-not: |
+          // tests, stories, benchmarks may allow it
+          $X
+    paths:
+      include:
+        - "apps/**"
+        - "packages/**"
+        - "libs/**"
+      exclude:
+        - "**/*.test.*"
+        - "**/*.spec.*"
+        - "**/*.stories.*"
+        - "simple-tests/**"
+        - "scripts/**"
+    metadata:
+      category: brainwav-prohibition
+      remediation: "Replace with deterministic source or injected RNG seeded via config."
+
+  - id: brainwav.mock-response-in-prod
+    message: >
+      [brAInwav] Mock response or placeholder implementation in production path is forbidden.
+    severity: ERROR
+    languages: [javascript, typescript, python, go, rust]
+    patterns:
+      - pattern-either:
+          - pattern: '"Mock adapter response"'
+          - pattern: '"Mock response"'
+          - pattern: /will be wired later/i
+          - pattern: /fake (metric|data)/i
+    paths:
+      include: ["apps/**", "packages/**", "libs/**"]
+      exclude: ["**/*.test.*", "**/*.spec.*", "simple-tests/**", "scripts/**"]
+    metadata:
+      category: brainwav-prohibition
+      remediation: "Remove mock; wire to real implementation or guard behind test-only flag."
+
+  - id: brainwav.todo-in-prod-path
+    message: >
+      [brAInwav] TODO/FIXME present in production path. Prohibited on runtime paths.
+    severity: ERROR
+    languages: [generic]
+    patterns:
+      - pattern-either:
+          - pattern: /\/\/\s*(TODO|FIXME)\b.*/
+          - pattern: /#\s*(TODO|FIXME)\b.*/
+    paths:
+      include: ["apps/**", "packages/**", "libs/**"]
+      exclude: ["**/*.test.*", "**/*.spec.*", "simple-tests/**", "docs/**"]
+    metadata:
+      category: brainwav-prohibition
+      remediation: "Resolve or move to tracked issue; do not leave TODO/FIXME in prod."
+
+  - id: brainwav.not-implemented-warn
+    message: >
+      [brAInwav] Disabled feature via console.warn('not implemented') is prohibited. Fail fast with branded error.
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern: console.warn("not implemented")
+    fix: console.error("[brAInwav] feature not implemented"); throw new Error("[brAInwav] feature not implemented")
+    paths:
+      include: ["apps/**", "packages/**", "libs/**"]
+      exclude: ["**/*.test.*", "**/*.spec.*"]
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # BRANDING IN LOGS/ERRORS (medium)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  - id: brainwav.branding.missing-in-logs
+    message: >
+      [brAInwav] Log/error message missing brAInwav branding.
+    severity: WARNING
+    languages: [javascript, typescript, python, go, rust]
+    patterns:
+      - pattern-either:
+          - pattern: console.log($MSG)
+          - pattern: console.error($MSG)
+          - pattern: console.warn($MSG)
+          - pattern: throw new Error($MSG)
+          - pattern: logger.$L($MSG)
+      - pattern-not: |
+          $F("[brAInwav]" ... )
+    metadata:
+      category: brainwav-branding
+      remediation: 'Prefix message with "[brAInwav] " and include actionable context.'
+    paths:
+      include: ["apps/**", "packages/**", "libs/**"]
+      exclude: ["**/*.test.*", "**/*.spec.*"]
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # SMART NX / CI HYGIENE (medium)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  - id: brainwav.nx.run-many.avoid
+    message: >
+      [brAInwav] Prefer Smart Nx wrappers (pnpm *:smart) over ad-hoc `nx run-many`.
+    severity: WARNING
+    languages: [generic]
+    pattern: /nx\s+run-many\b/
+    paths:
+      include: ["**/*.sh", "package.json", ".github/workflows/**", "scripts/**"]
+
+  - id: brainwav.interactive.prompts.in-ci
+    message: >
+      [brAInwav] Interactive prompts added in CI/system scripts. Keep NX_INTERACTIVE=false and deterministic flows.
+    severity: WARNING
+    languages: [javascript, typescript, generic]
+    patterns:
+      - pattern-either:
+          - pattern: /readline|inquirer|prompt\(/i
+          - pattern: /--interactive\b/
+    paths:
+      include: [".github/workflows/**", "scripts/**", "apps/**", "packages/**"]
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # AGENT-TOOLKIT USAGE (low→medium depending on path)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  - id: brainwav.agent-toolkit.required
+    message: >
+      [brAInwav] Use @cortex-os/agent-toolkit (multiSearch/codemod/validateProject) instead of raw grep/codemods.
+    severity: WARNING
+    languages: [javascript, typescript]
+    patterns:
+      - pattern-either:
+          - pattern: /child_process\.(exec|spawn|execSync)\(.+?\b(rg|grep|sed|awk)\b/
+          - pattern: /\b(rg|grep)\b.+?-R/
+    paths:
+      include: ["apps/**", "packages/**", "libs/**"]
+      exclude: ["scripts/**", "**/*.test.*", "**/*.spec.*"]
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # MCP / PORTS DRIFT (info)
+  # ────────────────────────────────────────────────────────────────────────────
+
+  - id: brainwav.mcp.port-drift
+    message: >
+      [brAInwav] MCP/port modification detected. Verify .well-known/mcp.json & ports.env consistency.
+    severity: INFO
+    languages: [javascript, typescript, json, yaml, python, generic]
+    patterns:
+      - pattern-either:
+          - pattern: /3023|3024|3028|39300/
+          - pattern: /.well-known\/mcp\.json/
+    paths:
+      include: ["**/*"]

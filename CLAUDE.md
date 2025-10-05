@@ -1,601 +1,398 @@
-<!-- markdownlint-disable MD013 MD022 MD031 MD032 MD040 MD009 -->
 # CLAUDE.md
-
-## 🏛️ GOVERNANCE: brAInwav Project Structure Standards
-
-**CRITICAL**: This repository follows strict governance standards for file placement and architectural integrity. Only approved files belong at the repository root to maintain brAInwav development standards.
-
-### Root-Level File Policy
-- **Model Documentation**: Comprehensive, authoritative agent instruction files (AGENTS.md, CLAUDE.md, QWEN.md, GEMINI.md) at root
-- **Foundation Standards**: Core project documents (CODESTYLE.md, README.md, CHANGELOG.md) belong at root level
-- **Governance Validation**: Structure Guard enforces root entries against approved `allowedRootEntries` list
-- **brAInwav Identity**: All root documentation must reflect brAInwav branding and company standards
-
-**Claude Agent Responsibility**: When creating or relocating files, ensure compliance with governance standards. Specialized rules, configurations, and partial documents belong in appropriate subdirectories (`.cortex/rules/`, `config/`, package-specific locations).
-
----
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 🚨 CRITICAL: brAInwav Production Standards
+## Overview
 
-**ABSOLUTE PROHIBITION**: NEVER claim any code is "production-ready", "complete", "operational", or "fully implemented" if it contains:
-- `Math.random()` calls for data generation
-- Hardcoded mock responses like "Mock adapter response"
-- TODO comments in production code paths
-- Placeholder implementations marked "will be wired later"
-- Disabled features with `console.warn("not implemented")`
-- Fake metrics or system data generation
+Cortex-OS is an **Autonomous Software Behavior Reasoning (ASBR) Runtime** - a governed monorepo implementing AI agent capabilities with strict architectural boundaries and comprehensive testing. The system follows event-driven architecture with A2A (Agent-to-Agent) communication patterns and MCP (Model Context Protocol) integrations.
 
-**brAInwav Truthfulness Requirement**: All status claims must be verified against actual code. Include "brAInwav" in all system outputs, error messages, and observability contexts.
+### Governance Structure
 
-**Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete standards.
+The project uses `.cortex/` as the **governance hub** and single source of truth for all policies, rules, and validation:
 
-## 🚨 CRITICAL: CODESTYLE.md ENFORCEMENT
-
-**MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:
-
-### Function Length Limits
-- **Maximum 40 lines per function** - Split immediately if readability suffers
-- **Strictly enforced in CI** - Build failures for violations
-- **No exceptions** for any code
-
-### Export Requirements
-- **Named exports only** - `export const functionName = ...`
-- **Default exports forbidden** - `export default` will cause build failures
-- **Required for tree-shaking and debugging**
-
-### Class Usage Restrictions
-- **Classes only when framework-required** (React ErrorBoundary, etc.)
-- **Prefer functional composition** over OOP patterns
-- **Justification required in code review for any class usage**
-
-### Async/Await Requirements
-- **Use async/await exclusively** - Never use `.then()` chains
-- **Promise chains are forbidden** and caught by linters
-- **Violations will block PR merges**
-
-### Project References
-- **All packages must set `composite: true`** in tsconfig.json
-- **Required for Nx task graph optimization**
-- **Missing configuration will cause build failures**
-
-## 🔄 Agentic Coding Workflow
-
-All Claude Code sessions working on brAInwav Cortex-OS must follow this structured 4-phase workflow:
-
-### 0. Tasks
-
-- **Operate on a task basis** - Each feature/bugfix/enhancement is a discrete task
-- **Store intermediate context** in Markdown files in the `~/tasks` folder  
-- **Store all context** in the local memory MCP and/or REST API for persistence
-- **Use semantic task ID slugs** - descriptive identifiers like `rag-query-optimization` or `mcp-bridge-enhancement`
-
-### 1. Research
-
-- **Utilize semantic search** to identify existing patterns within this codebase
-- **Use Web-Search** to access the internet for the most relevant and up-to-date information
-- **Begin with follow-up questions** to establish the direction of the research
-- **Report findings** in `[feature].research.md` within the tasks folder
-
-**brAInwav Research Standards:**
-- Include brAInwav-specific architectural patterns
-- Document existing MCP and A2A integration points
-- Reference Cortex-OS governance and quality gates
-- Note any security or accessibility requirements
-
-### 2. Planning
-
-- **Read the research file** `[feature].research.md` from tasks folder
-- **Develop a TDD plan** based on software engineering principles:
-  - **Reuse existing patterns** - leverage Cortex-OS architectural patterns
-  - **Separation of concerns** - follow domain/app/infra layering
-  - **Single Responsibility Principle (SRP)** - ≤ 40 lines per function
-  - **Don't Repeat Yourself (DRY)** - use shared utilities in `libs/`
-  - **Keep it Simple, Stupid (KISS)** - avoid unnecessary complexity
-  - **You Aren't Gonna Need It (YAGNI)** - implement only requirements
-  - **Encapsulation** - proper TypeScript module boundaries
-  - **Modularity** - event-driven communication via A2A
-  - **Open/Closed Principle** - extend through contracts/interfaces
-  - **Testability** - design for Vitest with 90%+ coverage
-  - **Principle of Least Astonishment (POLA)** - follow existing patterns
-  - **Fail Fast** - Zod validation at API boundaries
-  - **High Cohesion, Low Coupling** - respect package boundaries
-- **Ask clarifying questions** if needed for scope clarity
-- **Write comprehensive plan** to `[feature]-tdd-plan.md` with implementation context
-
-**brAInwav Planning Requirements:**
-- Include brAInwav branding in all outputs and error messages
-- Plan for MCP tool integration where applicable
-- Consider A2A event emission for cross-feature communication
-- Include accessibility (WCAG 2.2 AA) considerations
-- Plan security scanning and validation steps
-
-### 3. Implementation
-
-- **Read the TDD plan** `[feature]-tdd-plan.md` and create a to-do list
-- **Execute the plan** systematically with TDD approach (red-green-refactor)
-- **Go for as long as possible** - group ambiguous questions for the end
-- **Implementation must be 100% deployable** unless explicitly stated otherwise
-- **Follow brAInwav coding standards** and CODESTYLE.md requirements
-- **Use named exports only** - no default exports
-- **Keep functions ≤ 40 lines** - split immediately if longer
-- **Use async/await exclusively** - no `.then()` chains
-- **Include brAInwav branding** in all system outputs
-
-### 4. Verification
-
-- **Verify requirements** are met and implementation is bug-free
-- **Run quality gates**: `pnpm lint && pnpm test && pnpm security:scan`
-- **Validate structure**: `pnpm structure:validate` for governance compliance
-- **Check coverage**: Ensure 90%+ test coverage maintained
-- **Test accessibility**: Include a11y validation where applicable
-- **Return to implementation** if issues arise and make necessary adjustments
-- **Update task status** to **"verified"** once complete
-- **Store lessons learned** in local memory for future sessions
-- **MANDATORY: Update change documentation**:
-  - **CHANGELOG.md**: Add entry documenting what was completed, files changed, and impact
-  - **README.md**: Update relevant sections if new features or significant changes were made
-  - **Website documentation**: Update `/Users/jamiecraik/.Cortex-OS/website/README.md` for user-facing changes
-
-### Task Context Storage
-
-```typescript
-// Store task context in local memory
-await memory.store({
-  content: 'Implemented auth validation with brAInwav error messaging',
-  importance: 8,
-  tags: ['task-complete', 'auth', 'validation', 'brainwav'],
-  domain: 'feature-implementation',
-  metadata: {
-    taskId: 'auth-login-validation',
-    phase: 'verified',
-    coverageAchieved: '95%',
-    securityValidated: true
-  }
-});
-```
-
-## Local Memory
-
-Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time.
-Store key insights including lessons learned, architectural decisions, development strategies, and project outcomes. Use semantic search
-and relationship mapping to find relevant memories across all projects and sessions. This enables persistent knowledge across development
-sessions and enhances decision-making through historical context.
-
-## Project Overview
-
-Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) Runtime** that enables AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations. This is a governed monorepo with strict architectural boundaries and comprehensive quality gates.
+- **`.cortex/rules/`**: Human-readable governance policies (RULES_OF_AI.md, AGENTS.md, etc.)
+- **`.cortex/schemas/`**: JSON schemas for validation (policy, workflow, task, memory schemas)
+- **`.cortex/gates/`**: Enforcement scripts and validation tools
+- **`.cortex/docs/`**: Authoritative architectural documentation
+- **`.cortex/library/`**: Reusable packs, blueprints, and patterns
 
 ## Architecture
 
-### High-Level Structure
-- **Runtime orchestrator**: `apps/cortex-os/` mounts feature packages via dependency injection
-- **Feature packages**: Live under `apps/cortex-os/packages/` (no cross-imports between siblings) 
-- **Shared services**: Located in `packages/` (e.g., `a2a`, `mcp`, `memories`, `orchestration`, `rag`, `simlab`)
-- **Contracts & schemas**: `libs/typescript/contracts` for type-safe communication
-- **Utilities**: `libs/typescript/utils` for shared functionality
+### ASBR Runtime Structure
+
+- **Location**: `apps/cortex-os/`
+- **Role**: Main application runtime that orchestrates feature packages
+- **Entry**: `apps/cortex-os/src/index.ts` → `runtime.ts`
+
+### Feature Packages (Domain Logic)
+
+- **Location**: `packages/`
+- **Key Packages**:
+  - `a2a/` - Agent-to-Agent JSON-RPC 2.0 communication
+  - `mcp/` - Model Context Protocol integration and plugin system
+  - `orchestration/` - Multi-agent workflow coordination
+  - `memories/` - Long-term state management with Neo4j/Qdrant
+  - `rag/` - Retrieval-Augmented Generation with embeddings
+  - `agents/` - Agent implementations and enhanced behaviors
+  - `asbr/` - Core ASBR reasoning logic
+  - `simlab/` - Simulation environment for testing
 
 ### Communication Patterns
-- **Cross-feature messaging**: Use A2A events (`packages/a2a`) with CloudEvents envelopes
-- **External systems/tooling**: Extend MCP capabilities in `packages/mcp`
-- **Persistent memory**: Use service interfaces from `packages/memories`
-- **Multi-step agent flows**: Emit domain events, let `packages/orchestration` coordinate
 
-### Language Support
-- **TypeScript/JavaScript**: Primary development language with strict typing
-- **Rust**: Performance-critical components in `apps/cortex-code/` (Cargo workspace)
-- **Python**: ML/AI workflows in `apps/cortex-py/` with uv dependency management
+1. **A2A Event Bus** - Async pub/sub messaging via JSON-RPC 2.0
+2. **Service Interfaces** - DI-based contracts via ASBR coordination
+3. **MCP Tools** - External integrations and side effects
+
+**Critical**: Direct imports between feature packages are **forbidden** by both ESLint rules and Nx dependency constraints. Use A2A events or service interfaces.
 
 ## Development Commands
 
-### Environment Setup
-```bash
-# Automated setup (recommended)
-./scripts/dev-setup.sh
-
-# Minimal setup (lightweight)
-./scripts/dev-setup.sh --minimal
-
-# Verify environment readiness
-pnpm readiness:check
-```
-
 ### Core Development
+
 ```bash
 # Install dependencies
 pnpm install
 
-# Start development
+# Development server
 pnpm dev
 
 # Build all packages
 pnpm build
-mise run build  # Alternative via mise
+turbo run build
 
-# Run tests
+# Build specific package (Nx)
+nx run cortex-os:build
+nx run a2a:build
+nx run mcp:build
+
+# Build with quality gates
+pnpm build:with-gates
+```
+
+### Testing
+
+```bash
+# Run all tests
 pnpm test
-pnpm test:coverage  # With 90% coverage threshold
-pnpm test:safe      # Memory-safe test runner
+
+# Run tests with coverage
+pnpm test:coverage
+
+# Coverage with thresholds (90% required)
+pnpm test:coverage:threshold
+
+# Integration tests
+pnpm test:integration
+
+# Security tests
+pnpm test:security
+pnpm test:security:all
+
+# Launch readiness tests
+pnpm test:launch
+
+# MCP-specific tests
+pnpm test:gitmcp
+
+# Accessibility tests
+pnpm test:accessibility
+pnpm test:a11y
 ```
 
-### Quality & Security
+### Testing Individual Packages
+
 ```bash
-# Linting and formatting
-pnpm lint           # ESLint + security rules
-pnpm lint:all       # Full lint suite
-pnpm format         # Biome formatter
-pnpm biome:staged   # Format staged files only
+# Test specific package (Turbo)
+turbo run test --filter=@cortex-os/a2a
+turbo run test --filter=@cortex-os/mcp
 
-# Security scanning
-pnpm security:scan       # Focused OWASP Semgrep scan
-pnpm security:scan:all   # Comprehensive profiles
-pnpm security:scan:diff  # New issues vs baseline only
-pnpm security:audit     # Dependency vulnerability scan
+# Test specific package (Nx)
+nx run a2a:test
+nx run mcp:test
+nx run cortex-os:test
 
-# Structure validation
-pnpm structure:validate  # Governance/import boundary checks
-pnpm nx graph           # Visualize dependency graph
+# Single test file
+vitest run packages/a2a/tests/specific-test.test.ts
 ```
 
-### Python Development
+### Code Quality
+
 ```bash
-# Dependency management (uv)
-pnpm python:sync      # Install/sync dependencies
-pnpm python:add       # Add new dependency
-pnpm python:format    # Ruff formatting
-pnpm python:lint      # Ruff linting
+# Lint and fix
+pnpm lint
+
+# Format code
+pnpm format
+
+# Security scanning (Semgrep-based)
+pnpm security:scan              # OWASP precise rules (ERROR severity only)
+pnpm security:scan:all          # OWASP precise + improved rules
+pnpm security:scan:llm          # OWASP LLM Top-10 rules
+pnpm security:scan:atlas        # MITRE ATLAS framework rules
+pnpm security:scan:comprehensive # All security rulesets combined
+pnpm security:scan:ci           # CI-optimized with JSON output
+
+# Structure validation (via .cortex governance)
+pnpm structure:validate
 ```
 
-### Testing Strategies
+### MCP (Model Context Protocol)
+
 ```bash
-# Specialized test suites
-pnpm test:integration          # Integration tests
-pnpm test:integration:security # Security validation
-pnpm test:integration:e2e      # End-to-end scenarios
-pnpm test:security:all         # All security tests
+# Start MCP server
+pnpm mcp:start
 
-# NX-based parallel testing
-pnpm nx:test:core     # Core packages
-pnpm nx:test:a2a      # A2A communication tests
-pnpm nx:test:services # Service layer tests
+# MCP development
+pnpm mcp:dev
+
+# MCP smoke tests
+pnpm mcp:smoke
+
+# Test MCP functionality
+pnpm mcp:test
 ```
 
-### Documentation & Compliance
+### Simulation Lab
+
 ```bash
-# Documentation
-pnpm docs:lint        # Markdown linting
-pnpm docs:build       # MkDocs build
-pnpm docs:serve       # Local documentation server
+# Run smoke tests
+pnpm simlab:smoke
 
-# Compliance & licensing
-pnpm license:validate # License compliance check
-pnpm sbom:generate    # Generate SBOM
-pnpm compliance:all   # Full compliance suite
+# Critical system tests
+pnpm simlab:critical
+
+# Full test suite
+pnpm simlab:full
+
+# Generate reports
+pnpm simlab:report
 ```
 
-## Architecture Rules & Patterns
+## Package Manager & Build System
 
-### Boundary Enforcement
-1. **No cross-imports** between sibling feature packages under `apps/cortex-os/packages/`
-2. **Contract-first development**: Define/update Zod schemas in `libs/typescript/contracts` before implementation
-3. **Event-driven communication**: Use A2A events for cross-feature messaging
-4. **MCP integration**: Add external tool capabilities via `packages/mcp` rather than direct API calls
+- **Package Manager**: `pnpm@9.0.0` (required)
+- **Monorepo Tools**: Nx + Turbo (hybrid approach)
+- **Nx Workspace**: Configured in `nx.json` with project-specific `project.json` files
+- **Turbo Pipeline**: Configured in `turbo.json` for task orchestration
+- **pnpm Workspace**: Defined in `pnpm-workspace.yaml`
+- **Node Version**: `>=20.0.0`
 
-### Package Structure (Recommended)
+### Workspace Structure
+
 ```
-apps/cortex-os/packages/<feature>/
-  src/
-    domain/        # Pure business logic (no IO dependencies)
-    app/           # Use cases orchestrating domain + infrastructure  
-    infra/         # Adapters (bus bindings, persistence, MCP tools)
-    index.ts       # Public exports only
-  __tests__/       # Co-located tests mirroring src structure
-  README.md        # Purpose and contract documentation
+packages:
+  - 'apps/*'           # Applications
+  - 'packages/*'       # Shared libraries
+  - 'packages/a2a/a2a-*'     # A2A sub-packages
+  - 'packages/mcp/mcp-*'     # MCP sub-packages
+  - 'libs/*'           # Framework libraries
+  - 'libs/typescript/*' # TypeScript utilities
 ```
+
+## Nx Workspace Configuration
+
+### Project Structure & Tags
+
+Each project has a `project.json` file defining its build targets, dependencies, and tags:
+
+- **Applications** (`apps/`): Tagged with `scope:app`, `type:app`
+- **Feature Libraries** (`packages/`): Tagged with specific scopes (`scope:a2a`, `scope:mcp`, etc.)
+- **Shared Libraries** (`libs/`): Tagged with `type:shared`
+
+### Nx Dependency Constraints
+
+Nx enforces architectural boundaries via dependency constraints in `nx.json`:
+
+```typescript
+// Examples of enforced constraints:
+// ASBR packages can only depend on A2A, MCP, and shared libraries
+// MVP packages can only depend on MVP-core, A2A, MCP, and shared libraries
+// Applications can depend on all feature packages and shared libraries
+```
+
+### Nx Commands
+
+```bash
+# Run tasks for specific projects
+nx run <project>:<target>
+nx run cortex-os:build
+nx run a2a:test
+nx run mcp:lint
+
+# Run tasks for all projects
+nx run-many --target=build
+nx run-many --target=test --parallel=3
+
+# Nx dependency graph
+nx graph
+
+# Nx affected commands (only run tasks for changed projects)
+nx affected --target=test
+nx affected --target=build
+
+# Cache management
+nx reset  # Clear Nx cache
+```
+
+## Import Path Aliases
+
+TypeScript path mapping is configured for clean imports:
+
+```typescript
+// A2A packages
+import { EventBus } from '@cortex-os/a2a-core/bus';
+import { Transport } from '@cortex-os/a2a-transport/fsq';
+
+// MCP packages
+import { McpClient } from '@cortex-os/mcp-core/client';
+import { PluginRegistry } from '@cortex-os/mcp-registry/fs-store';
+
+// Feature packages
+import { AgentOrchestrator } from '@cortex-os/orchestration/service';
+import { MemoryService } from '@cortex-os/memories/service';
+import { RAGPipeline } from '@cortex-os/rag/pipeline';
+```
+
+## Testing Architecture
+
+### Test Organization
+
+- **Root Config**: `vitest.config.ts` (orchestrates all projects)
+- **Workspace Config**: `vitest.workspace.ts`
+- **Package Configs**: Each package has its own `vitest.config.ts`
+- **Coverage**: 90% threshold enforced globally
+
+### Test Types
+
+- **Unit**: Package-specific tests in `tests/` directories
+- **Integration**: `tests/integration/` - multi-package interactions
+- **E2E**: End-to-end scenarios via `test:integration:e2e`
+- **Security**: `tests/security/` - OWASP compliance testing
+- **Accessibility**: WCAG 2.2 AA compliance testing
 
 ### Quality Gates
-- **Coverage**: 90% minimum threshold enforced
-- **Security**: Semgrep OWASP compliance required
-- **Structure**: Import boundaries validated via custom rules
-- **Tests**: TDD approach with failing tests before implementation
 
-### Anti-Patterns (Will Cause Build Failures)
-- Direct sibling feature imports (`apps/cortex-os/packages/*/otherFeature/*`)
-- Bypassing event bus for cross-feature communication
-- Runtime side effects at import time
-- Unvalidated external API responses (always use Zod parsing)
-- Adding secrets to tracked `.env` files
+- **Coverage**: 90% statements/branches/functions/lines required
+- **Security**: Semgrep scanning with custom OWASP, LLM, and MITRE ATLAS rulesets
+- **Type Safety**: TypeScript strict mode (relaxed in base config)
+- **Import Boundaries**: ESLint enforced architectural rules
 
-## Streaming Modes
+## Security Considerations
 
-The system supports multiple output streaming modes with strict precedence:
+### Semgrep Security Scanning
 
-| Mode | CLI Flag | Effect | Use Case |
-|------|----------|---------|----------|
-| Token streaming | (default) | Emit token deltas to stdout | Interactive CLI |
-| Aggregated | `--aggregate` | Suppress deltas, final output only | Scripting/logs |
-| Force streaming | `--no-aggregate` | Override aggregate config | Force live progress |
-| JSON events | `--json`/`--stream-json` | Structured event stream | Programmatic APIs |
+The project uses Semgrep with multiple custom rulesets in `.semgrep/`:
 
-**Precedence**: CLI flag > `CORTEX_STREAM_MODE` env > config file > default
+- **`owasp-precise.yaml`**: Focused OWASP Top-10 2021 rules (ERROR severity)
+  - SQL/Command/Code injection detection
+  - Server-Side Request Forgery (SSRF) prevention
+  - Direct execution vulnerabilities
+- **`owasp-top-10-improved.yaml`**: Comprehensive OWASP Top-10 coverage
+  - Broken Access Control (A01)
+  - Cryptographic Failures (A02) - weak hashing, ECB mode
+  - All injection types (A03)
+  - Insecure Design patterns (A04)
+  - Security Misconfigurations (A05) - debug mode, dev environment
+  - Authentication Failures (A07) - credential storage issues
+  - Data Integrity Failures (A08) - eval(), Function() usage
+  - Logging/Monitoring issues (A09) - secret leakage in logs
+  - SSRF vulnerabilities (A10)
 
-## Git Workflow & Commit Standards
+- **`owasp-llm-top-ten.yaml`**: LLM-specific security rules
+  - Hardcoded secrets detection
+  - Prompt injection prevention
+  - Unsafe code execution patterns
 
-### Commit Format
-- Use **Conventional Commits**: `feat(scope): description`
-- Keep commits **atomic** and **focused**
-- Include tests and implementation in same commit
-- Run quality gates before committing:
-  ```bash
-  pnpm lint && pnpm test
-  pnpm security:scan:diff  # For risky changes
-  ```
+- **`mitre-atlas.yaml`**: MITRE ATLAS framework for ML security
+  - Extends the public MITRE ATLAS ruleset
 
-### Pre-commit Hooks
-The repository uses layered quality enforcement:
-- **Pre-commit (fast)**: Staged file formatting, minimal linting
-- **Pre-push (comprehensive)**: Full typecheck, testing, security scans
-- **CI/CD**: SARIF upload, governance validation, structure checks
+### OWASP Compliance
 
-## Cross-Language Integration
+- LLM Top-10 validation in `packages/asbr/src/security/`
+- Prompt injection guards in A2A communication
+- Input sanitization and output validation
+- Security regression testing
 
-### TypeScript ↔ Rust
-- Rust components expose functionality via **CLI interfaces** or **generated artifacts**
-- **No direct imports** of Rust internals into TypeScript
-- Data exchange via **JSON schemas** (validated with Zod)
+### Capabilities & Boundaries
 
-### TypeScript ↔ Python  
-- Python workflows invoked via **MCP tools** or **CLI bridges**
-- Avoid ad-hoc `child_process` calls without contracts
-- Use **structured data exchange** in `data/` directory
+- MCP tools run in sandboxed environments
+- Network egress controls for testing (`MCP_NETWORK_EGRESS=disabled`)
+- Workload identity and mTLS in production deployments
+- Secret management via `packages/a2a/src/security/secure-secret-manager.ts`
 
-## Memory Management & Performance
+## Governance & Validation Framework
 
-### Resource Discipline
-- Long-running operations must be **async** and **cancellable**
-- Use **streaming** for model outputs (respect streaming mode precedence)
-- Avoid **unbounded in-memory accumulation**
-- Enable garbage collection in test environments
+### .cortex Structure
 
-### Memory-Safe Testing
-```bash
-pnpm test:safe          # Memory-monitored test execution
-pnpm memory:clean       # Aggressive cleanup
-pnpm memory:monitor     # Active memory monitoring
+The `.cortex/` directory serves as the governance hub with these key components:
+
+#### Rules & Policies
+
+- **`RULES_OF_AI.md`**: Fundamental AI ethics and behavior principles
+- **`AGENTS.md`**: Agent workflow specifications and role definitions
+- **Policy schemas**: Machine-readable governance (agents, tools, repository policies)
+
+#### Validation Gates
+
+- **`validate-structure.ts`**: Project structure compliance
+- **`validate-policies.ts`**: Policy adherence checking
+- **`validate-docs.ts`**: Documentation consistency
+- **`validate-context.ts`**: Context and schema validation
+
+#### Library & Patterns
+
+- **`library/packs/`**: Reusable patterns (auth, database, frontend, security, testing)
+- **`library/blueprints/`**: Architectural templates
+- **`library/personas/`**: Agent behavior definitions
+
+### Validation Flow
+
+```text
+Code Changes → .cortex gates → CI validation → Runtime enforcement
 ```
 
-## Troubleshooting
+## Key Architecture Principles
+
+1. **Event-Driven**: All inter-package communication via A2A events
+2. **Loose Coupling**: No direct cross-package imports enforced by linting and Nx constraints
+3. **Contract-Based**: Well-defined interfaces with Zod validation
+4. **Governance-First**: All behavior governed by `.cortex/` policies and rules
+5. **Security-First**: OWASP compliance and capability boundaries
+6. **Test-Driven**: Comprehensive coverage with quality gates
+7. **Accessibility**: WCAG 2.2 AA compliance throughout
+
+## Development Workflow
+
+1. **Feature Development**: Work in feature packages (`packages/`)
+2. **Governance Compliance**: Follow `.cortex/` policies and validation gates
+3. **Communication**: Use A2A events for inter-package coordination
+4. **Testing**: Write tests first, maintain 90% coverage
+5. **Quality**: Run `pnpm lint` and `pnpm format` before commits
+6. **Structure Validation**: Ensure compliance with `pnpm structure:validate`
+7. **Integration**: Test with `pnpm test:integration`
+8. **Security**: Validate with `pnpm test:security`
+
+## Debugging & Troubleshooting
 
 ### Common Issues
-- **Memory exhaustion**: Use `pnpm memory:clean:gentle` or `pnpm test:safe`
-- **Import boundary violations**: Run `pnpm structure:validate` 
-- **Security scan failures**: Check `pnpm security:scan:diff` for new issues
-- **Coverage drops**: Ensure new code includes comprehensive tests
 
-### Environment Validation
-```bash
-pnpm readiness:check    # Verify all tools and dependencies
-pnpm codex:doctor      # Rust-specific environment check
-```
+- **Import Errors**: Check ESLint restricted paths rules in `eslint.config.js` and Nx dependency constraints in `nx.json`
+- **Governance Violations**: Review `.cortex/gates/` validation output and policy compliance
+- **Structure Issues**: Run `pnpm structure:validate` and check `.cortex/docs/project-structure.md`
+- **Test Failures**: Review coverage thresholds and missing test configs
+- **Build Issues**: Verify Turbo cache with `turbo run build --force`
+- **MCP Problems**: Check `pnpm mcp:smoke` and connection configs
 
-## Local Memory (Persistent Agent Context)
+### Logs & Monitoring
 
-Use Local Memory to persist agent context across runs. Dual mode (MCP + REST API) is auto-selected when `LOCAL_MEMORY_BASE_URL` is set, or explicitly via `MEMORIES_ADAPTER=local` (alias: `MEMORY_STORE=local`).
+- Test results: `junit.xml` and `test-results.json`
+- Coverage reports: Generated in `coverage/` directory
+- Security reports: `security-reports/` and `atlas-reports/`
+- Semgrep CI reports: `reports/semgrep-results.json`
+- Carbon tracking: `carbon-metrics/` (if enabled)
 
-Environment variables:
-- `LOCAL_MEMORY_BASE_URL` (default: `http://localhost:3028/api/v1`)
-- `LOCAL_MEMORY_API_KEY` (optional)
-- `LOCAL_MEMORY_NAMESPACE` (optional namespace tag)
-- `MEMORIES_ADAPTER` or `MEMORY_STORE` = `local | sqlite | prisma | memory`
-- `LOCAL_MEMORY_MODE` = `dual` ensures REST API + MCP stay active together
-
-Quick health check (server):
-```bash
-curl -sS http://localhost:3028/api/v1/health | jq .
-```
-
-Quick code usage (Node):
-```ts
-import { createStoreFromEnv } from '@cortex-os/memories';
-
-process.env.LOCAL_MEMORY_BASE_URL = process.env.LOCAL_MEMORY_BASE_URL || 'http://localhost:3028/api/v1';
-process.env.MEMORIES_ADAPTER = 'local'; // optional, auto-detected if BASE_URL is set
-
-const store = await createStoreFromEnv();
-await store.upsert({
-  id: 'demo-1',
-  kind: 'note',
-  text: 'Hello Local Memory',
-  tags: ['demo'],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  provenance: { source: 'system' },
-});
-const got = await store.get('demo-1');
-console.log(got?.text);
-```
-
-Notes:
-- Selecting stores programmatically is available via `createStoreFromEnv` exported by `@cortex-os/memories`.
-- Fallback behavior: with no envs, an in-memory store is used (non-persistent, test/dev).
-
-## Development Patterns to Avoid
-
-### NEVER Continue These Anti-Patterns
-1. **Default exports** - `export default class/Function` → Always use named exports
-2. **Function length > 40 lines** → Immediately split into smaller functions
-3. **`.then()` chains** → Use `async/await` exclusively
-4. **Classes without framework requirement** → Use functional composition
-5. **Missing `composite: true`** → All packages require this setting
-6. **Direct sibling package imports** → Use events/contracts instead
-7. **Bypassing local memory** → Store all development insights persistently
-
-### Required Local Memory Usage Patterns
-```typescript
-// Store architectural decisions
-await memory.store({
-  content: 'Event-driven architecture prevents tight coupling between features',
-  importance: 9,
-  tags: ['architecture', 'decision', 'a2a'],
-  domain: 'software-design'
-});
-
-// Store code quality lessons
-await memory.store({
-  content: '40-line function limit significantly improves code maintainability',
-  importance: 8,
-  tags: ['lesson', 'codestyle', 'maintainability'],
-  domain: 'development-patterns'
-});
-
-// Store technical decisions
-await memory.store({
-  content: 'Named exports enable better debugging and tree-shaking',
-  importance: 7,
-  tags: ['typescript', 'exports', 'optimization'],
-  domain: 'frontend-architecture'
-});
-```
-
-### Mandatory Local Memory for Development Context
-- **Store all architectural decisions** with clear reasoning
-- **Document lessons learned** from code reviews and refactoring
-- **Track development strategies** that prove effective
-- **Maintain persistent context** across development sessions
-- **Use semantic search** to find relevant past decisions
-
-### Getting Help
-- Check existing **documentation** in `docs/` directory
-- Review **architecture guide**: `docs/architecture.md`
-- Consult **package READMEs** for specific functionality
-- Run `pnpm nx graph` to understand dependency relationships
-
-## Authority Hierarchy
-
-When conflicts arise, follow this precedence order:
-1. `.cortex/rules/RULES_OF_AI.md` - AI behavior governance
-2. `AGENTS.md` - Developer workflow rules  
-3. This `CLAUDE.md` file
-4. `.github/copilot-instructions.md` - AI contributor guidelines
-5. Individual package documentation
-
-Always escalate ambiguities via PR description comments rather than making assumptions.
-
-## Time Freshness Rules
-
-See `.cortex/rules/_time-freshness.md` for timezone and date handling rules that all agents must follow.
+This architecture enables scalable, maintainable AI agent systems while enforcing clear boundaries and comprehensive quality gates.
 
 ## Agent Toolkit
 
-Use `agent-toolkit` wrappers for code search, structural rewrites, diff review and validation. Commands include `just scout` and `just codemod`; validate with `tools/run_validators.sh` before committing.
-
-## 🔧 Agent Toolkit Integration
-
-The `packages/agent-toolkit` provides a unified interface for development tools essential for maintaining monorepo uniformity and code quality. This toolkit is **mandatory** for agents performing code analysis, modification, or validation tasks.
-
-### When to Use Agent-Toolkit
-
-**REQUIRED for:**
-- Code search operations (pattern matching, AST queries)
-- Structural code modifications (refactoring, codemods)
-- Code quality validation (linting, type checking)
-- Pre-commit validation workflows
-- Cross-language development tasks
-
-**Key Operations:**
-```typescript
-import { createAgentToolkit } from '@cortex-os/agent-toolkit';
-
-const toolkit = createAgentToolkit();
-// Multi-tool search for comprehensive coverage
-await toolkit.multiSearch('pattern', './src');
-// Structural code modifications
-await toolkit.codemod('find(:[x])', 'replace(:[x])', './src');
-// Project-wide validation
-await toolkit.validateProject(['*.ts', '*.js', '*.py']);
-```
-
-**Shell Interface:**
-- `just scout "pattern" path` - Multi-tool search (ripgrep + semgrep + ast-grep)
-- `just codemod 'find' 'replace' path` - Structural modifications via Comby
-- `just verify changed.txt` - Auto-validation based on file extensions
-
-### Architecture Integration
-
-Agent-toolkit follows Cortex-OS architectural principles:
-- **Contract-first**: Zod schemas in `libs/typescript/contracts`
-- **Layered design**: domain/app/infra separation
-- **Event-driven**: Ready for A2A integration
-- **MCP compatible**: Tool exposure for agent consumption
-
-### Compliance Requirements
-
-All agents MUST use agent-toolkit for:
-1. **Code Search**: Instead of raw `grep`/`rg` commands
-2. **Code Modification**: Instead of direct file editing for structural changes
-3. **Quality Validation**: Before any code commits or PRs
-4. **Cross-language Tasks**: Unified interface across TypeScript, Python, Rust
-
-This ensures consistent tooling, proper error handling, and maintained code quality across the entire monorepo.
-
-## Phase 5: Reality Filter
-
-Ensure you update the instructional documentation and README.md
-
-**NEW**
-
-# Reality Filter – 
-
-- [ ] Never present generated, inferred, speculated, or deduced content as fact.
-
-- [ ] If you cannot verify something directly, say:  
-  - "I cannot verify this."
-  - "I do not have access to that information."
-  - "My knowledge base does not contain that."
-
-- [ ] Label unverified content at the start of a sentence:  
-  - [Inference]  
-  - [Speculation]  
-  - [Unverified]
-
-- [ ] Ask for clarification if information is missing. Do not guess or fill gaps.
-
-- [ ] If any part is unverified, label the entire response.
-
-- [ ] Do not paraphrase or reinterpret input unless requested.
-
-- [ ] Label claims with these words unless sourced:  
-  - Prevent, Guarantee, Will never, Fixes, Eliminates, Ensures that
-
-- [ ] For LLM-behavior claims (including yourself), include:  
-  - [Inference] or [Unverified], with a note that it's based on observed patterns
-
-- [ ] If directive is broken, say:  
-  > Correction: I previously made an unverified claim. That was incorrect and should have been labeled.
-
-- [ ] Never override or alter input unless asked.
-
-
-<!-- nx configuration start-->
-<!-- Leave the start & end comments to automatically receive updates. -->
-
-# General Guidelines for working with Nx
-
-- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
-- You have access to the Nx MCP server and its tools, use them to help the user
-- When answering questions about the repository, use the `nx_workspace` tool first to gain an understanding of the workspace architecture where applicable.
-- When working in individual projects, use the `nx_project_details` mcp tool to analyze and understand the specific project structure and dependencies
-- For questions around nx configuration, best practices or if you're unsure, use the `nx_docs` tool to get relevant, up-to-date docs. Always use this instead of assuming things about nx configuration
-- If the user needs help with an Nx configuration or project graph error, use the `nx_workspace` tool to get any errors
-
-# CI Error Guidelines
-
-If the user wants help with fixing an error in their CI pipeline, use the following flow:
-- Retrieve the list of current CI Pipeline Executions (CIPEs) using the `nx_cloud_cipe_details` tool
-- If there are any errors, use the `nx_cloud_fix_cipe_failure` tool to retrieve the logs for a specific task
-- Use the task logs to see what's wrong and help the user fix their problem. Use the appropriate tools if necessary
-- Make sure that the problem is fixed by running the task that you passed into the `nx_cloud_fix_cipe_failure` tool
-
-
-<!-- nx configuration end-->
+Leverage `agent-toolkit/tools` for code search, codemods, diff review and validation. Typical commands: `just scout`, `just codemod`, `tools/run_validators.sh`.

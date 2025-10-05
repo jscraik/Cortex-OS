@@ -1,0 +1,4 @@
+brAInwav: tsconfig validator report - 2025-10-05T16:39:56.857Z
+scanned: 110 files
+
+Result: OK — no issues found.

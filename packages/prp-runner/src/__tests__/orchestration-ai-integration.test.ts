@@ -236,14 +236,14 @@ class AIEnhancedOrchestrationEngine {
 		// Use RAG to analyze task against historical knowledge
 		const knowledgeContext = await this.aiCapabilities.ragQuery({
 			query: `Analyze task: ${task.title}. ${task.description}. Required capabilities: ${task.requiredCapabilities.join(', ')}`,
+			systemPromptId: 'sys.a2a.rag-query',
 		});
 
 		// Generate strategic analysis
 		const strategicAnalysis = await this.aiCapabilities.generate(
 			`Provide strategic analysis for task: ${task.title}`,
 			{
-				systemPrompt:
-					'You are an expert orchestration strategist. Analyze the task and provide execution recommendations.',
+				systemPromptId: 'sys.a2a.generate-text',
 				temperature: 0.3,
 				maxTokens: 512,
 			},
@@ -298,8 +298,7 @@ Task complexity: ${analysis.complexity}
 Risk factors: ${analysis.riskFactors.join(', ')}`;
 
 		const aiPlan = await this.aiCapabilities.generate(planPrompt, {
-			systemPrompt:
-				'Generate a structured execution plan with phases, dependencies, and checkpoints.',
+			systemPromptId: 'sys.a2a.generate-text',
 			temperature: 0.2,
 			maxTokens: 1024,
 		});
@@ -329,7 +328,7 @@ Cerebrum decision: ${prpResult.metadata.cerebrum.decision}`;
 		const analysis = await this.aiCapabilities.generate(
 			`Analyze execution results and provide quality assessment: ${resultSummary}`,
 			{
-				systemPrompt: 'Analyze task execution results and provide efficiency and quality metrics.',
+				systemPromptId: 'sys.a2a.generate-text',
 				temperature: 0.1,
 				maxTokens: 512,
 			},

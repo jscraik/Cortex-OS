@@ -1,5 +1,4 @@
 // Cortex Security Compliance Package - Main exports
-
 // Refactored to focus on compliance planning and orchestration
 // Static policies moved to .semgrep/policies/
 
@@ -10,19 +9,23 @@ export {
 	type SecurityPolicyUpdatedEvent,
 	type SecurityScanStartedEvent,
 	type VulnerabilityFoundEvent,
-} from './events/cortex-sec-events.ts';
+} from './events/cortex-sec-events.js';
+
 // MCP tool definitions for security automation
+export type { CortexSecTool, CortexSecToolResponse } from './mcp/tools.js';
 export {
 	CORTEX_SEC_TOOL_ALLOWLIST,
 	cortexSecMcpTools,
-} from './mcp/tools.ts';
+} from './mcp/tools.js';
+
 // Security Integration Service
 export {
 	createSecurityIntegrationService,
 	type SecurityIntegrationInput,
 	type SecurityIntegrationResult,
 	type SecurityIntegrationService,
-} from './nO/security-integration.ts';
+} from './nO/security-integration.js';
+
 // Compliance Planning and Risk Management
 export {
 	type CompliancePlanner,
@@ -30,11 +33,12 @@ export {
 	type CompliancePlanningResult,
 	createCompliancePlanner,
 	type SecurityActionPlan,
-} from './planning/compliance-planner.ts';
+} from './planning/compliance-planner.js';
+
 // Policy Utilities (now reads from .semgrep/policies/)
 export {
 	getPolicyThresholds,
 	loadSecurityPolicies,
 	type PolicyThresholds,
 	type SecurityPolicyConfig,
-} from './utils/policy-loader.ts';
+} from './utils/policy-loader.js';

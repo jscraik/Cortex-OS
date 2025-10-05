@@ -167,12 +167,14 @@ export async function runPRPWorkflow(
 	};
 
 	const controller = new AbortController();
-	const spoolEvents =
-		(state.metadata.spoolEvents as
-			| Array<{ type: string; id: string; status?: string }>
-			| undefined) ?? [];
-	if (!state.metadata.spoolEvents) {
-		state.metadata.spoolEvents = spoolEvents;
+	const metadata = state.metadata as Record<string, unknown> & {
+		startTime?: string;
+		spoolEvents?: Array<{ type: string; id: string; status?: string }>;
+		spoolSummary?: Array<{ id: string; status: string }>;
+	};
+	const spoolEvents = metadata.spoolEvents ?? [];
+	if (!metadata.spoolEvents) {
+		metadata.spoolEvents = spoolEvents;
 	}
 
 	const spoolResults = await runSpool(
@@ -199,7 +201,7 @@ export async function runPRPWorkflow(
 		},
 	);
 
-	state.metadata.spoolSummary = spoolResults.map(({ id, status }) => ({ id, status }));
+	metadata.spoolSummary = spoolResults.map(({ id, status }) => ({ id, status }));
 
 	for (const settled of spoolResults) {
 		if (settled.status === 'fulfilled') {

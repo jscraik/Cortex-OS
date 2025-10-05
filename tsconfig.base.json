@@ -6,6 +6,8 @@
     "moduleResolution": "NodeNext",
     "target": "ES2022",
     "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "lib": [
       "ES2023",
       "DOM"
@@ -17,6 +19,87 @@
     "types": [
       "node"
     ],
+    "baseUrl": ".",
+    "paths": {
+      "@cortex-os/a2a": [
+        "packages/a2a/src/index.ts"
+      ],
+      "@cortex-os/a2a/*": [
+        "packages/a2a/src/*"
+      ],
+      "@cortex-os/a2a-contracts": [
+        "packages/a2a/a2a-contracts/dist/index.d.ts",
+        "packages/a2a/a2a-contracts/dist/index.js"
+      ],
+      "@cortex-os/a2a-contracts/*": [
+        "packages/a2a/a2a-contracts/dist/*.d.ts",
+        "packages/a2a/a2a-contracts/dist/*"
+      ],
+      "@cortex-os/agent-contracts": [
+        "libs/typescript/agent-contracts/src/index.ts"
+      ],
+      "@cortex-os/agent-contracts/*": [
+        "libs/typescript/agent-contracts/src/*"
+      ],
+      "@cortex-os/commands": [
+        "packages/commands/src/index.ts"
+      ],
+      "@cortex-os/commands/*": [
+        "packages/commands/src/*"
+      ],
+      "@cortex-os/hooks": [
+        "packages/hooks/src/index.ts"
+      ],
+      "@cortex-os/hooks/*": [
+        "packages/hooks/src/*"
+      ],
+      "@cortex-os/kernel": [
+        "packages/kernel/src/index.ts"
+      ],
+      "@cortex-os/kernel/*": [
+        "packages/kernel/src/*"
+      ],
+      "@cortex-os/observability": [
+        "packages/observability/dist/src/index.d.ts",
+        "packages/observability/dist/src/index.js"
+      ],
+      "@cortex-os/observability/*": [
+        "packages/observability/dist/src/*.d.ts",
+        "packages/observability/dist/src/*"
+      ],
+      "@cortex-os/orchestration": [
+        "packages/orchestration/src/index.ts"
+      ],
+      "@cortex-os/orchestration/*": [
+        "packages/orchestration/src/*"
+      ],
+      "@cortex-os/prompts": [
+        "packages/prompts/src/index.ts"
+      ],
+      "@cortex-os/prompts/*": [
+        "packages/prompts/src/*"
+      ],
+      "@cortex-os/proof-artifacts": [
+        "packages/proof-artifacts/src/index.ts"
+      ],
+      "@cortex-os/proof-artifacts/*": [
+        "packages/proof-artifacts/src/*"
+      ],
+      "@cortex-os/cortex-sec": [
+        "packages/cortex-sec/src/index.ts"
+      ],
+      "@cortex-os/cortex-sec/*": [
+        "packages/cortex-sec/src/*"
+      ],
+      "@cortex-os/utils": [
+        "libs/typescript/utils/dist/index.d.ts",
+        "libs/typescript/utils/dist/index.js"
+      ],
+      "@cortex-os/utils/*": [
+        "libs/typescript/utils/dist/*.d.ts",
+        "libs/typescript/utils/dist/*"
+      ]
+    },
     "noEmit": true,
     "strict": true,
     "downlevelIteration": true,

@@ -177,8 +177,24 @@ if [ -n "$PY_CHANGED" ]; then
   fi
 fi
 
+########################################
+# 5. AST-Grep brAInwav policy checks  #
+########################################
+# Soft-fail locally to avoid blocking developers
+# CI will enforce these checks strictly
+if command -v ast-grep >/dev/null 2>&1; then
+  log_info "Running AST-Grep brAInwav policy checks (soft fail)"
+  if ! pnpm lint:ast-grep:check; then
+    log_warn "AST-Grep violations detected (non-blocking locally). Run 'pnpm lint:ast-grep:fix' to auto-remediate."
+  else
+    log_ok "AST-Grep policy checks passed"
+  fi
+else
+  log_info "ast-grep not installed – skipping policy checks (install with: cargo install ast-grep)"
+fi
+
 #############################################
-# 5. Opportunistic memory regression check #
+# 6. Opportunistic memory regression check #
 #############################################
 # Non-blocking by default. Set CORTEX_MEMORY_BLOCK=1 to enforce.
 # Runs a very small snapshot + guard only if baseline + log dir exist.

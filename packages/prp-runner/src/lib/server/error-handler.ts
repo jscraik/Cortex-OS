@@ -1,9 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
-import { AppError, RateLimitError } from '../../errors';
+import { AppError, RateLimitError } from '../../errors/index.js';
 
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction): void {
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const _acknowledgeExpressSignature = _next;
 	const requestId = (res.getHeader('x-request-id') as string) || req.header('x-request-id') || '';
 	let status = 500;
 	let code = 'INTERNAL_ERROR';

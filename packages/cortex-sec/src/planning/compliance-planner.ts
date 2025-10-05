@@ -5,7 +5,7 @@ import {
 	type SecurityPolicy,
 	type SecurityStandard,
 	SecurityStandardSchema,
-} from '../policies/security-policies.ts';
+} from '../policies/security-policies.js';
 
 export interface ComplianceSnapshot {
 	standards: string[];

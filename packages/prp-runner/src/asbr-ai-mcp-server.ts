@@ -8,6 +8,7 @@
  * @maintainer @jamiescottcraik
  */
 
+import { getPrompt, validatePromptUsage } from '@cortex-os/prompts';
 import { type AICoreCapabilities, createAICapabilities } from './ai-capabilities.js';
 import { type ASBRAIIntegration, createASBRAIIntegration } from './asbr-ai-integration.js';
 
@@ -116,9 +117,9 @@ export class ASBRAIMcpServer {
 							type: 'string',
 							description: 'The text prompt to generate from',
 						},
-						systemPrompt: {
+						systemPromptId: {
 							type: 'string',
-							description: 'Optional system prompt to guide the generation',
+							description: 'Registered prompt ID (sys.*) to guide the generation',
 						},
 						temperature: {
 							type: 'number',
@@ -197,9 +198,9 @@ export class ASBRAIMcpServer {
 							type: 'string',
 							description: 'Query to answer using RAG',
 						},
-						systemPrompt: {
+						systemPromptId: {
 							type: 'string',
-							description: 'Optional system prompt for generation',
+							description: 'Registered prompt ID (sys.*) guiding the RAG response',
 						},
 					},
 					required: ['query'],
@@ -376,8 +377,20 @@ export class ASBRAIMcpServer {
 	 * Tool handler implementations
 	 */
 	private async handleGenerateText(args: any): Promise<MCPToolCallResponse> {
+		if (args.systemPrompt) {
+			throw new Error(
+				'brAInwav MCP server: systemPrompt is deprecated. Provide a registered systemPromptId (sys.*).',
+			);
+		}
+
+		const promptConfig = this.resolveSystemPromptConfig({
+			promptId: args.systemPromptId,
+			fallbackId: 'sys.a2a.generate-text',
+		});
+
 		const result = await this.aiCapabilities.generate(args.prompt, {
-			systemPrompt: args.systemPrompt,
+			systemPromptId: promptConfig.id,
+			systemPromptVariables: promptConfig.variables,
 			temperature: args.temperature,
 			maxTokens: args.maxTokens,
 		});
@@ -447,9 +460,21 @@ export class ASBRAIMcpServer {
 	}
 
 	private async handleRAGQuery(args: any): Promise<MCPToolCallResponse> {
+		if (args.systemPrompt) {
+			throw new Error(
+				'brAInwav MCP server: systemPrompt is deprecated. Provide a registered systemPromptId (sys.*).',
+			);
+		}
+
+		const promptConfig = this.resolveSystemPromptConfig({
+			promptId: args.systemPromptId,
+			fallbackId: 'sys.a2a.rag-query',
+		});
+
 		const result = await this.aiCapabilities.ragQuery({
 			query: args.query,
-			systemPrompt: args.systemPrompt,
+			systemPromptId: promptConfig.id,
+			systemPromptVariables: promptConfig.variables,
 		});
 
 		return {
@@ -521,6 +546,46 @@ export class ASBRAIMcpServer {
 				},
 			],
 		};
+	}
+
+	private resolveSystemPromptConfig({
+		promptId,
+		fallbackId,
+		variables = {},
+	}: {
+		promptId?: string;
+		fallbackId?: string;
+		variables?: Record<string, unknown>;
+	}): { id: string; variables: Record<string, unknown> } {
+		const id = promptId ?? fallbackId;
+		if (!id) {
+			throw new Error('brAInwav MCP server: A systemPromptId is required for this tool.');
+		}
+
+		if (!id.startsWith('sys.')) {
+			throw new Error(
+				`brAInwav MCP server: Invalid prompt identifier '${id}'. Register the prompt and reference it with a sys.* id.`,
+			);
+		}
+
+		validatePromptUsage('', id);
+		const record = getPrompt(id);
+		if (!record) {
+			throw new Error(
+				`brAInwav MCP server: Prompt '${id}' is not registered in the prompt library.`,
+			);
+		}
+
+		const missingVariables = (record.variables ?? []).filter(
+			(variable) => variables[variable] === undefined,
+		);
+		if (missingVariables.length > 0) {
+			throw new Error(
+				`brAInwav MCP server: Missing prompt variables ${missingVariables.join(', ')} for prompt '${id}'.`,
+			);
+		}
+
+		return { id, variables };
 	}
 
 	private async handleCollectEnhancedEvidence(args: any): Promise<MCPToolCallResponse> {

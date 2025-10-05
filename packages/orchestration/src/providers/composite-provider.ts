@@ -10,6 +10,15 @@ import { CircuitBreaker } from '../lib/circuit-breaker.js';
 import { selectMLXModel, selectOllamaModel } from '../lib/model-selection.js';
 import type { MLXAdapterApi } from '../master-agent-loop/mlx-service-bridge.js';
 
+const isMLXAdapterApi = (value: unknown): value is MLXAdapterApi =>
+	value !== null &&
+	typeof value === 'object' &&
+	typeof (value as MLXAdapterApi).isAvailable === 'function' &&
+	typeof (value as MLXAdapterApi).generateEmbedding === 'function' &&
+	typeof (value as MLXAdapterApi).generateEmbeddings === 'function' &&
+	typeof (value as MLXAdapterApi).generateChat === 'function' &&
+	typeof (value as MLXAdapterApi).rerank === 'function';
+
 /**
  * Model request schemas
  */
@@ -338,7 +347,7 @@ class OpenAIProvider implements ModelProvider {
 	readonly name = 'openai';
 	private readonly apiKey: string;
 	private readonly baseUrl: string;
-	private circuitBreaker: CircuitBreaker;
+	private readonly circuitBreaker: CircuitBreaker;
 
 	constructor(config: { apiKey: string; baseUrl?: string }) {
 		this.apiKey = config.apiKey;
@@ -464,7 +473,11 @@ export const CompositeProviderConfigSchema = z.object({
 	mlx: z
 		.object({
 			enabled: z.boolean().default(true),
-			service: z.unknown().optional(),
+			service: z
+				.custom<MLXAdapterApi>((value) => value === undefined || isMLXAdapterApi(value), {
+					message: 'MLX service must satisfy the MLXAdapterApi contract',
+				})
+				.optional(),
 			priority: z.number().min(1).max(10).default(1),
 		})
 		.optional(),
@@ -570,13 +583,13 @@ export class CompositeModelProvider extends EventEmitter {
 	/**
 	 * Execute request with fallback across providers
 	 */
-	private async executeWithFallback<T>(
-		request: EmbeddingRequest | ChatRequest | RerankRequest,
-		operation: (
-			provider: ModelProvider,
-			request: EmbeddingRequest | ChatRequest | RerankRequest,
-		) => Promise<T>,
-	): Promise<{ result: T; provider: string; attempts: number }> {
+	private async executeWithFallback<
+		RequestType extends EmbeddingRequest | ChatRequest | RerankRequest,
+		ResultType,
+	>(
+		request: RequestType,
+		operation: (provider: ModelProvider, request: RequestType) => Promise<ResultType>,
+	): Promise<{ result: ResultType; provider: string; attempts: number }> {
 		this.validateProvidersConfigured();
 
 		let lastError: Error | null = null;
@@ -603,15 +616,15 @@ export class CompositeModelProvider extends EventEmitter {
 		}
 	}
 
-	private async executeWithProvider<T>(
+	private async executeWithProvider<
+		RequestType extends EmbeddingRequest | ChatRequest | RerankRequest,
+		ResultType,
+	>(
 		provider: ModelProvider,
-		request: EmbeddingRequest | ChatRequest | RerankRequest,
-		operation: (
-			provider: ModelProvider,
-			request: EmbeddingRequest | ChatRequest | RerankRequest,
-		) => Promise<T>,
+		request: RequestType,
+		operation: (provider: ModelProvider, request: RequestType) => Promise<ResultType>,
 		attemptStart: number,
-	): Promise<T> {
+	): Promise<ResultType> {
 		const available = await provider.isAvailable();
 		if (!available) {
 			this.emit('provider-skipped', {

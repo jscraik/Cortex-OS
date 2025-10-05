@@ -7,6 +7,13 @@
  */
 
 import {
+	capturePromptUsage,
+	getPrompt,
+	getSafePrompt,
+	renderPrompt,
+	validatePromptUsage,
+} from '@cortex-os/prompts';
+import {
 	createEmbeddingAdapter,
 	createRerankerAdapter,
 	type EmbeddingAdapter,
@@ -59,7 +66,8 @@ export interface AICoreConfig {
 export interface RAGQuery {
 	query: string;
 	context?: string[];
-	systemPrompt?: string;
+	systemPromptId?: string;
+	systemPromptVariables?: Record<string, unknown>;
 	includeEmbeddings?: boolean;
 	metadata?: Record<string, unknown>;
 }
@@ -79,7 +87,8 @@ export interface RAGResult {
 export interface GenerationOptions {
 	temperature?: number;
 	maxTokens?: number;
-	systemPrompt?: string;
+	systemPromptId?: string;
+	systemPromptVariables?: Record<string, unknown>;
 	stopTokens?: string[];
 }
 
@@ -150,7 +159,10 @@ export class AICoreCapabilities {
 	 * Generate text using configured LLM
 	 */
 	async generate(prompt: string, options: GenerationOptions = {}): Promise<string> {
-		const systemPrompt = options.systemPrompt;
+		const systemPrompt = this.resolvePromptText({
+			id: options.systemPromptId,
+			variables: options.systemPromptVariables,
+		});
 		const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt;
 
 		return llmGenerate(this.llmState, fullPrompt, {
@@ -209,7 +221,14 @@ export class AICoreCapabilities {
 			throw new Error('Embedding adapter not configured for RAG');
 		}
 
-		const { query, systemPrompt } = ragQuery;
+		const { query } = ragQuery;
+		const systemPrompt = this.resolvePromptText(
+			{
+				id: ragQuery.systemPromptId,
+				variables: ragQuery.systemPromptVariables,
+			},
+			'sys.a2a.rag-default',
+		);
 		const ragConfig = this.config.rag || {};
 
 		// Step 1: Retrieve relevant documents
@@ -386,6 +405,26 @@ export class AICoreCapabilities {
 		};
 	}
 
+	private resolvePromptText(
+		config: { id?: string; variables?: Record<string, unknown> },
+		fallbackId?: string,
+	): string {
+		const promptId = config.id ?? fallbackId;
+		if (!promptId) return '';
+
+		const promptRecord = getPrompt(promptId);
+		if (promptRecord) {
+			const rendered = renderPrompt(promptRecord, config.variables ?? {});
+			validatePromptUsage(rendered, promptId);
+			capturePromptUsage(promptRecord);
+			return rendered;
+		}
+
+		const safeTemplate = getSafePrompt(promptId, config.variables ?? {});
+		validatePromptUsage(safeTemplate, promptId);
+		return safeTemplate;
+	}
+
 	/**
 	 * Build RAG prompt with context
 	 */
@@ -396,9 +435,8 @@ export class AICoreCapabilities {
 			contextSection = `Context information:\n${contextLines}\n\n`;
 		}
 
-		const system = systemPrompt
-			? `${systemPrompt}\n\n`
-			: "You are a helpful AI assistant. Answer the question based on the provided context. If the context doesn't contain enough information, say so clearly.\n\n";
+		const resolvedSystem = systemPrompt ?? this.resolvePromptText({}, 'sys.a2a.rag-default');
+		const system = resolvedSystem ? `${resolvedSystem}\n\n` : '';
 
 		return `${system}${contextSection}Question: ${query}\n\nAnswer:`;
 	}

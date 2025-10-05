@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import chokidar from 'chokidar';
+import chokidar, { type FSWatcher } from 'chokidar';
 import picomatch from 'picomatch';
 import { getHookDirs, type LoadOptions, loadHookConfigs } from './loaders.js';
 import { runCommand } from './runners/command.js';
@@ -15,7 +15,7 @@ export class CortexHooks extends EventEmitter {
 	async init(opts: LoadOptions = {}) {
 		this.cfg = await loadHookConfigs(opts);
 	}
-	private watcher: chokidar.FSWatcher | null = null;
+	private watcher: FSWatcher | null = null;
 	private lastReload = 0;
 
 	// Start watching hook directories and hot-reload on changes

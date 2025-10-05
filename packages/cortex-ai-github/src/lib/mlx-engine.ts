@@ -3,6 +3,7 @@
  * Real MLX integration without mocks or classes
  */
 
+import { getSafePrompt } from '@cortex-os/prompts';
 import type { AITaskType, GitHubContext } from '../types/github-models.js';
 
 export interface MlxAnalysisResult {
@@ -20,17 +21,15 @@ export interface MlxAnalysisResult {
 	processingTime: number;
 }
 
-const SYSTEM_PROMPTS: Record<AITaskType, string> = {
-	code_review:
-		'You are a security-focused code reviewer. Analyze for OWASP Top 10 vulnerabilities and code quality issues.',
-	security_scan:
-		'You are a security analyst. Focus on finding injection vulnerabilities, authentication bypasses, and cryptographic failures.',
-	pr_analysis: 'You are a PR reviewer. Assess impact, breaking changes, and deployment risks.',
-	documentation: 'You are a technical writer. Generate comprehensive documentation.',
-	issue_triage: 'You are an issue triager. Categorize and prioritize issues.',
-	workflow_optimize: 'You are a DevOps expert. Optimize CI/CD workflows.',
-	repo_health: 'You are a repository analyst. Assess overall health and technical debt.',
-	auto_fix: 'You are a code improvement specialist. Generate safe, targeted fixes.',
+const SYSTEM_PROMPT_IDS: Record<AITaskType, string> = {
+	code_review: 'sys.github.code-review',
+	security_scan: 'sys.github.security-scan',
+	pr_analysis: 'sys.github.pr-analysis',
+	documentation: 'sys.github.documentation',
+	issue_triage: 'sys.github.issue-triage',
+	workflow_optimize: 'sys.github.workflow-optimize',
+	repo_health: 'sys.github.repo-health',
+	auto_fix: 'sys.github.auto-fix',
 };
 
 // Input sanitization for MLX security
@@ -151,7 +150,11 @@ export const buildAnalysisPrompt = (
 	context: GitHubContext,
 	taskType: AITaskType,
 ): string => {
-	const systemPrompt = SYSTEM_PROMPTS[taskType];
+	const promptId = SYSTEM_PROMPT_IDS[taskType];
+	if (!promptId) {
+		throw new Error(`Unsupported task type for MLX analysis: ${taskType}`);
+	}
+	const systemPrompt = getSafePrompt(promptId);
 
 	// Sanitize inputs to prevent injection
 	const sanitizedCode = code.slice(0, 4000); // Limit code length

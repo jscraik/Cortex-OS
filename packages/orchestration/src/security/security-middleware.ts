@@ -15,6 +15,38 @@ import { JSDOM } from 'jsdom';
 import { z } from 'zod';
 import { securityMetrics } from '../monitoring/prometheus-metrics.js';
 
+type TrustedTypesShim = {
+	createPolicy(
+		name: string,
+		rules?: {
+			createHTML?(input: string): string;
+			createScript?(input: string): string;
+			createScriptURL?(input: string): string;
+		},
+	): {
+		createHTML(input: string): string;
+		createScript(input: string): string;
+		createScriptURL(input: string): string;
+	};
+};
+
+type DomPurifyWindow = Window & typeof globalThis & { trustedTypes: TrustedTypesShim };
+
+const createDomPurifyWindow = (): DomPurifyWindow => {
+	const domWindow = new JSDOM('').window as unknown as Partial<DomPurifyWindow>;
+
+	domWindow.trustedTypes ??= {
+		createPolicy: (_name, rules = {}) => ({
+			createHTML: (input: string) => (rules.createHTML ? rules.createHTML(input) : input),
+			createScript: (input: string) => (rules.createScript ? rules.createScript(input) : input),
+			createScriptURL: (input: string) =>
+				rules.createScriptURL ? rules.createScriptURL(input) : input,
+		}),
+	};
+
+	return domWindow as DomPurifyWindow;
+};
+
 export interface SecurityConfig {
 	cors: {
 		enabled: boolean;
@@ -391,8 +423,8 @@ export class SecurityMiddleware {
 	private sanitizeHtmlRecursive<T>(obj: T): T {
 		if (typeof obj === 'string') {
 			// Use DOMPurify for secure HTML sanitization
-			const window = new JSDOM('').window;
-			const DOMPurify = createDOMPurify(window as unknown as Window & typeof globalThis);
+			const domPurifyWindow = createDomPurifyWindow();
+			const DOMPurify = createDOMPurify(domPurifyWindow);
 
 			// Configure DOMPurify to be very strict
 			const clean = DOMPurify.sanitize(obj, {

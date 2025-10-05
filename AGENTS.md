@@ -1,88 +1,76 @@
-# Repository Guidelines
+<user_instructions>
 
-## 🏛️ GOVERNANCE: brAInwav Project Structure Standards
+# AGENTS
 
-**CRITICAL**: This repository follows strict governance standards enforced by brAInwav development practices. Only approved files belong at the repository root level to maintain architectural clarity and professional standards.
+AGENTS.md is authoritative for structure and behavior. Deviations are blocked by CI.
 
-### Root-Level File Governance
+## Roles
 
-- **Authoritative Documentation**: Comprehensive agent instruction files (AGENTS.md, CLAUDE.md, QWEN.md, GEMINI.md) at root
-- **Core Standards**: Foundation documents like CODESTYLE.md, README.md, CHANGELOG.md belong at root
-- **Structure Guard**: Automated validation of root entries against governance `allowedRootEntries` list
-- **brAInwav Branding**: All root-level documentation must include brAInwav company context and branding
+Define agent roles across MCP, A2A, RAG, and Simlab domains:
 
-**Agent Compliance**: When creating, moving, or suggesting file placement, verify compliance with governance standards. Specialized configurations belong in subdirectories (`.cortex/rules/`, `config/`, `infra/`).
+- **MCP Agents**: Model Context Protocol handlers for external tool integration
+- **A2A Agents**: Agent-to-Agent communication coordinators
+- **RAG Agents**: Retrieval-Augmented Generation processors for knowledge queries
+- **Simlab Agents**: Simulation environment controllers
 
----
+Each role has explicit responsibilities and operational limits defined in their respective modules.
 
-## Project Structure & Module Organization
+## Boundaries
 
-- Apps live in `apps/`, libraries in `packages/`, service adapters in `services/`, and infrastructure in `infra/` and `config/`.
-- Docs and ADRs stay in `docs/` and `project-documentation/`; active research and TDD artifacts belong in `tasks/` with semantic slugs until archived.
-- `packages/agent-toolkit/` supplies the mandatory search, codemod, and validation utilities for agents and scripts.
+Strict domain separation with controlled interfaces:
 
-## Build, Test, and Development Commands
+- No direct cross-domain imports (`src/` or `dist/`)
+- Communication through defined message contracts only
+- Shared utilities via common interfaces
+- Clear separation of concerns between agent types
 
-- `pnpm install` prepares tooling; run pipelines via Smart Nx wrappers.
-- `pnpm build:smart`, `pnpm test:smart`, `pnpm lint:smart`, and `pnpm typecheck:smart` execute affected targets (`--dry-run` previews). Use `pnpm dev` per app README for local work.
-- `just scout "pattern" path` performs repo-aware search and `just verify changed.txt` runs targeted checks before committing.
+## Inputs
 
-## Coding Style & Naming Conventions
+All agent inputs must be validated:
 
-- `CODESTYLE.md` rules apply: functions ≤40 lines, named exports only, promises handled with `async/await`, guard clauses over deep nesting.
-- Biome formatting enforces tab indentation, 100-character lines, single quotes, and semicolons; naming uses `kebab-case` directories, `camelCase` identifiers, `PascalCase` types, `UPPER_SNAKE_CASE` constants, and Python `snake_case`.
-- Production code must exclude placeholder logic (`Math.random()` data, mock responses, TODO stubs) and surface brAInwav-branded logs or errors.
+```typescript
+// Use Zod schemas for validation
+const inputSchema = z.object({
+  seed: z.number().int().positive(),
+  maxTokens: z.number().max(4096),
+  // ... other fields
+});
+```
 
-## Testing Guidelines
+- Deterministic seeds for reproducible behavior
+- Resource caps to prevent runaway execution
+- JSON schema validation for external inputs
 
-- TypeScript suites run on Vitest via `pnpm test:smart` or scoped `pnpm vitest -- --runInBand`; configs reside in `vitest.*.config.ts`.
-- Python modules execute with `uv run pytest`; sustain ≥95% branch coverage and track `reports/badges/`.
-- Co-locate tests with sources (e.g., `apps/*/tests`, `packages/*/tests`) and attach Smart Nx/pytest output in PRs.
+## Outputs
 
-## 🧪 brAInwav Evaluation Gates
+Standardized output formats:
 
-- Run `pnpm eval:prompt`, `pnpm eval:redteam`, and `pnpm eval:rag` before committing prompt, RAG, or MCP changes.
-- Capture HTML/JSON artifacts under `reports/evals/` for reviewer audits; commit significant updates when behaviour changes.
-- CI mirrors these expectations via `.github/workflows/evals-quality.yml`; failures are merge blockers alongside existing gates.
+- Default: Human-readable text with context
+- `--json` flag: Machine-readable JSON with metadata
+- ISO-8601 timestamps for all temporal data
+- Structured error responses with error codes
 
-## Agent Workflow & Repo Standards
+## Memory
 
-- Follow five phases: Research (`*.research.md`), Planning (`*-tdd-plan.md`), Implementation (TDD checklists), Verification (Smart Nx + coverage logs), Archive (docs + CHANGELOG + website updates).
-- Store decisions and lessons in local memory adapters; query them via semantic search before new work.
-- Apply the Reality Filter—label unverifiable statements `[Inference]`, avoid speculation, and cite file:line references.
-- Never claim production readiness while placeholders, mocks, or missing integrations remain.
+Bounded and deterministic memory management:
 
-## Commit & Pull Request Guidelines
+- Interface-based memory stores (no direct persistence access)
+- Configurable memory limits per agent type
+- Deterministic cleanup and garbage collection
+- State serialization for agent persistence
 
-- Use Conventional Commit syntax with scopes (e.g., `feat(agent-toolkit): add multiSearch audit`) and keep each commit focused.
-- PRs must cite the related `tasks/` slug, summarize the change, include validation snippets, and list documentation updates (CHANGELOG, README, website).
-- Run `pnpm biome:staged` and rerun affected Smart Nx targets before requesting review.
+## Governance
 
-## Security & Operational Notes
+Enforcement through automated checks:
 
-- Do not commit secrets; rely on `.env.local`/Nx environment config.
-- Prefer `createAgentToolkit()` over ad-hoc scripts for automation; log anomalies with brAInwav-branded messaging.
+- `.cortex` control-centre validation in CI pipeline
+- Pre-commit hooks for agent contract compliance
+- Schema validation for agent configurations
+- Documentation synchronization checks
+- Pull request descriptions must follow `.github/pull_request_template.md`; the `review-automation` workflow fails otherwise
 
+## Agent Toolkit
 
-<!-- nx configuration start-->
-<!-- Leave the start & end comments to automatically receive updates. -->
+Agents must use scripts under `agent-toolkit/tools` for search, codemods, diff review and validation. Invoke via `just` recipes or direct script calls to keep outputs deterministic.
 
-# General Guidelines for working with Nx
-
-- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
-- You have access to the Nx MCP server and its tools, use them to help the user
-- When answering questions about the repository, use the `nx_workspace` tool first to gain an understanding of the workspace architecture where applicable.
-- When working in individual projects, use the `nx_project_details` mcp tool to analyze and understand the specific project structure and dependencies
-- For questions around nx configuration, best practices or if you're unsure, use the `nx_docs` tool to get relevant, up-to-date docs. Always use this instead of assuming things about nx configuration
-- If the user needs help with an Nx configuration or project graph error, use the `nx_workspace` tool to get any errors
-
-# CI Error Guidelines
-
-If the user wants help with fixing an error in their CI pipeline, use the following flow:
-- Retrieve the list of current CI Pipeline Executions (CIPEs) using the `nx_cloud_cipe_details` tool
-- If there are any errors, use the `nx_cloud_fix_cipe_failure` tool to retrieve the logs for a specific task
-- Use the task logs to see what's wrong and help the user fix their problem. Use the appropriate tools if necessary
-- Make sure that the problem is fixed by running the task that you passed into the `nx_cloud_fix_cipe_failure` tool
-
-
-<!-- nx configuration end-->
+</user_instructions>

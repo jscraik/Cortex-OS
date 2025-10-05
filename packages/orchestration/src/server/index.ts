@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { errorHandler } from './middleware/error-handler.js';
 import { requestId } from './middleware/request-id.js';
 import { requestLimit } from './middleware/request-limit.js';
-import { routes } from './routes';
+import { routes } from './routes/index.js';
 
 // Request schema for agent execution
 const executeAgentSchema = z.object({

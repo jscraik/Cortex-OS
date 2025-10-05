@@ -13,6 +13,23 @@ BrAInwav prompts are governed by the Prompt Library (see Phase 0.1 of the TDD pl
 
 ## Approval Steps
 
+### Prompt Registry Quick Reference
+
+| Prompt ID | Purpose | Default Consumers |
+|-----------|---------|-------------------|
+| `sys.n0-master` | Default N0 orchestration system prompt | `@cortex-os/orchestration` |
+| `sys.server.test-helper` | Sandbox server sampling responses | `servers/src/everything` |
+| `sys.prp.insights` | PRP evidence insight generation | `src/lib/insights`, `@cortex-os/prp-runner` |
+| `sys.asbr.fact-checker` | Fact-check retrieval flow | `@cortex-os/prp-runner` |
+| `sys.asbr.evidence-analyst` | Evidence enhancement summaries | `@cortex-os/prp-runner` |
+| `sys.asbr.evidence-gap` | Evidence gap suggestions | `@cortex-os/prp-runner` |
+| `sys.github.code-review` | GitHub MLX code review analyses | `@cortex-os/cortex-ai-github` |
+| `sys.github.security-scan` | GitHub security scan lens | `@cortex-os/cortex-ai-github` |
+| `sys.a2a.generate-text` | A2A text generation fallback prompt | `@cortex-os/prp-runner` |
+| `sys.a2a.rag-query` | A2A RAG query guidance | `@cortex-os/prp-runner` |
+| `sys.a2a.rag-default` | A2A default RAG fallback | `@cortex-os/prp-runner` |
+
+
 1. Update the prompt entry in `packages/prompts/src/registry.ts` (or add a new entry).
 2. Run `pnpm test --filter @cortex-os/prompts` to confirm schema/tests.
 3. Execute `pnpm run prompts:export` and attach the diff (`.cortex/prompts/registry.json`).

@@ -14,8 +14,6 @@ import {
 	type Tracer,
 	trace,
 } from '@opentelemetry/api';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 // Initialize OpenTelemetry
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
@@ -64,17 +62,6 @@ export class OrchestrationTracer {
 
 		// Create tracer
 		this.tracer = trace.getTracer(serviceName, version);
-
-		// Set up resource attributes
-		// Create resource (side-effect) — no need to keep a local variable
-		const _resource = new Resource({
-			[SemanticResourceAttributes.SERVICE_NAME]: serviceName,
-			[SemanticResourceAttributes.SERVICE_VERSION]: version,
-			[SemanticResourceAttributes.SERVICE_INSTANCE_ID]: `instance-${Date.now()}`,
-		});
-		if (_resource) {
-			// brAInwav: resource allocated for tracer
-		}
 	}
 
 	/**
@@ -386,8 +373,9 @@ export class OrchestrationTracer {
 
 	// Helper to normalize unknown values to OpenTelemetry AttributeValue
 	private normalizeAttributeValue(value: unknown): import('@opentelemetry/api').AttributeValue {
-		if (value === null || value === undefined)
-			return String(value) as unknown as import('@opentelemetry/api').AttributeValue;
+		if (value === null) return 'null' as unknown as import('@opentelemetry/api').AttributeValue;
+		if (value === undefined)
+			return 'undefined' as unknown as import('@opentelemetry/api').AttributeValue;
 		if (Array.isArray(value))
 			return value as unknown as import('@opentelemetry/api').AttributeValue;
 		if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
@@ -397,7 +385,7 @@ export class OrchestrationTracer {
 		try {
 			return JSON.stringify(value) as unknown as import('@opentelemetry/api').AttributeValue;
 		} catch {
-			return String(value) as unknown as import('@opentelemetry/api').AttributeValue;
+			return '[brAInwav] Unserializable attribute' as unknown as import('@opentelemetry/api').AttributeValue;
 		}
 	}
 
