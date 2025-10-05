@@ -661,7 +661,16 @@ type KernelReadFile = (target: string, maxBytes: number, allowlist: string[]) =>
 function createKernelRunBash(tools: KernelTool[]): KernelRunBash | undefined {
 	const tool = findKernelTool(tools, ['kernel.bash', 'shell.exec']);
 	if (!tool) return undefined;
-	return async (cmd: string, _allowlist: string[]) => {
+	return async (cmd: string, allowlist: string[]) => {
+		// Simple allowlist validation: check if the command starts with any allowed entry
+		const isAllowed = allowlist.some((allowed) => cmd.trim().startsWith(allowed));
+		if (!isAllowed) {
+			return {
+				stdout: '',
+				stderr: `Command "${cmd}" is not allowed by the allowlist.`,
+				code: 126, // 126: Command invoked cannot execute
+			} satisfies { stdout: string; stderr: string; code: number };
+		}
 		const payload = await tool.invoke({ command: cmd });
 		const stdout =
 			typeof payload === 'object' &&
