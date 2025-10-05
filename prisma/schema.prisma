@@ -255,19 +255,19 @@ model GraphEdge {
 }
 
 model ChunkRef {
-  id           String   @id @default(cuid())
-  nodeId       String   // reference to GraphNode
-  qdrantId     String   // Qdrant point-id for the chunk (existing collection: local_memory_v1)
-  path         String   // repo path of the source file
-  lineStart    Int?     // starting line number
-  lineEnd      Int?     // ending line number
-  meta         Json?    // chunk-specific metadata
-  createdAt    DateTime @default(now())
+        id        String   @id @default(cuid())
+        nodeId    String   // reference to GraphNode
+        qdrantId  String   // Qdrant point-id for the chunk (existing collection: local_memory_v1)
+        path      String   // repo path of the source file
+        lineStart Int?     // starting line number
+        lineEnd   Int?     // ending line number
+        meta      Json?    // chunk-specific metadata
+        createdAt DateTime @default(now())
 
-  node         GraphNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+        node         GraphNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
 
-  @@index([nodeId])
-  @@index([qdrantId])
+        @@index([nodeId])
+        @@index([qdrantId])
   @@index([path])
   @@index([createdAt])
   @@unique([nodeId, qdrantId]) // prevent duplicate chunk refs

@@ -1,614 +1,412 @@
 /**
  * GraphRAG Service for brAInwav Cortex-OS
  *
- * Provides graph-enhanced retrieval-augmented generation using:
- * - PostgreSQL graph storage (nodes + edges)
- * - Qdrant hybrid search (existing brAInwav memory stack)
- * - 1-hop graph expansion with edge filtering
- * - A2A event emission for observability
- * - brAInwav branding compliance
- *
- * This service integrates with the existing brAInwav memory-core Qdrant
- * infrastructure for seamless vector search capabilities.
+ * Implements the hybrid retrieval pipeline:
+ * 1. Qdrant hybrid search (dense + sparse)
+ * 2. Lift Qdrant points to graph nodes stored in Prisma/SQLite
+ * 3. One-hop graph expansion with edge whitelisting
+ * 4. Context assembly with prioritized chunk selection
+ * 5. brAInwav-branded response with optional citations
  */
 
+import { GraphEdgeType, GraphNodeType } from '@prisma/client';
 import { z } from 'zod';
-import { type GraphRAGSearchResult, QdrantHybridSearch } from '../retrieval/QdrantHybrid.js';
+import { prisma, shutdownPrisma } from '../db/prismaClient.js';
+import { assembleContext } from '../retrieval/contextAssembler.js';
+import { expandNeighbors } from '../retrieval/expandGraph.js';
+import {
+  QdrantHybridSearch,
+  QdrantConfigSchema,
+  type GraphRAGSearchResult,
+} from '../retrieval/QdrantHybrid.js';
 
-// Placeholder types for Prisma models until schema is generated
-type GraphNodeType =
-	| 'PACKAGE'
-	| 'SERVICE'
-	| 'AGENT'
-	| 'TOOL'
-	| 'CONTRACT'
-	| 'EVENT'
-	| 'DOC'
-	| 'ADR'
-	| 'FILE'
-	| 'API'
-	| 'PORT';
-type GraphEdgeType =
-	| 'IMPORTS'
-	| 'IMPLEMENTS_CONTRACT'
-	| 'CALLS_TOOL'
-	| 'EMITS_EVENT'
-	| 'EXPOSES_PORT'
-	| 'REFERENCES_DOC'
-	| 'DEPENDS_ON'
-	| 'DECIDES_WITH';
-
-interface GraphNode {
-	id: string;
-	type: GraphNodeType;
-	key: string;
-	label: string;
-	meta?: any;
-	createdAt: Date;
-	updatedAt: Date;
-}
-
-interface GraphEdge {
-	id: string;
-	type: GraphEdgeType;
-	srcId: string;
-	dstId: string;
-	weight?: number;
-	meta?: any;
-	createdAt: Date;
-}
-
-interface ChunkRef {
-	id: string;
-	nodeId: string;
-	qdrantId: string; // Changed from lancedbId to qdrantId
-	path: string;
-	lineStart?: number;
-	lineEnd?: number;
-	meta?: any;
-	createdAt: Date;
-	node: GraphNode;
-}
-
-// Prisma client placeholder - would be replaced with actual client
-const prisma = {
-	chunkRef: {
-		findMany: async (query: any) => [] as ChunkRef[],
-		count: async () => 0,
-	},
-	graphNode: {
-		findMany: async (query: any) => [] as GraphNode[],
-		groupBy: async (query: any) => [] as any[],
-	},
-	graphEdge: {
-		findMany: async (query: any) => [] as GraphEdge[],
-		groupBy: async (query: any) => [] as any[],
-	},
-	$queryRaw: async (query: any) => [{ '?column?': 1 }],
-	$disconnect: async () => {},
+const DEFAULT_QDRANT_CONFIG = {
+  url: process.env.QDRANT_URL ?? 'http://localhost:6333',
+  apiKey: process.env.QDRANT_API_KEY,
+  collection: process.env.QDRANT_COLLECTION ?? 'local_memory_v1',
+  timeout: 30000,
+  maxRetries: 3,
+  brainwavBranding: true,
 };
 
-// Schema definitions
 export const GraphRAGServiceConfigSchema = z.object({
-	qdrantConfig: z.object({
-		url: z.string().default('qdrant:6333'),
-		collection: z.string().default('local_memory_v1'),
-		apiKey: z.string().optional(),
-		timeout: z.number().default(30000),
-		maxRetries: z.number().default(3),
-		brainwavBranding: z.boolean().default(true),
-	}),
-	expansion: z.object({
-		allowedEdges: z
-			.array(z.string())
-			.default([
-				'IMPORTS',
-				'DEPENDS_ON',
-				'IMPLEMENTS_CONTRACT',
-				'CALLS_TOOL',
-				'EMITS_EVENT',
-				'EXPOSES_PORT',
-				'REFERENCES_DOC',
-				'DECIDES_WITH',
-			]),
-		maxHops: z.number().int().min(1).max(3).default(1),
-		maxNeighborsPerNode: z.number().int().min(1).max(50).default(20),
-	}),
-	limits: z.object({
-		maxContextChunks: z.number().int().min(1).max(100).default(24),
-		queryTimeoutMs: z.number().int().min(1000).max(60000).default(30000),
-		maxConcurrentQueries: z.number().int().min(1).max(20).default(5),
-	}),
-	branding: z.object({
-		enabled: z.boolean().default(true),
-		sourceAttribution: z.string().default('brAInwav Cortex-OS GraphRAG'),
-		emitBrandedEvents: z.boolean().default(true),
-	}),
+  qdrant: QdrantConfigSchema.default(DEFAULT_QDRANT_CONFIG),
+  expansion: z.object({
+    allowedEdges: z
+      .array(z.nativeEnum(GraphEdgeType))
+      .default([
+        GraphEdgeType.IMPORTS,
+        GraphEdgeType.DEPENDS_ON,
+        GraphEdgeType.IMPLEMENTS_CONTRACT,
+        GraphEdgeType.CALLS_TOOL,
+        GraphEdgeType.EMITS_EVENT,
+        GraphEdgeType.EXPOSES_PORT,
+        GraphEdgeType.REFERENCES_DOC,
+        GraphEdgeType.DECIDES_WITH,
+      ]),
+    maxHops: z.number().int().min(1).max(3).default(1),
+    maxNeighborsPerNode: z.number().int().min(1).max(50).default(20),
+  }),
+  limits: z.object({
+    maxContextChunks: z.number().int().min(1).max(100).default(24),
+    queryTimeoutMs: z.number().int().min(1000).max(60000).default(30000),
+    maxConcurrentQueries: z.number().int().min(1).max(20).default(5),
+  }),
+  branding: z.object({
+    enabled: z.boolean().default(true),
+    sourceAttribution: z.string().default('brAInwav Cortex-OS GraphRAG'),
+    emitBrandedEvents: z.boolean().default(true),
+  }),
 });
 
 export type GraphRAGServiceConfig = z.infer<typeof GraphRAGServiceConfigSchema>;
 
 export const GraphRAGQueryRequestSchema = z.object({
-	question: z.string().min(1),
-	k: z.number().int().min(1).max(50).default(8),
-	maxHops: z.number().int().min(1).max(3).default(1),
-	maxChunks: z.number().int().min(1).max(100).default(24),
-	threshold: z.number().min(0).max(1).optional(),
-	includeVectors: z.boolean().default(false),
-	includeCitations: z.boolean().default(true),
-	namespace: z.string().optional(),
-	filters: z.record(z.any()).optional(),
+  question: z.string().min(1),
+  k: z.number().int().min(1).max(50).default(8),
+  maxHops: z.number().int().min(1).max(3).default(1),
+  maxChunks: z.number().int().min(1).max(100).default(24),
+  threshold: z.number().min(0).max(1).optional(),
+  includeVectors: z.boolean().default(false),
+  includeCitations: z.boolean().default(true),
+  namespace: z.string().optional(),
+  filters: z.record(z.any()).optional(),
 });
 
 export type GraphRAGQueryRequest = z.infer<typeof GraphRAGQueryRequestSchema>;
 
 export interface GraphRAGContext {
-	chunks: Array<{
-		id: string;
-		nodeId: string;
-		path: string;
-		content: string;
-		lineStart?: number;
-		lineEnd?: number;
-		score: number;
-		nodeType: string;
-		nodeKey: string;
-	}>;
-	nodes: Array<{
-		id: string;
-		type: GraphNodeType;
-		key: string;
-		label: string;
-		meta?: any;
-	}>;
-	edges: Array<{
-		id: string;
-		type: GraphEdgeType;
-		srcId: string;
-		dstId: string;
-		weight?: number;
-		meta?: any;
-	}>;
+  chunks: Array<{
+    id: string;
+    nodeId: string;
+    path: string;
+    content: string;
+    lineStart?: number;
+    lineEnd?: number;
+    score: number;
+    nodeType: GraphNodeType;
+    nodeKey: string;
+  }>;
+  nodes: Array<{
+    id: string;
+    type: GraphNodeType;
+    key: string;
+    label: string;
+    meta: unknown;
+  }>;
 }
 
 export interface GraphRAGResult {
-	answer?: string;
-	sources: GraphRAGContext['chunks'];
-	graphContext: {
-		focusNodes: number;
-		expandedNodes: number;
-		totalChunks: number;
-		edgesTraversed: number;
-	};
-	metadata: {
-		brainwavPowered: boolean;
-		retrievalDurationMs: number;
-		queryTimestamp: string;
-		brainwavSource: string;
-	};
-	citations?: Array<{
-		path: string;
-		lines?: string;
-		nodeType: string;
-		relevanceScore: number;
-		brainwavIndexed: boolean;
-	}>;
+  answer?: string;
+  sources: GraphRAGContext['chunks'];
+  graphContext: {
+    focusNodes: number;
+    expandedNodes: number;
+    totalChunks: number;
+    edgesTraversed: number;
+  };
+  metadata: {
+    brainwavPowered: boolean;
+    retrievalDurationMs: number;
+    queryTimestamp: string;
+    brainwavSource: string;
+  };
+  citations?: Array<{
+    path: string;
+    lines?: string;
+    nodeType: GraphNodeType;
+    relevanceScore: number;
+    brainwavIndexed: boolean;
+  }>;
 }
 
-/**
- * GraphRAG Service - Main orchestrator for graph-enhanced retrieval
- */
+interface QueryReservation {
+  queryId: string;
+  startTime: number;
+  release: () => void;
+}
+
 export class GraphRAGService {
-	private qdrant: QdrantHybridSearch;
-	private config: GraphRAGServiceConfig;
-	private activeQueries = new Set<string>();
+  private readonly qdrant: QdrantHybridSearch;
+  private readonly config: GraphRAGServiceConfig;
+  private readonly activeQueries = new Set<string>();
 
-	constructor(config: GraphRAGServiceConfig) {
-		this.config = GraphRAGServiceConfigSchema.parse(config);
-		this.qdrant = new QdrantHybridSearch(this.config.qdrantConfig);
-	}
+  constructor(config: GraphRAGServiceConfig) {
+    this.config = GraphRAGServiceConfigSchema.parse(config);
+    this.qdrant = new QdrantHybridSearch(this.config.qdrant);
+  }
 
-	/**
-	 * Initialize the service with embedding functions
-	 */
-	async initialize(
-		embedDenseFunc: (text: string) => Promise<number[]>,
-		embedSparseFunc: (text: string) => Promise<{ indices: number[]; values: number[] }>,
-	): Promise<void> {
-		await this.lancedb.initialize(embedDenseFunc, embedSparseFunc);
+  async initialize(
+    embedDenseFunc: (text: string) => Promise<number[]>,
+    embedSparseFunc: (text: string) => Promise<{ indices: number[]; values: number[] }>,
+  ): Promise<void> {
+    await this.qdrant.initialize(embedDenseFunc, embedSparseFunc);
+    if (this.config.branding.enabled) {
+      console.log('brAInwav GraphRAG service initialized successfully');
+    }
+  }
 
-		if (this.config.branding.enabled) {
-			console.log('brAInwav GraphRAG service initialized successfully');
-		}
-	}
+  async query(params: GraphRAGQueryRequest): Promise<GraphRAGResult> {
+    const reservation = this.reserveQuerySlot();
 
-	/**
-	 * Main query method - orchestrates the entire GraphRAG pipeline
-	 */
-	async query(params: GraphRAGQueryRequest): Promise<GraphRAGResult> {
-		const queryId = `query_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-		const startTime = Date.now();
+    try {
+      const validated = GraphRAGQueryRequestSchema.parse(params);
+      const seeds = await this.hybridSeedSearch(validated);
+      const focusNodeIds = await this.liftToGraphNodes(seeds);
 
-		// Rate limiting
-		if (this.activeQueries.size >= this.config.limits.maxConcurrentQueries) {
-			throw new Error('brAInwav GraphRAG: Maximum concurrent queries exceeded');
-		}
+      const expansion = await expandNeighbors(focusNodeIds, {
+        allowedEdges: this.config.expansion.allowedEdges as GraphEdgeType[],
+        maxNeighborsPerNode: this.config.expansion.maxNeighborsPerNode,
+      });
 
-		this.activeQueries.add(queryId);
+      const allNodeIds = [...focusNodeIds, ...expansion.neighborIds];
+      const context = await assembleContext(
+        allNodeIds,
+        Math.min(validated.maxChunks, this.config.limits.maxContextChunks),
+        seeds,
+      );
 
-		try {
-			// Validate input
-			const validatedParams = GraphRAGQueryRequestSchema.parse(params);
+      const result = this.buildResult(context, expansion, reservation.startTime, seeds);
 
-			// Step 1: Hybrid seed search using LanceDB
-			const seedResults = await this.hybridSeedSearch(validatedParams);
+      if (validated.includeCitations) {
+        result.citations = this.formatCitations(context.chunks);
+      }
 
-			// Step 2: Lift vector results to graph nodes
-			const focusNodeIds = await this.liftToGraphNodes(seedResults);
+      if (this.config.branding.emitBrandedEvents) {
+        await this.emitQueryEvent('completed', {
+          queryId: reservation.queryId,
+          question: validated.question,
+          focusNodes: focusNodeIds.length,
+          expandedNodes: expansion.neighborIds.length,
+          totalChunks: context.chunks.length,
+          durationMs: Date.now() - reservation.startTime,
+        });
+      }
 
-			// Step 3: Graph expansion (1-hop)
-			const { neighborIds, edgesTraversed } = await this.expandGraph(
-				focusNodeIds,
-				validatedParams.maxHops || this.config.expansion.maxHops,
-			);
+      return result;
+    } catch (error) {
+      if (this.config.branding.emitBrandedEvents) {
+        await this.emitQueryEvent('failed', {
+          queryId: reservation.queryId,
+          question: params.question,
+          error: error instanceof Error ? error.message : String(error),
+          durationMs: Date.now() - reservation.startTime,
+        });
+      }
+      throw error;
+    } finally {
+      reservation.release();
+    }
+  }
 
-			// Step 4: Assemble context from nodes and neighbors
-			const context = await this.assembleContext(
-				[...focusNodeIds, ...neighborIds],
-				validatedParams.maxChunks || this.config.limits.maxContextChunks,
-			);
+  async healthCheck(): Promise<{
+    status: 'healthy' | 'unhealthy';
+    components: { qdrant: boolean; prisma: boolean };
+    brainwavSource: string;
+  }> {
+    try {
+      const [qdrantHealthy, prismaHealthy] = await Promise.all([
+        this.qdrant.healthCheck(),
+        prisma.$queryRaw`SELECT 1`.then(
+          () => true,
+          () => false,
+        ),
+      ]);
 
-			// Step 5: Generate result
-			const result: GraphRAGResult = {
-				sources: context.chunks,
-				graphContext: {
-					focusNodes: focusNodeIds.length,
-					expandedNodes: neighborIds.length,
-					totalChunks: context.chunks.length,
-					edgesTraversed,
-				},
-				metadata: {
-					brainwavPowered: this.config.branding.enabled,
-					retrievalDurationMs: Date.now() - startTime,
-					queryTimestamp: new Date().toISOString(),
-					brainwavSource: this.config.branding.sourceAttribution,
-				},
-			};
+      const healthy = qdrantHealthy && prismaHealthy;
+      return {
+        status: healthy ? 'healthy' : 'unhealthy',
+        components: { qdrant: qdrantHealthy, prisma: prismaHealthy },
+        brainwavSource: this.config.branding.sourceAttribution,
+      };
+    } catch {
+      return {
+        status: 'unhealthy',
+        components: { qdrant: false, prisma: false },
+        brainwavSource: this.config.branding.sourceAttribution,
+      };
+    }
+  }
 
-			// Add citations if requested
-			if (validatedParams.includeCitations) {
-				result.citations = this.formatCitations(context.chunks);
-			}
+  async getStats(): Promise<{
+    totalNodes: number;
+    totalEdges: number;
+    totalChunks: number;
+    nodeTypeDistribution: Record<string, number>;
+    edgeTypeDistribution: Record<string, number>;
+    brainwavSource: string;
+  }> {
+    const [nodeStats, edgeStats, chunkCount] = await Promise.all([
+      prisma.graphNode.groupBy({ by: ['type'], _count: { type: true } }),
+      prisma.graphEdge.groupBy({ by: ['type'], _count: { type: true } }),
+      prisma.chunkRef.count(),
+    ]);
 
-			// Emit A2A event for observability
-			if (this.config.branding.emitBrandedEvents) {
-				await this.emitQueryEvent('completed', {
-					queryId,
-					question: validatedParams.question,
-					focusNodes: focusNodeIds.length,
-					expandedNodes: neighborIds.length,
-					totalChunks: context.chunks.length,
-					durationMs: Date.now() - startTime,
-				});
-			}
+    const nodeTypeDistribution = Object.fromEntries(
+      nodeStats.map((stat) => [stat.type, stat._count.type]),
+    );
+    const edgeTypeDistribution = Object.fromEntries(
+      edgeStats.map((stat) => [stat.type, stat._count.type]),
+    );
+    const totalNodes = nodeStats.reduce((sum, stat) => sum + stat._count.type, 0);
+    const totalEdges = edgeStats.reduce((sum, stat) => sum + stat._count.type, 0);
 
-			return result;
-		} catch (error) {
-			// Emit error event
-			if (this.config.branding.emitBrandedEvents) {
-				await this.emitQueryEvent('failed', {
-					queryId,
-					question: params.question,
-					error: error instanceof Error ? error.message : String(error),
-					durationMs: Date.now() - startTime,
-				});
-			}
+    return {
+      totalNodes,
+      totalEdges,
+      totalChunks: chunkCount,
+      nodeTypeDistribution,
+      edgeTypeDistribution,
+      brainwavSource: this.config.branding.sourceAttribution,
+    };
+  }
 
-			throw error;
-		} finally {
-			this.activeQueries.delete(queryId);
-		}
-	}
+  async close(): Promise<void> {
+    await this.qdrant.close();
+    await shutdownPrisma();
+    if (this.config.branding.enabled) {
+      console.log('brAInwav GraphRAG service closed');
+    }
+  }
 
-	/**
-	 * Step 1: Perform hybrid search to get seed results
-	 */
-	private async hybridSeedSearch(params: GraphRAGQueryRequest): Promise<GraphRAGSearchResult[]> {
-		const lancedbParams = {
-			question: params.question,
-			k: params.k,
-			threshold: params.threshold,
-			includeVectors: params.includeVectors,
-			namespace: params.namespace,
-			filters: params.filters,
-		};
+  private reserveQuerySlot(): QueryReservation {
+    if (this.activeQueries.size >= this.config.limits.maxConcurrentQueries) {
+      throw new Error('brAInwav GraphRAG: Maximum concurrent queries exceeded');
+    }
 
-		return await this.lancedb.hybridSearch(lancedbParams);
-	}
+    const queryId = `graphrag_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    this.activeQueries.add(queryId);
 
-	/**
-	 * Step 2: Map vector search results to graph nodes
-	 */
-	private async liftToGraphNodes(seedResults: GraphRAGSearchResult[]): Promise<string[]> {
-		const lancedbIds = seedResults.map((r) => r.id);
+    return {
+      queryId,
+      startTime: Date.now(),
+      release: () => {
+        this.activeQueries.delete(queryId);
+      },
+    };
+  }
 
-		const chunkRefs = await prisma.chunkRef.findMany({
-			where: { lancedbId: { in: lancedbIds } },
-			select: { nodeId: true },
-		});
+  private async hybridSeedSearch(params: GraphRAGQueryRequest): Promise<GraphRAGSearchResult[]> {
+    return this.qdrant.hybridSearch({
+      question: params.question,
+      k: params.k,
+      threshold: params.threshold,
+      includeVectors: params.includeVectors,
+      namespace: params.namespace,
+      filters: params.filters,
+    });
+  }
 
-		return [...new Set(chunkRefs.map((cr) => cr.nodeId))];
-	}
+  private async liftToGraphNodes(seedResults: GraphRAGSearchResult[]): Promise<string[]> {
+    if (seedResults.length === 0) {
+      return [];
+    }
 
-	/**
-	 * Step 3: Expand graph by traversing edges
-	 */
-	private async expandGraph(
-		nodeIds: string[],
-		maxHops: number,
-	): Promise<{
-		neighborIds: string[];
-		edgesTraversed: number;
-	}> {
-		const allowedEdges = this.config.expansion.allowedEdges as GraphEdgeType[];
-		const maxNeighbors = this.config.expansion.maxNeighborsPerNode;
+    const qdrantIds = seedResults.map((result) => result.id);
+    const chunkRefs = await prisma.chunkRef.findMany({
+      where: { qdrantId: { in: qdrantIds } },
+      select: { nodeId: true },
+    });
 
-		const edges = await prisma.graphEdge.findMany({
-			where: {
-				type: { in: allowedEdges },
-				OR: [{ srcId: { in: nodeIds } }, { dstId: { in: nodeIds } }],
-			},
-			take: maxNeighbors * nodeIds.length,
-			orderBy: { weight: 'desc' }, // Prioritize higher-weight edges
-		});
+    return [...new Set(chunkRefs.map((ref) => ref.nodeId))];
+  }
 
-		const neighborIds = new Set<string>();
-		for (const edge of edges) {
-			if (nodeIds.includes(edge.srcId)) neighborIds.add(edge.dstId);
-			if (nodeIds.includes(edge.dstId)) neighborIds.add(edge.srcId);
-		}
+  private buildResult(
+    context: Awaited<ReturnType<typeof assembleContext>>,
+    expansion: Awaited<ReturnType<typeof expandNeighbors>>,
+    startTime: number,
+    seeds: GraphRAGSearchResult[],
+  ): GraphRAGResult {
+    return {
+      answer: seeds[0]?.chunkContent,
+      sources: context.chunks,
+      graphContext: {
+        focusNodes: new Set(context.chunks.map((chunk) => chunk.nodeId)).size,
+        expandedNodes: expansion.neighborIds.length,
+        totalChunks: context.chunks.length,
+        edgesTraversed: expansion.edges.length,
+      },
+      metadata: {
+        brainwavPowered: this.config.branding.enabled,
+        retrievalDurationMs: Date.now() - startTime,
+        queryTimestamp: new Date().toISOString(),
+        brainwavSource: this.config.branding.sourceAttribution,
+      },
+    };
+  }
 
-		// Remove original nodes from neighbors
-		for (const nodeId of nodeIds) {
-			neighborIds.delete(nodeId);
-		}
+  private formatCitations(chunks: GraphRAGContext['chunks']): GraphRAGResult['citations'] {
+    return chunks.map((chunk) => ({
+      path: chunk.path,
+      lines:
+        chunk.lineStart !== undefined && chunk.lineEnd !== undefined
+          ? `${chunk.lineStart}-${chunk.lineEnd}`
+          : undefined,
+      nodeType: chunk.nodeType,
+      relevanceScore: chunk.score,
+      brainwavIndexed: this.config.branding.enabled,
+    }));
+  }
 
-		return {
-			neighborIds: [...neighborIds],
-			edgesTraversed: edges.length,
-		};
-	}
+  private async emitQueryEvent(
+    type: 'completed' | 'failed',
+    data: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      const event = {
+        type: `graphrag.query.${type}`,
+        source: 'brAInwav.memory-core.graphrag',
+        data: {
+          ...data,
+          brainwavSource: this.config.branding.sourceAttribution,
+        },
+        timestamp: new Date().toISOString(),
+      };
 
-	/**
-	 * Step 4: Assemble context from graph nodes
-	 */
-	private async assembleContext(nodeIds: string[], maxChunks: number): Promise<GraphRAGContext> {
-		// Get nodes
-		const nodes = await prisma.graphNode.findMany({
-			where: { id: { in: nodeIds } },
-		});
-
-		// Get chunks with vector search scores preserved
-		const chunkRefs = await prisma.chunkRef.findMany({
-			where: { nodeId: { in: nodeIds } },
-			include: { node: true },
-			take: maxChunks,
-			orderBy: { createdAt: 'desc' },
-		});
-
-		// Get edges between the nodes
-		const edges = await prisma.graphEdge.findMany({
-			where: {
-				AND: [{ srcId: { in: nodeIds } }, { dstId: { in: nodeIds } }],
-			},
-		});
-
-		// Transform chunks with preserved relevance scoring
-		const chunks = chunkRefs.map((cr) => ({
-			id: cr.id,
-			nodeId: cr.nodeId,
-			path: cr.path,
-			content: `${cr.path}:${cr.lineStart || 1}-${cr.lineEnd || 1}`, // Placeholder - would load actual content
-			lineStart: cr.lineStart,
-			lineEnd: cr.lineEnd,
-			score: 0.8, // Would preserve from LanceDB search
-			nodeType: cr.node.type,
-			nodeKey: cr.node.key,
-		}));
-
-		return { chunks, nodes, edges };
-	}
-
-	/**
-	 * Format citations for the response
-	 */
-	private formatCitations(chunks: GraphRAGContext['chunks']): GraphRAGResult['citations'] {
-		return chunks.map((chunk) => ({
-			path: chunk.path,
-			lines: chunk.lineStart && chunk.lineEnd ? `${chunk.lineStart}-${chunk.lineEnd}` : undefined,
-			nodeType: chunk.nodeType,
-			relevanceScore: chunk.score,
-			brainwavIndexed: this.config.branding.enabled,
-		}));
-	}
-
-	/**
-	 * Emit A2A events for observability
-	 */
-	private async emitQueryEvent(
-		type: 'completed' | 'failed',
-		data: Record<string, any>,
-	): Promise<void> {
-		try {
-			// This would integrate with the actual A2A event system
-			const event = {
-				type: `graphrag.query.${type}`,
-				data: {
-					...data,
-					brainwavSource: this.config.branding.sourceAttribution,
-				},
-				source: 'brAInwav.memory-core.graphrag',
-				headers: { 'brainwav-brand': 'brAInwav' },
-				timestamp: new Date().toISOString(),
-			};
-
-			// Placeholder for actual event emission
-			console.log('brAInwav A2A Event:', JSON.stringify(event, null, 2));
-
-			// await publishEvent(event);
-		} catch (error) {
-			console.error('brAInwav GraphRAG event emission failed:', error);
-			// Don't throw - event emission shouldn't break the main flow
-		}
-	}
-
-	/**
-	 * Health check for the service
-	 */
-	async healthCheck(): Promise<{
-		status: 'healthy' | 'unhealthy';
-		components: {
-			lancedb: boolean;
-			postgres: boolean;
-		};
-		brainwavSource: string;
-	}> {
-		try {
-			const lancedbHealthy = await this.lancedb.healthCheck();
-			let postgresHealthy = false;
-
-			try {
-				await prisma.$queryRaw`SELECT 1`;
-				postgresHealthy = true;
-			} catch {
-				postgresHealthy = false;
-			}
-
-			const allHealthy = lancedbHealthy && postgresHealthy;
-
-			return {
-				status: allHealthy ? 'healthy' : 'unhealthy',
-				components: {
-					lancedb: lancedbHealthy,
-					postgres: postgresHealthy,
-				},
-				brainwavSource: this.config.branding.sourceAttribution,
-			};
-		} catch (error) {
-			return {
-				status: 'unhealthy',
-				components: {
-					lancedb: false,
-					postgres: false,
-				},
-				brainwavSource: this.config.branding.sourceAttribution,
-			};
-		}
-	}
-
-	/**
-	 * Get service statistics
-	 */
-	async getStats(): Promise<{
-		totalNodes: number;
-		totalEdges: number;
-		totalChunks: number;
-		nodeTypeDistribution: Record<string, number>;
-		edgeTypeDistribution: Record<string, number>;
-		brainwavSource: string;
-	}> {
-		const [nodeStats, edgeStats, chunkCount] = await Promise.all([
-			prisma.graphNode.groupBy({
-				by: ['type'],
-				_count: { type: true },
-			}),
-			prisma.graphEdge.groupBy({
-				by: ['type'],
-				_count: { type: true },
-			}),
-			prisma.chunkRef.count(),
-		]);
-
-		const nodeTypeDistribution = Object.fromEntries(
-			nodeStats.map((stat) => [stat.type, stat._count.type]),
-		);
-
-		const edgeTypeDistribution = Object.fromEntries(
-			edgeStats.map((stat) => [stat.type, stat._count.type]),
-		);
-
-		const totalNodes = nodeStats.reduce((sum, stat) => sum + stat._count.type, 0);
-		const totalEdges = edgeStats.reduce((sum, stat) => sum + stat._count.type, 0);
-
-		return {
-			totalNodes,
-			totalEdges,
-			totalChunks: chunkCount,
-			nodeTypeDistribution,
-			edgeTypeDistribution,
-			brainwavSource: this.config.branding.sourceAttribution,
-		};
-	}
-
-	/**
-	 * Close the service and cleanup resources
-	 */
-	async close(): Promise<void> {
-		await this.lancedb.close();
-		await prisma.$disconnect();
-
-		if (this.config.branding.enabled) {
-			console.log('brAInwav GraphRAG service closed');
-		}
-	}
+      console.log('brAInwav A2A Event:', JSON.stringify(event));
+    } catch (error) {
+      console.error('brAInwav GraphRAG event emission failed:', error);
+    }
+  }
 }
 
-/**
- * Factory function to create GraphRAG service with default config
- */
-export function createGraphRAGService(config?: Partial<GraphRAGServiceConfig>): GraphRAGService {
-	const defaultConfig: GraphRAGServiceConfig = {
-		lancedbConfig: {
-			uri: process.env.LANCEDB_URI || './data/lancedb',
-			tableName: 'cortex_graphrag',
-			dimensions: 1024,
-			hybridMode: 'rrf',
-			densityWeight: 0.7,
-		},
-		expansion: {
-			allowedEdges: [
-				'IMPORTS',
-				'DEPENDS_ON',
-				'IMPLEMENTS_CONTRACT',
-				'CALLS_TOOL',
-				'EMITS_EVENT',
-				'EXPOSES_PORT',
-				'REFERENCES_DOC',
-				'DECIDES_WITH',
-			],
-			maxHops: 1,
-			maxNeighborsPerNode: 20,
-		},
-		limits: {
-			maxContextChunks: 24,
-			queryTimeoutMs: 30000,
-			maxConcurrentQueries: 5,
-		},
-		branding: {
-			enabled: process.env.BRAINWAV_BRANDING !== 'false',
-			sourceAttribution: 'brAInwav Cortex-OS GraphRAG',
-			emitBrandedEvents: true,
-		},
-	};
+export function createGraphRAGService(
+  config?: Partial<GraphRAGServiceConfig>,
+): GraphRAGService {
+  const baseConfig: GraphRAGServiceConfig = {
+    qdrant: DEFAULT_QDRANT_CONFIG,
+    expansion: {
+      allowedEdges: [
+        GraphEdgeType.IMPORTS,
+        GraphEdgeType.DEPENDS_ON,
+        GraphEdgeType.IMPLEMENTS_CONTRACT,
+        GraphEdgeType.CALLS_TOOL,
+        GraphEdgeType.EMITS_EVENT,
+        GraphEdgeType.EXPOSES_PORT,
+        GraphEdgeType.REFERENCES_DOC,
+        GraphEdgeType.DECIDES_WITH,
+      ],
+      maxHops: 1,
+      maxNeighborsPerNode: 20,
+    },
+    limits: {
+      maxContextChunks: 24,
+      queryTimeoutMs: 30000,
+      maxConcurrentQueries: 5,
+    },
+    branding: {
+      enabled: process.env.BRAINWAV_BRANDING !== 'false',
+      sourceAttribution: 'brAInwav Cortex-OS GraphRAG',
+      emitBrandedEvents: true,
+    },
+  };
 
-	const mergedConfig = {
-		...defaultConfig,
-		...config,
-		lancedbConfig: { ...defaultConfig.lancedbConfig, ...config?.lancedbConfig },
-		expansion: { ...defaultConfig.expansion, ...config?.expansion },
-		limits: { ...defaultConfig.limits, ...config?.limits },
-		branding: { ...defaultConfig.branding, ...config?.branding },
-	};
+  const mergedConfig: GraphRAGServiceConfig = {
+    qdrant: { ...baseConfig.qdrant, ...config?.qdrant },
+    expansion: { ...baseConfig.expansion, ...config?.expansion },
+    limits: { ...baseConfig.limits, ...config?.limits },
+    branding: { ...baseConfig.branding, ...config?.branding },
+  };
 
-	return new GraphRAGService(mergedConfig);
+  return new GraphRAGService(mergedConfig);
 }

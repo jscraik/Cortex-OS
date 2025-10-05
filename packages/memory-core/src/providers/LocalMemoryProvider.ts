@@ -1,3 +1,5 @@
+
+import { createHash, randomUUID } from 'node:crypto';
 import type {
         MemoryAnalysisInput,
         MemoryRelationshipsInput,
@@ -14,9 +16,10 @@ import { pino } from 'pino';
 import type { CheckpointManager } from '../checkpoints/index.js';
 import { createCheckpointManager } from '../checkpoints/index.js';
 import type {
-        Memory,
-        MemoryAnalysisResult,
-        MemoryCoreConfig,
+	Memory,
+	MemoryAnalysisResult,
+	MemoryCoreConfig,
+	MemoryMetadata,
 	MemoryGraph,
 	MemoryProvider,
 	MemoryRelationship,
@@ -29,17 +32,19 @@ import type {
 } from '../types.js';
 import { MemoryProviderError } from '../types.js';
 
+type NormalizedStoreInput = MemoryStoreInput & { metadata?: MemoryMetadata };
+
 // import { MemoryWorkflowEngine } from '../workflows/memoryWorkflow.js'; // Temporarily disabled
 // Local types to replace workflow types
 interface StoreWorkflowPersistPayload {
 	id: string;
-	input: MemoryStoreInput;
+	input: NormalizedStoreInput;
 	timestamp: number;
 }
 
 interface StoreWorkflowIndexPayload {
 	id: string;
-	input: MemoryStoreInput;
+	input: NormalizedStoreInput;
 	timestamp: number;
 }
 
@@ -68,6 +73,167 @@ type MemoryGraphEdge = {
 };
 
 const logger = pino({ level: 'info' });
+
+const EMBEDDING_USER_AGENT = 'brAInwav-Memory-Core/1.0';
+
+const SENSITIVE_PATTERNS: RegExp[] = [
+	/sk-[A-Za-z0-9_-]{20,}/g,
+	/[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/g,
+	/\b\d{3}-\d{2}-\d{4}\b/g,
+];
+
+function scrubSensitiveContent(content: string): string {
+	return SENSITIVE_PATTERNS.reduce(
+		(current, pattern) => current.replace(pattern, '[REDACTED]'),
+		content,
+	);
+}
+
+function normalizeMetadata(metadata?: MemoryMetadata | Record<string, unknown>): MemoryMetadata | undefined {
+	if (!metadata) {
+		return undefined;
+	}
+
+	const candidate = metadata as MemoryMetadata;
+	const normalized: MemoryMetadata = { ...metadata };
+
+	const tenant = typeof candidate.tenant === 'string' ? candidate.tenant.trim() : '';
+	if (tenant.length > 0) {
+		normalized.tenant = tenant;
+	} else {
+		delete normalized.tenant;
+	}
+
+	const contentSha = typeof candidate.contentSha === 'string' ? candidate.contentSha.trim() : '';
+	if (contentSha.length > 0) {
+		normalized.contentSha = contentSha;
+	} else {
+		delete normalized.contentSha;
+	}
+
+	if (typeof candidate.sourceUri === 'string' && candidate.sourceUri.length > 0) {
+		normalized.sourceUri = candidate.sourceUri;
+	} else {
+		delete normalized.sourceUri;
+	}
+
+	const labels = Array.isArray(candidate.labels)
+		? candidate.labels
+			  .map((label) => (typeof label === 'string' ? label.trim() : ''))
+			  .filter((label) => label.length > 0)
+		: [];
+	if (labels.length > 0) {
+		normalized.labels = Array.from(new Set(labels));
+	} else {
+		delete normalized.labels;
+	}
+
+	return normalized;
+}
+
+function computeContentSha(content: string): string {
+	return createHash('sha256').update(content).digest('hex');
+}
+
+function buildProvenancePayload(metadata: MemoryMetadata | undefined, sanitizedContent: string) {
+	const tenant =
+		typeof metadata?.tenant === 'string' && metadata.tenant.length > 0
+			? metadata.tenant
+			: 'public';
+	const labels = Array.isArray(metadata?.labels) ? [...metadata.labels] : [];
+	const sourceUri =
+		typeof metadata?.sourceUri === 'string' && metadata.sourceUri.length > 0
+			? metadata.sourceUri
+			: undefined;
+	const contentSha =
+		typeof metadata?.contentSha === 'string' && metadata.contentSha.length >= 8
+			? metadata.contentSha
+			: computeContentSha(sanitizedContent);
+
+	return { tenant, labels, sourceUri, contentSha };
+}
+
+async function requestMlxEmbedding(text: string): Promise<number[] | null> {
+	const baseUrl = process.env.MLX_EMBED_BASE_URL;
+	if (!baseUrl) {
+		return null;
+	}
+
+	try {
+		const parsed = new URL(baseUrl);
+		const { embedding } = await safeFetchJson<{ embedding: number[] }>(`${baseUrl}/embed`, {
+			allowedHosts: [parsed.hostname.toLowerCase()],
+			allowedProtocols: [parsed.protocol],
+			allowLocalhost: isPrivateHostname(parsed.hostname),
+			fetchOptions: {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'User-Agent': EMBEDDING_USER_AGENT,
+				},
+				body: JSON.stringify({ text }),
+			},
+		});
+		if (!Array.isArray(embedding)) {
+			logger.warn('brAInwav MLX embedding returned invalid payload');
+			return null;
+		}
+		return embedding;
+	} catch (error) {
+		logger.warn('brAInwav MLX embedding failed', { error: (error as Error).message });
+		return null;
+	}
+}
+
+async function requestOllamaEmbedding(text: string): Promise<number[] | null> {
+	const baseUrl = process.env.OLLAMA_BASE_URL;
+	if (!baseUrl) {
+		return null;
+	}
+
+	try {
+		const parsed = new URL(baseUrl);
+		const data = await safeFetchJson<Record<string, unknown>>(`${baseUrl}/embeddings`, {
+			allowedHosts: [parsed.hostname.toLowerCase()],
+			allowedProtocols: [parsed.protocol],
+			allowLocalhost: isPrivateHostname(parsed.hostname),
+			fetchOptions: {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: 'Bearer ollama',
+					'User-Agent': EMBEDDING_USER_AGENT,
+				},
+				body: JSON.stringify({
+					model: process.env.OLLAMA_MODEL || 'mxbai-embed-large',
+					input: text,
+				}),
+			},
+		});
+		const embedding =
+			Array.isArray((data as any)?.data)
+				? ((data as any).data?.[0]?.embedding as number[] | undefined)
+				: (data as any)?.embedding;
+		if (!Array.isArray(embedding)) {
+			logger.warn('brAInwav Ollama embedding returned invalid payload');
+			return null;
+		}
+		return embedding;
+	} catch (error) {
+		logger.warn('brAInwav Ollama embedding failed', { error: (error as Error).message });
+		return null;
+	}
+}
+
+function createMockEmbedding(text: string, dim: number): number[] {
+	const embedding = new Array(dim).fill(0);
+	for (let i = 0; i < text.length; i++) {
+		const charCode = text.charCodeAt(i);
+		embedding[i % dim] = (embedding[i % dim] + charCode) / 255;
+	}
+	const norm = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+	return embedding.map((val) => (norm === 0 ? 0 : val / norm));
+}
 
 export class LocalMemoryProvider implements MemoryProvider {
 	private readonly db: Database.Database;
@@ -133,60 +299,75 @@ export class LocalMemoryProvider implements MemoryProvider {
   */
 	}
 
-        private initializeDatabase(): void {
-                // Create memories table with FTS5
-                this.db.exec(`
+	private normalizeStoreInput(input: MemoryStoreInput): NormalizedStoreInput {
+		const tags = Array.isArray(input.tags)
+			? input.tags
+				  .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+				  .filter((tag) => tag.length > 0)
+			: undefined;
+		const metadata = normalizeMetadata(input.metadata);
+
+		return {
+			...input,
+			tags,
+			metadata,
+		};
+	}
+
+	private initializeDatabase(): void {
+		// Create memories table with FTS5
+		this.db.exec(`
       CREATE TABLE IF NOT EXISTS memories (
-        id TEXT PRIMARY KEY,
-        content TEXT NOT NULL,
-        importance INTEGER DEFAULT 5,
-        domain TEXT,
-        tags TEXT,
-        metadata TEXT,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        vector_indexed INTEGER DEFAULT 0
+	id TEXT PRIMARY KEY,
+	content TEXT NOT NULL,
+	importance INTEGER DEFAULT 5,
+	domain TEXT,
+	tags TEXT,
+	metadata TEXT,
+	created_at INTEGER NOT NULL,
+	updated_at INTEGER NOT NULL,
+	vector_indexed INTEGER DEFAULT 0
       );
     `);
 
 		// FTS5 table for keyword search
 		this.db.exec(`
       CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
-        content,
-        content='memories',
-        content_rowid='rowid',
-        tokenize='porter'
+	content,
+	content='memories',
+	content_rowid='rowid',
+	tokenize='porter'
       );
     `);
 
 		// Triggers for FTS5
 		this.db.exec(`
       CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
-        INSERT INTO memories_fts(rowid, content) VALUES (new.rowid, new.content);
+	INSERT INTO memories_fts(rowid, content) VALUES (new.rowid, new.content);
       END;
 
       CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
-        UPDATE memories_fts SET content = new.content WHERE rowid = new.rowid;
+	UPDATE memories_fts SET content = new.content WHERE rowid = new.rowid;
       END;
 
       CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
-        DELETE FROM memories_fts WHERE rowid = old.rowid;
+	DELETE FROM memories_fts WHERE rowid = old.rowid;
       END;
     `);
 
 		// Relationships table
 		this.db.exec(`
       CREATE TABLE IF NOT EXISTS memory_relationships (
-        id TEXT PRIMARY KEY,
-        source_id TEXT NOT NULL,
-        target_id TEXT NOT NULL,
-        type TEXT NOT NULL,
-        strength REAL DEFAULT 0.5,
-        bidirectional INTEGER DEFAULT 0,
-        created_at INTEGER NOT NULL,
-        metadata TEXT,
-        FOREIGN KEY (source_id) REFERENCES memories(id) ON DELETE CASCADE,
-        FOREIGN KEY (target_id) REFERENCES memories(id) ON DELETE CASCADE
+	id TEXT PRIMARY KEY,
+	source_id TEXT NOT NULL,
+	target_id TEXT NOT NULL,
+	type TEXT NOT NULL,
+	strength REAL DEFAULT 0.5,
+	bidirectional INTEGER DEFAULT 0,
+	created_at INTEGER NOT NULL,
+	metadata TEXT,
+	FOREIGN KEY (source_id) REFERENCES memories(id) ON DELETE CASCADE,
+	FOREIGN KEY (target_id) REFERENCES memories(id) ON DELETE CASCADE
       );
     `);
 
@@ -213,7 +394,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}: StoreWorkflowPersistPayload): Promise<void> {
 		const stmt = this.db.prepare(`
       INSERT INTO memories (
-        id, content, importance, domain, tags, metadata, created_at, updated_at, vector_indexed
+	id, content, importance, domain, tags, metadata, created_at, updated_at, vector_indexed
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
@@ -246,7 +427,8 @@ export class LocalMemoryProvider implements MemoryProvider {
 		const task = async () => {
 			try {
 				await this.ensureQdrantCollection();
-				const embedding = await this.generateEmbedding(input.content);
+				const sanitizedContent = scrubSensitiveContent(input.content);
+				const embedding = await this.generateEmbedding(sanitizedContent);
 				if (!embedding || embedding.length === 0) {
 					throw new MemoryProviderError('INTERNAL', 'Failed to generate embedding');
 				}
@@ -254,6 +436,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 				if (!this.qdrant || !this.qdrantConfig) {
 					throw new MemoryProviderError('INTERNAL', 'Qdrant not configured');
 				}
+				const provenance = buildProvenancePayload(input.metadata, sanitizedContent);
 				await this.qdrant.upsert(this.qdrantConfig.collection, {
 					points: [
 						{
@@ -263,6 +446,10 @@ export class LocalMemoryProvider implements MemoryProvider {
 								id,
 								domain: input.domain,
 								tags: input.tags || [],
+								labels: provenance.labels,
+								tenant: provenance.tenant,
+								sourceUri: provenance.sourceUri,
+								contentSha: provenance.contentSha,
 								createdAt: timestamp,
 								updatedAt: timestamp,
 								importance: input.importance || 5,
@@ -272,7 +459,11 @@ export class LocalMemoryProvider implements MemoryProvider {
 				});
 
 				this.db.prepare('UPDATE memories SET vector_indexed = 1 WHERE id = ?').run(id);
-				logger.debug('Vector indexed', { id, domain: input.domain });
+				logger.debug('Vector indexed', {
+					id,
+					domain: input.domain,
+					tenant: provenance.tenant,
+				});
 			} catch (error) {
 				logger.warn('Failed to index vector', { id, error: (error as Error).message });
 			}
@@ -337,79 +528,17 @@ export class LocalMemoryProvider implements MemoryProvider {
 		}
 	}
 
-	// Simple embedding generation (placeholder - replace with actual embedding model)
-	// WARNING: Mock embeddings - not production ready - violates brAInwav production standards
 	private async generateEmbedding(text: string): Promise<number[]> {
-		// brAInwav Production Standard: Real embeddings required
-		const mlxBaseUrl = process.env.MLX_EMBED_BASE_URL;
-		const ollamaBaseUrl = process.env.OLLAMA_BASE_URL;
-
-		// MLX embedding service (preferred)
-		if (mlxBaseUrl) {
-			try {
-				const parsed = new URL(mlxBaseUrl);
-				const { embedding } = await safeFetchJson<{ embedding: number[] }>(`${mlxBaseUrl}/embed`, {
-					allowedHosts: [parsed.hostname.toLowerCase()],
-					allowedProtocols: [parsed.protocol],
-					allowLocalhost: isPrivateHostname(parsed.hostname),
-					fetchOptions: {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							'User-Agent': 'brAInwav-Memory-Core/1.0',
-						},
-						body: JSON.stringify({ text }),
-					},
-				});
-				if (!Array.isArray(embedding)) {
-					throw new MemoryProviderError(
-						'INTERNAL',
-						'brAInwav: Invalid embed payload from MLX service',
-					);
-				}
-				return embedding;
-			} catch (error) {
-				logger.warn('brAInwav MLX embedding failed, trying fallback', {
-					error: (error as Error).message,
-				});
-			}
+		const mlxEmbedding = await requestMlxEmbedding(text);
+		if (mlxEmbedding) {
+			return mlxEmbedding;
 		}
 
-		// Ollama fallback (OpenAI-compatible)
-		if (ollamaBaseUrl) {
-			try {
-				const parsed = new URL(ollamaBaseUrl);
-				const data = await safeFetchJson<Record<string, any>>(`${ollamaBaseUrl}/embeddings`, {
-					allowedHosts: [parsed.hostname.toLowerCase()],
-					allowedProtocols: [parsed.protocol],
-					allowLocalhost: isPrivateHostname(parsed.hostname),
-					fetchOptions: {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							Authorization: 'Bearer ollama',
-							'User-Agent': 'brAInwav-Memory-Core/1.0',
-						},
-						body: JSON.stringify({
-							model: process.env.OLLAMA_MODEL || 'mxbai-embed-large',
-							input: text,
-						}),
-					},
-				});
-				const embedding = data?.data?.[0]?.embedding ?? data?.embedding;
-				if (!Array.isArray(embedding)) {
-					throw new MemoryProviderError(
-						'INTERNAL',
-						'brAInwav: Invalid embed payload from Ollama service',
-					);
-				}
-				return embedding;
-			} catch (error) {
-				logger.warn('brAInwav Ollama embedding failed', { error: (error as Error).message });
-			}
+		const ollamaEmbedding = await requestOllamaEmbedding(text);
+		if (ollamaEmbedding) {
+			return ollamaEmbedding;
 		}
 
-		// STRICT MODE: Fail rather than use mock embeddings in production
 		if (process.env.NODE_ENV === 'production') {
 			throw new MemoryProviderError(
 				'INTERNAL',
@@ -417,20 +546,8 @@ export class LocalMemoryProvider implements MemoryProvider {
 			);
 		}
 
-		// Development fallback with warning
 		logger.warn('brAInwav: Using mock embeddings - NOT SUITABLE FOR PRODUCTION');
-		const dim = this.config.embedDim || 384;
-		const embedding = new Array(dim).fill(0);
-
-		// Simple hash-based embedding for demo
-		for (let i = 0; i < text.length; i++) {
-			const charCode = text.charCodeAt(i);
-			embedding[i % dim] = (embedding[i % dim] + charCode) / 255;
-		}
-
-		// Normalize
-		const norm = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-		return embedding.map((val) => val / norm);
+		return createMockEmbedding(text, this.config.embedDim || 384);
 	}
 
 	async get(id: string): Promise<Memory | null> {
@@ -468,10 +585,15 @@ export class LocalMemoryProvider implements MemoryProvider {
 	async store(input: MemoryStoreInput): Promise<{ id: string; vectorIndexed: boolean }> {
 		try {
 			// Direct implementation without workflow engine
+			const normalizedInput = this.normalizeStoreInput(input);
 			const id = randomUUID();
 			const timestamp = Date.now();
-			await this.persistMemoryRecord({ id, input, timestamp });
-			const indexingResult = await this.scheduleVectorIndexing({ id, input, timestamp });
+			await this.persistMemoryRecord({ id, input: normalizedInput, timestamp });
+			const indexingResult = await this.scheduleVectorIndexing({
+				id,
+				input: normalizedInput,
+				timestamp,
+			});
 			const result = { id, vectorIndexed: indexingResult.vectorIndexed };
 			logger.info('Memory stored', {
 				id: result.id,
@@ -491,9 +613,19 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	async search(input: MemorySearchInput): Promise<MemorySearchResult[]> {
-		const limit = Math.min(input.limit || this.config.defaultLimit, this.config.maxLimit);
-		const offset = input.offset || 0;
-		const threshold = input.score_threshold || this.config.defaultThreshold;
+		this.ensureSearchGuards(input);
+		const limit = Math.min(
+			Math.max(1, input.limit ?? this.config.defaultLimit),
+			this.config.maxLimit,
+		);
+		const offset = Math.min(
+			Math.max(0, input.offset ?? 0),
+			this.config.maxOffset,
+		);
+		const threshold =
+			typeof input.score_threshold === 'number'
+				? input.score_threshold
+				: this.config.defaultThreshold;
 
 		try {
 			// Try semantic/hybrid search if Qdrant is healthy
@@ -513,13 +645,28 @@ export class LocalMemoryProvider implements MemoryProvider {
 		}
 	}
 
+	private ensureSearchGuards(input: MemorySearchInput): void {
+		const hasDomain = Boolean(input.domain);
+		const hasTags = Array.isArray(input.tags) && input.tags.length > 0;
+		const hasTenant = Boolean(input.tenant);
+		const hasLabels = Array.isArray(input.labels) && input.labels.length > 0;
+
+		if (!hasDomain && !hasTags && !hasTenant && !hasLabels) {
+			throw new MemoryProviderError(
+				'VALIDATION',
+				'brAInwav: Tenant, domain, tags, or labels filter required for search',
+			);
+		}
+	}
+
 	private async searchWithQdrant(
 		input: MemorySearchInput,
 		limit: number,
 		offset: number,
 		threshold: number,
 	): Promise<MemorySearchResult[]> {
-		const embedding = await this.generateEmbedding(input.query);
+		const sanitizedQuery = scrubSensitiveContent(input.query);
+		const embedding = await this.generateEmbedding(sanitizedQuery);
 		const searchType = input.search_type || 'semantic';
 
 		// Qdrant search with filters
@@ -582,7 +729,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 	): Promise<MemorySearchResult[]> {
 		let query = `
       SELECT memories.*,
-             COALESCE(memories_fts.rank, 0) as score
+	     COALESCE(memories_fts.rank, 0) as score
       FROM memories
       LEFT JOIN memories_fts ON memories.rowid = memories_fts.rowid
     `;
@@ -617,6 +764,22 @@ export class LocalMemoryProvider implements MemoryProvider {
 			}
 		}
 
+		if (input.tenant) {
+			conditions.push("json_extract(memories.metadata, '$.tenant') = ?");
+			params.push(input.tenant);
+		}
+
+		if (input.labels && input.labels.length > 0) {
+			for (const label of input.labels) {
+				conditions.push(`EXISTS (
+					SELECT 1
+					FROM json_each(memories.metadata, '$.labels') AS label
+					WHERE label.value = ?
+				)`);
+				params.push(label);
+			}
+		}
+
 		if (conditions.length > 0) {
 			query += ` WHERE ${conditions.join(' AND ')}`;
 		}
@@ -643,6 +806,16 @@ export class LocalMemoryProvider implements MemoryProvider {
 
 		if (input.tags && input.tags.length > 0) {
 			must.push({ key: 'tags', match: { any: input.tags } });
+		}
+
+		if (input.tenant) {
+			must.push({ key: 'tenant', match: { value: input.tenant } });
+		}
+
+		if (input.labels && input.labels.length > 0) {
+			for (const label of input.labels) {
+				must.push({ key: 'labels', match: { value: label } });
+			}
 		}
 
 		return must.length > 0 ? { must } : undefined;
@@ -706,9 +879,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 
 				const rows = this.db
 					.prepare(`
-            SELECT * FROM memory_relationships
-            WHERE source_id = ? OR target_id = ?
-          `)
+	    SELECT * FROM memory_relationships
+	    WHERE source_id = ? OR target_id = ?
+	  `)
 					.all(currentId, currentId) as SQLiteRelationshipRow[];
 
 				for (const row of rows) {
@@ -871,8 +1044,8 @@ export class LocalMemoryProvider implements MemoryProvider {
 		) {
 			this.db
 				.prepare(`
-         DELETE FROM memory_relationships
-         WHERE source_id = ? AND target_id = ? AND type = ?
+	 DELETE FROM memory_relationships
+	 WHERE source_id = ? AND target_id = ? AND type = ?
        `)
 				.run(input.target_id, input.source_id, input.relationship_type);
 		}
@@ -902,10 +1075,10 @@ export class LocalMemoryProvider implements MemoryProvider {
 			if (include.includes('domain_distribution')) {
 				const rows = this.db
 					.prepare(`
-          SELECT domain, COUNT(*) as count FROM memories
-          WHERE domain IS NOT NULL
-          GROUP BY domain
-        `)
+	  SELECT domain, COUNT(*) as count FROM memories
+	  WHERE domain IS NOT NULL
+	  GROUP BY domain
+	`)
 					.all() as { domain: string; count: number }[];
 
 				stats.domainDistribution = rows.reduce(
@@ -938,9 +1111,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 			if (include.includes('importance_distribution')) {
 				const rows = this.db
 					.prepare(`
-          SELECT importance, COUNT(*) as count FROM memories
-          GROUP BY importance
-        `)
+	  SELECT importance, COUNT(*) as count FROM memories
+	  GROUP BY importance
+	`)
 					.all() as { importance: number; count: number }[];
 
 				stats.importanceDistribution = rows.reduce(

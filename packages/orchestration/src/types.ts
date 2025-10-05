@@ -179,10 +179,48 @@ export interface DSPPlanningComplianceIssue {
 }
 
 export interface DSPPlanningCompliance {
-	standards: string[];
-	lastCheckedAt: Date | null;
-	riskScore: number;
-	outstandingViolations: DSPPlanningComplianceIssue[];
+        standards: string[];
+        lastCheckedAt: Date | null;
+        riskScore: number;
+        outstandingViolations: DSPPlanningComplianceIssue[];
+}
+
+export interface RoutingRequest {
+        requestId?: string;
+        interfaceId: string;
+        capabilities: string[];
+        tags?: string[];
+        source?: string;
+        command?: string;
+        env?: string;
+        operation?: string;
+        metadata?: Record<string, unknown>;
+}
+
+export interface RoutingCandidate {
+        agent: string;
+        score: number;
+        capabilities: string[];
+        reasons: string[];
+}
+
+export interface RoutingApproval {
+        required: boolean;
+        approvers: string[];
+        policies: string[];
+}
+
+export interface RoutingDecision {
+        requestId: string;
+        interfaceId: string;
+        policyVersion: string;
+        request: Required<RoutingRequest>;
+        selectedAgent: string;
+        candidates: RoutingCandidate[];
+        appliedRules: string[];
+        approval: RoutingApproval;
+        fallback?: { agent: string; reason: string } | null;
+        createdAt: string;
 }
 
 export interface DSPPlanningContext {

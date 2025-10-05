@@ -11,6 +11,7 @@ export type {
         Memory,
         MemoryAnalysisResult,
         MemoryCoreConfig,
+
         MemoryGraph,
         MemoryProvider,
         MemoryProviderError,
@@ -26,6 +27,11 @@ export type {
         CheckpointBranchRequest,
         CheckpointBranchResult,
 } from './types.js';
+export type {
+GraphRAGQueryRequest,
+GraphRAGResult,
+GraphRAGServiceConfig,
+} from './services/GraphRAGService.js';
 
 import { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 import { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';
@@ -41,13 +47,14 @@ export function createMemoryProviderFromEnv(): LocalMemoryProvider | RemoteMemor
 		});
 	}
 
-	const config: import('./types.js').MemoryCoreConfig = {
-		sqlitePath: process.env.MEMORY_DB_PATH || './data/unified-memories.db',
-		defaultLimit: parseInt(process.env.MEMORY_DEFAULT_LIMIT || '10', 10),
-		maxLimit: parseInt(process.env.MEMORY_MAX_LIMIT || '100', 10),
-		defaultThreshold: parseFloat(process.env.MEMORY_DEFAULT_THRESHOLD || '0.5'),
-		hybridWeight: parseFloat(process.env.MEMORY_HYBRID_WEIGHT || '0.6'),
-		enableCircuitBreaker: process.env.MEMORY_ENABLE_CIRCUIT_BREAKER === 'true',
+        const config: import('./types.js').MemoryCoreConfig = {
+                sqlitePath: process.env.MEMORY_DB_PATH || './data/unified-memories.db',
+                defaultLimit: parseInt(process.env.MEMORY_DEFAULT_LIMIT || '10', 10),
+                maxLimit: parseInt(process.env.MEMORY_MAX_LIMIT || '100', 10),
+                maxOffset: parseInt(process.env.MEMORY_MAX_OFFSET || '1000', 10),
+                defaultThreshold: parseFloat(process.env.MEMORY_DEFAULT_THRESHOLD || '0.5'),
+                hybridWeight: parseFloat(process.env.MEMORY_HYBRID_WEIGHT || '0.6'),
+                enableCircuitBreaker: process.env.MEMORY_ENABLE_CIRCUIT_BREAKER === 'true',
 		circuitBreakerThreshold: parseInt(process.env.MEMORY_CIRCUIT_BREAKER_THRESHOLD || '5', 10),
 		queueConcurrency: parseInt(process.env.MEMORY_QUEUE_CONCURRENCY || '10', 10),
 		logLevel: (process.env.MEMORY_LOG_LEVEL as any) || 'info',

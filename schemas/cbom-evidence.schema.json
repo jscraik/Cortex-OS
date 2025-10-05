@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cortex-os.dev/schemas/cbom-evidence.schema.json",
+  "title": "CBOM Evidence Envelope",
+  "type": "object",
+  "required": ["evidenceId", "type", "hash"],
+  "properties": {
+    "evidenceId": {
+      "type": "string",
+      "pattern": "^evid:[a-z0-9-]{8,}$"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "otel-span",
+        "tool-call",
+        "file-pointer",
+        "policy-report",
+        "attestation"
+      ]
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[A-Fa-f0-9]{64}$"
+    },
+    "location": {
+      "type": "string",
+      "format": "uri-reference"
+    },
+    "redacted": {
+      "type": "boolean",
+      "default": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

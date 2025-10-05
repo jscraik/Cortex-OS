@@ -39,6 +39,12 @@
 - Python modules execute with `uv run pytest`; sustain ≥95% branch coverage and track `reports/badges/`.
 - Co-locate tests with sources (e.g., `apps/*/tests`, `packages/*/tests`) and attach Smart Nx/pytest output in PRs.
 
+## 🧪 brAInwav Evaluation Gates
+
+- Run `pnpm eval:prompt`, `pnpm eval:redteam`, and `pnpm eval:rag` before committing prompt, RAG, or MCP changes.
+- Capture HTML/JSON artifacts under `reports/evals/` for reviewer audits; commit significant updates when behaviour changes.
+- CI mirrors these expectations via `.github/workflows/evals-quality.yml`; failures are merge blockers alongside existing gates.
+
 ## Agent Workflow & Repo Standards
 
 - Follow five phases: Research (`*.research.md`), Planning (`*-tdd-plan.md`), Implementation (TDD checklists), Verification (Smart Nx + coverage logs), Archive (docs + CHANGELOG + website updates).

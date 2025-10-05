@@ -255,24 +255,19 @@ function main() {
 
 	// Resolve vitest binary directly to avoid npx/npm exec process indirection
 	// Prefer local binary from workspace. Fallback to require.resolve if not on PATH.
-	const require = createRequire(import.meta.url);
-	const vitestBin = 'vitest';
-	try {
-		// vitest exposes a bin at node_modules/.bin/vitest via package.json "bin"
-		// Using require.resolve on the package main gives us a path; we derive bin nearby.
-		const vitestMain = require.resolve('vitest');
-		// node_modules/vitest/dist/... -> node_modules/.bin/vitest is usually available on PATH
-		// To be explicit, pick the CLI entrypoint exported by vitest: vitest/node.mjs supports CLI
-		// But safest is to execute the bin name relying on local node_modules/.bin precedence.
-		if (vitestMain) {
-			// No change needed; rely on local .bin in PATH
-		}
-	} catch {
-		// keep default 'vitest' expecting it on PATH
-	}
+        const require = createRequire(import.meta.url);
+        let vitestCommand = 'vitest';
+        let spawnArgs = [...enforcedArgs];
+        try {
+                const vitestEntrypoint = require.resolve('vitest/node');
+                vitestCommand = process.execPath;
+                spawnArgs = [vitestEntrypoint, ...enforcedArgs];
+        } catch {
+                // Fall back to expecting vitest on PATH when the module resolution fails
+        }
 
-	// Spawn vitest as a new process group; this allows killing the entire group on cleanup
-	const child = spawn(vitestBin, [...enforcedArgs], {
+        // Spawn vitest as a new process group; this allows killing the entire group on cleanup
+        const child = spawn(vitestCommand, spawnArgs, {
 		stdio: 'inherit',
 		env: {
 			...process.env,
