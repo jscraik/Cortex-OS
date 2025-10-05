@@ -1,0 +1,10 @@
+version: 1
+providers:
+  - id: "${PROMPTFOO_PROVIDER:-openai:gpt-4o-mini}"
+    config:
+      temperature: 0.2
+      maxOutputTokens: 600
+      seed: 1234
+assertions:
+  - type: not_contains
+    value: "[Inference]"

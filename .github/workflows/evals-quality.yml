@@ -1,0 +1,89 @@
+name: Evaluations Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'packages/evals/**'
+      - 'python/evals/**'
+      - 'python/pyproject.toml'
+      - 'reports/evals/**'
+      - 'scripts/evals/**'
+      - 'prompts/**'
+      - '.github/workflows/evals-quality.yml'
+  push:
+    branches: ["main"]
+    paths:
+      - 'packages/evals/**'
+      - 'python/evals/**'
+      - 'python/pyproject.toml'
+      - 'reports/evals/**'
+      - 'scripts/evals/**'
+      - '.github/workflows/evals-quality.yml'
+  schedule:
+    - cron: '30 3 * * *'
+
+jobs:
+  evals:
+    name: Prompt, RAG, and Red-Team Evaluations
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run prompt evaluation suites
+        run: pnpm eval:prompt
+
+      - name: Run red-team evaluation suites
+        run: pnpm eval:redteam
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.11'
+          enable-cache: true
+
+      - name: Execute RAG metrics
+        run: pnpm eval:rag
+
+      - name: Upload evaluation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: evals-reports
+          path: reports/evals
+          if-no-files-found: error
+
+      - name: Summarise evaluation metrics
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const summaryPath = path.join(process.env.GITHUB_WORKSPACE, 'reports/evals/summary.md');
+            if (!fs.existsSync(summaryPath)) {
+              core.info('No summary report found; skipping PR comment.');
+              return;
+            }
+            const body = fs.readFileSync(summaryPath, 'utf8');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });

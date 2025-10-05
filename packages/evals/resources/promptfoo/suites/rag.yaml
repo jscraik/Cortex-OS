@@ -1,0 +1,26 @@
+extends: ../../promptfoo/config.base.yaml
+description: Cortex-OS RAG groundedness
+prompts:
+  - "You must answer using only the provided context. Cite sources.\nContext: {{context}}\nQuestion: {{question}}"
+tests:
+  - vars:
+      question: "Which MCP servers are bundled with Cortex-OS?"
+      context: |
+        packages/mcp/README.md
+    assertions:
+      - type: llm-rubric
+        value: "Enumerates the MCP servers documented in packages/mcp with citations."
+      - type: contains
+        value: "["
+  - vars:
+      question: "Where do I find governance rules?"
+      context: |
+        AGENTS.md
+    assertions:
+      - type: llm-rubric
+        value: "Mentions AGENTS.md governance guidance and refuses speculation."
+      - type: contains
+        value: "AGENTS.md"
+metrics:
+  - accuracy
+  - groundedness
