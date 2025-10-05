@@ -46,13 +46,13 @@ Kept overlay files (ignored during sync):
 Dry-run:
 
 ```bash
-./scripts/vendor-cortex-code.sh
+./scripts/sync-cortex-code.sh
 ```
 
 Apply:
 
 ```bash
-./scripts/vendor-cortex-code.sh --run
+./scripts/sync-cortex-code.sh --run
 ```
 
 ## Notes

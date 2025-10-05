@@ -1,43 +1,38 @@
 Exemption Notice: Upstream Submodule Integration (codex-rs)
 
+> **Status (2025-10-01):** *Retired*. The `external/openai-codex` submodule has been
+> removed from Cortex-OS. This notice remains for historical context only.
+
 Summary
 
-- Purpose: adopt and utilize the upstream OpenAI codex-rs submodule at `external/openai-codex/codex-rs` while keeping our workspace fully operational.
-- Scope: introduces extension crates, adjusts tests, and prepares dependency rewiring to upstream crates.
+- Original purpose: adopt and utilize the upstream OpenAI codex-rs submodule at
+  `external/openai-codex/codex-rs` while keeping the workspace fully operational.
+- Retirement outcome: the workspace now vendors upstream crates through
+  `scripts/sync-cortex-code.sh`, eliminating the need for a Git submodule.
 
-Temporary Deviations
+Historical Deviations (now closed)
 
-- Workspace composition: the codex-rs workspace now lives under `apps/cortex-code/`.
-  - `apps/cortex-code/cli` (bin `codex`) hosts the streaming CLI experience decoupled from shared `core` logic.
-  - `apps/cortex-code/core` continues to expose provider abstractions while we migrate the remaining registries from legacy crates.
-- Test hardening: sanitized environment in MCP tests to avoid `.env` leakage that could set `OPENAI_API_KEY` during CI.
-  - Ensures hermetic behavior regardless of developer/local environment.
-- UI shape stability: normalized trailing whitespace in a TUI markdown shape test to avoid environment-dependent diffs while preserving rendering semantics.
+- Workspace composition: temporary extension crates (`chat-cli-plus`,
+  `providers-ext`) were introduced instead of modifying upstream crates directly.
+- Test hardening: MCP tests sanitized environment variables to avoid accidental
+  `OPENAI_API_KEY` leakage.
+- UI stability: normalized trailing whitespace in TUI markdown shape tests to keep
+  rendering deterministic across environments.
 
-Rationale
+Retirement Rationale
 
-- Keeps upstream crates pristine and allows staged migration without breaking existing behavior.
-- Maintains green tests and enables parallel verification against the upstream submodule.
+- Removing the submodule simplifies cloning, CI configuration, and dependency
+  review while retaining deterministic vendor snapshots via the sync script.
+- The explicit workflow documents provenance in
+  [`apps/cortex-code/UPSTREAM_SYNC.md`](../apps/cortex-code/UPSTREAM_SYNC.md).
 
-Risk and Mitigation
+Follow-up Expectations
 
-- Risk: minor differences in CLI stream-mode behavior handling when decoupled from core.
-  - Mitigation: unit and integration tests cover legacy flags, JSON NDJSON streaming, and precedence (CLI > env > default).
-- Risk: provider logic migration could introduce regressions when moved.
-  - Mitigation: staged move into `providers-ext` with re-exports first, followed by targeted test migration.
-
-Validation
-
-- `cargo test --workspace` passes locally across all crates, including the new extension crates.
-- Upstream submodule (`external/openai-codex/codex-rs`) builds and tests pass independently.
-
-Planned Follow-ups
-
-1) Dependency rewiring: repoint local crates to use upstream `codex-rs` crates via path dependencies; remove duplicate local crates from the workspace.
-2) Provider migration: move `core/src/providers/*` into `providers-ext` and update dependents accordingly.
-3) Finalize: delete transitional re-exports and update documentation.
+- Continue monitoring the vendor workflow for drift against upstream licensing
+  and security advisories.
+- Revisit this notice only if a new exemption is required for future integrations.
 
 Contact
 
 - Owners: Cortex‑OS Engineering
-- Context: tracked in `project-documentation/cortex-code/TASKS.md`.
+- Context: tracked historically in `apps/cortex-codex/TASK_TRACKER.md`.

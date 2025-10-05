@@ -1,101 +1,40 @@
 # Submodules
 
-This repository uses Git submodules to vendor external code while keeping a clear, pinned provenance.
+The Cortex-OS repository no longer tracks any Git submodules. Historical references to
+`external/openai-codex` have been retired in favour of an explicit vendor workflow.
 
-## OpenAI Codex
+## Current workflow
 
-Path: `external/openai-codex`
-Remote: <https://github.com/openai/codex.git>
+Use `scripts/sync-cortex-code.sh` to mirror the upstream Rust crates from
+[`openai/codex`](https://github.com/openai/codex) into `apps/cortex-code/`.
 
-Overlay governance & usage guide: [docs/submodules/openai-codex.md](./submodules/openai-codex.md)
-
-### Cloning With Submodules
-
-Fresh clone including submodules:
+Dry-run (inspect differences only):
 
 ```bash
-git clone --recurse-submodules <repo-url>
+./scripts/sync-cortex-code.sh
 ```
 
-If you already cloned without submodules:
+Apply an update:
 
 ```bash
-git submodule update --init --recursive
+./scripts/sync-cortex-code.sh --run
 ```
 
-### Pinning / Updating
+See [`apps/cortex-code/UPSTREAM_SYNC.md`](../apps/cortex-code/UPSTREAM_SYNC.md) for
+end-to-end documentation of the sync guardrails, including cache layout, branch naming,
+and validation hooks.
 
-We pin to a specific commit for reproducibility. To update:
+## CI considerations
 
-```bash
-# Enter the submodule directory
-git -C external/openai-codex fetch origin
-# Option A: Checkout a specific tag or branch
-git -C external/openai-codex checkout <ref>
-# Option B: Fast-forward to origin/main
-git -C external/openai-codex checkout main && git -C external/openai-codex pull --ff-only
-# Stage the new commit reference (the SHA lives in the parent repo index)
-git add external/openai-codex
-```
+- Standard clones (`git clone`) are sufficient; no `--recurse-submodules` flag is
+  required.
+- Workflows invoking the sync script should run it in dry-run mode first to gather
+  metrics without mutating the working tree.
 
-Then commit in the parent repo with a message, e.g.:
+## Governance notes
 
-```bash
-git commit -m "chore(submodule): bump openai-codex to <short-sha>"
-```
-
-### Shallow / Sparse Strategies (Optional)
-
-If clone size becomes an issue you can convert to a shallow submodule clone:
-
-```bash
-git submodule deinit -f external/openai-codex
-rm -rf .git/modules/external/openai-codex
-rm -rf external/openai-codex
-# Re-add shallow
-GIT_SSH_COMMAND="ssh" git submodule add --depth 1 https://github.com/openai/codex.git external/openai-codex
-```
-
-(Depth pinning means you may need to fetch unshallow before moving to an older commit.)
-
-### Removing the Submodule
-
-```bash
-git submodule deinit -f external/openai-codex
-rm -rf .git/modules/external/openai-codex
-rm -rf external/openai-codex
-# Remove the entry from .gitmodules and stage changes
-$EDITOR .gitmodules
-git add .gitmodules
-```
-
-### CI Considerations
-
-Ensure CI workflows either:
-
-- Use `git clone --recurse-submodules`
-- Or run `git submodule update --init --recursive` before build/test
-
-### Security / License Review
-
-Treat submodule updates like dependency bumps: review diff, licenses, and security advisories.
-
-### Sync Helper
-
-Use the provided Make target to initialize and update all submodules:
-
-```bash
-make submodules-sync
-```
-
-This performs:
-
-1. `git submodule sync --recursive` (refresh URLs)
-2. `git submodule update --init --recursive` (ensure checkout)
-3. `git submodule update --remote --recursive` (attempt remote tracking update; non-fatal if pinned)
-
-Comment out step 3 in the `Makefile` if you prefer strict commit pinning without auto-advancing remote tracking branches.
-
----
-
-For questions about submodule policy, contact maintainers.
+- Vendor updates remain subject to license and security review.
+- Copy only the files required for Cortex-OS operation and follow attribution
+  requirements outlined in `apps/cortex-code/UPSTREAM_SYNC.md`.
+- If a new submodule ever becomes necessary, update this document and obtain approval
+  from the maintainers before landing the change.

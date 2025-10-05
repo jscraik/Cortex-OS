@@ -51,7 +51,7 @@
 - `alternative-dependency-update.sh`
 - `cleanup-duplicate-configs.sh`
 - `codex-doctor.sh`
-- `codex-rs-subtree.sh`
+- `codex-rs-subtree.sh` *(retired 2025-10-01 alongside OpenAI Codex submodule removal)*
 - `cortex-dev.sh`
 
 ### 4. Directories Consolidated
