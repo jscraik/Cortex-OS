@@ -46,8 +46,6 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 
 	const _memories = memories;
 
-	const _orchestration = orchestration;
-
 	const publish = wiring.publish;
 
 	const envSchema = z.object({
@@ -73,6 +71,7 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 		profiles: profileRepository,
 		artifacts: artifactRepository,
 		evidence: evidenceRepository,
+		orchestration,
 	});
 	const eventManager = createEventManager({ httpServer });
 

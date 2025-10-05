@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import {
+        RoutingDecisionEventSchema,
+        RoutingFallbackEventSchema,
+        RoutingPlanEventSchema,
+} from './routing-events.js';
+
 export const OrchestrationEventTypes = {
 	TaskCreated: 'orchestration.task.created',
 	TaskStarted: 'orchestration.task.started',
@@ -7,13 +13,16 @@ export const OrchestrationEventTypes = {
 	TaskFailed: 'orchestration.task.failed',
 	AgentAssigned: 'orchestration.agent.assigned',
 	AgentFreed: 'orchestration.agent.freed',
-	PlanCreated: 'orchestration.plan.created',
-	PlanUpdated: 'orchestration.plan.updated',
-	CoordinationStarted: 'orchestration.coordination.started',
-	DecisionMade: 'orchestration.decision.made',
-	ResourceAllocated: 'orchestration.resource.allocated',
-	// nO Architecture Events
-	AgentCoordinationStarted: 'agent_coordination_started',
+        PlanCreated: 'orchestration.plan.created',
+        PlanUpdated: 'orchestration.plan.updated',
+        CoordinationStarted: 'orchestration.coordination.started',
+        DecisionMade: 'orchestration.decision.made',
+        ResourceAllocated: 'orchestration.resource.allocated',
+        RoutingPlan: 'orchestration.routing.plan',
+        RoutingDecision: 'orchestration.routing.decision',
+        RoutingFallback: 'orchestration.routing.fallback',
+        // nO Architecture Events
+        AgentCoordinationStarted: 'agent_coordination_started',
 	ScheduleAdjusted: 'schedule_adjusted',
 	ToolLayerInvoked: 'tool_layer_invoked',
 } as const;
@@ -203,13 +212,16 @@ export const ORCHESTRATION_EVENT_SCHEMAS = {
 	[OrchestrationEventTypes.TaskFailed]: taskFailedEventSchema,
 	[OrchestrationEventTypes.AgentAssigned]: agentAssignedEventSchema,
 	[OrchestrationEventTypes.AgentFreed]: agentFreedEventSchema,
-	[OrchestrationEventTypes.PlanCreated]: planCreatedEventSchema,
-	[OrchestrationEventTypes.PlanUpdated]: planUpdatedEventSchema,
-	[OrchestrationEventTypes.CoordinationStarted]: coordinationStartedEventSchema,
-	[OrchestrationEventTypes.DecisionMade]: decisionMadeEventSchema,
-	[OrchestrationEventTypes.ResourceAllocated]: resourceAllocatedEventSchema,
-	// nO Architecture Event Schemas
-	[OrchestrationEventTypes.AgentCoordinationStarted]: agentCoordinationStartedEventSchema,
+        [OrchestrationEventTypes.PlanCreated]: planCreatedEventSchema,
+        [OrchestrationEventTypes.PlanUpdated]: planUpdatedEventSchema,
+        [OrchestrationEventTypes.CoordinationStarted]: coordinationStartedEventSchema,
+        [OrchestrationEventTypes.DecisionMade]: decisionMadeEventSchema,
+        [OrchestrationEventTypes.ResourceAllocated]: resourceAllocatedEventSchema,
+        [OrchestrationEventTypes.RoutingPlan]: RoutingPlanEventSchema,
+        [OrchestrationEventTypes.RoutingDecision]: RoutingDecisionEventSchema,
+        [OrchestrationEventTypes.RoutingFallback]: RoutingFallbackEventSchema,
+        // nO Architecture Event Schemas
+        [OrchestrationEventTypes.AgentCoordinationStarted]: agentCoordinationStartedEventSchema,
 	[OrchestrationEventTypes.ScheduleAdjusted]: scheduleAdjustedEventSchema,
 	[OrchestrationEventTypes.ToolLayerInvoked]: toolLayerInvokedEventSchema,
 } as const;
