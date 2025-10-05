@@ -1,23 +1,31 @@
 export { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 export { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';
+export { CheckpointManager, createCheckpointManager } from './checkpoints/index.js';
 export {
-createGraphRAGService,
-GraphRAGQueryRequestSchema,
-GraphRAGServiceConfigSchema,
-} from './services/GraphRAGService.js';
+        ensureCheckpointSchema,
+        resolveCheckpointPolicy,
+        type CheckpointRuntimePolicy,
+        type CheckpointManagerOptions,
+} from './checkpoints/index.js';
 export type {
         Memory,
         MemoryAnalysisResult,
         MemoryCoreConfig,
-        MemoryMetadata,
+
         MemoryGraph,
         MemoryProvider,
-	MemoryProviderError,
-	MemoryRelationship,
-	MemorySearchResult,
-	MemoryStats,
-	QdrantConfig,
-RelationshipType,
+        MemoryProviderError,
+        MemoryRelationship,
+        MemorySearchResult,
+        MemoryStats,
+        QdrantConfig,
+        RelationshipType,
+        CheckpointConfig,
+        CheckpointSnapshot,
+        CheckpointListPage,
+        CheckpointContext,
+        CheckpointBranchRequest,
+        CheckpointBranchResult,
 } from './types.js';
 export type {
 GraphRAGQueryRequest,

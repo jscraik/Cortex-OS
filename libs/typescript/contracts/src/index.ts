@@ -65,13 +65,14 @@ export const RAGQuerySchema = z.object({
 export type RAGQuery = z.infer<typeof RAGQuerySchema>;
 
 export const SimlabCommandSchema = z.object({
-	scenario: z.string(),
-	step: z.string(),
-	params: z.record(z.unknown()).optional(),
+        scenario: z.string(),
+        step: z.string(),
+        params: z.record(z.unknown()).optional(),
 });
 export type SimlabCommand = z.infer<typeof SimlabCommandSchema>;
 
 // Event schemas for comprehensive MCP/A2A integration
+export * from './checkpoint.js';
 export * from './a2a-mcp.js';
 export * from './agent-events.js';
 export * from './agent-toolkit.js';

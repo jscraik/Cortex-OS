@@ -1,10 +1,11 @@
+
 import { createHash, randomUUID } from 'node:crypto';
 import type {
-	MemoryAnalysisInput,
-	MemoryRelationshipsInput,
-	MemorySearchInput,
-	MemoryStatsInput,
-	MemoryStoreInput,
+        MemoryAnalysisInput,
+        MemoryRelationshipsInput,
+        MemorySearchInput,
+        MemoryStatsInput,
+        MemoryStoreInput,
 } from '@cortex-os/tool-spec';
 import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import { QdrantClient } from '@qdrant/js-client-rest';
@@ -12,6 +13,8 @@ import Database from 'better-sqlite3';
 import CircuitBreaker from 'circuit-breaker-js';
 import PQueue from 'p-queue';
 import { pino } from 'pino';
+import type { CheckpointManager } from '../checkpoints/index.js';
+import { createCheckpointManager } from '../checkpoints/index.js';
 import type {
 	Memory,
 	MemoryAnalysisResult,
@@ -244,11 +247,13 @@ export class LocalMemoryProvider implements MemoryProvider {
 	private readonly config: MemoryCoreConfig;
 	// private workflows: MemoryWorkflowEngine; // Temporarily disabled
 
-	constructor(config: MemoryCoreConfig) {
-		this.config = config;
-		this.db = new Database(config.sqlitePath);
-		this.db.pragma('journal_mode = WAL');
-		this.db.pragma('foreign_keys = ON');
+        private readonly checkpointManager: CheckpointManager;
+
+        constructor(config: MemoryCoreConfig) {
+                this.config = config;
+                this.db = new Database(config.sqlitePath);
+                this.db.pragma('journal_mode = WAL');
+                this.db.pragma('foreign_keys = ON');
 
 		// Initialize Qdrant if configured
 		if (config.qdrant) {
@@ -272,9 +277,13 @@ export class LocalMemoryProvider implements MemoryProvider {
 			});
 		}
 
-		this.initializeDatabase();
+                this.initializeDatabase();
 
-		/* Temporarily disabled
+                this.checkpointManager = createCheckpointManager(this.db, {
+                        policy: config.checkpoint,
+                });
+
+                /* Temporarily disabled
   // this.workflows = new MemoryWorkflowEngine({
   //   store: {
   //     generateId: () => randomUUID(),
@@ -372,7 +381,11 @@ export class LocalMemoryProvider implements MemoryProvider {
       CREATE INDEX IF NOT EXISTS idx_relationships_target ON memory_relationships(target_id);
       CREATE INDEX IF NOT EXISTS idx_relationships_type ON memory_relationships(type);
     `);
-	}
+        }
+
+        get checkpoints(): CheckpointManager {
+                return this.checkpointManager;
+        }
 
 	private async persistMemoryRecord({
 		id,

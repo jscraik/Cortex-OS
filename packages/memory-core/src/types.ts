@@ -1,4 +1,11 @@
 import type {
+        BranchId,
+        CheckpointId,
+        CheckpointMeta,
+        CheckpointRecord,
+        StateEnvelope,
+} from '@cortex-os/contracts';
+import type {
         MemoryAnalysisInput,
         MemoryRelationshipsInput,
         MemorySearchInput,
@@ -155,13 +162,15 @@ export interface MemoryProvider {
 	): Promise<MemoryRelationship | MemoryRelationship[] | MemoryGraph | { success: boolean }>;
 	stats(input?: MemoryStatsInput): Promise<MemoryStats>;
 
-	// Health checks
-	healthCheck(): Promise<{ healthy: boolean; details: Record<string, unknown> }>;
+        // Health checks
+        healthCheck(): Promise<{ healthy: boolean; details: Record<string, unknown> }>;
 
-	// Optional: cleanup/maintenance
-	cleanup?(): Promise<void>;
-	optimize?(): Promise<void>;
-	close?(): Promise<void>;
+        // Optional: cleanup/maintenance
+        cleanup?(): Promise<void>;
+        optimize?(): Promise<void>;
+        close?(): Promise<void>;
+
+        checkpoints?: import('./checkpoints/CheckpointManager.js').CheckpointManager;
 }
 
 // Qdrant-specific types
@@ -217,14 +226,48 @@ export interface SQLiteRelationshipRow {
 
 // Error types
 export class MemoryProviderError extends Error {
-	constructor(
-		public code: 'NOT_FOUND' | 'VALIDATION' | 'STORAGE' | 'NETWORK' | 'INDEX' | 'INTERNAL',
-		message: string,
-		public details?: Record<string, unknown>,
-	) {
-		super(message);
-		this.name = 'MemoryProviderError';
-	}
+        constructor(
+                public code: 'NOT_FOUND' | 'VALIDATION' | 'STORAGE' | 'NETWORK' | 'INDEX' | 'INTERNAL',
+                message: string,
+                public details?: Record<string, unknown>,
+        ) {
+                super(message);
+                this.name = 'MemoryProviderError';
+        }
+}
+
+export interface CheckpointConfig {
+        maxRetained: number;
+        ttlMs: number;
+        branchBudget: number;
+        samplerLabel?: string;
+}
+
+export interface CheckpointSnapshot extends CheckpointRecord {
+        digest: string;
+}
+
+export interface CheckpointListPage {
+        items: CheckpointRecord[];
+        nextCursor?: string;
+}
+
+export interface CheckpointContext {
+        meta: CheckpointMeta;
+        state: StateEnvelope;
+        digest: string;
+}
+
+export interface CheckpointBranchRequest {
+        from: CheckpointId;
+        count: number;
+        labels?: string[];
+}
+
+export interface CheckpointBranchResult {
+        parent: CheckpointId;
+        branchId: BranchId;
+        checkpoints: CheckpointId[];
 }
 
 // Configuration
@@ -251,6 +294,8 @@ export interface MemoryCoreConfig {
 	circuitBreakerThreshold: number;
 	queueConcurrency: number;
 
-	// Logging
-	logLevel: 'silent' | 'error' | 'warn' | 'info' | 'debug';
+        // Logging
+        logLevel: 'silent' | 'error' | 'warn' | 'info' | 'debug';
+
+        checkpoint?: CheckpointConfig;
 }
