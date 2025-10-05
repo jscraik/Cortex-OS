@@ -52,7 +52,8 @@
     "@cortex-os/hooks": "workspace:*",
     "@cortex-os/orchestration": "workspace:*",
     "@cortex-os/prp-types": "workspace:*",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "@cortex-os/proof-artifacts": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.18.1",

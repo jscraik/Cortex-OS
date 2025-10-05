@@ -1,0 +1,16 @@
+import path from 'node:path';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+	plugins: [react()],
+	resolve: {
+		alias: {
+			'@cortex-os/cbom': path.resolve(__dirname, '../../packages/cbom/src'),
+		},
+	},
+	test: {
+		environment: 'jsdom',
+		globals: true,
+	},
+});

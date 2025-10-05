@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 /**
  * @file integration.test.ts
  * @description Integration tests for Cortex Kernel with PRP runner
@@ -7,7 +9,9 @@
  */
 
 import { beforeEach, describe, expect, it } from 'vitest';
+import { verifyProofEnvelope } from '@cortex-os/proof-artifacts';
 import { createKernel } from '../src/graph-simple.js';
+import { createProofSession, exportExecutionProofEnvelope, finalizeProof } from '../src/proof/proofSystem.js';
 
 describe('Cortex Kernel Integration', () => {
 	let kernel: ReturnType<typeof createKernel>;
@@ -223,3 +227,32 @@ describe('Cortex Kernel Integration', () => {
 		});
 	});
 });
+
+describe('Proof envelope export', () => {
+        it('emits a verifiable proof envelope for kernel artifacts', async () => {
+                const outputDir = join(process.cwd(), 'test-temp');
+                mkdirSync(outputDir, { recursive: true });
+                const artifactPath = join(outputDir, 'integration-proof.json');
+                writeFileSync(artifactPath, JSON.stringify({ ok: true }));
+
+                const session = createProofSession({
+                        seed: 'seed',
+                        executionHash: 'hash',
+                        records: [],
+                });
+                session.addClaim('core.totalTasks', '0');
+                const artifact = await finalizeProof(session);
+                const envelope = exportExecutionProofEnvelope(artifact, {
+                        artifactPath,
+                        artifactMime: 'application/json',
+                        publicContext: { instruction: 'integration' },
+                        evidence: [],
+                        runtime: { model: 'gpt-5-codex' },
+                });
+                const verification = verifyProofEnvelope(envelope);
+                expect(verification.valid).toBe(true);
+                expect(envelope.context.public.kernelProofId).toBe(artifact.id);
+                expect(envelope.context.public.kernelDigest).toBe(artifact.digest.value);
+        });
+});
+

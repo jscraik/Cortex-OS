@@ -1,6 +1,8 @@
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import type { NoTelemetryEvent } from '../observability/no-telemetry-contracts.js';
 import { createNoTelemetryEvent } from '../observability/no-telemetry-contracts.js';
+import type { PolicyRouter } from '../routing/policy-router.js';
+import type { RoutingDecision, RoutingRequest } from '../types.js';
 import {
 	type ThermalGuardPatch,
 	type ThermalGuardState,
@@ -19,8 +21,9 @@ import {
 } from './thermal/thermal-policy.js';
 
 export interface CerebrumGraphConfig {
-	thermalPolicy?: ThermalPolicy;
-	clock?: () => number;
+        routing?: PolicyRouter;
+        thermalPolicy?: ThermalPolicy;
+        clock?: () => number;
 }
 
 type ModelRef = {
@@ -32,8 +35,9 @@ type CerebrumState = typeof CerebrumAnnotation.State;
 type GuardedState = CerebrumState & ThermalGuardState;
 
 type RoutingContext = {
-	selectedProvider?: string;
-	decision?: string;
+        selectedProvider?: string;
+        decision?: RoutingDecision;
+        decisionLabel?: string;
 };
 
 type TelemetryContext = NoTelemetryEvent[];
@@ -73,11 +77,49 @@ function ensureBudget(state: CerebrumState): N0Budget {
 }
 
 function ensureTelemetry(ctx: Record<string, unknown> | undefined): TelemetryContext {
-	const telemetry = ctx?.telemetry;
-	if (Array.isArray(telemetry)) {
-		return [...(telemetry as TelemetryContext)];
-	}
-	return [];
+        const telemetry = ctx?.telemetry;
+        if (Array.isArray(telemetry)) {
+                return [...(telemetry as TelemetryContext)];
+        }
+        return [];
+}
+
+function extractStringArray(value: unknown): string[] {
+        if (!Array.isArray(value)) return [];
+        return value.filter((entry): entry is string => typeof entry === 'string' && entry.length > 0);
+}
+
+function getString(value: unknown, fallback: string): string {
+        return typeof value === 'string' && value.length > 0 ? value : fallback;
+}
+
+async function resolveRoutingDecision(
+        router: PolicyRouter | undefined,
+        state: CerebrumState,
+): Promise<RoutingDecision | undefined> {
+        if (!router) return undefined;
+        const context = (state.ctx as Record<string, unknown> | undefined) ?? {};
+        const metadataCandidate = context.metadata;
+        const metadata =
+                metadataCandidate && typeof metadataCandidate === 'object'
+                        ? (metadataCandidate as Record<string, unknown>)
+                        : {};
+        const request: RoutingRequest = {
+                interfaceId: getString(context.interface ?? context.interfaceId, 'cli'),
+                capabilities: extractStringArray(context.capabilities),
+                tags: extractStringArray(context.tags),
+                source: getString(context.source, 'langgraph'),
+                command: getString(context.command, ''),
+                env: getString(context.env, 'development'),
+                operation: getString(context.operation, 'read_only'),
+                metadata,
+        };
+        try {
+                return await router.route(request);
+        } catch (error) {
+                console.warn('cerebrum routing decision failed', error);
+                return undefined;
+        }
 }
 
 function buildTelemetryEvent(
@@ -148,13 +190,14 @@ function createPausePatch(decision: ThermalDecision, state: N0State): ThermalGua
 		cooldownUntil: decision.cooldownUntil,
 	});
 	const existingTelemetry = ensureTelemetry(state.ctx);
-	const ctx: Record<string, unknown> = {
-		routing: {
-			...((state.ctx?.routing as RoutingContext | undefined) ?? {}),
-			decision: 'thermal-fallback',
-			selectedProvider: 'ollama.brainwav-fallback',
-		},
-	};
+        const ctx: Record<string, unknown> = {
+                routing: {
+                        ...((state.ctx?.routing as RoutingContext | undefined) ?? {}),
+                        decision: undefined,
+                        decisionLabel: 'thermal-fallback',
+                        selectedProvider: 'ollama.brainwav-fallback',
+                },
+        };
 	if (telemetry) {
 		ctx.telemetry = [...existingTelemetry, telemetry];
 	}
@@ -171,13 +214,14 @@ function createResumePatch(state: N0State): ThermalGuardPatch {
 		paused: false,
 	});
 	const existingTelemetry = ensureTelemetry(state.ctx);
-	const ctx: Record<string, unknown> = {
-		routing: {
-			...((state.ctx?.routing as RoutingContext | undefined) ?? {}),
-			selectedProvider: 'mlx.brainwav-foundation',
-			decision: 'thermal-nominal',
-		},
-	};
+        const ctx: Record<string, unknown> = {
+                routing: {
+                        ...((state.ctx?.routing as RoutingContext | undefined) ?? {}),
+                        selectedProvider: 'mlx.brainwav-foundation',
+                        decision: undefined,
+                        decisionLabel: 'thermal-nominal',
+                },
+        };
 	if (telemetry) {
 		ctx.telemetry = [...existingTelemetry, telemetry];
 	}
@@ -191,21 +235,24 @@ export function createCerebrumGraph(config: CerebrumGraphConfig = {}) {
 	const policy = config.thermalPolicy ?? new ThermalPolicy();
 	const clock = config.clock ?? (() => Date.now());
 
-	const guardedSelect = withThermalGuard<GuardedState>(
-		async (state) => {
-			return {
-				selectedModel: {
-					provider: 'mlx',
-					model: 'brainwav-foundation',
-				},
-				ctx: {
-					routing: {
-						...((state.ctx?.routing as RoutingContext | undefined) ?? {}),
-						selectedProvider: 'mlx.brainwav-foundation',
-					},
-				},
-			};
-		},
+        const guardedSelect = withThermalGuard<GuardedState>(
+                async (state) => {
+                        const decision = await resolveRoutingDecision(config.routing, state);
+                        const previous = state.ctx?.routing as RoutingContext | undefined;
+                        const selectedProvider = decision?.selectedAgent ?? previous?.selectedProvider ?? 'mlx.brainwav-foundation';
+                        const decisionLabel = decision ? 'policy-router' : previous?.decisionLabel ?? 'thermal-default';
+                        return {
+                                selectedModel: { provider: 'mlx', model: 'brainwav-foundation' },
+                                ctx: {
+                                        routing: {
+                                                ...previous,
+                                                selectedProvider,
+                                                decision,
+                                                decisionLabel,
+                                        },
+                                },
+                        };
+                },
 		{
 			policy,
 			clock,
