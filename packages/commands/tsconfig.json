@@ -13,7 +13,8 @@
       "es2022"
     ],
   "strict": true,
-  "skipLibCheck": true
+  "skipLibCheck": true,
+  "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"
