@@ -5,11 +5,7 @@ declare module 'eventsource' {
 		fetch?: (input: string | URL, init?: RequestInit) => Promise<Response>;
 	}
 
-	export class EventSource {
-		constructor(url: string, options?: EventSourceOptions);
-		addEventListener(type: string, handler: (ev: Event) => void): void;
-		close(): void;
+	export default class EventSourcePolyfill extends globalThis.EventSource {
+		constructor(url: string | URL, options?: EventSourceOptions);
 	}
-
-	export default EventSource;
 }

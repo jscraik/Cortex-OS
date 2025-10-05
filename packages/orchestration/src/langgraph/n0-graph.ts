@@ -25,9 +25,11 @@ import {
 import {
 	capturePromptUsage,
 	getPrompt,
+	getSafePrompt,
 	loadDefaultPrompts,
 	type PromptCapture,
 	renderPrompt,
+	validatePromptUsage,
 } from '@cortex-os/prompts';
 import {
 	AIMessage,
@@ -1062,8 +1064,12 @@ async function ensureHooks(
 
 	function resolveSystemPrompt(custom?: string): { prompt: string; capture?: PromptCapture } {
 		if (custom) {
+			validatePromptUsage(custom);
 			return { prompt: custom };
 		}
+
+		// Enforce that the default prompt remains registered with the prompt library
+		const safeTemplate = getSafePrompt(DEFAULT_SYSTEM_PROMPT_ID);
 		const record = getPrompt(DEFAULT_SYSTEM_PROMPT_ID);
 		if (record) {
 			return {
@@ -1071,7 +1077,9 @@ async function ensureHooks(
 				capture: capturePromptUsage(record),
 			};
 		}
-		return { prompt: fallbackSystemPrompt() };
+
+		// Fall back to the registered template when no record metadata is available
+		return { prompt: safeTemplate };
 	}
 
 	function fallbackSystemPrompt(): string {

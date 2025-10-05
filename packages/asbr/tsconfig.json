@@ -10,7 +10,7 @@
     "incremental": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "target": "ES2022",
-    "module": "ESNext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -32,7 +32,7 @@
       "./node_modules/@types",
       "../../node_modules/@types"
     ],
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "5.0"
   },
   "include": [
     "src/**/*",
