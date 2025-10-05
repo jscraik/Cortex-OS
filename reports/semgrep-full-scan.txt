@@ -1,0 +1,431 @@
+
+> cortex-os@0.0.1 security:scan /Users/jamiecraik/.Cortex-OS
+> cross-env NODE_OPTIONS="--max-old-space-size=2048" semgrep scan --config=.semgrep/owasp-precise.yaml --severity=ERROR . --max-memory=2048 --timeout 180 --max-target-bytes 200MB
+
+               
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 6720 files tracked by git with 4 Code rules:
+                                                                                                                        
+  Language   Rules   Files          Origin   Rules                                                                      
+ ──────────────────────────        ────────────────                                                                     
+  ts             3    2557          Custom       4                                                                      
+  python         4     269                                                                                              
+  js             3     203                                                                                              
+                                                                                                                        
+                    
+                    
+┌──────────────────┐
+│ 64 Code Findings │
+└──────────────────┘
+                                                            
+    apps/cortex-os/tests/e2e/second-brain-validation.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           59┆ const toolsResponse = await fetch(`${runtime.mcpUrl}/tools`);
+            ⋮┆----------------------------------------
+          133┆ const toolsResponse = await fetch(`${runtime.mcpUrl}/tools`);
+            ⋮┆----------------------------------------
+          258┆ const toolsResponse = await fetch(`${runtime.mcpUrl}/tools`);
+            ⋮┆----------------------------------------
+          294┆ const toolsResponse = await fetch(`${runtime.mcpUrl}/tools`);
+            ⋮┆----------------------------------------
+          342┆ const toolsResponse = await fetch(`${runtime.mcpUrl}/tools`);
+                                                   
+    apps/cortex-os/tests/http/api-endpoints.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           75┆ const response = await fetch(`${runtime.httpUrl}/v1/tasks`);
+                                              
+    apps/cortex-os/tests/mcp/mcp-basic.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           25┆ const response = await fetch(`${runtime.mcpUrl}/tools`);
+            ⋮┆----------------------------------------
+           37┆ const response = await fetch(`${runtime.mcpUrl}/tools`);
+            ⋮┆----------------------------------------
+           59┆ const response = await fetch(`${runtime.mcpUrl}/tools`);
+            ⋮┆----------------------------------------
+           77┆ const response = await fetch(`${runtime.mcpUrl}/nonexistent`);
+            ⋮┆----------------------------------------
+           90┆ const response = await fetch(`${runtime.mcpUrl}/tools`);
+                                                           
+    apps/cortex-os/tests/mcp/mcp-server-integration.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           25┆ const response = await fetch(`${runtime.mcpUrl}/tools`);
+            ⋮┆----------------------------------------
+          182┆ const response = await fetch(`${runtime.mcpUrl}/tools`);
+            ⋮┆----------------------------------------
+          225┆ const response = await fetch(`${runtime.mcpUrl}/tools`);
+                                                              
+    apps/cortex-os/tests/runtime.bootstrap.integration.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           52┆ const res = await fetch(`${runtime.mcpUrl}/tools`);
+                                                      
+    apps/cortex-os/tests/runtime/basic-startup.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           73┆ const response = await fetch(`${runtime.mcpUrl}/tools`);
+                                           
+    apps/cortex-py/src/cortex_py/thermal.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+          200┆ completed = subprocess.run(
+          201┆     self._COMMAND,
+          202┆     check=True,
+          203┆     capture_output=True,
+          204┆     text=True,
+          205┆     timeout=3,
+          206┆ )
+            ⋮┆----------------------------------------
+          237┆ completed = subprocess.run(
+          238┆     self._COMMAND,
+          239┆     check=True,
+          240┆     capture_output=True,
+          241┆     text=True,
+          242┆     timeout=3,
+          243┆ )
+                                                   
+    apps/cortex-py/src/cortex_py/thermal_monitor.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+           99┆ result = subprocess.run(
+          100┆     ["which", "powermetrics"], capture_output=True, text=True
+          101┆ )
+            ⋮┆----------------------------------------
+          106┆ result = subprocess.run(
+          107┆     ["which", "system_profiler"], capture_output=True, text=True
+          108┆ )
+            ⋮┆----------------------------------------
+          236┆ result = subprocess.run(
+          237┆     ["which", "sensors"], capture_output=True, text=True
+          238┆ )
+            ⋮┆----------------------------------------
+          392┆ result = subprocess.run(
+          393┆     [
+          394┆         "wmic",
+          395┆         "/namespace:\\\\root\\wmi",
+          396┆         "PATH",
+          397┆         "MSAcpi_ThermalZoneTemperature",
+          398┆         "get",
+          399┆         "CurrentTemperature",
+          400┆         "/format:list",
+          401┆     ],
+             [hid 4 additional lines, adjust with --max-lines-per-finding] 
+                                                        
+    apps/cortex-py/tests/test_cortex_py_comprehensive.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+          214┆ result = subprocess.run(
+          215┆     [
+          216┆         sys.executable,
+          217┆         "-c",
+          218┆         f"import sys; sys.path.insert(0, '{SRC_ROOT}'); "
+          219┆         "from mlx.mlx_unified import main; "
+          220┆         "main(['--model', 'test-embedding', '--mode', 'embedding', '--text', 'hello'])",
+          221┆     ],
+          222┆     capture_output=True,
+          223┆     text=True,
+             [hid 2 additional lines, adjust with --max-lines-per-finding] 
+          240┆ result = subprocess.run(
+          241┆     [
+          242┆         sys.executable,
+          243┆         "-c",
+          244┆         f"import sys; sys.path.insert(0, '{SRC_ROOT}'); "
+          245┆         "from mlx.mlx_unified import main; "
+          246┆         "main(['--model', 'test-embedding', '--mode', 'embedding', '--text', 'hello', '--
+               text', 'world'])",                                                                       
+          247┆     ],
+          248┆     capture_output=True,
+          249┆     text=True,
+             [hid 2 additional lines, adjust with --max-lines-per-finding] 
+          265┆ result = subprocess.run(
+          266┆     [
+          267┆         sys.executable,
+          268┆         "-c",
+          269┆         f"import sys; sys.path.insert(0, '{SRC_ROOT}'); "
+          270┆         "from mlx.mlx_unified import main; "
+          271┆         "main(['--model', 'test-chat', '--mode', 'chat', '--text', 'Hello!'])",
+          272┆     ],
+          273┆     capture_output=True,
+          274┆     text=True,
+             [hid 2 additional lines, adjust with --max-lines-per-finding] 
+          283┆ result = subprocess.run(
+          284┆     [
+          285┆         sys.executable,
+          286┆         "-c",
+          287┆         f"import sys; sys.path.insert(0, '{SRC_ROOT}'); "
+          288┆         "from mlx.mlx_unified import main; "
+          289┆         "main(['--model', 'test-rerank', '--mode', 'rerank', '--query', 'test query', '--
+               text', 'doc1', '--text', 'doc2'])",                                                      
+          290┆     ],
+          291┆     capture_output=True,
+          292┆     text=True,
+             [hid 2 additional lines, adjust with --max-lines-per-finding] 
+                                   
+    docker/gpl-tools/gpl_service.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+          159┆ result = subprocess.run(
+          160┆     cmd,
+          161┆     capture_output=True,
+          162┆     text=True,
+          163┆     timeout=30,
+          164┆     cwd=SAFE_IMAGE_DIR,  # Run in safe directory
+          165┆     shell=False,  # Security: prevent shell injection
+          166┆ )
+            ⋮┆----------------------------------------
+          275┆ result = subprocess.run(
+          276┆     [tool, "--version"], capture_output=True, text=True, timeout=5
+          277┆ )
+                                    
+    docker/gpl-tools/health_check.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+           25┆ result = subprocess.run(
+           26┆     [tool, "--version"], capture_output=True, text=True, timeout=5
+           27┆ )
+                                     
+    examples/local-memory-rest-api.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           82┆ const response = await fetch(`${this.baseUrl}/memories/${id}`);
+            ⋮┆----------------------------------------
+           95┆ const response = await fetch(`${this.baseUrl}/memories/search?${params}`);
+            ⋮┆----------------------------------------
+          201┆ const response = await fetch(`${this.baseUrl}/health`);
+                                  
+    examples/test-local-memory.mjs
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           17┆ const healthResponse = await fetch(`${BASE_URL}/health`);
+            ⋮┆----------------------------------------
+           50┆ const searchResponse = await fetch(`${BASE_URL}/memories/search?${searchParams}`);
+            ⋮┆----------------------------------------
+           78┆ const apiResponse = await fetch(`${BASE_URL}/`);
+                                                  
+    libs/python/safe_subprocess/safe_subprocess.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+          167┆ return subprocess.run(
+          168┆     cmd_parts,
+          169┆     cwd=cwd,
+          170┆     timeout=timeout,
+          171┆     capture_output=capture_output,
+          172┆     text=text,
+          173┆     env=env,
+          174┆     check=check,
+          175┆     **kwargs,
+          176┆ )
+                                    
+    packages/agents/test-endpoint.js
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           26┆ const healthResponse = await fetch(`${baseUrl}/health`);
+                                     
+    packages/commands/src/adapters.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-code
+          Potential Code Injection: Direct execution of user input as code
+                                                                          
+           68┆ const { stdout: branch } = await exec('git rev-parse --abbrev-ref HEAD');
+            ⋮┆----------------------------------------
+           82┆ const { stdout } = await exec(cmd);
+            ⋮┆----------------------------------------
+          106┆ const { stdout } = await exec(cmd);
+            ⋮┆----------------------------------------
+          119┆ const { stdout } = await exec(cmd);
+                                                 
+    packages/memories/tests/health-report.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+           99┆ const response = await fetch(url);
+                                                 
+    packages/prp-runner/src/lib/model-selector.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+          165┆ const response = await fetch('http://localhost:11434/api/tags');
+                                                
+    packages/rag/__tests__/health-server.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+            6┆ return fetch(url).then(async (r) => ({ status: r.status, body: await r.json() }));
+            ⋮┆----------------------------------------
+           62┆ const res = await fetch(`${baseUrl}/nope`);
+                                                     
+    packages/testing/src/integration/mcp-http.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+          204┆ const response = await fetch(`${baseUrl}/healthz`);
+                                     
+    scripts/__tests__/test_codemap.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+          119┆ subprocess.run(command, cwd=repo, check=True, capture_output=True, text=True)
+            ⋮┆----------------------------------------
+          172┆ completed = subprocess.run(
+          173┆     command,
+          174┆     cwd=cwd or repo,
+          175┆     capture_output=True,
+          176┆     text=True,
+          177┆     check=False,
+          178┆ )
+            ⋮┆----------------------------------------
+          347┆ result = subprocess.run(
+          348┆     [
+          349┆         sys.executable,
+          350┆         str(script_path),
+          351┆         "--repo",
+          352┆         str(fixture_repo),
+          353┆         "--out",
+          354┆         str(json_path),
+          355┆         "--md",
+          356┆         str(md_path),
+             [hid 10 additional lines, adjust with --max-lines-per-finding] 
+                                 
+    scripts/create_github_release
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+           98┆ result = subprocess.run(command, text=True, capture_output=True, input=json_payload)
+                                           
+    scripts/maintenance/fix-dependencies.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+           46┆ result = subprocess.run(
+           47┆     validated_cmd,
+           48┆     shell=False,
+           49┆     check=True,
+           50┆     capture_output=True,
+           51┆     text=True,
+           52┆     timeout=300  # 5 minute timeout
+           53┆ )
+                                            
+    scripts/maintenance/install-mlx-tools.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+           23┆ subprocess.run(
+           24┆     cmd_list, shell=False, check=True, capture_output=True, text=True
+           25┆ )
+            ⋮┆----------------------------------------
+          103┆ result = subprocess.run(
+          104┆     cmd_list, shell=False, check=True, capture_output=True, text=True
+          105┆ )
+                             
+    scripts/smoke-healthz.mjs
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+            6┆ const res = await fetch(`http://127.0.0.1:${port}/healthz`);
+                             
+    scripts/system/codemap.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+           87┆ completed = subprocess.run(
+           88┆     command,
+           89┆     cwd=cwd,
+           90┆     capture_output=True,
+           91┆     text=True,
+           92┆     check=False,
+           93┆ )
+                              
+    servers/scripts/release.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+           53┆ subprocess.run(
+           54┆     [git_path, "rev-parse", "--verify", value],
+           55┆     check=True,
+           56┆     capture_output=True,
+           57┆     shell=False,  # Prevent shell injection
+           58┆     timeout=10,  # Prevent hanging
+           59┆ )
+            ⋮┆----------------------------------------
+          136┆ output = subprocess.run(
+          137┆     [git_path, "diff", "--name-only", git_hash, "--", "."],
+          138┆     cwd=path,
+          139┆     check=True,
+          140┆     capture_output=True,
+          141┆     text=True,
+          142┆     shell=False,  # Prevent shell injection
+          143┆     timeout=30,  # Prevent hanging
+          144┆ )
+                                                
+    simple-tests/agent-isolation-sandbox.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-code
+          Potential Code Injection: Direct execution of user input as code
+                                                                          
+          171┆ eval('1 + 2');
+            ⋮┆----------------------------------------
+          223┆ eval('2+2');
+            ⋮┆----------------------------------------
+          257┆ eval('2+2');
+            ⋮┆----------------------------------------
+          298┆ eval('40+2');
+                                               
+    tests/memory/integration-validation.test.ts
+   ❯❯❱ semgrep.owasp-top-10-2021-a10-server-side-request-forgery
+          Potential Server-Side Request Forgery: Direct use of user input in HTTP requests
+                                                                                          
+          160┆ const healthResponse = await fetch(`${baseUrl}/healthz`);
+            ⋮┆----------------------------------------
+          169┆ const readyResponse = await fetch(`${baseUrl}/readyz`);
+                                         
+    tools/model-convert/convert-to-mlx.py
+   ❯❯❱ semgrep.owasp-top-10-2021-a03-injection-command
+          Potential Command Injection: Direct use of user input in system commands
+                                                                                  
+           36┆ result = subprocess.run(
+           37┆     [mlxknife_path, "--version"],
+           38┆     capture_output=True,
+           39┆     text=True,
+           40┆     shell=False,  # Prevent shell injection
+           41┆     timeout=10,  # Prevent hanging
+           42┆ )
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 64 (64 blocking)
+ • Rules run: 4
+ • Targets scanned: 3029
+ • Parsed lines: ~99.9%
+ • Scan skipped: 
+   ◦ Files matching .semgrepignore patterns: 249
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 4 rules on 3029 files: 64 findings.
+
+A new version of Semgrep is available. See https://semgrep.dev/docs/upgrading
+
+📢 Too many findings? Try Semgrep Pro for more powerful queries and less noise.
+   See https://sg.run/false-positives.
+

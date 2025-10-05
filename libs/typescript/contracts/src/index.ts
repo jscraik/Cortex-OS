@@ -71,10 +71,11 @@ export const SimlabCommandSchema = z.object({
 });
 export type SimlabCommand = z.infer<typeof SimlabCommandSchema>;
 
-// Event schemas for comprehensive MCP/A2A integration
 export * from './a2a-mcp.js';
 export * from './agent-events.js';
 export * from './agent-toolkit.js';
+// Event schemas for comprehensive MCP/A2A integration
+export * from './checkpoint.js';
 export * from './diagnostics.js';
 
 export * from './gateway-events.js';
@@ -85,11 +86,11 @@ export * from './memory-realtime.js';
 export * from './model-gateway-events.js';
 export * from './observability-events.js';
 export {
-        RoutingPolicySchema,
-        type RoutingCondition,
-        type RoutingInterface,
-        type RoutingPolicy,
-        type RoutingPriorityRule,
+	type RoutingCondition,
+	type RoutingInterface,
+	type RoutingPolicy,
+	RoutingPolicySchema,
+	type RoutingPriorityRule,
 } from './orchestration/routing-policy.js';
 // nO Intelligence Scheduler contracts (used by orchestration tests)
 export * from './orchestration-no/intelligence-scheduler.js';

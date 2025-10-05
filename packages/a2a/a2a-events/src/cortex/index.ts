@@ -4,12 +4,12 @@ export const CORTEX_A2A_EVENTS_VERSION = '1.0.0';
 export * from './agent-events';
 // Core Event Types
 export * from './api-events.js';
+export * from './checkpoint-events.js';
 export * from './mcp-events.js';
 export * from './rag-events';
-export * from './routing-events.js';
-
 // Routing and Utilities
 export * from './routing';
+export * from './routing-events.js';
 
 import type {
 	AgentStateChangedEvent,
@@ -23,6 +23,13 @@ import type {
 	ApiResponseGeneratedEvent,
 	ApiWebhookReceivedEvent,
 } from './api-events.js';
+import type {
+	CheckpointBranchCompletedEvent,
+	CheckpointBranchStartedEvent,
+	CheckpointPrunedEvent,
+	CheckpointRolledBackEvent,
+	CheckpointSavedEvent,
+} from './checkpoint-events.js';
 import type {
 	McpContextCreatedEvent,
 	McpErrorEvent,
@@ -51,7 +58,12 @@ export type CortexEvent =
 	| RagEmbeddingGeneratedEvent
 	| AgentTaskCreatedEvent
 	| AgentTaskCompletedEvent
-	| AgentStateChangedEvent;
+	| AgentStateChangedEvent
+	| CheckpointSavedEvent
+	| CheckpointRolledBackEvent
+	| CheckpointPrunedEvent
+	| CheckpointBranchStartedEvent
+	| CheckpointBranchCompletedEvent;
 
 // Comprehensive event type guard
 export function isCortexEvent(data: unknown): data is CortexEvent {
@@ -100,6 +112,12 @@ export type {
 	AgentTaskCreatedEvent,
 	AgentTaskCompletedEvent,
 	AgentStateChangedEvent,
+	// Checkpoint Events
+	CheckpointSavedEvent,
+	CheckpointRolledBackEvent,
+	CheckpointPrunedEvent,
+	CheckpointBranchStartedEvent,
+	CheckpointBranchCompletedEvent,
 	// Union type
 	CortexEvent,
 };

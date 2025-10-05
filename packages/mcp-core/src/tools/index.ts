@@ -1,5 +1,6 @@
 // Core system tools
 export * from './bash-tool.js';
+export * from './checkpoint-tools.js';
 // Coordination tools with security controls
 export * from './coordination-tools.js';
 export * from './echo-tool.js';
@@ -28,6 +29,14 @@ export * from './write-tool.js';
 // Tool registry utilities
 import { type McpTool, ToolRegistry } from '../tools.js';
 import { bashTool } from './bash-tool.js';
+import {
+	checkpointBranchTool,
+	checkpointListTool,
+	checkpointLoadTool,
+	checkpointPruneTool,
+	checkpointRollbackTool,
+	checkpointSaveTool,
+} from './checkpoint-tools.js';
 import {
 	assignTaskTool,
 	createCoordinationSessionTool,
@@ -99,6 +108,14 @@ export const toolCategories = {
 		executePlanningPhase: executePlanningPhaseTool,
 		getPlanningStatus: getPlanningStatusTool,
 	},
+	memory: {
+		checkpointSave: checkpointSaveTool,
+		checkpointLoad: checkpointLoadTool,
+		checkpointList: checkpointListTool,
+		checkpointRollback: checkpointRollbackTool,
+		checkpointBranch: checkpointBranchTool,
+		checkpointPrune: checkpointPruneTool,
+	},
 	coordination: {
 		createCoordinationSession: createCoordinationSessionTool,
 		registerAgent: registerAgentTool,
@@ -151,6 +168,14 @@ export const allTools: ReadonlyArray<McpTool<any, any>> = [
 	createCoordinationSessionTool,
 	registerAgentTool,
 	assignTaskTool,
+
+	// Memory checkpoint tools
+	checkpointSaveTool,
+	checkpointLoadTool,
+	checkpointListTool,
+	checkpointRollbackTool,
+	checkpointBranchTool,
+	checkpointPruneTool,
 ];
 
 /**
@@ -171,6 +196,9 @@ export const permissionRequiredTools: ReadonlyArray<McpTool<any, any>> = [
 	createCoordinationSessionTool, // Coordination session creation
 	registerAgentTool, // Agent registration
 	assignTaskTool, // Task assignment
+	checkpointSaveTool, // Persist checkpoints
+	checkpointBranchTool, // Branch creation
+	checkpointPruneTool, // Pruning operations
 ];
 
 /**
@@ -187,6 +215,9 @@ export const noPermissionTools: ReadonlyArray<McpTool<any, any>> = [
 	workspaceListTool, // Workspace listing
 	workspaceReadTool, // Workspace file reading
 	getPlanningStatusTool, // Planning status retrieval
+	checkpointLoadTool, // Retrieve checkpoints
+	checkpointListTool, // Enumerate checkpoints
+	checkpointRollbackTool, // Prepare rollback state
 ];
 
 /**

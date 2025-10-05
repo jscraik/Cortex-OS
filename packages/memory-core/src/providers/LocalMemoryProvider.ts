@@ -12,6 +12,8 @@ import CircuitBreaker from 'circuit-breaker-js';
 import { createHash, randomUUID } from 'node:crypto';
 import PQueue from 'p-queue';
 import { pino } from 'pino';
+import type { CheckpointManager } from '../checkpoints/index.js';
+import { createCheckpointManager } from '../checkpoints/index.js';
 import type {
 	Memory,
 	MemoryAnalysisResult,
@@ -243,6 +245,8 @@ export class LocalMemoryProvider implements MemoryProvider {
 	private readonly config: MemoryCoreConfig;
 	// private workflows: MemoryWorkflowEngine; // Temporarily disabled
 
+	private readonly checkpointManager: CheckpointManager;
+
 	constructor(config: MemoryCoreConfig) {
 		this.config = config;
 		this.db = new Database(config.sqlitePath);
@@ -272,6 +276,10 @@ export class LocalMemoryProvider implements MemoryProvider {
 		}
 
 		this.initializeDatabase();
+
+		this.checkpointManager = createCheckpointManager(this.db, {
+			policy: config.checkpoint,
+		});
 
 		/* Temporarily disabled
   // this.workflows = new MemoryWorkflowEngine({
@@ -371,6 +379,10 @@ export class LocalMemoryProvider implements MemoryProvider {
       CREATE INDEX IF NOT EXISTS idx_relationships_target ON memory_relationships(target_id);
       CREATE INDEX IF NOT EXISTS idx_relationships_type ON memory_relationships(type);
     `);
+	}
+
+	get checkpoints(): CheckpointManager {
+		return this.checkpointManager;
 	}
 
 	private async persistMemoryRecord({

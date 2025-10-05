@@ -116,43 +116,61 @@ export class QdrantHybridSearch {
 		const startTime = Date.now();
 
 		try {
-			// Generate embeddings
 			const denseVector = await this.embedDense(params.question);
-			// Note: sparse vector support to be added in future iteration
+			const sparseVector = await this.embedSparse(params.question);
 
-			// Prepare search request with hybrid scoring
-			const searchRequest = {
-				vector: denseVector,
-				limit: params.k,
+			const queryRequest: Record<string, unknown> = {
+				query: {
+					must: [
+						{
+							vector: {
+								name: 'dense',
+								vector: denseVector,
+								limit: params.k,
+							},
+						},
+					],
+				},
 				with_payload: true,
 				with_vector: params.includeVectors,
+				limit: params.k,
 				score_threshold: params.threshold,
 				filter: this._buildFilter(params.filters, params.namespace),
 			};
 
-			// Execute search on existing collection
-			const response = await this.client.search(this.config.collection, searchRequest);
+			if (sparseVector.indices.length > 0 && sparseVector.values.length > 0) {
+				(queryRequest.query as { must: Array<Record<string, unknown>> }).must.push({
+					sparse_vector: {
+						name: 'sparse',
+						indices: sparseVector.indices,
+						values: sparseVector.values,
+						limit: params.k,
+					},
+				});
+			}
 
-			// Transform results to GraphRAG format
-			const transformedResults: GraphRAGSearchResult[] = response.map((result) => ({
-				id: String(result.id),
-				score: result.score,
-				nodeId: (result.payload?.node_id as string) || '',
-				chunkContent: (result.payload?.chunk_content as string) || '',
+			const response = await this.client.query(this.config.collection, queryRequest);
+			const points = response.points ?? [];
+
+			const transformedResults: GraphRAGSearchResult[] = points.map((point) => ({
+				id: String(point.id),
+				score: point.score ?? 0,
+				nodeId: (point.payload?.node_id as string) || '',
+				chunkContent: (point.payload?.chunk_content as string) || '',
 				metadata: {
-					path: (result.payload?.path as string) || '',
-					nodeType: (result.payload?.node_type as string) || '',
-					nodeKey: (result.payload?.node_key as string) || '',
-					lineStart: result.payload?.line_start as number,
-					lineEnd: result.payload?.line_end as number,
+					path: (point.payload?.path as string) || '',
+					nodeType: (point.payload?.node_type as string) || '',
+					nodeKey: (point.payload?.node_key as string) || '',
+					lineStart: point.payload?.line_start as number,
+					lineEnd: point.payload?.line_end as number,
 					brainwavSource: this.config.brainwavBranding
 						? 'brAInwav Cortex-OS GraphRAG'
-						: (result.payload?.brainwav_source as string) || 'Unknown',
-					relevanceScore: result.score,
+						: (point.payload?.brainwav_source as string) || 'Unknown',
+					relevanceScore: point.score ?? 0,
 					retrievalDurationMs: Date.now() - startTime,
-					...result.payload,
+					...point.payload,
 				},
-				vector: params.includeVectors ? (result.vector as number[]) : undefined,
+				vector: params.includeVectors ? (point.vector as number[]) : undefined,
 			}));
 
 			console.log(
@@ -183,7 +201,13 @@ export class QdrantHybridSearch {
 
 		const points = chunks.map((chunk) => ({
 			id: chunk.id,
-			vector: chunk.vector,
+			vectors: {
+				dense: chunk.vector,
+				sparse: {
+					indices: chunk.sparseVector.indices,
+					values: chunk.sparseVector.values,
+				},
+			},
 			payload: {
 				node_id: chunk.nodeId,
 				chunk_content: chunk.content,

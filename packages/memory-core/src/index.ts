@@ -1,6 +1,23 @@
+export {
+        CheckpointManager, createCheckpointManager,
+        ensureCheckpointSchema,
+        resolveCheckpointPolicy, type CheckpointManagerOptions,
+        type CheckpointRuntimePolicy
+} from './checkpoints/index.js';
 export { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 export { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';
 export type {
+        GraphRAGQueryRequest,
+        GraphRAGResult,
+        GraphRAGServiceConfig
+} from './services/GraphRAGService.js';
+export type {
+        CheckpointBranchRequest,
+        CheckpointBranchResult,
+        CheckpointConfig,
+        CheckpointContext,
+        CheckpointListPage,
+        CheckpointSnapshot,
         Memory,
         MemoryAnalysisResult,
         MemoryCoreConfig,

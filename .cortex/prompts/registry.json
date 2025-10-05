@@ -1,0 +1,14 @@
+[
+  {
+    "id": "sys.n0-master",
+    "name": "n0 Master System Prompt",
+    "version": "1",
+    "role": "system",
+    "riskLevel": "L2",
+    "owners": [
+      "agents@brainwav.dev"
+    ],
+    "sha256": "a8b4c6d8e2f3a1b9c5d7e0f2a4b6c8d0e3f5a7b9c1d3e5f7a9b2c4d6e8f0a2b4",
+    "variables": []
+  }
+]
