@@ -93,14 +93,21 @@ export {
 	createUnifiedToolSystem,
 } from './langgraph/tool-system.js';
 export {
-	type ComplianceEvaluationResult,
-	SecurityCoordinator,
+        type ComplianceEvaluationResult,
+        SecurityCoordinator,
 } from './security/security-coordinator.js';
 export {
-	type OrchestrationFacade,
-	OrchestrationService,
-	provideOrchestration,
+        type OrchestrationFacade,
+        OrchestrationService,
+        provideOrchestration,
 } from './service.js';
+export { PolicyRouter } from './routing/policy-router.js';
+export type {
+        RoutingApproval,
+        RoutingCandidate,
+        RoutingDecision,
+        RoutingRequest,
+} from './types.js';
 
 // Utility defaults
 export const OrchestrationDefaults = {

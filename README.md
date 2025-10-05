@@ -14,7 +14,10 @@
 
 **Autonomous Software Behavior Reasoning (ASBR) Runtime**
 
-Production-ready AI agent orchestration platform with event-driven architecture and MCP integration
+Governed AI agent orchestration platform with event-driven architecture and MCP integration
+
+> [!IMPORTANT]
+> Semantic search and embeddings require configuring an external MLX or Ollama embedding service. Without it, Cortex-OS falls back to keyword-only retrieval and disables vector indexing.
 
 [Website](https://docs.cortex-os.dev) • [Documentation](./docs) • [Quick Start](./docs/quick-start.md) • [API Reference](https://api.cortex-os.dev)
 
@@ -58,19 +61,19 @@ Production-ready AI agent orchestration platform with event-driven architecture 
 
 ## Overview
 
-Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) Runtime** enabling AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations. The system implements strict governance boundaries, comprehensive testing, and security practices.
+Cortex-OS is an actively developed **Autonomous Software Behavior Reasoning (ASBR) Runtime** enabling AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations. The system implements strict governance boundaries, comprehensive testing, and transparent security practices that are still evolving.
 
 ### 🎯 Key Features
 
 - **🤖 AI Agent Orchestration** – Multi-agent workflows with A2A communication
 - **🧠 Multimodal AI Processing** – Comprehensive support for images, audio, PDFs with OCR, vision analysis, and cross-modal search
-- **🔍 Advanced RAG System** – Retrieval-Augmented Generation with unified embeddings and citation tracking
+- **🔍 Retrieval-Augmented Workflows** – Hybrid keyword/vector search when embeddings backends are configured
 - **🔌 MCP Integration** – Standardized tool integration via MCP with FastMCP v3 advanced features
-- **🛡️ Security First** – OWASP compliance, OAuth 2.1 + PKCE, SBOM generation, vulnerability scanning
+- **🛡️ Security First** – Documented hardening roadmap with current safeguards (see [Security Posture](./docs/security.md))
 - **📊 Comprehensive Observability** – OpenTelemetry instrumentation, monitoring, tracing, analytics hooks
 - **🏗️ Governed Architecture** – Import boundaries (ESLint + Nx), strict architectural rules
 - **🧪 Quality Gates & TDD** – 95/95 coverage targets, mutation testing ≥80%, automated TDD coach integration
-- **🚀 Production Ready** – Docker deployment, CI/CD pipelines, health checks, graceful shutdown
+- **🚀 Deployment Tooling** – Docker compose stack, CI/CD pipelines, and health checks for iterative hardening
 - **🎯 Reality Filter** – Truthfulness verification and accuracy validation for all AI agents
 
 ---
@@ -174,11 +177,11 @@ Cortex-OS follows a governed monorepo architecture with strict boundaries:
 
 ### Core Documentation
 
-- **[Architecture Guide](./docs/architecture.md)** – System design and patterns
+- **Architecture Guide (in progress)** – Drafting updated system design documentation
 - **[Quick Start](./docs/quick-start.md)** – Fast setup path
 - **[Python Integration](./docs/python-integration.md)** – Instructor + Ollama
 - **[Deployment Guide](./docs/deployment.md)** – Production deployment
-- **[Security Guide](./docs/security.md)** – Security practices and compliance
+- **[Security Posture](./docs/security.md)** – Current safeguards, limitations, and roadmap
 - **[Streaming Modes](./docs/streaming-modes.md)** – Token, aggregated, and JSON streaming
 
 ### Development Documentation

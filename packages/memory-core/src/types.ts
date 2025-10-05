@@ -1,22 +1,29 @@
 import type {
-	MemoryAnalysisInput,
-	MemoryRelationshipsInput,
-	MemorySearchInput,
-	MemoryStatsInput,
-	MemoryStoreInput,
+        MemoryAnalysisInput,
+        MemoryRelationshipsInput,
+        MemorySearchInput,
+        MemoryStatsInput,
+        MemoryStoreInput,
 } from '@cortex-os/tool-spec';
+
+export type MemoryMetadata = Record<string, unknown> & {
+        sourceUri?: string;
+        contentSha?: string;
+        tenant?: string;
+        labels?: string[];
+};
 
 // Base memory entity
 export interface Memory {
-	id: string;
-	content: string;
-	importance: number;
-	tags: string[];
-	domain?: string;
-	metadata?: Record<string, unknown>;
-	createdAt: Date;
-	updatedAt: Date;
-	vectorIndexed?: boolean;
+        id: string;
+        content: string;
+        importance: number;
+        tags: string[];
+        domain?: string;
+        metadata?: MemoryMetadata;
+        createdAt: Date;
+        updatedAt: Date;
+        vectorIndexed?: boolean;
 }
 
 // Search result with score
@@ -168,16 +175,20 @@ export interface QdrantConfig {
 }
 
 export interface QdrantPoint {
-	id: string;
-	vector: number[];
-	payload: {
-		id: string;
-		domain?: string;
-		tags: string[];
-		createdAt: number;
-		updatedAt: number;
-		importance: number;
-	};
+        id: string;
+        vector: number[];
+        payload: {
+                id: string;
+                domain?: string;
+                tags: string[];
+                labels: string[];
+                tenant?: string;
+                sourceUri?: string;
+                contentSha?: string;
+                createdAt: number;
+                updatedAt: number;
+                importance: number;
+        };
 }
 
 // SQLite schema types
@@ -218,24 +229,25 @@ export class MemoryProviderError extends Error {
 
 // Configuration
 export interface MemoryCoreConfig {
-	// SQLite
-	sqlitePath: string;
+        // SQLite
+        sqlitePath: string;
 
-	// Qdrant
-	qdrant?: QdrantConfig;
+        // Qdrant
+        qdrant?: QdrantConfig;
 
-	// Embedding
-	embeddingModel?: string;
-	embedDim?: number;
+        // Embedding
+        embeddingModel?: string;
+        embedDim?: number;
 
-	// Search defaults
-	defaultLimit: number;
-	maxLimit: number;
-	defaultThreshold: number;
-	hybridWeight: number;
+        // Search defaults
+        defaultLimit: number;
+        maxLimit: number;
+        maxOffset: number;
+        defaultThreshold: number;
+        hybridWeight: number;
 
-	// Performance
-	enableCircuitBreaker: boolean;
+        // Performance
+        enableCircuitBreaker: boolean;
 	circuitBreakerThreshold: number;
 	queueConcurrency: number;
 

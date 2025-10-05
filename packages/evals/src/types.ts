@@ -11,12 +11,29 @@ export const GoldenQuerySchema = z.object({
 });
 
 export const GoldenDatasetSchema = z.object({
-	name: z.string().optional(),
-	docs: z.array(GoldenItemSchema),
-	queries: z.array(GoldenQuerySchema),
+        name: z.string().optional(),
+        docs: z.array(GoldenItemSchema),
+        queries: z.array(GoldenQuerySchema),
 });
 
 export type GoldenDataset = z.infer<typeof GoldenDatasetSchema>;
+
+export const PromptThresholdSchema = z
+        .object({
+                accuracy: z.number().min(0).max(1).default(0.8),
+                groundedness: z.number().min(0).max(1).default(0.95),
+                refusal: z.number().min(0).max(1).default(0.98),
+        })
+        .partial();
+export type PromptThresholds = z.infer<typeof PromptThresholdSchema>;
+
+export const RedteamThresholdSchema = z
+        .object({
+                maxFailures: z.number().int().min(0).default(0),
+                maxCritical: z.number().int().min(0).default(0),
+        })
+        .partial();
+export type RedteamThresholds = z.infer<typeof RedteamThresholdSchema>;
 
 // Shared eval config schema (validated at runtime)
 export const GateConfigSchema = z.object({

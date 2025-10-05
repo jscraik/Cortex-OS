@@ -1,0 +1,136 @@
+version: 0.4
+metadata:
+  owner: orchestration
+  description: Unified routing policy for Cortex-OS entry points.
+  last_review: '2025-10-03'
+interfaces:
+  webui:
+    app: apps/cortex-webui
+    priority_base: 60
+    safety:
+      allow_network: ask
+      allow_fs_write: tempdir
+  cli:
+    app: apps/cortex-os
+    priority_base: 80
+    safety:
+      allow_network: true
+      allow_fs_write: workspace_only
+  mcp:
+    pkg: packages/mcp
+    priority_base: 70
+    safety:
+      allow_network: false
+      allow_fs_write: tempdir
+  a2a:
+    pkg: packages/a2a
+    priority_base: 90
+    safety:
+      allow_network: true
+      allow_fs_write: workspace_only
+priority_rules:
+  - id: pr-runbook-sev1
+    if:
+      tags_any:
+        - runbook
+        - sev1
+        - incident
+    then:
+      boost: 40
+      prefer_capabilities:
+        - runbook_execute
+      require_approval: false
+  - id: pr-cli-dev-ops
+    if:
+      interface: cli
+      command_prefix_any:
+        - cortex-os
+        - just
+        - pnpm
+    then:
+      boost: 25
+      prefer_capabilities:
+        - code_edit
+        - test_execute
+  - id: pr-ci-safe
+    if:
+      interface: a2a
+      source: ci
+    then:
+      boost: 20
+      safety_override:
+        sandbox: process:node
+        allow_fs_write: workspace_only
+      prefer_capabilities:
+        - test_execute
+routing:
+  strategy:
+    plan_with: packages/orchestration/planners/policy-driven
+    select_by:
+      - capability_score
+      - availability
+      - cost
+    fallbacks:
+      - packages/agents/generalist
+    guardrails: packages/security/policies/llm-guardrails.yaml
+    evidence:
+      require_provenance: true
+      sink: packages/memories
+capability_matrix:
+  required:
+    - id: code_edit
+      providers:
+        - packages/agents/dev
+        - packages/agents/generalist
+    - id: data_retrieval
+      providers:
+        - packages/agents/researcher
+        - packages/agents/generalist
+    - id: test_execute
+      providers:
+        - packages/agents/test-runner
+    - id: runbook_execute
+      providers:
+        - packages/agents/ops-runbook
+  incompatible:
+    - id: network_forbidden
+      disallow_providers:
+        - packages/agents/web-fetcher
+approvals:
+  policies:
+    - id: never-for-readonly
+      if:
+        operation: read_only
+      then:
+        require_approval: false
+    - id: high-risk-file-write
+      if:
+        operation: fs_write
+        path_not_in:
+          - ./workspace
+          - ./tmp
+      then:
+        require_approval: true
+        approvers:
+          - owner
+          - security
+    - id: prod-impact
+      if:
+        env: production
+        operation_any:
+          - deploy
+          - migrate
+          - delete
+      then:
+        require_approval: true
+        approvers:
+          - owner
+          - ops
+telemetry:
+  otel_spans: true
+  a2a_events_topic: routing.decisions
+  redact:
+    fields:
+      - api_key
+      - bearer_token
+      - oauth.refresh_token

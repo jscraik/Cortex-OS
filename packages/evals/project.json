@@ -1,0 +1,40 @@
+{
+    "name": "@cortex-os/evals",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/evals/src",
+    "projectType": "library",
+    "targets": {
+        "eval.prompt": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node scripts/evals/run-promptfoo.mjs --suite prompt"
+            },
+            "outputs": ["{workspaceRoot}/reports/evals/prompt"],
+            "cache": false
+        },
+        "eval.redteam": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node scripts/evals/run-promptfoo.mjs --suite redteam"
+            },
+            "outputs": ["{workspaceRoot}/reports/evals/redteam"],
+            "cache": false
+        },
+        "eval.ab": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "node scripts/evals/run-promptfoo.mjs --suite prompt --mode compare"
+            },
+            "outputs": ["{workspaceRoot}/reports/evals/compare"],
+            "cache": false
+        },
+        "eval.rag": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "uv run python/evals/run_ragas_eval.py --dataset packages/evals/resources/datasets/rag.jsonl --out reports/evals/ragas.json"
+            },
+            "outputs": ["{workspaceRoot}/reports/evals/ragas.json"],
+            "cache": false
+        }
+    }
+}
