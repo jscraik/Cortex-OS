@@ -1,0 +1,36 @@
+{
+  "name": "@cortex-os/proof-artifacts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/proof-artifacts/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "main": "packages/proof-artifacts/src/index.ts",
+        "outputPath": "dist/packages/proof-artifacts",
+        "tsConfig": "packages/proof-artifacts/tsconfig.json"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @cortex-os/proof-artifacts test"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @cortex-os/proof-artifacts lint"
+      }
+    },
+    "verify": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @cortex-os/proof-artifacts run verify"
+      }
+    }
+  },
+  "tags": ["scope:governance", "type:library"],
+  "implicitDependencies": []
+}

@@ -335,7 +335,9 @@
     "test:mcp": "vitest packages/mcp-core/tests/tools-contract.spec.ts",
     "baseline:collect": "ts-node --transpile-only scripts/ci/generate-baseline.ts",
     "baseline:prepare": "ts-node --transpile-only scripts/ci/prepare-baseline.ts",
-    "baseline:refresh": "COVERAGE_THRESHOLD_GLOBAL=0 COVERAGE_THRESHOLD_LINES=0 COVERAGE_THRESHOLD_BRANCHES=0 COVERAGE_THRESHOLD_FUNCTIONS=0 VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 pnpm test:smart --coverage && pnpm baseline:collect"
+    "baseline:refresh": "COVERAGE_THRESHOLD_GLOBAL=0 COVERAGE_THRESHOLD_LINES=0 COVERAGE_THRESHOLD_BRANCHES=0 COVERAGE_THRESHOLD_FUNCTIONS=0 VITEST_MAX_THREADS=1 VITEST_MIN_THREADS=1 pnpm test:smart --coverage && pnpm baseline:collect",
+    "proofs:verify": "pnpm --filter @cortex-os/proof-artifacts run verify",
+    "proofs:sign": "pnpm --filter @cortex-os/proof-artifacts run sign"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.61.0",

@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cortex-os.brainwav/proof-artifact.v0.2.json",
+  "type": "object",
+  "required": [
+    "proofSpec",
+    "specVersion",
+    "id",
+    "issuedAt",
+    "actor",
+    "artifact",
+    "context",
+    "evidence",
+    "runtime"
+  ],
+  "properties": {
+    "proofSpec": { "const": "cortex-os/proof-artifact" },
+    "specVersion": { "const": "0.2.0" },
+    "id": { "type": "string", "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$" },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "actor": {
+      "$ref": "#/definitions/actor"
+    },
+    "artifact": {
+      "$ref": "#/definitions/artifact"
+    },
+    "bundle": {
+      "$ref": "#/definitions/bundle"
+    },
+    "context": {
+      "$ref": "#/definitions/context"
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/evidence" }
+    },
+    "runtime": { "$ref": "#/definitions/runtime" },
+    "trace": { "$ref": "#/definitions/trace" },
+    "policyReceipts": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/policyReceipt" }
+    },
+    "attestations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/attestation" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "actor": {
+      "type": "object",
+      "required": ["agent", "role"],
+      "properties": {
+        "agent": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "minLength": 1 },
+        "runId": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["uri", "mime", "contentHash"],
+      "properties": {
+        "uri": { "type": "string", "format": "uri" },
+        "mime": { "type": "string", "minLength": 1 },
+        "contentHash": {
+          "type": "object",
+          "required": ["alg", "hex"],
+          "properties": {
+            "alg": { "const": "sha256" },
+            "hex": { "$ref": "#/definitions/sha256" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "bundle": {
+      "type": "object",
+      "required": ["files"],
+      "properties": {
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["uri", "sha256"],
+            "properties": {
+              "uri": { "type": "string", "format": "uri" },
+              "sha256": { "$ref": "#/definitions/sha256" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "merkleRoot": { "$ref": "#/definitions/sha256" }
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "type": "object",
+      "required": ["public"],
+      "properties": {
+        "public": { "type": "object" },
+        "sealedRef": {
+          "type": "object",
+          "required": ["uri", "sha256"],
+          "properties": {
+            "uri": { "type": "string", "format": "uri" },
+            "sha256": { "$ref": "#/definitions/sha256" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "oneOf": [
+        { "$ref": "#/definitions/evidenceFile" },
+        { "$ref": "#/definitions/evidenceUrl" }
+      ]
+    },
+    "evidenceFile": {
+      "type": "object",
+      "required": ["type", "path", "blobSha256"],
+      "properties": {
+        "type": { "const": "file" },
+        "path": { "type": "string", "minLength": 1 },
+        "blobSha256": { "$ref": "#/definitions/sha256" },
+        "commit": { "type": "string", "minLength": 1 },
+        "lines": {
+          "type": "object",
+          "required": ["start", "end"],
+          "properties": {
+            "start": { "type": "integer", "minimum": 1 },
+            "end": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "quote": { "type": "string" },
+        "quoteSha256": { "$ref": "#/definitions/sha256" }
+      },
+      "additionalProperties": false
+    },
+    "evidenceUrl": {
+      "type": "object",
+      "required": ["type", "href"],
+      "properties": {
+        "type": { "const": "url" },
+        "href": { "type": "string", "format": "uri" },
+        "selector": { "type": "string" },
+        "snapshot": {
+          "type": "object",
+          "required": ["bodySha256", "retrievedAt"],
+          "properties": {
+            "bodySha256": { "$ref": "#/definitions/sha256" },
+            "retrievedAt": { "type": "string", "format": "date-time" }
+          },
+          "additionalProperties": false
+        },
+        "quote": { "type": "string" },
+        "quoteSha256": { "$ref": "#/definitions/sha256" }
+      },
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["model"],
+      "properties": {
+        "model": { "type": "string", "minLength": 1 },
+        "parameters": { "type": "object" },
+        "tooling": {
+          "type": "object",
+          "patternProperties": {
+            ".+": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "trace": {
+      "type": "object",
+      "required": ["otel"],
+      "properties": {
+        "otel": {
+          "type": "object",
+          "required": ["traceId"],
+          "properties": {
+            "traceId": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+            "rootSpanId": { "type": "string", "pattern": "^[0-9a-f]{16}$" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "policyReceipt": {
+      "type": "object",
+      "required": ["name", "status"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["pass", "fail", "warn"] },
+        "checks": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sbom": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "attestation": {
+      "type": "object",
+      "required": ["type", "predicateType", "statement", "signing"],
+      "properties": {
+        "type": { "const": "in-toto" },
+        "predicateType": { "type": "string", "format": "uri" },
+        "statement": { "type": "string", "minLength": 1 },
+        "signing": {
+          "type": "object",
+          "required": ["method", "issuer"],
+          "properties": {
+            "method": { "const": "sigstore-cosign" },
+            "issuer": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
