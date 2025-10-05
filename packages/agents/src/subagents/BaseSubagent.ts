@@ -17,6 +17,9 @@ export abstract class BaseSubagent extends EventEmitter {
 
 	constructor(config: SubagentConfig) {
 		super();
+		if (!config.systemPromptId) {
+			throw new Error('Subagent configuration must include a systemPromptId');
+		}
 		this.config = {
 			...config,
 			name: config.name || 'unknown',
@@ -24,6 +27,7 @@ export abstract class BaseSubagent extends EventEmitter {
 			capabilities: config.capabilities || [],
 			tools: config.tools || [],
 			model: config.model || 'default',
+			systemPromptId: config.systemPromptId,
 			systemPrompt: config.systemPrompt || '',
 			scope: config.scope || 'project',
 			maxConcurrency: config.maxConcurrency || 1,
