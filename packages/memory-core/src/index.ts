@@ -1,5 +1,10 @@
 export { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 export { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';
+export {
+createGraphRAGService,
+GraphRAGQueryRequestSchema,
+GraphRAGServiceConfigSchema,
+} from './services/GraphRAGService.js';
 export type {
         Memory,
         MemoryAnalysisResult,
@@ -12,8 +17,13 @@ export type {
 	MemorySearchResult,
 	MemoryStats,
 	QdrantConfig,
-	RelationshipType,
+RelationshipType,
 } from './types.js';
+export type {
+GraphRAGQueryRequest,
+GraphRAGResult,
+GraphRAGServiceConfig,
+} from './services/GraphRAGService.js';
 
 import { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 import { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';

@@ -170,18 +170,18 @@ class GraphRAGTool:
         request_payload = {
             "question": params.question,
             "k": params.k,
-            "max_hops": params.max_hops,
-            "max_chunks": params.max_chunks,
+            "maxHops": params.max_hops,
+            "maxChunks": params.max_chunks,
             "threshold": params.threshold,
-            "include_citations": params.include_citations,
-            "include_vectors": params.include_vectors,
+            "includeCitations": params.include_citations,
+            "includeVectors": params.include_vectors,
             "namespace": params.namespace,
         }
 
         # Remove None values
         request_payload = {k: v for k, v in request_payload.items() if v is not None}
 
-        endpoint_url = f"{self.memory_core_endpoint}/api/graphrag/query"
+        endpoint_url = f"{self.memory_core_endpoint.rstrip('/')}/api/v1/graphrag/query"
 
         response = await self.client.post(
             endpoint_url,
@@ -206,13 +206,13 @@ class GraphRAGTool:
 
         duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
 
+        payload = service_response.get("data", service_response)
+
         # Extract core data from service response
-        sources = service_response.get("sources", [])
-        graph_context = service_response.get("graph_context", {})
-        metadata = service_response.get("metadata", {})
-        citations = (
-            service_response.get("citations", []) if params.include_citations else None
-        )
+        sources = payload.get("sources", [])
+        graph_context = payload.get("graphContext", payload.get("graph_context", {}))
+        metadata = payload.get("metadata", {})
+        citations = payload.get("citations", []) if params.include_citations else None
 
         # Format sources with brAInwav indexing metadata
         formatted_sources = [
