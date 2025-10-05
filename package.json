@@ -91,6 +91,7 @@
     "test:fuzz": "vitest run -c vitest.fuzz.config.ts",
     "generate:tests": "node scripts/ai-test-generator.mjs",
     "test:policy": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run -c vitest.policy.config.ts",
+    "policy:generate-routing": "node scripts/policies/generate-routing-policy-schema.cjs",
     "test:launch": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run -c tests/launch-readiness/vitest.config.ts",
     "ci:launch": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" vitest run -c vitest.launch.config.ts --reporter=dot",
     "test:gitmcp": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" VITEST_MAX_THREADS=2 VITEST_MIN_THREADS=1 VITEST_MAX_FORKS=2 VITEST_MIN_FORKS=1 vitest run -c vitest.gitmcp.config.ts",

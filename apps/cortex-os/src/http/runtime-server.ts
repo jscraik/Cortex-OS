@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { URL } from 'node:url';
+import type { OrchestrationFacade, RoutingDecision, RoutingRequest } from '@cortex-os/orchestration';
 import type { ArtifactRepository } from '../persistence/artifact-repository.js';
 import { OptimisticLockError } from '../persistence/errors.js';
 import type { EvidenceRepository, SaveEvidenceInput } from '../persistence/evidence-repository.js';
@@ -16,10 +17,11 @@ export interface RuntimeHttpServer {
 }
 
 export interface RuntimeHttpDependencies {
-	tasks: TaskRepository;
-	profiles: ProfileRepository;
-	artifacts: ArtifactRepository;
-	evidence: EvidenceRepository;
+\ttasks: TaskRepository;
+\tprofiles: ProfileRepository;
+\tartifacts: ArtifactRepository;
+\tevidence: EvidenceRepository;
+\torchestration: OrchestrationFacade;
 }
 
 class HttpError extends Error {
@@ -178,6 +180,9 @@ async function handleApiRequest(
 			return;
 		case 'artifacts':
 			await handleArtifactsRoute(req, res, url, segments, dependencies.artifacts);
+			return;
+		case 'routing':
+			await handleRoutingRoute(req, res, url, segments, dependencies.orchestration);
 			return;
 		case 'evidence':
 			await handleEvidenceRoute(req, res, url, segments, dependencies.evidence);
@@ -345,11 +350,11 @@ async function handleProfilesRoute(
 }
 
 async function handleArtifactsRoute(
-	req: IncomingMessage,
-	res: ServerResponse,
-	url: URL,
-	segments: string[],
-	artifacts: ArtifactRepository,
+		req: IncomingMessage,
+		res: ServerResponse,
+		url: URL,
+		segments: string[],
+		artifacts: ArtifactRepository,
 ): Promise<void> {
 	if (segments.length === 2) {
 		if (req.method === 'GET') {
@@ -450,6 +455,131 @@ async function handleArtifactsRoute(
 	}
 
 	sendNotFound(res, 'Unsupported artifact route');
+}
+
+type OrchestrationRouter = OrchestrationFacade['router'];
+
+async function handleRoutingRoute(
+		req: IncomingMessage,
+		res: ServerResponse,
+		_url: URL,
+		segments: string[],
+		orchestration: OrchestrationFacade,
+): Promise<void> {
+	const router = orchestration?.router;
+	if (!router) {
+		throw new HttpError(503, 'Routing service unavailable', 'ROUTING_UNAVAILABLE');
+	}
+	if (segments.length === 3 && segments[2] === 'dry-run') {
+		await handleRoutingDryRun(req, res, router);
+		return;
+	}
+	if (segments.length === 4 && segments[2] === 'explain') {
+		await handleRoutingExplain(req, res, segments[3], router);
+		return;
+	}
+	sendNotFound(res, 'Unsupported routing route');
+}
+
+async function handleRoutingDryRun(
+		req: IncomingMessage,
+		res: ServerResponse,
+		router: OrchestrationRouter,
+): Promise<void> {
+	if (req.method !== 'POST') {
+		throw new HttpError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
+	}
+	const body = await readJsonBody(req);
+	const request = buildRoutingRequest(body);
+	try {
+		const decision = await router.route(request);
+		sendJson(res, 200, { decision });
+	} catch (error) {
+		const mapped = mapRoutingError(error);
+		if (mapped) throw mapped;
+		throw error;
+	}
+}
+
+async function handleRoutingExplain(
+		req: IncomingMessage,
+		res: ServerResponse,
+		requestId: string,
+		router: OrchestrationRouter,
+): Promise<void> {
+	if (req.method !== 'GET') {
+		throw new HttpError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
+	}
+	const decision: RoutingDecision | undefined = router.explain(requestId);
+	if (!decision) {
+		sendNotFound(res, 'Routing decision not found', { requestId });
+		return;
+	}
+	sendJson(res, 200, { decision });
+}
+
+function buildRoutingRequest(payload: unknown): RoutingRequest {
+	const candidate =
+		payload && typeof payload === 'object' && !Array.isArray(payload)
+			? (payload as Record<string, unknown>)
+			: {};
+	const metadata = parseRoutingMetadata(candidate.metadata);
+	return {
+		requestId: getStringField(candidate.requestId),
+		interfaceId:
+			getStringField(candidate.interfaceId) ?? getStringField(candidate.interface) ?? 'cli',
+		capabilities: toStringArray(candidate.capabilities),
+		tags: toStringArray(candidate.tags),
+		source: getStringField(candidate.source) ?? 'runtime-http',
+		command: getStringField(candidate.command),
+		env: getStringField(candidate.env),
+		operation: getStringField(candidate.operation),
+		metadata,
+	};
+}
+
+function getStringField(value: unknown): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function toStringArray(value: unknown): string[] {
+	if (!Array.isArray(value)) return [];
+	const unique = new Set<string>();
+	for (const entry of value) {
+		if (typeof entry === 'string') {
+			const trimmed = entry.trim();
+			if (trimmed.length > 0) unique.add(trimmed);
+		}
+	}
+	return Array.from(unique);
+}
+
+function parseRoutingMetadata(value: unknown): Record<string, unknown> | undefined {
+	if (value === undefined || value === null) return undefined;
+	if (Array.isArray(value) || typeof value !== 'object') {
+		throw new HttpError(400, 'metadata must be an object', 'ROUTING_METADATA_INVALID');
+	}
+	return { ...(value as Record<string, unknown>) };
+}
+
+function mapRoutingError(error: unknown): HttpError | undefined {
+	if (!(error instanceof Error)) return undefined;
+	const message = error.message;
+	if (message === 'routing_policy:not_loaded') {
+		return new HttpError(503, 'Routing policy not loaded', 'ROUTING_POLICY_NOT_LOADED');
+	}
+	if (message.startsWith('routing_policy:interface_missing:')) {
+		const parts = message.split(':');
+		const interfaceId = parts[parts.length - 1] ?? 'unknown';
+		return new HttpError(
+			404,
+			`Routing interface '${interfaceId}' not found`,
+			'ROUTING_INTERFACE_NOT_FOUND',
+		);
+	}
+	return undefined;
 }
 
 async function handleEvidenceRoute(

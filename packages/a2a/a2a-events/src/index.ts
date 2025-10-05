@@ -11,8 +11,9 @@ export {
 // Core types and functions
 export type { A2AEventEnvelope } from './types.js';
 export {
-	A2AEventEnvelopeSchema,
-	createA2AEventEnvelope,
-	isA2AEventEnvelope,
-	validateA2AEventEnvelope,
+        A2AEventEnvelopeSchema,
+        createA2AEventEnvelope,
+        isA2AEventEnvelope,
+        validateA2AEventEnvelope,
 } from './types.js';
+export * from './cortex/index.js';

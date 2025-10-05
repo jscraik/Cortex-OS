@@ -6,6 +6,7 @@ export * from './agent-events';
 export * from './api-events.js';
 export * from './mcp-events.js';
 export * from './rag-events';
+export * from './routing-events.js';
 
 // Routing and Utilities
 export * from './routing';
