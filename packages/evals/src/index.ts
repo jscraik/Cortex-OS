@@ -1,5 +1,8 @@
 import type { z } from 'zod';
 import { type RagDeps, ragSuite } from './suites/rag.js';
+import { type RedteamDeps, redteamSuite } from './suites/redteam.js';
+import { type PromptDeps, promptSuite } from './suites/promptfoo.js';
+import { type McpToolsDeps, mcpToolsSuite } from './suites/mcp-tools.js';
 import { type Router, routerSuite } from './suites/router.js';
 import { GateConfigSchema, type GateResult, type SuiteOutcome } from './types.js';
 
@@ -9,13 +12,19 @@ interface SuiteDef<O, D> {
 }
 
 const suiteRegistry = {
-	rag: ragSuite,
-	router: routerSuite,
+        rag: ragSuite,
+        router: routerSuite,
+        prompt: promptSuite,
+        redteam: redteamSuite,
+        mcpTools: mcpToolsSuite,
 } as const;
 
 type SuiteDeps = {
-	rag: RagDeps;
-	router: Router;
+        rag: RagDeps;
+        router: Router;
+        prompt: PromptDeps;
+        redteam: RedteamDeps;
+        mcpTools: McpToolsDeps;
 };
 
 export async function runGate(config: unknown, deps: SuiteDeps): Promise<GateResult> {
