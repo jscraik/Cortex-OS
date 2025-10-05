@@ -52,7 +52,7 @@
     "circuit-breaker-js": "^0.0.1",
     "commander": "^13.0.0",
     "p-queue": "^7.4.1",
-    "pino": "^8.16.0",
+    "pino": "^10.0.0",
     "sqlite-vec": "^0.1.7-alpha.2",
     "zod": "^3.25.76"
   },

@@ -5,7 +5,7 @@
     "rootDir": ".",
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
-    "ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "./**/*.ts"

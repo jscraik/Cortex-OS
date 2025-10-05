@@ -11,6 +11,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+#### CVE-2025-57319 (fast-redact) Fixed - Zero Vulnerabilities Achieved (2025-01-21)
+
+- **Vulnerability Remediation**: Resolved prototype pollution vulnerability in fast-redact@3.5.0
+  - Updated `pino` from v8.x/v9.x to v10.0.0 across 14 packages
+  - Implemented pnpm overrides to force `pino@>=10.0.0` globally
+  - Replaced `fast-redact` with `slow-redact` via override mechanism
+  - Fixed transitive dependency chain: fastify→pino→fast-redact
+
+- **Package Updates**:
+  - Root `package.json`: pino ^9.11.0 → ^10.0.0
+  - Updated pino in: agents, observability, orchestration, registry, mcp-server, security, cortex-logging, mvp-core, memories, memory-core, memory-rest-api, local-memory, evidence/analytics
+  - @pact-foundation/pact: ^12.2.0 → ^15.0.1 (packages/gateway)
+
+- **pnpm Overrides Added**:
+
+  ```json
+  {
+    "pino": ">=10.0.0",
+    "fast-redact": "npm:slow-redact@latest"
+  }
+  ```
+
+- **Verification**:
+  - `pnpm audit`: 0 vulnerabilities (previously 1 low severity)
+  - Total dependencies: 3,947
+  - fast-redact completely removed from dependency tree
+  - slow-redact successfully deployed as replacement
+
+- **Security Scanning**:
+  - Secret scanning: No secrets detected
+  - Code scanning: Semgrep configured in CI/CD (OWASP, LLM, MITRE ATLAS rulesets)
+
+**Impact**: Achieved zero known vulnerabilities across entire dependency tree. Established pnpm override pattern for future security enforcement. All brAInwav security standards maintained.
+
+**Reference**: See `SECURITY_FIXES_REPORT.md` for comprehensive documentation.
+
 ### Added
 
 #### brAInwav Policy Enforcement Pack (2025-01-21)

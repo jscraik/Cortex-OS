@@ -16,7 +16,7 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
-    "pino": "^9.9.2"
+    "pino": "^10.0.0"
   },
   "devDependencies": {
     "typescript": "^5.9.2",

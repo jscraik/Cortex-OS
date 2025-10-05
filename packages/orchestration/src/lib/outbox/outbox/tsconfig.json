@@ -39,7 +39,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "downlevelIteration": true,
-    "ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src",

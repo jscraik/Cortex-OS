@@ -1,6 +1,8 @@
 import { Buffer } from 'node:buffer';
 import { DSSEBundleBuilder, FulcioSigner } from '@sigstore/sign';
 import type { IdentityProvider } from '@sigstore/sign/dist/identity/index.js';
+import { type TrustMaterial, toSignedEntity, toTrustMaterial, Verifier } from '@sigstore/verify';
+import { getDefaultTrustMaterial } from '../trust/trust-root-manager.js';
 import type { ProofAttestation, ProofEnvelope } from '../types.js';
 
 export interface CosignSignOptions {
@@ -25,7 +27,7 @@ const decodeBundle = (statement: string): Record<string, unknown> => {
 };
 
 const assertBundleShape = (bundle: Record<string, unknown>) => {
-	if (bundle === null || typeof bundle !== 'object') {
+	if (!bundle || typeof bundle !== 'object') {
 		throw new Error('invalid sigstore bundle structure');
 	}
 	if (!('content' in bundle) || !('verificationMaterial' in bundle)) {
@@ -63,19 +65,44 @@ export const signEnvelopeWithCosign = async (
 	return { ...envelope, attestations: [...existing, attestation] };
 };
 
+export interface VerifyCosignOptions {
+	verifier?: Verifier;
+	trustMaterial?: TrustMaterial;
+	trustRootJSON?: Record<string, unknown>;
+}
+
 export const verifyCosignAttestations = async (
 	envelope: ProofEnvelope,
+	options: VerifyCosignOptions = {},
 ): Promise<ProofAttestation[]> => {
 	const attestations = envelope.attestations ?? [];
+	const activeVerifier = await resolveVerifier(options);
+	const artifactBytes = Buffer.from(JSON.stringify(envelope));
+
 	for (const attestation of attestations) {
-		try {
-			const bundle = decodeBundle(attestation.statement);
-			assertBundleShape(bundle);
-		} catch (error) {
-			throw new Error(
-				`sigstore attestation verification failed for issuer ${attestation.signing.issuer}: ${(error as Error).message}`,
-			);
+		const bundle = decodeBundle(attestation.statement);
+		assertBundleShape(bundle);
+		if (activeVerifier) {
+			const entity = toSignedEntity(bundle as never, artifactBytes);
+			activeVerifier.verify(entity);
 		}
 	}
+
 	return attestations;
+};
+
+const resolveVerifier = async (options: VerifyCosignOptions): Promise<Verifier | undefined> => {
+	if (options.verifier) {
+		return options.verifier;
+	}
+	if (options.trustMaterial) {
+		return new Verifier(options.trustMaterial);
+	}
+	if (options.trustRootJSON) {
+		const material = toTrustMaterial(options.trustRootJSON as never);
+		return new Verifier(material);
+	}
+
+	const trustMaterial = await getDefaultTrustMaterial();
+	return new Verifier(trustMaterial);
 };

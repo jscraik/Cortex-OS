@@ -6,7 +6,7 @@
     ],
     "outDir": "./dist",
     "moduleResolution": "NodeNext",
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
     "module": "NodeNext"
   },
   "include": [

@@ -11,7 +11,7 @@
 		// Ensure modern package resolution for ESM packages with package.json exports
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
-		"ignoreDeprecations": "5.0",
+		"ignoreDeprecations": "6.0",
 		"types": [
 			"node"
 		]

@@ -337,6 +337,7 @@ pnpm test:safe     # safe, minimal tests
 Cortex-OS is a governed monorepo implementing a unified memory architecture:
 
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
 │                    Clients                                  │
 ├──────────┬──────────┬──────────┬──────────┬───────────────┤
@@ -369,6 +370,7 @@ Cortex-OS is a governed monorepo implementing a unified memory architecture:
                     │    Storage Layer    │
                     │  SQLite + Qdrant    │
                     └─────────────────────┘
+
 ```
 
 ### Core Principles
@@ -499,6 +501,26 @@ pnpm nx graph           # Dependency visualization
 scripts/list-rust-editions.sh -e 2024  # Audit crates pinned to Rust 2024 edition
 scripts/cleanup-duplicate-configs.sh   # Remove/consolidate duplicate config files
 ```
+
+### 🔐 Security Status
+
+**Current Security Posture**: ✅ **ZERO VULNERABILITIES**
+
+- **Dependabot**: All advisories resolved (CVE-2025-57319 fixed)
+- **Secret Scanning**: No secrets detected
+- **Dependency Audit**: 0 vulnerabilities across 3,947 dependencies
+- **Code Scanning**: Semgrep OWASP, LLM, and MITRE ATLAS rulesets active in CI/CD
+
+**Recent Security Fixes** (2025-01-21):
+
+- Updated `pino` from v8.x/v9.x to v10.0.0 across 14 packages
+- Resolved fast-redact prototype pollution vulnerability (CVE-2025-57319)
+- Implemented pnpm overrides for security enforcement:
+  - `pino@>=10.0.0` forced globally
+  - `fast-redact` replaced with `slow-redact`
+- Updated @pact-foundation/pact to v15.0.1
+
+**Reference**: See [SECURITY_FIXES_REPORT.md](./SECURITY_FIXES_REPORT.md) for comprehensive details.
 
 > **Latest:** Improved streaming modes with unified `--stream-mode` flag, JSON schema validation,
 > and comprehensive automation examples. See [`docs/streaming-modes.md`](./docs/streaming-modes.md).
@@ -970,14 +992,16 @@ environments set `LOCAL_MEMORY_BIN` to the absolute binary path.
 Cortex-OS uses several ports for different services. See `ports.env` for the complete list:
 
 ### MCP Ports
+
 - **Pieces OS**: `39300` - Pieces MCP server (required for Pieces CLI integration)
 - **Cortex MCP**: `3023` - Main Cortex-OS MCP server
 - **Memory MCP**: `3024` - Local memory MCP server with Cloudflare tunnel access
-  - Cloudflare tunnel: https://cortex-mcp.brainwav.io
+  - Cloudflare tunnel: <https://cortex-mcp.brainwav.io>
   - External integrations connect via the tunnel URL
 - **Memory API**: `3028` - Local memory REST API
 
 ### Core Services
+
 - **Cortex Runtime**: `3000` - Main runtime server
 - **WebUI Backend**: `3001` - Web application backend
 - **WebUI Frontend**: `5173` - Development server
