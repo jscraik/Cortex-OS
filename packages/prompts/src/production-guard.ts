@@ -45,36 +45,40 @@ export class ProductionPromptGuard {
 			return; // Allow ad-hoc prompts in development environments
 		}
 
-		// If prompt ID is provided, validate it exists in registry
 		if (promptId) {
 			const registeredPrompt = getPrompt(promptId);
 			if (!registeredPrompt) {
 				throw new Error(
-					`brAInwav production guard: Unknown prompt ID '${promptId}'. All production prompts must be registered in the prompt library.`
+					`brAInwav production guard: Unknown prompt ID '${promptId}'. All production prompts must be registered in the prompt library.`,
 				);
 			}
+
+			this.assertNoAdHocPatterns(registeredPrompt.template);
 			return; // Valid registered prompt
 		}
 
-		// Check for ad-hoc system prompt patterns
-		const isAdHocPrompt = this.config.blockPatterns.some(pattern => 
-			pattern.test(promptText)
+		throw new Error(
+			`brAInwav production guard: Prompt ID is required in production environments. ` +
+				`Register this prompt in the prompt library and reference it by id instead of embedding raw text.`,
 		);
+	}
+
+	private assertNoAdHocPatterns(promptText: string): void {
+		const isAdHocPrompt = this.config.blockPatterns.some((pattern) => pattern.test(promptText));
 
 		if (isAdHocPrompt) {
 			throw new Error(
 				`brAInwav production guard: Ad-hoc system prompts are not allowed in production. ` +
-				`Please register this prompt in the prompt library using the schema defined in packages/prompts/src/schema.ts. ` +
-				`Blocked text: "${promptText.substring(0, 100)}"...`
+					`Please register this prompt in the prompt library using the schema defined in packages/prompts/src/schema.ts. ` +
+					`Blocked text: "${promptText.substring(0, 100)}"...`,
 			);
 		}
 
-		// Check for long unregistered prompts (likely system prompts)
 		if (promptText.length > 200 && this.containsSystemKeywords(promptText)) {
 			throw new Error(
 				`brAInwav production guard: Long unregistered prompt detected that appears to be a system prompt. ` +
-				`Please register this prompt with appropriate risk level and ownership in the prompt library. ` +
-				`Length: ${promptText.length} characters`
+					`Please register this prompt with appropriate risk level and ownership in the prompt library. ` +
+					`Length: ${promptText.length} characters`,
 			);
 		}
 	}
@@ -96,7 +100,7 @@ export class ProductionPromptGuard {
 		];
 
 		const lowerText = text.toLowerCase();
-		return systemKeywords.some(keyword => lowerText.includes(keyword));
+		return systemKeywords.some((keyword) => lowerText.includes(keyword));
 	}
 
 	/**
@@ -113,7 +117,7 @@ export class ProductionPromptGuard {
 		// Render the prompt with variables (this will be implemented by the calling code)
 		// For now, return the template with brAInwav compliance logging
 		console.log(`brAInwav prompt guard: Using registered prompt '${promptId}' v${prompt.version}`);
-		
+
 		return prompt.template;
 	}
 

@@ -98,7 +98,8 @@ export const SubagentConfigSchema = z.object({
 	description: z.string(),
 	tools: z.array(z.string()).optional(), // undefined = inherit all
 	model: z.custom<AgentModel>().optional(), // undefined/'inherit' = parent model
-	systemPrompt: z.string(),
+	systemPromptId: z.string().regex(/^sys\./, 'systemPromptId must reference a registered prompt'),
+	systemPrompt: z.string().optional(),
 	scope: z.enum(['project', 'user']),
 	path: z.string(),
 	capabilities: z.array(z.string()).default([]),

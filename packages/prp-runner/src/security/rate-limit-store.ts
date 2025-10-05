@@ -1,5 +1,7 @@
 import type { Request } from 'express';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
+
+type RedisClient = Redis;
 
 export interface RateLimitStoreResult {
 	allowed: boolean;
@@ -36,7 +38,7 @@ export function createMemoryStore(): RateLimitStore {
 }
 
 // Redis store using sorted sets per key
-export function createRedisStore(redis: Redis): RateLimitStore {
+export function createRedisStore(redis: RedisClient): RateLimitStore {
 	const zKey = (k: string) => `rl:${k}`;
 	return {
 		async hit(key, nowMs, windowMs, max) {

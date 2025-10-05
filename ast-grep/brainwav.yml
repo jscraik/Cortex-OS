@@ -1,0 +1,35 @@
+# ast-grep/brainwav.yml
+# Enforce branded messages and ban console.warn("not implemented") at AST level.
+language: ts
+rules:
+  - id: brand-in-throw
+    message: "[brAInwav] thrown errors must be branded."
+    severity: warning
+    rule:
+      kind: new_expression
+      pattern: new Error($MSG)
+      constraints:
+        $MSG:
+          not:
+            regex: '^\s*\[brAInwav\]\s+'
+    fix: 'new Error("[brAInwav] " + ${MSG})'
+
+  - id: brand-in-logger
+    message: "[brAInwav] logger messages must include branding."
+    severity: warning
+    rule:
+      pattern: console.$C($MSG)
+      constraints:
+        $C:
+          regex: "^(log|error|warn)$"
+        $MSG:
+          not:
+            regex: '^\s*\[brAInwav\]\s+'
+    fix: 'console.${C}("[brAInwav] " + ${MSG})'
+
+  - id: no-not-implemented-warn
+    message: "[brAInwav] console.warn('not implemented') is prohibited; throw branded error."
+    severity: error
+    rule:
+      pattern: console.warn("not implemented")
+    fix: 'console.error("[brAInwav] feature not implemented"); throw new Error("[brAInwav] feature not implemented")'

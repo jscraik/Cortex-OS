@@ -4,14 +4,16 @@
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
+    "declarationMap": true,
     "emitDeclarationOnly": false,
     "composite": true,
+    "noEmit": false,
     "module": "NodeNext",
     "target": "ES2022",
     "moduleResolution": "NodeNext",
     "skipLibCheck": true,
     "strict": true,
-    "ignoreDeprecations": "5.0"
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*.ts"

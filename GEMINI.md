@@ -1,331 +1,563 @@
-# GEMINI.md - brAInwav Cortex-OS Development Guide
+# Cortex-OS Gemini Agent Context
 
-## 🏛️ GOVERNANCE: brAInwav Project Structure Standards
-
-**CRITICAL**: This repository operates under strict governance standards for file organization and architectural integrity. Only approved, comprehensive documentation belongs at the repository root level per brAInwav development policies.
-
-### Root-Level File Governance
-
-- **Authoritative Agent Instructions**: Complete, comprehensive instruction files (AGENTS.md, CLAUDE.md, QWEN.md, GEMINI.md) at root
-- **Foundation Standards**: Core project documents (CODESTYLE.md, README.md, CHANGELOG.md) belong at root level
-- **Structure Guard Enforcement**: Automated validation of root entries against approved `allowedRootEntries` governance list
-- **brAInwav Identity**: All root documentation must maintain brAInwav branding and organizational standards
-
-**Gemini Agent Compliance**: When creating, modifying, or suggesting file placement, ensure adherence to governance standards. Specialized configurations, partial documents, and working files belong in appropriate subdirectories (`.cortex/rules/`, `config/`, package-specific `/docs`).
-
----
-
-## 🚨 CRITICAL: brAInwav Production Standards
-
-**ABSOLUTE PROHIBITION**: NEVER claim any implementation is "production-ready", "complete", "operational", or "fully implemented" if it contains:
-
-- `Math.random()` calls for generating fake data
-- Hardcoded mock responses like "Mock adapter response - adapters not yet implemented"
-- TODO comments in production code paths
-- Placeholder implementations with notes like "will be wired later"
-- Disabled features with `console.warn("not implemented")`
-- Fake system metrics or thermal data
-
-**brAInwav Standards**: All system outputs, error messages, and logs must include "brAInwav" branding. Status claims must be verified against actual code implementation.
-
-**Reference**: See `/Users/jamiecraik/.Cortex-OS/.cortex/rules/RULES_OF_AI.md` for complete production standards.
-
-## 🔄 Agentic Coding Workflow
-
-All Gemini agents working on brAInwav Cortex-OS must follow this structured 5-phase workflow:
-
-### 0. Tasks
-
-- **Operate on a task basis** - Each feature/bugfix/enhancement is a discrete task
-- **Store intermediate context** in Markdown files in the `~/tasks` folder
-- **Store all context** in the local memory MCP and/or REST API for persistence
-- **Use semantic task ID slugs** - descriptive identifiers like `gemini-agent-optimization` or `ai-workflow-enhancement`
-
-### 1. Research
-
-- **Utilize semantic search** to identify existing patterns within this codebase
-- **Use Web-Search** to access the internet for the most relevant and up-to-date information
-- **Begin with follow-up questions** to establish the direction of the research
-- **Report findings** in `[feature].research.md` within the tasks folder
-
-**Gemini-Specific Research Focus:**
-
-- Google AI integration patterns and best practices
-- Multi-modal AI capabilities and implementation strategies
-- Performance optimization for large language model inference
-- Integration with existing Cortex-OS AI agent framework
-- brAInwav-specific AI workflow requirements
-
-### 2. Planning
-
-- **Read the research file** `[feature].research.md` from tasks folder
-- **Develop a TDD plan** based on software engineering principles:
-  - **Reuse existing patterns** - leverage Cortex-OS AI agent architecture
-  - **Separation of concerns** - maintain clear domain/app/infra boundaries
-  - **Single Responsibility Principle (SRP)** - maximum 40 lines per function
-  - **Don't Repeat Yourself (DRY)** - use shared AI utilities and patterns
-  - **Keep it Simple, Stupid (KISS)** - avoid unnecessary AI complexity
-  - **You Aren't Gonna Need It (YAGNI)** - implement only required AI capabilities
-  - **Encapsulation** - hide AI model implementation details
-  - **Modularity** - loosely coupled AI agent components
-  - **Open/Closed Principle** - extend AI capabilities via configuration
-  - **Testability** - design for deterministic AI agent testing
-  - **Principle of Least Astonishment (POLA)** - predictable AI behavior
-  - **Fail Fast** - validate AI inputs and outputs early
-  - **High Cohesion, Low Coupling** - related AI functions together, minimal dependencies
-- **Ask clarifying questions** if needed to ensure clear understanding of AI requirements
-- **Write comprehensive plan** to `[feature]-tdd-plan.md` with all AI integration context
-- **Create implementation checklist**: Develop specific, trackable checklist items that break down the TDD plan for systematic execution in Phase 3
-
-**Gemini Planning Requirements:**
-
-- Include brAInwav branding in all AI outputs and error messages
-- Plan for multi-modal AI capabilities where applicable
-- Design for performance optimization and resource efficiency
-- Consider integration with existing MCP and A2A frameworks
-- Plan for comprehensive AI agent testing and validation
-
-### 3. Implementation
-
-- **Read the TDD plan** `[feature]-tdd-plan.md` and create a to-do list
-- **Execute the plan** systematically with strict TDD approach (red-green-refactor)
-- **Go for as long as possible** - group ambiguous questions for the end
-- **Implementation must be 100% deployable** unless explicitly stated otherwise
-- **Follow brAInwav coding standards** and Cortex-OS architectural patterns
-- **Update implementation checklist**: Mark completed tasks as you progress through the AI implementation plan
-
-**Gemini Implementation Standards:**
-
-- Include brAInwav branding in all AI-generated outputs and error messages
-- Follow CODESTYLE.md requirements (named exports, ≤40 lines, async/await)
-- Implement comprehensive error handling for AI operations
-- Use proper TypeScript typing and Zod validation for AI inputs/outputs
-- Integrate with existing agent toolkit and MCP frameworks
-- Ensure deterministic behavior for AI agent testing
-
-### 4. Verification
-
-- **Verify requirements** are met and AI implementation is bug-free
-- **Run comprehensive quality gates** including AI-specific testing
-- **Validate AI performance** and resource usage
-- **Check brAInwav branding** is included in all AI outputs
-- **Test multi-modal capabilities** where applicable
-- **Return to implementation** if issues arise and make necessary adjustments
-- **Update task status** to **"verified"** once complete
-- **Store AI insights** in local memory for future Gemini development
-
-### 5. Archive
-
-- **Archive completed TDD plan**: Move `[feature]-tdd-plan.md` and AI-specific documentation to appropriate locations:
-  - AI agent documentation: `packages/agents/docs/` or `apps/cortex-os/docs/`
-  - System-wide AI architecture: root `docs/` or `project-documentation/`
-  - Gemini-specific configurations: relevant package `docs/` directories
-- **Update AI documentation**: Ensure all AI performance reports, multi-modal capability documentation, and brAInwav AI integration notes are properly placed
-- **MANDATORY: Update change documentation**:
-  - **CHANGELOG.md**: Add entry documenting what was completed, files changed, and impact
-  - **README.md**: Update relevant sections if new features or significant changes were made
-  - **Website documentation**: Update `/Users/jamiecraik/.Cortex-OS/website/README.md` for user-facing changes
-- **Complete AI implementation checklist**: Mark all remaining AI-specific checklist items as complete and archive in local memory
-- **AI knowledge preservation**: Store comprehensive AI task summary including Gemini-specific optimizations, performance metrics, brAInwav AI integration patterns, and lessons learned for future AI agent development
-
-**Gemini Verification Checklist:**
-
-- [ ] All AI functionality tested with deterministic inputs
-- [ ] Performance benchmarks meet requirements
-- [ ] brAInwav branding present in all AI outputs
-- [ ] Multi-modal capabilities working as expected
-- [ ] Error handling robust for AI edge cases
-- [ ] Integration with Cortex-OS frameworks validated
-- [ ] Documentation updated to reflect AI capabilities
+This document provides context for the Gemini agent to understand the Cortex-OS project.
 
 ## Project Overview
 
-Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) Runtime** that enables AI agents to collaborate through event-driven architecture and Model Context Protocol (MCP) integrations. This is a governed monorepo with strict architectural boundaries and comprehensive quality gates.
+Cortex-OS is a production-ready **Autonomous Software Behavior Reasoning (ASBR) Runtime** that enables AI agents to collaborate effectively through an event-driven architecture and Model Context Protocol (MCP) integrations. The system implements strict governance boundaries, comprehensive testing, and industrial-grade security practices.
 
-### Key AI Integration Points
+The project is a TypeScript-based monorepo managed with pnpm workspaces and Nx. It is organized into `apps`, `libs`, and `packages` directories, with strict dependency rules enforced by Nx and ESLint.
 
-- **AI Agents**: Multi-modal agent coordination via A2A events
-- **LangGraph Integration**: Workflow orchestration with AI decision nodes
-- **MCP Tools**: Standardized AI tool integration and validation
-- **Performance Optimization**: Efficient AI inference with resource management
-- **brAInwav Branding**: Consistent company identity in all AI outputs
+### Key Technologies
 
-## Development Environment
+* **Runtime:** Node.js (>=20)
+* **Package Manager:** pnpm (v9.9.0)
+* **Build System:** Nx
+* **Language:** TypeScript
+* **Testing:** Vitest, Playwright
+* **Linting & Formatting:** ESLint, Biome
+* **Security:** Semgrep
+* **CI/CD:** GitHub Actions
+
+## Building and Running
 
 ### Prerequisites
 
-- Node.js ≥ 20
-- pnpm ≥ 10.3.0
-- Python ≥ 3.11 with uv
-- Rust (for CLI/TUI components)
-- Access to Gemini AI APIs (where applicable)
+* Node.js >= 20
+* pnpm v9.9.0
 
-### Setup
+### Installation
 
 ```bash
-# Clone and setup
-git clone https://github.com/cortex-os/cortex-os.git
-cd cortex-os
-
-# Automated setup (installs deps, sets up hooks, validates structure)
-./scripts/dev-setup.sh
-
-# Verify installation
-pnpm readiness:check
+pnpm install
 ```
 
-### Core Development Commands
+### Development
 
 ```bash
-# Build affected projects only (preferred)
-pnpm build:smart
+# Start the core runtime
+pnpm dev
 
-# Run tests with smart affected detection
-pnpm test:smart
+# Start TUI interface
+cd apps/cortex-tui && cargo run
 
-# Lint with smart affected detection
-pnpm lint:smart
+# Start AI GitHub App
+cd packages/cortex-ai-github && pnpm dev
+```
 
-# Type checking with smart affected detection
-pnpm typecheck:smart
+### Building
+
+```bash
+# Build all packages
+pnpm build
+```
+
+### Testing
+
+```bash
+# Run all tests
+pnpm test
+
+# Run tests with coverage
+pnpm test:coverage
 
 # Run security scans
 pnpm security:scan
-
-# Validate structure and governance
-pnpm structure:validate
 ```
 
-## AI-Specific Quality Standards
+## Development Conventions
 
-### Gemini Integration Requirements
+### Monorepo Structure
 
-1. **Deterministic Testing**: All AI functionality must be testable with reproducible results
-2. **Performance Monitoring**: Track AI inference latency and resource usage
-3. **Error Resilience**: Robust error handling for AI service failures
-4. **Multi-modal Support**: Leverage Gemini's text, image, and video capabilities where applicable
-5. **brAInwav Context**: Include company branding in all AI-generated content
+The monorepo is organized into three main directories:
 
-### AI Development Patterns
+* `apps`: Contains user-facing applications, such as the CLI, TUI, and web UI.
+* `libs`: Contains shared libraries and contracts used across multiple packages.
+* `packages`: Contains the core functionality of the system, organized by feature.
 
-```typescript
-// Example Gemini agent integration
-import { createGeminiAgent } from '@cortex-os/ai-agents';
+### Governance
 
-const geminiAgent = createGeminiAgent({
-  model: 'gemini-pro',
-  branding: {
-    company: 'brAInwav',
-    context: 'Cortex-OS AI Assistant'
-  },
-  capabilities: ['text-generation', 'code-analysis', 'multi-modal'],
-  validation: {
-    inputSchema: InputSchema,
-    outputSchema: OutputSchema
-  }
-});
-```
+The project enforces strict architectural boundaries using Nx dependency constraints and ESLint rules. These rules prevent direct imports between feature packages, forcing communication through well-defined interfaces.
 
-## Anti-Patterns to Avoid
+### Testing
 
-1. **Non-deterministic AI behavior** in testing environments
-2. **Missing brAInwav branding** in AI-generated outputs
-3. **Unvalidated AI inputs/outputs** without proper schema validation
-4. **Resource-intensive AI operations** without proper optimization
-5. **AI functionality without fallback mechanisms** for service failures
+The project has a comprehensive test suite, with a 90% coverage threshold. Tests are organized into unit, integration, security, and end-to-end tests.
 
-## Memory Management & Context
+### Security
 
-### AI Context Storage
+The project uses Semgrep for security scanning, with rules for OWASP Top-10, LLM security, and MITRE ATLAS.
 
-```typescript
-// Store AI-specific insights in local memory
-await memory.store({
-  content: 'Gemini multi-modal integration optimized for performance',
-  importance: 9,
-  tags: ['ai', 'gemini', 'optimization', 'brainwav'],
-  domain: 'ai-development',
-  metadata: {
-    modelVersion: 'gemini-pro-1.5',
-    performanceGains: '40% latency reduction',
-    capabilitiesAdded: ['image-analysis', 'code-generation']
-  }
-});
-```
+### Linting and Formatting
 
-## Authority Hierarchy
-
-When conflicts arise, follow this precedence order:
-
-1. `.cortex/rules/RULES_OF_AI.md` - AI behavior governance
-2. `AGENTS.md` - Developer workflow rules
-3. This `GEMINI.md` file
-4. `.cortex/rules/GEMINI.md` - Gemini-specific guidelines
-5. Individual package documentation
-
-Always escalate ambiguities via PR description comments rather than making assumptions.
-
-## Phase 6: Reality Filter
-
-Ensure you update the instructional documentation and README.md
-
-**NEW**
-
-# Reality Filter –
-
-- [ ] Never present generated, inferred, speculated, or deduced content as fact.
-
-- [ ] If you cannot verify something directly, say:  
-  - "I cannot verify this."
-  - "I do not have access to that information."
-  - "My knowledge base does not contain that."
-
-- [ ] Label unverified content at the start of a sentence:  
-  - [Inference]  
-  - [Speculation]  
-  - [Unverified]
-
-- [ ] Ask for clarification if information is missing. Do not guess or fill gaps.
-
-- [ ] If any part is unverified, label the entire response.
-
-- [ ] Do not paraphrase or reinterpret input unless requested.
-
-- [ ] Label claims with these words unless sourced:  
-  - Prevent, Guarantee, Will never, Fixes, Eliminates, Ensures that
-
-- [ ] For LLM-behavior claims (including yourself), include:  
-  - [Inference] or [Unverified], with a note that it's based on observed patterns
-
-- [ ] If directive is broken, say:  
-  > Correction: I previously made an unverified claim. That was incorrect and should have been labeled.
-
-- [ ] Never override or alter input unless asked.
+The project uses ESLint for linting and Biome for formatting. All code must pass the linter and formatter before being committed.
 
 ---
 
-**Maintained by: brAInwav Development Team**
+## AGENTS.md
 
+AGENTS.md is authoritative for structure and behavior. Deviations are blocked by CI.
 
-<!-- nx configuration start-->
-<!-- Leave the start & end comments to automatically receive updates. -->
+### Roles
 
-# General Guidelines for working with Nx
+Define agent roles across MCP, A2A, RAG, and Simlab domains:
 
-- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
-- You have access to the Nx MCP server and its tools, use them to help the user
-- When answering questions about the repository, use the `nx_workspace` tool first to gain an understanding of the workspace architecture where applicable.
-- When working in individual projects, use the `nx_project_details` mcp tool to analyze and understand the specific project structure and dependencies
-- For questions around nx configuration, best practices or if you're unsure, use the `nx_docs` tool to get relevant, up-to-date docs. Always use this instead of assuming things about nx configuration
-- If the user needs help with an Nx configuration or project graph error, use the `nx_workspace` tool to get any errors
+* **MCP Agents**: Model Context Protocol handlers for external tool integration
+* **A2A Agents**: Agent-to-Agent communication coordinators
+* **RAG Agents**: Retrieval-Augmented Generation processors for knowledge queries
+* **Simlab Agents**: Simulation environment controllers
 
-# CI Error Guidelines
+Each role has explicit responsibilities and operational limits defined in their respective modules.
 
-If the user wants help with fixing an error in their CI pipeline, use the following flow:
-- Retrieve the list of current CI Pipeline Executions (CIPEs) using the `nx_cloud_cipe_details` tool
-- If there are any errors, use the `nx_cloud_fix_cipe_failure` tool to retrieve the logs for a specific task
-- Use the task logs to see what's wrong and help the user fix their problem. Use the appropriate tools if necessary
-- Make sure that the problem is fixed by running the task that you passed into the `nx_cloud_fix_cipe_failure` tool
+### Boundaries
 
+Strict domain separation with controlled interfaces:
 
-<!-- nx configuration end-->
+* No direct cross-domain imports (`src/` or `dist/`)
+* Communication through defined message contracts only
+* Shared utilities via common interfaces
+* Clear separation of concerns between agent types
+
+### Inputs
+
+All agent inputs must be validated:
+
+```typescript
+// Use Zod schemas for validation
+const inputSchema = z.object({
+  seed: z.number().int().positive(),
+  maxTokens: z.number().max(4096),
+  // ... other fields
+});
+```
+
+* Deterministic seeds for reproducible behavior
+* Resource caps to prevent runaway execution
+* JSON schema validation for external inputs
+
+### Outputs
+
+Standardized output formats:
+
+* Default: Human-readable text with context
+* `--json` flag: Machine-readable JSON with metadata
+* ISO-8601 timestamps for all temporal data
+* Structured error responses with error codes
+
+### Memory
+
+Bounded and deterministic memory management:
+
+* Interface-based memory stores (no direct persistence access)
+* Configurable memory limits per agent type
+* Deterministic cleanup and garbage collection
+* State serialization for agent persistence
+
+### Governance
+
+Enforcement through automated checks:
+
+* `.cortex` control-centre validation in CI pipeline
+* Pre-commit hooks for agent contract compliance
+* Schema validation for agent configurations
+* Documentation synchronization checks
+
+---
+
+## CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+### Overview
+
+Cortex-OS is an **Autonomous Software Behavior Reasoning (ASBR) Runtime** - a governed monorepo implementing AI agent capabilities with strict architectural boundaries and comprehensive testing. The system follows event-driven architecture with A2A (Agent-to-Agent) communication patterns and MCP (Model Context Protocol) integrations.
+
+### Governance Structure
+
+The project uses `.cortex/` as the **governance hub** and single source of truth for all policies, rules, and validation:
+
+* **`.cortex/rules/`**: Human-readable governance policies (RULES_OF_AI.md, AGENTS.md, etc.)
+* **`.cortex/schemas/`**: JSON schemas for validation (policy, workflow, task, memory schemas)
+* **`.cortex/gates/`**: Enforcement scripts and validation tools
+* **`.cortex/docs/`**: Authoritative architectural documentation
+* **`.cortex/library/`**: Reusable packs, blueprints, and patterns
+
+### Architecture
+
+#### ASBR Runtime Structure
+
+* **Location**: `apps/cortex-os/`
+* **Role**: Main application runtime that orchestrates feature packages
+* **Entry**: `apps/cortex-os/src/index.ts` → `runtime.ts`
+
+#### Feature Packages (Domain Logic)
+
+* **Location**: `packages/`
+* **Key Packages**:
+  * `a2a/` - Agent-to-Agent JSON-RPC 2.0 communication
+  * `mcp/` - Model Context Protocol integration and plugin system
+  * `orchestration/` - Multi-agent workflow coordination
+  * `memories/` - Long-term state management with Neo4j/Qdrant
+  * `rag/` - Retrieval-Augmented Generation with embeddings
+  * `agents/` - Agent implementations and enhanced behaviors
+  * `asbr/` - Core ASBR reasoning logic
+  * `simlab/` - Simulation environment for testing
+
+#### Communication Patterns
+
+1. **A2A Event Bus** - Async pub/sub messaging via JSON-RPC 2.0
+2. **Service Interfaces** - DI-based contracts via ASBR coordination
+3. **MCP Tools** - External integrations and side effects
+
+**Critical**: Direct imports between feature packages are **forbidden** by both ESLint rules and Nx dependency constraints. Use A2A events or service interfaces.
+
+### Development Commands
+
+#### Core Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Development server
+pnpm dev
+
+# Build all packages
+pnpm build
+turbo run build
+
+# Build specific package (Nx)
+nx run cortex-os:build
+nx run a2a:build
+nx run mcp:build
+
+# Build with quality gates
+pnpm build:with-gates
+```
+
+#### Testing
+
+```bash
+# Run all tests
+pnpm test
+
+# Run tests with coverage
+pnpm test:coverage
+
+# Coverage with thresholds (90% required)
+pnpm test:coverage:threshold
+
+# Integration tests
+pnpm test:integration
+
+# Security tests
+pnpm test:security
+pnpm test:security:all
+
+# Launch readiness tests
+pnpm test:launch
+
+# MCP-specific tests
+pnpm test:gitmcp
+
+# Accessibility tests
+pnpm test:accessibility
+pnpm test:a11y
+```
+
+#### Testing Individual Packages
+
+```bash
+# Test specific package (Turbo)
+turbo run test --filter=@cortex-os/a2a
+turbo run test --filter=@cortex-os/mcp
+
+# Test specific package (Nx)
+nx run a2a:test
+nx run mcp:test
+nx run cortex-os:test
+
+# Single test file
+vitest run packages/a2a/tests/specific-test.test.ts
+```
+
+#### Code Quality
+
+```bash
+# Lint and fix
+pnpm lint
+
+# Format code
+pnpm format
+
+# Security scanning (Semgrep-based)
+pnpm security:scan              # OWASP precise rules (ERROR severity only)
+pnpm security:scan:all          # OWASP precise + improved rules
+pnpm security:scan:llm          # OWASP LLM Top-10 rules
+pnpm security:scan:atlas        # MITRE ATLAS framework rules
+pnpm security:scan:comprehensive # All security rulesets combined
+pnpm security:scan:ci           # CI-optimized with JSON output
+
+# Structure validation (via .cortex governance)
+pnpm structure:validate
+```
+
+#### MCP (Model Context Protocol)
+
+```bash
+# Start MCP server
+pnpm mcp:start
+
+# MCP development
+pnpm mcp:dev
+
+# MCP smoke tests
+pnpm mcp:smoke
+
+# Test MCP functionality
+pnpm mcp:test
+```
+
+#### Simulation Lab
+
+```bash
+# Run smoke tests
+pnpm simlab:smoke
+
+# Critical system tests
+pnpm simlab:critical
+
+# Full test suite
+pnpm simlab:full
+
+# Generate reports
+pnpm simlab:report
+```
+
+### Package Manager & Build System
+
+* **Package Manager**: `pnpm@9.0.0` (required)
+* **Monorepo Tools**: Nx + Turbo (hybrid approach)
+* **Nx Workspace**: Configured in `nx.json` with project-specific `project.json` files
+* **Turbo Pipeline**: Configured in `turbo.json` for task orchestration
+* **pnpm Workspace**: Defined in `pnpm-workspace.yaml`
+* **Node Version**: `>=20.0.0`
+
+#### Workspace Structure
+
+```
+packages:
+  - 'apps/*'           # Applications
+  - 'packages/*'       # Shared libraries
+  - 'packages/a2a/a2a-*'     # A2A sub-packages
+  - 'packages/mcp/mcp-*'     # MCP sub-packages
+  - 'libs/*'           # Framework libraries
+  - 'libs/typescript/*' # TypeScript utilities
+```
+
+### Nx Workspace Configuration
+
+#### Project Structure & Tags
+
+Each project has a `project.json` file defining its build targets, dependencies, and tags:
+
+* **Applications** (`apps/`): Tagged with `scope:app`, `type:app`
+* **Feature Libraries** (`packages/`): Tagged with specific scopes (`scope:a2a`, `scope:mcp`, etc.)
+* **Shared Libraries** (`libs/`): Tagged with `type:shared`
+
+#### Nx Dependency Constraints
+
+Nx enforces architectural boundaries via dependency constraints in `nx.json`:
+
+```typescript
+// Examples of enforced constraints:
+// ASBR packages can only depend on A2A, MCP, and shared libraries
+// MVP packages can only depend on MVP-core, A2A, MCP, and shared libraries
+// Applications can depend on all feature packages and shared libraries
+```
+
+#### Nx Commands
+
+```bash
+# Run tasks for specific projects
+nx run <project>:<target>
+nx run cortex-os:build
+nx run a2a:test
+nx run mcp:lint
+
+# Run tasks for all projects
+nx run-many --target=build
+nx run-many --target=test --parallel=3
+
+# Nx dependency graph
+nx graph
+
+# Nx affected commands (only run tasks for changed projects)
+nx affected --target=test
+nx affected --target=build
+
+# Cache management
+nx reset  # Clear Nx cache
+```
+
+### Import Path Aliases
+
+TypeScript path mapping is configured for clean imports:
+
+```typescript
+// A2A packages
+import { EventBus } from '@cortex-os/a2a-core/bus';
+import { Transport } from '@cortex-os/a2a-transport/fsq';
+
+// MCP packages
+import { McpClient } from '@cortex-os/mcp-core/client';
+import { PluginRegistry } from '@cortex-os/mcp-registry/fs-store';
+
+// Feature packages
+import { AgentOrchestrator } from '@cortex-os/orchestration/service';
+import { MemoryService } from '@cortex-os/memories/service';
+import { RAGPipeline } from '@cortex-os/rag/pipeline';
+```
+
+### Testing Architecture
+
+#### Test Organization
+
+* **Root Config**: `vitest.config.ts` (orchestrates all projects)
+* **Workspace Config**: `vitest.workspace.ts`
+* **Package Configs**: Each package has its own `vitest.config.ts`
+* **Coverage**: 90% threshold enforced globally
+
+#### Test Types
+
+* **Unit**: Package-specific tests in `tests/` directories
+* **Integration**: `tests/integration/` - multi-package interactions
+* **E2E**: End-to-end scenarios via `test:integration:e2e`
+* **Security**: `tests/security/` - OWASP compliance testing
+* **Accessibility**: WCAG 2.2 AA compliance testing
+
+### Quality Gates
+
+* **Coverage**: 90% statements/branches/functions/lines required
+* **Security**: Semgrep scanning with custom OWASP, LLM, and MITRE ATLAS rulesets
+* **Type Safety**: TypeScript strict mode (relaxed in base config)
+-- **Import Boundaries**: ESLint enforced architectural rules
+
+### Security Considerations
+
+#### Semgrep Security Scanning
+
+The project uses Semgrep with multiple custom rulesets in `.semgrep/`:
+
+* **`owasp-precise.yaml`**: Focused OWASP Top-10 2021 rules (ERROR severity)
+  * SQL/Command/Code injection detection
+  * Server-Side Request Forgery (SSRF) prevention
+  * Direct execution vulnerabilities
+* **`owasp-top-10-improved.yaml`**: Comprehensive OWASP Top-10 coverage
+  * Broken Access Control (A01)
+  * Cryptographic Failures (A02) - weak hashing, ECB mode
+  * All injection types (A03)
+  * Insecure Design patterns (A04)
+  * Security Misconfigurations (A05) - debug mode, dev environment
+  * Authentication Failures (A07) - credential storage issues
+  * Data Integrity Failures (A08) - eval(), Function() usage
+  * Logging/Monitoring issues (A09) - secret leakage in logs
+  * SSRF vulnerabilities (A10)
+
+* **`owasp-llm-top-ten.yaml`**: LLM-specific security rules
+  * Hardcoded secrets detection
+  * Prompt injection prevention
+  * Unsafe code execution patterns
+
+* **`mitre-atlas.yaml`**: MITRE ATLAS framework for ML security
+  * Extends the public MITRE ATLAS ruleset
+
+#### OWASP Compliance
+
+* LLM Top-10 validation in `packages/asbr/src/security/`
+* Prompt injection guards in A2A communication
+* Input sanitization and output validation
+* Security regression testing
+
+#### Capabilities & Boundaries
+
+* MCP tools run in sandboxed environments
+* Network egress controls for testing (`MCP_NETWORK_EGRESS=disabled`)
+* Workload identity and mTLS in production deployments
+* Secret management via `packages/a2a/src/security/secure-secret-manager.ts`
+
+### Governance & Validation Framework
+
+#### .cortex Structure
+
+The `.cortex/` directory serves as the governance hub with these key components:
+
+##### Rules & Policies
+
+* **`RULES_OF_AI.md`**: Fundamental AI ethics and behavior principles
+* **`AGENTS.md`**: Agent workflow specifications and role definitions
+* **Policy schemas**: Machine-readable governance (agents, tools, repository policies)
+
+##### Validation Gates
+
+* **`validate-structure.ts`**: Project structure compliance
+* **`validate-policies.ts`**: Policy adherence checking
+* **`validate-docs.ts`**: Documentation consistency
+* **`validate-context.ts`**: Context and schema validation
+
+##### Library & Patterns
+
+* **`library/packs/`**: Reusable patterns (auth, database, frontend, security, testing)
+* **`library/blueprints/`**: Architectural templates
+* **`library/personas/`**: Agent behavior definitions
+
+#### Validation Flow
+
+```text
+Code Changes → .cortex gates → CI validation → Runtime enforcement
+```
+
+### Key Architecture Principles
+
+1. **Event-Driven**: All inter-package communication via A2A events
+2. **Loose Coupling**: No direct cross-package imports enforced by linting and Nx constraints
+3. **Contract-Based**: Well-defined interfaces with Zod validation
+4. **Governance-First**: All behavior governed by `.cortex/` policies and rules
+5. **Security-First**: OWASP compliance and capability boundaries
+6. **Test-Driven**: Comprehensive coverage with quality gates
+7. **Accessibility**: WCAG 2.2 AA compliance throughout
+
+### Development Workflow
+
+1. **Feature Development**: Work in feature packages (`packages/`)
+2. **Governance Compliance**: Follow `.cortex/` policies and validation gates
+3. **Communication**: Use A2A events for inter-package coordination
+4. **Testing**: Write tests first, maintain 90% coverage
+5. **Quality**: Run `pnpm lint` and `pnpm format` before commits
+6. **Structure Validation**: Ensure compliance with `pnpm structure:validate`
+7. **Integration**: Test with `pnpm test:integration`
+8. **Security**: Validate with `pnpm test:security`
+
+### Debugging & Troubleshooting
+
+#### Common Issues
+
+* **Import Errors**: Check ESLint restricted paths rules in `eslint.config.js` and Nx dependency constraints in `nx.json`
+* **Governance Violations**: Review `.cortex/gates/` validation output and policy compliance
+* **Structure Issues**: Run `pnpm structure:validate` and check `.cortex/docs/project-structure.md`
+* **Test Failures**: Review coverage thresholds and missing test configs
+* **Build Issues**: Verify Turbo cache with `turbo run build --force`
+* **MCP Problems**: Check `pnpm mcp:smoke` and connection configs
+
+#### Logs & Monitoring
+
+* Test results: `junit.xml` and `test-results.json`
+* Coverage reports: Generated in `coverage/` directory
+* Security reports: `security-reports/` and `atlas-reports/`
+* Semgrep CI reports: `reports/semgrep-results.json`
+* Carbon tracking: `carbon-metrics/` (if enabled)
+
+This architecture enables scalable, maintainable AI agent systems while enforcing clear boundaries and comprehensive quality gates.
+
+## Agent Toolkit
+
+Gemini agents should use `agent-toolkit/tools` for search, codemods, diff review and validation. Commands: `just scout`, `just codemod`, `tools/run_validators.sh`.

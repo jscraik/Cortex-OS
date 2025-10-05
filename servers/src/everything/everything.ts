@@ -215,7 +215,7 @@ export const createServer = () => {
 						},
 					},
 				],
-				systemPrompt: 'You are a helpful test server.',
+				systemPromptId: 'sys.server.test-helper',
 				maxTokens,
 				temperature: 0.7,
 				includeContext: 'thisServer',

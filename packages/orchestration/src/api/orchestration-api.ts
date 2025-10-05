@@ -3,19 +3,18 @@
  * Provides comprehensive HTTP API for workflow orchestration
  */
 
-import type { Context } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { jwt } from 'hono/jwt';
 import { logger } from 'hono/logger';
 import { timing } from 'hono/timing';
-import { rateLimiter } from 'hono-rate-limiter';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import { CircuitBreakerManager } from '../lib/circuit-breaker.js';
 import type { CompositeModelProvider } from '../providers/composite-provider.js';
-import type { OrchestrationService } from '../types/orchestration-service';
+import type { OrchestrationService } from '../types/orchestration-service.js';
 import { AgentRole, OrchestrationStrategy, TaskStatus } from '../types.js';
 
 // JWT Secret - should be from environment
@@ -107,6 +106,38 @@ type UpdateTaskRequest = z.infer<typeof UpdateTaskSchema>;
 type AgentMetricsRequest = z.infer<typeof _AgentMetricsSchema>;
 
 // Local lightweight view types to type handler responses
+const TaskViewSchema = z
+	.object({
+		id: z.string().min(1),
+		title: z.string().min(1),
+		status: z.nativeEnum(TaskStatus),
+		workflowId: z.string().min(1),
+		createdAt: z.union([z.string(), z.date()]),
+		updatedAt: z.union([z.string(), z.date()]).optional(),
+	})
+	.passthrough();
+
+const ListTasksResultSchema = z.object({
+	tasks: z.array(TaskViewSchema),
+	total: z.number().int().nonnegative(),
+});
+
+const WorkflowViewSchema = z
+	.object({
+		id: z.string().min(1),
+		name: z.string().optional(),
+		goal: z.string().optional(),
+		status: z.string().optional(),
+		strategy: z.nativeEnum(OrchestrationStrategy).optional(),
+		createdAt: z.union([z.string(), z.date()]).optional(),
+	})
+	.passthrough();
+
+const ListWorkflowsResultSchema = z.object({
+	workflows: z.array(WorkflowViewSchema),
+	total: z.number().int().nonnegative(),
+});
+
 type AgentView = {
 	id: string;
 	name: string;
@@ -126,11 +157,59 @@ type WorkflowView = {
 };
 
 // Rate limiter
-const limiter = rateLimiter({
-	windowMs: 60 * 1000, // 1 minute
-	limit: 100, // 100 requests per minute
-	keyGenerator: (c: Context) => c.req.header('cf-connecting-ip') || 'anonymous',
+const limiter = createRateLimiterMiddleware({
+	windowMs: 60_000,
+	limit: 100,
+	keyGenerator: getClientIdentifier,
 });
+
+interface RateLimiterState {
+	count: number;
+	resetAt: number;
+}
+
+interface RateLimiterOptions {
+	windowMs: number;
+	limit: number;
+	keyGenerator?: (context: Context) => string | undefined;
+}
+
+function getClientIdentifier(context: Context): string {
+	return (
+		context.req.header('cf-connecting-ip') ||
+		context.req.header('x-forwarded-for') ||
+		context.req.header('x-real-ip') ||
+		context.req.header('x-client-ip') ||
+		'anonymous'
+	);
+}
+
+function createRateLimiterMiddleware(options: RateLimiterOptions): MiddlewareHandler {
+	const { windowMs, limit, keyGenerator } = options;
+	const requests = new Map<string, RateLimiterState>();
+
+	return async (context, next) => {
+		const clientKey = keyGenerator?.(context) ?? 'anonymous';
+		const now = Date.now();
+		const existing = requests.get(clientKey);
+		if (!existing || existing.resetAt <= now) {
+			requests.set(clientKey, { count: 1, resetAt: now + windowMs });
+			await next();
+			return;
+		}
+
+		if (existing.count >= limit) {
+			const retryAfter = Math.max(1, Math.ceil((existing.resetAt - now) / 1000));
+			context.res.headers.set('Retry-After', String(retryAfter));
+			throw new HTTPException(429, {
+				message: '[brAInwav] Orchestration API rate limit exceeded. Please retry later.',
+			});
+		}
+
+		existing.count += 1;
+		await next();
+	};
+}
 
 // JWT middleware
 const auth = jwt({
@@ -308,8 +387,8 @@ export class OrchestrationAPI {
 	private async createWorkflow(c: Context) {
 		try {
 			const request = await this.validateWorkflowRequest(c);
-			const workflow = await this.executeWorkflowCreation(c, request);
-			return c.json(this.formatWorkflowResponse(workflow as unknown as WorkflowView), 201);
+			const workflow = WorkflowViewSchema.parse(await this.executeWorkflowCreation(c, request));
+			return c.json(this.formatWorkflowResponse(workflow), 201);
 		} catch (error) {
 			this.handleWorkflowErrors(error);
 		}
@@ -368,14 +447,16 @@ export class OrchestrationAPI {
 			// status filtering not implemented yet
 			const createdBy = query.createdBy;
 
-			const result = (await this.orchestrationService.listWorkflows({
-				page,
-				limit,
-				createdBy,
-			})) as unknown as { workflows: WorkflowView[]; total: number };
+			const result = ListWorkflowsResultSchema.parse(
+				await this.orchestrationService.listWorkflows({
+					page,
+					limit,
+					createdBy,
+				}),
+			);
 
 			return c.json({
-				workflows: result.workflows,
+				workflows: result.workflows.map((workflow) => this.formatWorkflowResponse(workflow)),
 				pagination: {
 					page,
 					limit,
@@ -386,7 +467,7 @@ export class OrchestrationAPI {
 		} catch (error) {
 			console.error('brAInwav: list workflows failed', error);
 			throw new HTTPException(500, {
-				message: 'Failed to list workflows',
+				message: 'brAInwav: Failed to list workflows',
 			});
 		}
 	}
@@ -448,21 +529,23 @@ export class OrchestrationAPI {
 		try {
 			const workflowId = c.req.param('id');
 			await this.circuitBreakerManager.execute('cancel-workflow', async () => {
-				return this.orchestrationService.cancelWorkflow(workflowId);
+				await this.orchestrationService.cancelWorkflow(workflowId);
 			});
 
 			return c.json({
-				id: workflowId,
 				status: 'cancelled',
-				message: 'Workflow cancelled successfully',
+				message: 'brAInwav: Workflow cancelled successfully',
 			});
 		} catch (error) {
 			if (error instanceof Error && error.message.includes('not found')) {
 				throw new HTTPException(404, {
-					message: 'Workflow not found',
+					message: 'brAInwav: Workflow not found',
 				});
 			}
-			throw error;
+			console.error('brAInwav: cancel workflow failed', error);
+			throw new HTTPException(500, {
+				message: 'brAInwav: Failed to cancel workflow',
+			});
 		}
 	}
 
@@ -475,15 +558,14 @@ export class OrchestrationAPI {
 			const page = parseInt(query.page, 10) || 1;
 			const limit = parseInt(query.limit, 10) || 20;
 
-			const result = await this.orchestrationService.listTasks({
+			const rawResult = await this.orchestrationService.listTasks({
 				workflowId,
 				assignee,
 				page,
 				limit,
 			});
 
-			type ListTasksResult = { tasks: unknown[]; total: number };
-			const resultTyped = result as unknown as ListTasksResult;
+			const resultTyped = ListTasksResultSchema.parse(rawResult);
 			return c.json({
 				tasks: resultTyped.tasks,
 				total: resultTyped.total,
@@ -513,17 +595,18 @@ export class OrchestrationAPI {
 					createdBy: c.get('jwtPayload').sub,
 				});
 			});
+			const taskView = TaskViewSchema.parse(task);
 
 			return c.json(
 				{
-					id: task.id,
-					title: task.title,
-					status: task.status,
-					workflowId: task.workflowId,
-					createdAt: task.createdAt,
+					id: taskView.id,
+					title: taskView.title,
+					status: taskView.status,
+					workflowId: taskView.workflowId,
+					createdAt: taskView.createdAt,
 					links: {
-						self: `/api/v1/tasks/${task.id}`,
-						workflow: `/api/v1/workflows/${task.workflowId}`,
+						self: `/api/v1/tasks/${taskView.id}`,
+						workflow: `/api/v1/workflows/${taskView.workflowId}`,
 					},
 				},
 				201,

@@ -1,0 +1,317 @@
+[
+  {
+    "original_path": "tasks/COMPLETE-SYSTEM-FINAL-SUMMARY.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__COMPLETE-SYSTEM-FINAL-SUMMARY.md",
+    "action": "archive",
+    "reason": "System-wide completion summary closed; retain for historical trace.",
+    "size": 15364,
+    "last_modified": "2025-10-05T00:30:43.542Z",
+    "git_sha": "193cf008cd2369150c4cc39d0ddf2690468e6c69"
+  },
+  {
+    "original_path": "tasks/FINAL-COMPLETION-CERTIFICATE.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__FINAL-COMPLETION-CERTIFICATE.md",
+    "action": "archive",
+    "reason": "Certification document for completed phases; no longer active.",
+    "size": 7895,
+    "last_modified": "2025-10-04T01:04:33.797Z",
+    "git_sha": "26025bd56c706b70b95111c1a72d8e87df56a749"
+  },
+  {
+    "original_path": "tasks/FINAL-SESSION-SUMMARY.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__FINAL-SESSION-SUMMARY.md",
+    "action": "archive",
+    "reason": "Wrap-up session summary superseded by final reports.",
+    "size": 10963,
+    "last_modified": "2025-10-05T00:30:43.543Z",
+    "git_sha": "c7d3f3ee2abde6f9ccccf24547e00cede601b944"
+  },
+  {
+    "original_path": "tasks/FINAL-SWEEP-CHECKLIST.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__FINAL-SWEEP-CHECKLIST.md",
+    "action": "archive",
+    "reason": "Checklist for previous sweep finished; keeping for audit history.",
+    "size": 10295,
+    "last_modified": "2025-10-04T01:04:33.797Z",
+    "git_sha": "ae9a391ebebea8f7a09d86b812c320f8be44b681"
+  },
+  {
+    "original_path": "tasks/PHASE-7-CI-CD-AUDIT.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__PHASE-7-CI-CD-AUDIT.md",
+    "action": "archive",
+    "reason": "Phase 7 CI/CD audit log finalized.",
+    "size": 9522,
+    "last_modified": "2025-10-04T11:29:36.895Z",
+    "git_sha": "b93bed0778414bb0b311c189df517f93cc4b1a0b"
+  },
+  {
+    "original_path": "tasks/PHASE-7-COMPLETE.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__PHASE-7-COMPLETE.md",
+    "action": "archive",
+    "reason": "Phase 7 completion log finalized.",
+    "size": 14818,
+    "last_modified": "2025-10-03T19:13:29.843Z",
+    "git_sha": "cbd6ec4c0d33eb85ac19343603dc812e57dab328"
+  },
+  {
+    "original_path": "tasks/PHASE3-COMPLETION-SUMMARY.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__PHASE3-COMPLETION-SUMMARY.md",
+    "action": "archive",
+    "reason": "Phase 3 completion summary archived for traceability.",
+    "size": 13158,
+    "last_modified": "2025-10-03T22:53:34.099Z",
+    "git_sha": "3f807d4fc7f7746a9bcb1388d6970e6fac58fe90"
+  },
+  {
+    "original_path": "tasks/PHASE3-PHASE4-SESSION-SUMMARY.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__PHASE3-PHASE4-SESSION-SUMMARY.md",
+    "action": "archive",
+    "reason": "Session summary covering phases 3-4 completed.",
+    "size": 11970,
+    "last_modified": "2025-10-05T00:30:43.543Z",
+    "git_sha": "c8afd4c79ea769346c063ef35203d9bc7f883c6d"
+  },
+  {
+    "original_path": "tasks/PHASE7-COMPLETION-SUMMARY.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__PHASE7-COMPLETION-SUMMARY.md",
+    "action": "archive",
+    "reason": "Phase 7 completion record finalized.",
+    "size": 10391,
+    "last_modified": "2025-10-04T01:04:33.797Z",
+    "git_sha": "b8cb7b9e1bc20b0a965c236290b81fbbd2291188"
+  },
+  {
+    "original_path": "tasks/PHASE8-COMPLETION-SUMMARY.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__PHASE8-COMPLETION-SUMMARY.md",
+    "action": "archive",
+    "reason": "Phase 8 completion record finalized.",
+    "size": 8458,
+    "last_modified": "2025-10-04T01:04:33.797Z",
+    "git_sha": "34fd87faf8e43a33ea3a869192e5072c4341abec"
+  },
+  {
+    "original_path": "tasks/PHASE9-FINAL-COMPLETION-SUMMARY.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__PHASE9-FINAL-COMPLETION-SUMMARY.md",
+    "action": "archive",
+    "reason": "Phase 9 final completion record finalized.",
+    "size": 12040,
+    "last_modified": "2025-10-04T01:04:33.797Z",
+    "git_sha": "cadb0f88d722734a5d49d59570c85671c0b007fb"
+  },
+  {
+    "original_path": "tasks/SESSION-COMPLETE-SUMMARY.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__SESSION-COMPLETE-SUMMARY.md",
+    "action": "archive",
+    "reason": "Completed session recap retained historically.",
+    "size": 15002,
+    "last_modified": "2025-10-05T00:30:43.545Z",
+    "git_sha": "ac8c428ba3217c51545b4f0b169accf32c62b769"
+  },
+  {
+    "original_path": "tasks/fastmcp-migration-summary.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__fastmcp-migration-summary.md",
+    "action": "archive",
+    "reason": "Fast MCP migration summary completed and superseded.",
+    "size": 7312,
+    "last_modified": "2025-10-01T01:45:48.186Z",
+    "git_sha": "a1743819e45d16b8761f875af6cb69b5e9982782"
+  },
+  {
+    "original_path": "tasks/integration-tests-complete.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__integration-tests-complete.md",
+    "action": "archive",
+    "reason": "Integration testing closure note.",
+    "size": 8116,
+    "last_modified": "2025-10-05T00:30:43.546Z",
+    "git_sha": "0a1ac0b93353b371e3306ac72bca24cdf9edfaf4"
+  },
+  {
+    "original_path": "tasks/phase3-1-1-schema-extension-summary.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase3-1-1-schema-extension-summary.md",
+    "action": "archive",
+    "reason": "Phase 3 schema extension summary completed.",
+    "size": 4384,
+    "last_modified": "2025-10-04T12:49:44.706Z",
+    "git_sha": "5411353e149f5a0a885be8f5ab61845b7db8c82e"
+  },
+  {
+    "original_path": "tasks/phase3-1-2-file-validation-summary.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase3-1-2-file-validation-summary.md",
+    "action": "archive",
+    "reason": "Phase 3 file validation summary completed.",
+    "size": 5978,
+    "last_modified": "2025-10-04T12:58:01.159Z",
+    "git_sha": "4ddd57f97f86f0a99d2a011a856f958de889ee1c"
+  },
+  {
+    "original_path": "tasks/phase3-1-3-clip-integration-summary.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase3-1-3-clip-integration-summary.md",
+    "action": "archive",
+    "reason": "Phase 3 clip integration summary completed.",
+    "size": 7589,
+    "last_modified": "2025-10-04T13:04:52.077Z",
+    "git_sha": "d484b4f0706b1f42e758be449bbbb5befcf7fdae"
+  },
+  {
+    "original_path": "tasks/phase3-FINAL-COMPLETION.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase3-FINAL-COMPLETION.md",
+    "action": "archive",
+    "reason": "Phase 3 final completion record archived.",
+    "size": 14716,
+    "last_modified": "2025-10-05T00:30:42.509Z",
+    "git_sha": "f324159705982948b5c09a93331f9d09683e0ffc"
+  },
+  {
+    "original_path": "tasks/phase3-completion-report.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase3-completion-report.md",
+    "action": "archive",
+    "reason": "Phase 3 completion report archived.",
+    "size": 9729,
+    "last_modified": "2025-10-05T00:30:42.509Z",
+    "git_sha": "1ccaad909ac5713236271d7de3161835a770ec46"
+  },
+  {
+    "original_path": "tasks/phase3-final-summary.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase3-final-summary.md",
+    "action": "archive",
+    "reason": "Phase 3 final summary archived.",
+    "size": 8647,
+    "last_modified": "2025-10-05T00:30:42.510Z",
+    "git_sha": "1b1c6870d579caca20b38fae81909c71c196ac64"
+  },
+  {
+    "original_path": "tasks/phase3-progress-summary.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase3-progress-summary.md",
+    "action": "archive",
+    "reason": "Phase 3 progress summary archived.",
+    "size": 8157,
+    "last_modified": "2025-10-04T12:58:52.111Z",
+    "git_sha": "19e1cfd8900ad854a2849c117f462dc60645a7ca"
+  },
+  {
+    "original_path": "tasks/phase4-1-cot-planning-complete.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase4-1-cot-planning-complete.md",
+    "action": "archive",
+    "reason": "Phase 4 chain-of-thought planning marked complete.",
+    "size": 8266,
+    "last_modified": "2025-10-05T00:30:42.566Z",
+    "git_sha": "6c4bcbd04dca8d7466464b66c97acdb8fe4de41d"
+  },
+  {
+    "original_path": "tasks/phase4-2-self-reflection-complete.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase4-2-self-reflection-complete.md",
+    "action": "archive",
+    "reason": "Phase 4 self-reflection tasks completed.",
+    "size": 11452,
+    "last_modified": "2025-10-05T00:30:42.567Z",
+    "git_sha": "60d11efac601653a2fb0de833f031176c2b5b2b7"
+  },
+  {
+    "original_path": "tasks/phase4-3-tot-planning-complete.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase4-3-tot-planning-complete.md",
+    "action": "archive",
+    "reason": "Phase 4 tree-of-thought planning completed.",
+    "size": 9619,
+    "last_modified": "2025-10-05T00:30:43.374Z",
+    "git_sha": "2a23fd18520637de9370baddd8f7dba11559d108"
+  },
+  {
+    "original_path": "tasks/phase5-1-health-endpoints-complete.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase5-1-health-endpoints-complete.md",
+    "action": "archive",
+    "reason": "Phase 5 health endpoints tasks completed.",
+    "size": 4150,
+    "last_modified": "2025-10-05T00:30:42.633Z",
+    "git_sha": "e4f83aa11a3587e2379bcbe35c30c79953e1573d"
+  },
+  {
+    "original_path": "tasks/phase5-2-graceful-shutdown-complete.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase5-2-graceful-shutdown-complete.md",
+    "action": "archive",
+    "reason": "Phase 5 graceful shutdown work completed.",
+    "size": 5981,
+    "last_modified": "2025-10-05T00:30:42.717Z",
+    "git_sha": "bf6f89cfef4e21aaaeefb18c1f8216759a7911be"
+  },
+  {
+    "original_path": "tasks/phase6-observability-complete.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase6-observability-complete.md",
+    "action": "archive",
+    "reason": "Phase 6 observability backlog completed.",
+    "size": 9679,
+    "last_modified": "2025-10-05T00:30:43.546Z",
+    "git_sha": "3c69328c46add7616dd856f90c91a9093bb6d899"
+  },
+  {
+    "original_path": "tasks/phase7-performance-complete.md",
+    "archived_path": "archive/docs/2025-10-05/tasks__phase7-performance-complete.md",
+    "action": "archive",
+    "reason": "Phase 7 performance work completed.",
+    "size": 9573,
+    "last_modified": "2025-10-05T00:30:51.239Z",
+    "git_sha": "884668c5e87b9fbc835e55423b41ad2c771de5dd"
+  },
+  {
+    "original_path": "docs/README_OLD.md",
+    "archived_path": "archive/docs/2025-10-05/docs__README_OLD.md",
+    "action": "archive",
+    "reason": "Superseded documentation hub replaced by docs/README.md.",
+    "size": 3735,
+    "last_modified": "2025-10-01T00:32:50.551Z",
+    "git_sha": "29dedc2f4bca0aad38ceb45ac13c045dfd0521b2"
+  },
+  {
+    "original_path": "reports/generated/hook-validation-report.md",
+    "archived_path": "archive/docs/2025-10-05/reports__generated__hook-validation-report.md",
+    "action": "remove",
+    "reason": "Generated hook validation output; regenerated by automation.",
+    "size": 2822,
+    "last_modified": "2025-09-24T15:18:01.281Z",
+    "git_sha": null
+  },
+  {
+    "original_path": "reports/generated/import-violations-report.txt",
+    "archived_path": "archive/docs/2025-10-05/reports__generated__import-violations-report.txt",
+    "action": "remove",
+    "reason": "Outdated import violations log; superseded by Nx checks.",
+    "size": 22101,
+    "last_modified": "2025-09-24T15:18:01.281Z",
+    "git_sha": null
+  },
+  {
+    "original_path": "reports/eslint-filelist.txt",
+    "archived_path": "archive/docs/2025-10-05/reports__eslint-filelist.txt",
+    "action": "remove",
+    "reason": "Transient ESLint file listing; regenerated as needed.",
+    "size": 51323,
+    "last_modified": "2025-09-29T23:30:39.129Z",
+    "git_sha": "2778bc3e4def6cb6ed1caab26cfb5c889c17dcde"
+  },
+  {
+    "original_path": "reports/semgrep-full-scan.txt",
+    "archived_path": "archive/docs/2025-10-05/reports__semgrep-full-scan.txt",
+    "action": "remove",
+    "reason": "Bulk Semgrep scan output; superseded by current security scans.",
+    "size": 24170,
+    "last_modified": "2025-10-05T00:42:25.721Z",
+    "git_sha": "b3f5140a6a7d74085202e02490a4aff20bc73c24"
+  },
+  {
+    "original_path": "reports/logs/tsconfig-validator.txt",
+    "archived_path": "archive/docs/2025-10-05/reports__logs__tsconfig-validator.txt",
+    "action": "remove",
+    "reason": "Temporary tsconfig validator log.",
+    "size": 114,
+    "last_modified": "2025-10-05T16:39:56.859Z",
+    "git_sha": null
+  },
+  {
+    "original_path": "reports/planning/node-next-tsconfigs.txt",
+    "archived_path": "archive/docs/2025-10-05/reports__planning__node-next-tsconfigs.txt",
+    "action": "remove",
+    "reason": "Scratch planning notes superseded by finalized plan.",
+    "size": 1399,
+    "last_modified": "2025-10-05T14:00:24.178Z",
+    "git_sha": "67f8f81f808012933bc333e4553072748609bfd3"
+  }
+]

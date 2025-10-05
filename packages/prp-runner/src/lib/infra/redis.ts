@@ -1,8 +1,10 @@
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 
-let cached: Redis | undefined;
+type RedisClient = Redis;
 
-export const getRedisFromEnv = (): Redis | undefined => {
+let cached: RedisClient | undefined;
+
+export const getRedisFromEnv = (): RedisClient | undefined => {
 	const url = process.env.PRP_REDIS_URL || process.env.REDIS_URL;
 	if (!url) return undefined;
 	if (cached) return cached;

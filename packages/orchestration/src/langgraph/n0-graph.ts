@@ -15,7 +15,7 @@ import {
 	type SlashParseResult,
 } from '@cortex-os/commands';
 import { CortexHooks, type HookContext, type HookEvent, type HookResult } from '@cortex-os/hooks';
-import type { LoadOptions as HookLoadOptions } from '@cortex-os/hooks/loaders';
+import type { LoadOptions as HookLoadOptions } from '@cortex-os/hooks/loaders.js';
 import {
 	type BindKernelToolsOptions,
 	bindKernelTools,
@@ -120,7 +120,8 @@ export interface BuildN0Options {
 	toolHooks?: ToolDispatchHooks;
 	toolAllowList?: string[];
 	toolConcurrency?: number;
-	systemPrompt?: string;
+	systemPromptId?: string;
+	systemPromptVariables?: Record<string, unknown>;
 	planResolver?: (state: N0State) => PlanDecision;
 	compaction?: { maxMessages?: number; maxChars?: number };
 	logger?: Pick<Console, 'info' | 'warn' | 'error'>;
@@ -144,22 +145,25 @@ export async function buildN0(options: BuildN0Options): Promise<BuildN0Result> {
 	const hooks = await ensureHooks(options.hooks, options.hookLoadOptions);
 	const logger = options.logger ?? console;
 	const runSlashImpl = options.runSlash ?? defaultRunSlash;
-	const systemPromptInfo = resolveSystemPrompt(options.systemPrompt);
+	const systemPromptInfo = resolveSystemPrompt({
+		id: options.systemPromptId,
+		variables: options.systemPromptVariables,
+	});
 	const systemPrompt = systemPromptInfo.prompt;
 	const planResolver = options.planResolver ?? defaultPlanResolver;
 	const compactionConfig = options.compaction ?? {};
 	const dispatchHooks = options.toolHooks ?? createToolHookAdapter(hooks);
 
 	const kernelBinding = resolveKernelBinding(options);
-	const kernelTools = options.kernelTools ?? bindKernelTools(options.kernelOptions ?? {});
-	const kernelDefinitions: ToolDefinition[] = (kernelBinding?.tools ?? kernelTools).map(
-		(tool: KernelTool) => kernelToolToDefinition(tool),
+	const kernelTools = kernelBinding?.tools ?? options.kernelTools ?? [];
+	const kernelDefinitions: ToolDefinition[] = kernelTools.map((tool: KernelTool) =>
+		kernelToolToDefinition(tool),
 	);
 	const renderDefaults = pickDefined({
 		runBashSafe: createKernelRunBash(kernelTools),
 		readFileCapped: createKernelReadFile(kernelTools),
-		fileAllowlist: deriveKernelFileAllowlist(options.kernelOptions),
-		maxIncludeBytes: options.kernelOptions?.filesystem?.maxBytes,
+		fileAllowlist: deriveKernelFileAllowlist(kernelBinding, options.kernelOptions),
+		maxIncludeBytes: options.kernelOptions?.maxReadBytes,
 	});
 
 	let subagentManager: LoadedSubagents['manager'] | undefined;
@@ -645,451 +649,517 @@ async function ensureHooks(
 		await (instance.init as unknown as (opts?: unknown) => Promise<void>)(options as unknown);
 	}
 	return instance;
+}
 
-	function _ensureHooks(
-		hooks: HookRunner | undefined,
-		options?: HookLoadOptions,
-	): Promise<HookRunner> {
-		if (hooks) {
-			return Promise.resolve(hooks);
-		}
-		const instance = new CortexHooks();
-		return instance.init(options).then(() => instance);
-	}
+type KernelRunBash = (
+	cmd: string,
+	allowlist: string[],
+) => Promise<{ stdout: string; stderr: string; code: number }>;
 
-	type KernelRunBash = (
-		cmd: string,
-		allowlist: string[],
-	) => Promise<{ stdout: string; stderr: string; code: number }>;
+type KernelReadFile = (target: string, maxBytes: number, allowlist: string[]) => Promise<string>;
 
-	type KernelReadFile = (target: string, maxBytes: number, allowlist: string[]) => Promise<string>;
-
-	function _createKernelRunBash(tools: BoundKernelTool[]): KernelRunBash | undefined {
-		const tool = findKernelTool(tools, ['kernel.bash', 'shell.exec']);
-		if (!tool) return undefined;
-		return async (cmd: string, _allowlist: string[]) => {
-			// TODO: Use allowlist for command validation if needed
-			const payload = await tool.execute({ command: cmd });
-			const stdout =
-				typeof payload === 'object' &&
-				payload &&
-				'stdout' in payload &&
-				typeof payload.stdout === 'string'
-					? payload.stdout
-					: '';
-			const stderr =
-				typeof payload === 'object' &&
-				payload &&
-				'stderr' in payload &&
-				typeof payload.stderr === 'string'
-					? payload.stderr
-					: '';
+function createKernelRunBash(tools: KernelTool[]): KernelRunBash | undefined {
+	const tool = findKernelTool(tools, ['kernel.bash', 'shell.exec']);
+	if (!tool) return undefined;
+	return async (cmd: string, allowlist: string[]) => {
+		// Simple allowlist validation: check if the command starts with any allowed entry
+		const isAllowed = allowlist.some((allowed) => cmd.trim().startsWith(allowed));
+		if (!isAllowed) {
 			return {
-				stdout,
-				stderr,
-				code: normaliseKernelExitCode(payload),
+				stdout: '',
+				stderr: `Command "${cmd}" is not allowed by the allowlist.`,
+				code: 126, // 126: Command invoked cannot execute
 			} satisfies { stdout: string; stderr: string; code: number };
-		};
-	}
-
-	function _createKernelReadFile(tools: BoundKernelTool[]): KernelReadFile | undefined {
-		const tool = findKernelTool(tools, ['kernel.fs.read', 'kernel.filesystem.read', 'fs.read']);
-		if (!tool) return undefined;
-		return async (target, maxBytes, allowlist) => {
-			// If allowlist is provided, check if target is allowed
-			if (Array.isArray(allowlist) && allowlist.length > 0) {
-				const isAllowed = allowlist.some((allowedPath) => target.startsWith(allowedPath));
-				if (!isAllowed) {
-					throw new Error(`Access to file "${target}" is not allowed by the allowlist.`);
-				}
-			}
-			const payload = await tool.execute(
-				tool.name === 'fs.read' ? { path: target } : { path: target, maxBytes },
-			);
-			const content = extractKernelFileContent(payload);
-			return typeof maxBytes === 'number' ? content.slice(0, maxBytes) : content;
-		};
-	}
-
-	function _deriveKernelFileAllowlist(options?: BindKernelToolsOptions): string[] | undefined {
-		const allow = options?.filesystem?.allow;
-		if (!allow || allow.length === 0) return undefined;
-		return [...allow];
-	}
-
-	function _pickDefined<T extends Record<string, unknown>>(source: T): Partial<T> {
-		const defined: Partial<T> = {};
-		for (const [key, value] of Object.entries(source)) {
-			if (value !== undefined) {
-				(defined as Record<string, unknown>)[key] = value;
-			}
 		}
-		return defined;
-	}
-
-	function findKernelTool(tools: BoundKernelTool[], names: string[]): BoundKernelTool | undefined {
-		return tools.find((tool) => names.includes(tool.name));
-	}
-
-	function normaliseKernelExitCode(payload: unknown): number {
-		if (typeof payload === 'object' && payload) {
-			const record = payload as Record<string, unknown>;
-			const exit = record['exitCode'];
-			if (typeof exit === 'number') {
-				return exit;
-			}
-			const code = record['code'];
-			if (typeof code === 'number') {
-				return code;
-			}
-		}
-		return 0;
-	}
-
-	function extractKernelFileContent(payload: unknown): string {
-		if (typeof payload === 'string') {
-			return payload;
-		}
-		if (typeof payload === 'object' && payload) {
-			const record = payload as Record<string, unknown>;
-			const content = record['content'];
-			if (typeof content === 'string') {
-				return content;
-			}
-			const body = record['body'];
-			if (typeof body === 'string') {
-				return body;
-			}
-		}
-		return '';
-	}
-
-	function _createToolHookAdapter(hooks: HookRunner): ToolDispatchHooks {
+		const payload = await tool.invoke({ command: cmd });
+		const stdout =
+			typeof payload === 'object' &&
+			payload &&
+			'stdout' in payload &&
+			typeof payload.stdout === 'string'
+				? payload.stdout
+				: '';
+		const stderr =
+			typeof payload === 'object' &&
+			payload &&
+			'stderr' in payload &&
+			typeof payload.stderr === 'string'
+				? payload.stderr
+				: '';
 		return {
-			run: async (event, ctx) => hooks.run(event, ctx),
-		};
-	}
+			stdout,
+			stderr,
+			code: normaliseKernelExitCode(payload),
+		} satisfies { stdout: string; stderr: string; code: number };
+	};
+}
 
-	function _kernelToolToDefinition(tool: KernelTool): ToolDefinition {
-		return {
-			name: tool.name,
-			description: tool.description,
-			schema: tool.schema,
-			metadata: {
-				provider: 'kernel',
-				surface: tool.metadata.surface,
-				allowList: [...tool.metadata.allowList],
-				timeoutMs: tool.metadata.timeoutMs,
-			},
-			async execute(input) {
-				const parsed = tool.schema.parse(input);
-				const result = await tool.invoke(parsed);
-				return {
-					content: renderOutput(result),
-					status: 'success',
-					metadata: {
-						provider: 'kernel',
-						surface: tool.metadata.surface,
-						allowList: [...tool.metadata.allowList],
-						timeoutMs: tool.metadata.timeoutMs,
-					},
-					artifact: result,
-				} satisfies ToolExecutionOutput;
-			},
-		} satisfies ToolDefinition;
-	}
-
-	function _subagentToolToDefinition(binding: SubagentToolBinding): ToolDefinition {
-		return {
-			name: binding.tool.name,
-			description: binding.tool.description,
-			schema: binding.tool.schema,
-			metadata: binding.metadata,
-			async execute(input) {
-				const response = await binding.tool.call(input, { caller: 'n0', depth: 0 });
-				const status: 'success' | 'error' = response.success ? 'success' : 'error';
-				const content =
-					response.text ?? (response.error ? `brAInwav subagent error: ${response.error}` : '');
-				return {
-					content,
-					status,
-					metadata: {
-						...(binding.metadata ?? {}),
-						traceId: response.traceId,
-						metrics: response.metrics,
-					},
-					artifact: response,
-				} satisfies ToolExecutionOutput;
-			},
-		} satisfies ToolDefinition;
-	}
-
-	function _toStructuredTool(definition: ToolDefinition): StructuredTool {
-		return new DynamicStructuredTool({
-			name: definition.name,
-			description: definition.description,
-			schema: definition.schema,
-			func: async () => {
+function createKernelReadFile(tools: KernelTool[]): KernelReadFile | undefined {
+	const tool = findKernelTool(tools, [
+		'kernel.readFile',
+		'kernel.fs.read',
+		'kernel.filesystem.read',
+		'fs.read',
+	]);
+	if (!tool) return undefined;
+	return async (target, maxBytes, allowlist) => {
+		// If allowlist is provided, check if target is allowed
+		if (Array.isArray(allowlist) && allowlist.length > 0) {
+			const isAllowed = allowlist.some((allowedPath) => target.startsWith(allowedPath));
+			if (!isAllowed) {
 				throw new Error(
-					`brAInwav tool ${definition.name} must be invoked via the LangGraph tool_dispatch pipeline`,
+					`[brAInwav] kernel policy violation: access to file "${target}" is not allowed by the current allowlist.`,
 				);
-			},
-		});
-	}
-
-	function isRecord(value: unknown): value is Record<string, unknown> {
-		return typeof value === 'object' && value !== null && !Array.isArray(value);
-	}
-
-	function _extractCommandMetadata(metadata: unknown): Record<string, unknown> | undefined {
-		if (!metadata) {
-			return undefined;
-		}
-		if (isRecord(metadata)) {
-			const command = Object.hasOwn(metadata as object, 'command')
-				? (metadata as { command?: unknown }).command
-				: undefined;
-			if (isRecord(command)) {
-				return command;
-			}
-			if (typeof metadata['name'] === 'string') {
-				return metadata;
 			}
 		}
+		const payload = await tool.invoke(
+			tool.name === 'fs.read' ? { path: target } : { path: target, maxBytes },
+		);
+		const content = extractKernelFileContent(payload);
+		return typeof maxBytes === 'number' ? content.slice(0, maxBytes) : content;
+	};
+}
+
+function deriveKernelFileAllowlist(
+	binding?: KernelToolBinding,
+	options?: BindKernelToolsOptions,
+): string[] | undefined {
+	const fromBinding = binding?.metadata.allowLists.filesystem;
+	if (fromBinding && fromBinding.length > 0) {
+		return [...fromBinding];
+	}
+	const allow = options?.fsAllow;
+	if (!allow || allow.length === 0) return undefined;
+	return [...allow];
+}
+
+function pickDefined<T extends Record<string, unknown>>(source: T): Partial<T> {
+	const defined: Partial<T> = {};
+	for (const [key, value] of Object.entries(source)) {
+		if (value !== undefined) {
+			(defined as Record<string, unknown>)[key] = value;
+		}
+	}
+	return defined;
+}
+
+function findKernelTool(tools: KernelTool[], names: string[]): KernelTool | undefined {
+	return tools.find((tool) => names.includes(tool.name));
+}
+
+function normaliseKernelExitCode(payload: unknown): number {
+	if (typeof payload === 'object' && payload) {
+		const record = payload as Record<string, unknown>;
+		const exit = record['exitCode'];
+		if (typeof exit === 'number') {
+			return exit;
+		}
+		const code = record['code'];
+		if (typeof code === 'number') {
+			return code;
+		}
+	}
+	return 0;
+}
+
+function extractKernelFileContent(payload: unknown): string {
+	if (typeof payload === 'string') {
+		return payload;
+	}
+	if (typeof payload === 'object' && payload) {
+		const record = payload as Record<string, unknown>;
+		const content = record['content'];
+		if (typeof content === 'string') {
+			return content;
+		}
+		const body = record['body'];
+		if (typeof body === 'string') {
+			return body;
+		}
+	}
+	return '';
+}
+
+function createToolHookAdapter(hooks: HookRunner): ToolDispatchHooks {
+	return {
+		run: async (event, ctx) => hooks.run(event, ctx),
+	};
+}
+
+function kernelToolToDefinition(tool: KernelTool): ToolDefinition {
+	return {
+		name: tool.name,
+		description: tool.description,
+		schema: tool.schema,
+		metadata: {
+			provider: 'kernel',
+			surface: tool.metadata.surface,
+			allowList: [...tool.metadata.allowList],
+			timeoutMs: tool.metadata.timeoutMs,
+		},
+		async execute(input) {
+			const parsed = tool.schema.parse(input);
+			const result = await tool.invoke(parsed);
+			return {
+				content: renderOutput(result),
+				status: 'success',
+				metadata: {
+					provider: 'kernel',
+					surface: tool.metadata.surface,
+					allowList: [...tool.metadata.allowList],
+					timeoutMs: tool.metadata.timeoutMs,
+				},
+				artifact: result,
+			} satisfies ToolExecutionOutput;
+		},
+	} satisfies ToolDefinition;
+}
+
+function subagentToolToDefinition(binding: SubagentToolBinding): ToolDefinition {
+	const schema = ensureZodSchema(binding.tool.schema);
+	return {
+		name: binding.tool.name,
+		description: binding.tool.description,
+		schema,
+		metadata: binding.metadata,
+		async execute(input) {
+			const response = await binding.tool.call(input, { caller: 'n0', depth: 0 });
+			const status: 'success' | 'error' = response.success ? 'success' : 'error';
+			const content =
+				response.text ?? (response.error ? `brAInwav subagent error: ${response.error}` : '');
+			return {
+				content,
+				status,
+				metadata: {
+					...(binding.metadata ?? {}),
+					traceId: response.traceId,
+					metrics: response.metrics,
+				},
+				artifact: response,
+			} satisfies ToolExecutionOutput;
+		},
+	} satisfies ToolDefinition;
+}
+
+function toStructuredTool(definition: ToolDefinition): StructuredTool {
+	return new DynamicStructuredTool({
+		name: definition.name,
+		description: definition.description,
+		schema: definition.schema,
+		func: async () => {
+			throw new Error(
+				`brAInwav tool ${definition.name} must be invoked via the LangGraph tool_dispatch pipeline`,
+			);
+		},
+	});
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function ensureZodSchema(schema: unknown): z.ZodTypeAny {
+	if (
+		schema !== null &&
+		typeof schema === 'object' &&
+		'parse' in schema &&
+		typeof (schema as { parse?: unknown }).parse === 'function'
+	) {
+		return schema as z.ZodTypeAny;
+	}
+	if (
+		schema !== null &&
+		typeof schema === 'object' &&
+		'safeParse' in schema &&
+		typeof (schema as { safeParse?: unknown }).safeParse === 'function'
+	) {
+		return schema as z.ZodTypeAny;
+	}
+	throw new Error('[brAInwav] subagent schema must be a valid Zod schema');
+}
+
+function extractCommandMetadata(metadata: unknown): Record<string, unknown> | undefined {
+	if (!metadata) {
 		return undefined;
 	}
-
-	function extractString(value: unknown): string | undefined {
-		if (typeof value !== 'string') {
-			return undefined;
+	if (isRecord(metadata)) {
+		const command = Object.hasOwn(metadata as object, 'command')
+			? (metadata as { command?: unknown }).command
+			: undefined;
+		if (isRecord(command)) {
+			return command;
 		}
-		const trimmed = value.trim();
-		return trimmed.length > 0 ? trimmed : undefined;
-	}
-
-	function _extractStringArray(value: unknown): string[] | undefined {
-		if (Array.isArray(value)) {
-			const strings = value
-				.map((item) => (typeof item === 'string' ? item.trim() : undefined))
-				.filter((item): item is string => Boolean(item));
-			return strings.length ? strings : undefined;
+		if (typeof metadata['name'] === 'string') {
+			return metadata;
 		}
-		const single = extractString(value);
-		return single ? [single] : undefined;
 	}
+	return undefined;
+}
 
-	function _extendCtx(
-		base: Record<string, unknown> | undefined,
-		patch: Record<string, unknown>,
-	): Record<string, unknown> {
-		return { ...(base ?? {}), ...patch };
+function extractString(value: unknown): string | undefined {
+	if (typeof value !== 'string') {
+		return undefined;
 	}
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed : undefined;
+}
 
-	function _ensureSystemPrompt(
-		messages: BaseMessage[],
-		prompt: string,
-		ctx?: Record<string, unknown>,
-	): BaseMessage[] {
-		const cloned = [...messages];
-		if (cloned.length === 0 || cloned[0].getType() !== 'system') {
-			cloned.unshift(new SystemMessage({ content: prompt }));
-		}
-		const hasPlanInstruction = cloned.some(
-			(message) => message.getType() === 'system' && message.additional_kwargs?.['brAInwav-plan'],
+function extractStringArray(value: unknown): string[] | undefined {
+	if (Array.isArray(value)) {
+		const strings = value
+			.map((item) => (typeof item === 'string' ? item.trim() : undefined))
+			.filter((item): item is string => Boolean(item));
+		return strings.length ? strings : undefined;
+	}
+	const single = extractString(value);
+	return single ? [single] : undefined;
+}
+
+function extendCtx(
+	base: Record<string, unknown> | undefined,
+	patch: Record<string, unknown>,
+): Record<string, unknown> {
+	return { ...(base ?? {}), ...patch };
+}
+
+function ensureSystemPrompt(
+	messages: BaseMessage[],
+	prompt: string,
+	ctx?: Record<string, unknown>,
+): BaseMessage[] {
+	const cloned = [...messages];
+	if (cloned.length === 0 || cloned[0].getType() !== 'system') {
+		cloned.unshift(new SystemMessage({ content: prompt }));
+	}
+	const hasPlanInstruction = cloned.some(
+		(message) => message.getType() === 'system' && message.additional_kwargs?.['brAInwav-plan'],
+	);
+	if (ctx?.strategy && !hasPlanInstruction) {
+		const instruction =
+			ctx.strategy === 'plan'
+				? 'You must outline a brief plan before executing tools. Use subagents when helpful.'
+				: 'Respond directly while using tools only when they materially improve the answer.';
+		cloned.splice(
+			1,
+			0,
+			new SystemMessage({
+				content: instruction,
+				additional_kwargs: { 'brAInwav-plan': true },
+			}),
 		);
-		if (ctx?.strategy && !hasPlanInstruction) {
-			const instruction =
-				ctx.strategy === 'plan'
-					? 'You must outline a brief plan before executing tools. Use subagents when helpful.'
-					: 'Respond directly while using tools only when they materially improve the answer.';
-			cloned.splice(
-				1,
-				0,
-				new SystemMessage({
-					content: instruction,
-					additional_kwargs: { 'brAInwav-plan': true },
-				}),
-			);
-		}
-		return cloned;
 	}
+	return cloned;
+}
 
-	function _normaliseToAIMessage(message: BaseMessage): AIMessage {
-		if (isAIMessage(message)) return message;
-		return new AIMessage({ content: renderMessageContent(message.content) });
-	}
+function normaliseToAIMessage(message: BaseMessage): AIMessage {
+	if (isAIMessage(message)) return message;
+	return new AIMessage({ content: renderMessageContent(message.content) });
+}
 
-	function renderMessageContent(content: BaseMessage['content']): string {
-		if (typeof content === 'string') return content;
-		if (Array.isArray(content)) {
-			return content
-				.map((part) => {
-					if (typeof part === 'string') return part;
-					if (typeof part === 'object' && part && 'text' in part) {
-						return String((part as { text?: unknown }).text ?? '');
+function renderMessageContent(content: BaseMessage['content']): string {
+	if (typeof content === 'string') return content;
+	if (Array.isArray(content)) {
+		return content
+			.map((part) => {
+				if (typeof part === 'string') return part;
+				if (typeof part === 'object' && part && 'text' in part) {
+					const textValue = (part as { text?: unknown }).text;
+					if (typeof textValue === 'string') return textValue;
+					if (typeof textValue === 'number' || typeof textValue === 'boolean') {
+						return String(textValue);
 					}
 					try {
-						return JSON.stringify(part);
+						return JSON.stringify(textValue);
 					} catch {
-						return String(part);
+						return '[unserializable-text]';
 					}
-				})
-				.join('\n');
-		}
-		try {
-			return JSON.stringify(content);
-		} catch {
-			return String(content);
-		}
+				}
+				try {
+					return JSON.stringify(part);
+				} catch {
+					return '[unserializable-part]';
+				}
+			})
+			.join('\n');
 	}
-
-	function renderOutput(value: unknown): string {
-		if (value === undefined || value === null) return '';
-		if (typeof value === 'string') return value;
-		if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-		try {
-			return JSON.stringify(value);
-		} catch {
-			return String(value);
-		}
+	try {
+		return JSON.stringify(content);
+	} catch {
+		return '[unserializable-content]';
 	}
+}
 
-	async function _safeRunHook(
-		hooks: HookRunner,
-		event: HookEvent,
-		ctx: Record<string, unknown>,
-		logger: Pick<Console, 'warn'>,
-	): Promise<HookResult[] | undefined> {
-		try {
-			return await hooks.run(event, ctx as HookContext);
-		} catch (error) {
-			logger.warn?.('brAInwav hook execution failed', { event, error });
-			return undefined;
-		}
+function renderOutput(value: unknown): string {
+	if (value === undefined || value === null) return '';
+	if (typeof value === 'string') return value;
+	if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+	try {
+		return JSON.stringify(value);
+	} catch {
+		return '[unserializable-artifact]';
 	}
+}
 
-	function _sessionHookContext(state: N0State): Record<string, unknown> {
-		return {
-			event: 'SessionStart',
-			cwd: state.session.cwd,
-			user: state.session.user,
-			model: state.session.model,
-			session: state.session,
-			tags: ['n0'],
-		};
-	}
-
-	function _stopHookContext(state: N0State, output?: string): Record<string, unknown> {
-		return {
-			event: 'Stop',
-			cwd: state.session.cwd,
-			user: state.session.user,
-			model: state.session.model,
-			session: state.session,
-			output,
-			tags: ['n0'],
-		};
-	}
-
-	function totalCharacters(messages: BaseMessage[]): number {
-		return messages.reduce((sum, message) => sum + renderMessageContent(message.content).length, 0);
-	}
-
-	function _compactMessages(
-		messages: BaseMessage[],
-		maxMessages: number,
-		maxChars: number,
-	): BaseMessage[] {
-		const preserved: BaseMessage[] = [];
-		if (messages.length > 0) preserved.push(messages[0]);
-		const remainder = messages.slice(-Math.max(0, maxMessages - preserved.length));
-		const result = [...preserved, ...remainder];
-		while (totalCharacters(result) > maxChars && result.length > 2) {
-			result.splice(1, 1);
-		}
-		return result;
-	}
-
-	function _deriveOutputFromMessages(messages?: BaseMessage[]): string | undefined {
-		if (!messages || messages.length === 0) return undefined;
-		for (let index = messages.length - 1; index >= 0; index -= 1) {
-			const candidate = messages[index];
-			const type = candidate.getType();
-			if (type === 'ai' || type === 'tool') {
-				return renderMessageContent(candidate.content);
-			}
-		}
+async function safeRunHook(
+	hooks: HookRunner,
+	event: HookEvent,
+	ctx: Record<string, unknown>,
+	logger: Pick<Console, 'warn'>,
+): Promise<HookResult[] | undefined> {
+	try {
+		return await hooks.run(event, ctx as HookContext);
+	} catch (error) {
+		logger.warn?.('brAInwav hook execution failed', { event, error });
 		return undefined;
 	}
+}
 
-	function mergePromptCaptures(
-		ctx: Record<string, unknown> | undefined,
-		capture?: PromptCapture,
-	): PromptCapture[] {
-		const existing = Array.isArray(ctx?.promptCaptures)
-			? [...(ctx!.promptCaptures as PromptCapture[])]
-			: [];
-		if (capture) {
-			const already = existing.some(
-				(entry) => entry.id === capture.id && entry.version === capture.version,
+function sessionHookContext(state: N0State): Record<string, unknown> {
+	return {
+		event: 'SessionStart',
+		cwd: state.session.cwd,
+		user: state.session.user,
+		model: state.session.model,
+		session: state.session,
+		tags: ['n0'],
+	};
+}
+
+function stopHookContext(state: N0State, output?: string): Record<string, unknown> {
+	return {
+		event: 'Stop',
+		cwd: state.session.cwd,
+		user: state.session.user,
+		model: state.session.model,
+		session: state.session,
+		output,
+		tags: ['n0'],
+	};
+}
+
+function totalCharacters(messages: BaseMessage[]): number {
+	return messages.reduce((sum, message) => sum + renderMessageContent(message.content).length, 0);
+}
+
+function compactMessages(
+	messages: BaseMessage[],
+	maxMessages: number,
+	maxChars: number,
+): BaseMessage[] {
+	const preserved: BaseMessage[] = [];
+	if (messages.length > 0) preserved.push(messages[0]);
+	const remainder = messages.slice(-Math.max(0, maxMessages - preserved.length));
+	const result = [...preserved, ...remainder];
+	while (totalCharacters(result) > maxChars && result.length > 2) {
+		result.splice(1, 1);
+	}
+	return result;
+}
+
+function deriveOutputFromMessages(messages?: BaseMessage[]): string | undefined {
+	if (!messages || messages.length === 0) return undefined;
+	for (let index = messages.length - 1; index >= 0; index -= 1) {
+		const candidate = messages[index];
+		const type = candidate.getType();
+		if (type === 'ai' || type === 'tool') {
+			return renderMessageContent(candidate.content);
+		}
+	}
+	return undefined;
+}
+
+function mergePromptCaptures(
+	ctx: Record<string, unknown> | undefined,
+	capture?: PromptCapture,
+): PromptCapture[] {
+	const candidate = ctx?.promptCaptures;
+	const existing: PromptCapture[] = Array.isArray(candidate)
+		? [...(candidate as PromptCapture[])]
+		: [];
+	if (capture) {
+		const already = existing.some(
+			(entry) => entry.id === capture.id && entry.version === capture.version,
+		);
+		if (!already) existing.push(capture);
+	}
+	return existing;
+}
+
+function tryParseSlash(input: string): SlashParseResult | null {
+	try {
+		return parseSlash(input);
+	} catch {
+		return null;
+	}
+}
+
+function defaultPlanResolver(state: N0State): PlanDecision {
+	const content = state.input.toLowerCase();
+	const shouldPlan =
+		state.input.length > 240 ||
+		state.input.split('\n').length > 3 ||
+		['plan', 'steps', 'strategy', 'investigate', 'analysis', 'roadmap'].some((keyword) =>
+			content.includes(keyword),
+		);
+	return shouldPlan
+		? {
+				strategy: 'plan',
+				rationale: 'Detected long or multi-part request requiring coordination.',
+			}
+		: { strategy: 'direct', rationale: 'Prompt is concise; direct execution preferred.' };
+}
+
+interface SystemPromptConfig {
+	id?: string;
+	variables?: Record<string, unknown>;
+}
+
+function resolveSystemPrompt(config: SystemPromptConfig): {
+	prompt: string;
+	capture?: PromptCapture;
+} {
+	if (config.id) {
+		const record = getPrompt(config.id);
+		if (!record) {
+			throw new Error(
+				`brAInwav orchestration: Unknown system prompt '${config.id}'. Register the prompt before invoking the orchestrator.`,
 			);
-			if (!already) existing.push(capture);
 		}
-		return existing;
+
+		const rendered = renderPrompt(record, config.variables ?? {});
+		validatePromptUsage(rendered, config.id);
+		return {
+			prompt: rendered,
+			capture: capturePromptUsage(record),
+		};
 	}
 
-	function _tryParseSlash(input: string): SlashParseResult | null {
-		try {
-			return parseSlash(input);
-		} catch {
-			return null;
-		}
+	// Enforce that the default prompt remains registered with the prompt library
+	const safeTemplate = getSafePrompt(DEFAULT_SYSTEM_PROMPT_ID);
+	const record = getPrompt(DEFAULT_SYSTEM_PROMPT_ID);
+	if (record) {
+		return {
+			prompt: renderPrompt(record, {}),
+			capture: capturePromptUsage(record),
+		};
 	}
 
-	function _defaultPlanResolver(state: N0State): PlanDecision {
-		const content = state.input.toLowerCase();
-		const shouldPlan =
-			state.input.length > 240 ||
-			state.input.split('\n').length > 3 ||
-			['plan', 'steps', 'strategy', 'investigate', 'analysis', 'roadmap'].some((keyword) =>
-				content.includes(keyword),
-			);
-		return shouldPlan
-			? {
-					strategy: 'plan',
-					rationale: 'Detected long or multi-part request requiring coordination.',
-				}
-			: { strategy: 'direct', rationale: 'Prompt is concise; direct execution preferred.' };
-	}
-
-	function resolveSystemPrompt(custom?: string): { prompt: string; capture?: PromptCapture } {
-		if (custom) {
-			validatePromptUsage(custom);
-			return { prompt: custom };
-		}
-
-		// Enforce that the default prompt remains registered with the prompt library
-		const safeTemplate = getSafePrompt(DEFAULT_SYSTEM_PROMPT_ID);
-		const record = getPrompt(DEFAULT_SYSTEM_PROMPT_ID);
-		if (record) {
-			return {
-				prompt: renderPrompt(record, {}),
-				capture: capturePromptUsage(record),
-			};
-		}
-
-		// Fall back to the registered template when no record metadata is available
+	if (safeTemplate) {
+		validatePromptUsage(safeTemplate, DEFAULT_SYSTEM_PROMPT_ID);
 		return { prompt: safeTemplate };
 	}
 
-	function fallbackSystemPrompt(): string {
-		return [
-			'You are brAInwav n0, the master orchestration loop for Cortex-OS.',
-			'Coordinate kernel tools, workspace commands, and subagents to produce accurate, secure results.',
-			'Always respect hook policies, filesystem/network allow-lists, and budget constraints.',
-			'Explain tool usage briefly in natural language while keeping sensitive data protected.',
-			'Log session information and relevant context for debugging when errors or unexpected behavior occur, following best practices for observability.',
-			'Handle errors gracefully and provide clear, actionable feedback to users and developers.',
-		].join(' ');
-	}
+	// Fall back to a minimal safe prompt when no record metadata is available
+	return { prompt: fallbackSystemPrompt() };
+}
+
+function fallbackSystemPrompt(): string {
+	return [
+		'You are brAInwav n0, the master orchestration loop for Cortex-OS.',
+		'Coordinate kernel tools, workspace commands, and subagents to produce accurate, secure results.',
+		'Always respect hook policies, filesystem/network allow-lists, and budget constraints.',
+		'Explain tool usage briefly in natural language while keeping sensitive data protected.',
+		'Log session information and relevant context for debugging when errors or unexpected behavior occur, following best practices for observability.',
+		'Handle errors gracefully and provide clear, actionable feedback to users and developers.',
+	].join(' ');
 }

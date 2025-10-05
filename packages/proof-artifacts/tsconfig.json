@@ -6,13 +6,17 @@
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
+    "noEmit": false,
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
     "target": "es2022",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
     "ignoreDeprecations": "5.0"
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.json"
   ],
   "exclude": [
     "dist",

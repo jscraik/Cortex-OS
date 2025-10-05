@@ -2,11 +2,11 @@ name: Security Modern
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
-    - cron: '0 3 * * 1' # Weekly full scan (Mondays 03:00 UTC)
+    - cron: "0 3 * * 1" # Weekly full scan (Mondays 03:00 UTC)
 
 concurrency:
   group: security-modern-${{ github.ref }}
@@ -33,11 +33,11 @@ jobs:
       - name: Full-stack setup (minimal)
         uses: ./.github/workflows/reusable-full-stack-setup.yml
         with:
-          node-version: '22'
-          pnpm-version: '9'
-          python-version: '3.11'
+          node-version: "22"
+          pnpm-version: "9"
+          python-version: "3.11"
           uv: true
-          run-install: false  # Just cache warming
+          run-install: false # Just cache warming
           cache-warm: true
 
       - name: Gitleaks (PR diff only)
@@ -55,7 +55,7 @@ jobs:
         uses: ./.github/actions/upload-security-artifacts
         with:
           name: security-gates-pr
-          sarif-path: '*.sarif'
+          sarif-path: "*.sarif"
 
   # Comprehensive security scan (scheduled + main branch)
   security-comprehensive:
@@ -93,7 +93,7 @@ jobs:
 
           # Dependency audit
           pnpm audit --audit-level=high --json > audit-results.json || true
-          
+
           # OSV Scanner
           curl -L https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_linux_amd64 -o osv-scanner
           chmod +x osv-scanner
@@ -117,10 +117,10 @@ jobs:
           # Setup Python with uv
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.cargo/bin:$PATH"
-          
+
           # Bandit scan
           uvx --from bandit bandit -r . -f json -o bandit-results.json || true
-          
+
           # Safety check
           uv run safety check --json --output safety-results.json || true
 
@@ -146,9 +146,9 @@ jobs:
         uses: ./.github/actions/upload-security-artifacts
         with:
           name: security-${{ matrix.scan-type }}-${{ github.sha }}
-          sarif-path: '*.sarif'
-          reports-path: '*-results.json'
-          retention-days: '90'  # Longer retention for comprehensive scans
+          sarif-path: "*.sarif"
+          reports-path: "*-results.json"
+          retention-days: "90" # Longer retention for comprehensive scans
 
   # Security summary (always runs)
   security-summary:
@@ -162,12 +162,107 @@ jobs:
           echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
           echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "| Security Gates | ${{ needs.security-gates.result }} |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Comprehensive Scan | ${{ needs.security-comprehensive.result }} |" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "View detailed results in Security tab and workflow artifacts." >> $GITHUB_STEP_SUMMARY
+
+  # brAInwav policy enforcement
+  brainwav-policy:
+    name: brAInwav Prohibitions & Branding
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.3.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Setup Python & uv
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Semgrep via uv
+        run: uv pip install --system semgrep
+
+      - name: Install AST-Grep
+        run: |
+          curl -sSL https://ast-grep.github.io/install | bash
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH || true
+
+      - name: Create reports directory
+        run: mkdir -p reports
+
+      - name: Semgrep brAInwav scan
+        continue-on-error: true
+        run: |
+          if [ -f reports/semgrep-brainwav-baseline.json ]; then
+            pnpm security:scan:brainwav:diff
+          else
+            echo "No baseline found, running full scan"
+            pnpm security:scan:brainwav
+          fi
+
+      - name: AST-Grep branding & prohibitions
+        run: |
+          pnpm lint:ast-grep:check || echo "::warning::AST-Grep found branding/prohibition issues"
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brainwav-policy-results
+          path: reports/semgrep-brainwav-*.json
+          retention-days: 30
+
+      - name: Comment PR with findings
+        if: github.event_name == 'pull_request' && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let findings = [];
+
+            try {
+              const semgrepResults = JSON.parse(fs.readFileSync('reports/semgrep-brainwav-current.json', 'utf8'));
+              findings = semgrepResults.results || [];
+            } catch (e) {
+              console.log('No semgrep results to parse');
+            }
+
+            if (findings.length > 0) {
+              const body = `## 🚨 brAInwav Policy Violations\n\n${findings.length} issue(s):\n\n${findings.slice(0, 10).map(f => \`- **\${f.check_id}**: \${f.extra.message} (\${f.path}:\${f.start.line})\`).join('\\n')}\n\n${findings.length > 10 ? \`...and \${findings.length - 10} more.\` : ''}`;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }

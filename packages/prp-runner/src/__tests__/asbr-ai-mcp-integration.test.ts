@@ -164,7 +164,7 @@ vi.mock('../asbr-ai-mcp-server.js', () => ({
 				if (name === 'ai_rag_query' && (this as any).aiCapabilities) {
 					const rag = await (this as any).aiCapabilities.ragQuery({
 						query: req.params.arguments?.query,
-						systemPrompt: req.params.arguments?.systemPrompt,
+						systemPromptId: req.params.arguments?.systemPromptId,
 					});
 					return {
 						isError: false,
@@ -577,7 +577,7 @@ describe('🔧 ASBR AI MCP Integration Tests', () => {
 					name: 'ai_rag_query',
 					arguments: {
 						query: 'What is machine learning?',
-						systemPrompt: 'You are a helpful AI assistant.',
+						systemPromptId: 'sys.a2a.rag-query',
 					},
 				},
 			};

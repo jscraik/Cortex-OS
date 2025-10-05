@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "composite": false,
     "target": "ES2022",
@@ -12,7 +13,6 @@
     "esModuleInterop": true,
     "allowJs": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -24,9 +24,8 @@
     "declarationMap": true,
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "downlevelIteration": true,
-    "ignoreDeprecations": "5.0"
+  "skipLibCheck": true,
+  "downlevelIteration": true
   },
   "include": [
     "src/**/*"

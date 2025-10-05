@@ -2,12 +2,13 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "composite": true,
+    "rootDir": "../",
     "outDir": "../dist/tests",
     "tsBuildInfoFile": "../dist/tests/.tsbuildinfo",
     "allowJs": true,
     "checkJs": false,
     "moduleResolution": "NodeNext",
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
     "module": "NodeNext"
   },
   "include": [
@@ -20,6 +21,8 @@
     "../node_modules",
     "../dist",
     "../build",
-    "../coverage"
+    "../coverage",
+    "../**/*.mjs",
+    "../**/*.js"
   ]
 }

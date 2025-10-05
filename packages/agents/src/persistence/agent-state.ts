@@ -44,6 +44,7 @@ export const AgentConfigSchema = z.object({
 	presencePenalty: z.number().min(-2).max(2).optional(),
 	stop: z.array(z.string()).optional(),
 	tools: z.array(z.string()).optional(),
+	systemPromptId: z.string().optional(),
 	systemPrompt: z.string().optional(),
 });
 

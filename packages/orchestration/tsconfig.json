@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "include": [
     "src/**/*.ts",
     "src/types/**/*.d.ts"
@@ -21,13 +21,39 @@
     "composite": true,
     "skipLibCheck": true,
     "noEmitOnError": false,
-    "moduleResolution": "NodeNext",
-    "ignoreDeprecations": "5.0",
-    "module": "NodeNext"
+  "moduleResolution": "NodeNext",
+  "module": "NodeNext"
   },
   "references": [
     {
       "path": "../../packages/hooks"
+    },
+    {
+      "path": "../../packages/prompts"
+    },
+    {
+      "path": "../../packages/commands"
+    },
+    {
+      "path": "../../packages/kernel"
+    },
+    {
+      "path": "../../packages/cortex-sec"
+    },
+    {
+      "path": "../../packages/observability"
+    },
+    {
+      "path": "../../packages/proof-artifacts"
+    },
+    {
+      "path": "../../packages/a2a/a2a-contracts"
+    },
+    {
+      "path": "../../libs/typescript/agent-contracts"
+    },
+    {
+      "path": "../../libs/typescript/utils"
     }
   ]
 }

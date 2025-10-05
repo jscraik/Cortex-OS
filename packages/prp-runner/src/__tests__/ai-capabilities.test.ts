@@ -58,10 +58,9 @@ describe('🧠 AI Core Capabilities Integration Tests', () => {
 
 		it('should generate text with system prompt', async () => {
 			const prompt = 'Count to 3';
-			const systemPrompt = 'You are a helpful assistant that provides concise answers.';
 
 			const result = await aiCore.generate(prompt, {
-				systemPrompt,
+				systemPromptId: 'sys.a2a.generate-text',
 				maxTokens: 50,
 				temperature: 0.1,
 			});
@@ -167,7 +166,7 @@ describe('🧠 AI Core Capabilities Integration Tests', () => {
 
 			const result = await aiCore.ragQuery({
 				query,
-				systemPrompt: 'Answer based on the provided context.',
+				systemPromptId: 'sys.a2a.rag-query',
 			});
 
 			expect(result).toBeDefined();

@@ -12,6 +12,7 @@ export interface AgentConfig {
 	tools?: ToolConfig[];
 	memoryConfig?: MemoryConfig;
 	toolConfig?: ToolConfig;
+	systemPromptId?: string;
 	systemPrompt?: string;
 	mcpEndpoint?: string;
 	streamingMode?: 'updates' | 'values';

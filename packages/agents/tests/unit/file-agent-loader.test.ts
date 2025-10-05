@@ -44,13 +44,13 @@ describe('file-based agent template loader', () => {
 		expect(debuggerTemplate?.scope).toBe('project');
 		expect(debuggerTemplate?.config.description).toBe('Project scoped debugger.');
 		expect(debuggerTemplate?.config.tools).toEqual(['git.diff']);
-		expect(debuggerTemplate?.config.systemPrompt).toBe('Investigate regression traces.');
+		expect(debuggerTemplate?.config.systemPromptId).toBe('sys.agents.project.debugger');
 		expect(debuggerTemplate?.prompt).toBe('Investigate regression traces.');
 
 		const storyTemplate = templates.get('story-writer');
 		expect(storyTemplate?.scope).toBe('user');
 		expect(storyTemplate?.config.model).toBe('mlx-community/brainwav-creative');
-		expect(storyTemplate?.config.systemPrompt).toBe('Write imaginative narratives for families.');
+		expect(storyTemplate?.config.systemPromptId).toBe('sys.agents.user.story-writer');
 		expect(storyTemplate?.filePath).toMatch(/story-writer\.yaml$/);
 	});
 
@@ -62,7 +62,7 @@ describe('file-based agent template loader', () => {
 
 		const analystTemplate = templates.get('analyst');
 		expect(analystTemplate?.config.description).toBe('Project analyst with markdown source.');
-		expect(analystTemplate?.config.systemPrompt).toBe('Summarise incident response findings.');
+		expect(analystTemplate?.config.systemPromptId).toBe('sys.agents.project.analyst');
 		expect(analystTemplate?.prompt).toBe('Summarise incident response findings.');
 	});
 

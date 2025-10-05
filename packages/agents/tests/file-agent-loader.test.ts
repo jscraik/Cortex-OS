@@ -92,6 +92,7 @@ describe('file agent loader', () => {
 		const planner = templates.get('planner') as AgentTemplate;
 		expect(planner.scope).toBe('project');
 		expect(planner.config.timeout).toBe(120000);
+		expect(planner.config.systemPromptId).toBe('sys.agents.project.planner');
 		expect(planner.metadata.format).toBe('json');
 	});
 });

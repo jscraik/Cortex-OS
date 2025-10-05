@@ -105,6 +105,7 @@ export interface AgentConfig {
 	streamingMode?: 'updates' | 'values';
 	toolConfig?: ToolConfig;
 	memoryConfig?: MemoryConfig;
+	systemPromptId?: string;
 	systemPrompt?: string;
 	mcpEndpoint?: string;
 	// Add tools property that was missing
@@ -119,7 +120,8 @@ export interface SubagentConfig {
 	description: string;
 	maxConcurrency: number;
 	timeout: number;
-	systemPrompt: string;
+	systemPromptId: string;
+	systemPrompt?: string;
 	scope: 'user' | 'project';
 	model?: string;
 	tools?: string[];

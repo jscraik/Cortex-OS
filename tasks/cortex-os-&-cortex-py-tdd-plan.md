@@ -29,7 +29,7 @@ This plan structures the upgrade and refactor of `apps/cortex-os` (Node/TypeScri
 ### TypeScript/JavaScript Standards
 
 - ✅ **Functional-first**: Pure, composable functions preferred over classes
-- ✅ **Function Size**: All functions ≥40 lines maximum
+- ✅ **Function Size**: All functions ≤40 lines maximum
 - ✅ **Exports**: Named exports only, no `export default`
 - ✅ **Types**: Explicit type annotations at all public API boundaries
 - ✅ **Async**: async/await pattern, avoid .then() chains
@@ -653,7 +653,7 @@ describe('Tool Path Resolution', () => {
 
 - Functional-first: Enhanced handlers using functional composition
 - TypeScript: Explicit type interfaces for A2A events and circuit breaker states
-- Functions ≥40 lines: Break down complex handlers into pure utility functions
+- Functions ≤40 lines: Break down complex handlers into pure utility functions
 - Error handling: Guard clauses for token budget and circuit breaker checks
 - brAInwav branding: All error messages, events, and health checks must include brAInwav
 - Constants: UPPER_SNAKE_CASE for circuit breaker thresholds and token limits
@@ -697,7 +697,7 @@ describe('MCP Tool Registration', () => {
 
 **Evidence**:
 
-- ✅ **CODESTYLE.md Compliance**: Enhanced handlers use functional composition, ≥40 line functions
+- ✅ **CODESTYLE.md Compliance**: Enhanced handlers use functional composition, ≤40 line functions
 - ✅ **brAInwav Branding**: All events, errors, and health checks include "brAInwav" prefix
 - ✅ **TypeScript Standards**: Named exports, explicit type interfaces for A2A events
 - ✅ **A2A Event Emission**: CloudEvents 1.0 compliant with brAInwav session IDs
@@ -729,7 +729,7 @@ describe('MCP Tool Registration', () => {
 **CODESTYLE.md Requirements**:
 
 - Python: snake_case identifiers, type hints required on all public functions
-- Functions ≥40 lines, absolute imports only
+- Functions ≤40 lines, absolute imports only
 - Error handling: Guard clauses, no deep nesting
 - brAInwav branding in all API responses and error messages
 - MLX integrations must be real, no mocks in production code
@@ -781,7 +781,7 @@ async def test_embedding_timeout():
 
 - Functional-first: Pure scoring functions, composable ranking algorithms
 - TypeScript: Explicit type annotations for search interfaces and result types
-- Functions ≥40 lines, prefer functional composition over complex classes
+- Functions ≤40 lines, prefer functional composition over complex classes
 - Constants: UPPER_SNAKE_CASE for scoring weights and thresholds
 - brAInwav branding in search metadata and performance logging
 
@@ -922,7 +922,7 @@ it('enriches GraphRAG context with KG nodes when enabled', async () => {
 
 - Functional-first: Pure functions for plan generation and reasoning chains
 - TypeScript: Explicit interfaces for Plan, ReasoningTrace, and TaskStep types
-- Functions ≥40 lines, compose complex planning from smaller utilities
+- Functions ≤40 lines, compose complex planning from smaller utilities
 - Error handling: Guard clauses for invalid goals and context validation
 - brAInwav branding in planning metadata and reasoning trace logs
 
@@ -977,7 +977,7 @@ describe('Agent Planning Module', () => {
 
 - Functional composition: Pure reflection functions, immutable state updates
 - Python: snake_case naming, type hints, absolute imports
-- Functions ≥40 lines, break down reflection logic into composable parts
+- Functions ≤40 lines, break down reflection logic into composable parts
 - Error handling: Guard clauses for reflection validation
 - brAInwav branding in reflection feedback and improvement tracking
 
@@ -1080,7 +1080,7 @@ it('emits attention_taps.json when KV‑tap enabled (AT-ATTN-05)', async () => {
 
 - Functional health check functions, avoid stateful classes
 - TypeScript: Explicit types for health status interfaces and dependency states
-- Functions ≥40 lines, compose health checks from individual service validators
+- Functions ≤40 lines, compose health checks from individual service validators
 - Error handling: Guard clauses for dependency availability checks
 - brAInwav branding in health check responses and dependency status messages
 
@@ -1134,7 +1134,7 @@ describe('Health Endpoints', () => {
 
 - Functional shutdown handlers, avoid complex class hierarchies
 - TypeScript: Explicit types for shutdown lifecycle and connection states
-- Functions ≥40 lines, compose shutdown sequence from atomic operations
+- Functions ≤40 lines, compose shutdown sequence from atomic operations
 - Error handling: Guard clauses for graceful timeout and connection draining
 - brAInwav branding in shutdown logs and operational messages per memory requirements
 
@@ -1190,7 +1190,7 @@ describe('Graceful Shutdown', () => {
 
 - Functional instrumentation utilities, avoid stateful metric collectors
 - TypeScript: Explicit types for telemetry interfaces and trace contexts
-- Functions ≥40 lines, compose observability from pure logging/metrics functions
+- Functions ≤40 lines, compose observability from pure logging/metrics functions
 - Constants: UPPER_SNAKE_CASE for metric names and trace attribute keys
 - brAInwav branding in all logs, metric labels, and trace metadata per memory requirements
 
@@ -1306,7 +1306,7 @@ it('purges data and respects legal hold (AT-PURGE-10)', async () => {
 
 - Functional validation: Pure validator functions, immutable validation results
 - TypeScript: Explicit Zod schemas, named exports for all validation utilities
-- Functions ≥40 lines, compose complex validation from atomic checks
+- Functions ≤40 lines, compose complex validation from atomic checks
 - Error handling: Guard clauses for input sanitization and rejection
 - brAInwav branding in security violation logs and validation error messages
 
@@ -1460,7 +1460,7 @@ describe('SBOM Generation', () => {
 
 - Functional performance measurement utilities, pure metric calculation functions
 - TypeScript: Explicit types for SLO thresholds and performance baseline interfaces
-- Functions ≥40 lines, compose load testing from modular scenario builders
+- Functions ≤40 lines, compose load testing from modular scenario builders
 - Constants: UPPER_SNAKE_CASE for performance thresholds and SLO budgets
 - brAInwav branding in performance dashboards and SLO alerting messages
 
@@ -1519,7 +1519,7 @@ export default function() {
 
 - Functional energy measurement utilities, pure calculation functions for power metrics
 - Python: snake_case for energy monitoring functions, type hints required
-- Functions ≥40 lines, compose energy optimization from atomic power management operations
+- Functions ≤40 lines, compose energy optimization from atomic power management operations
 - Constants: UPPER_SNAKE_CASE for power thresholds and efficiency targets
 - brAInwav branding in energy metrics and sustainability reports
 
@@ -1594,7 +1594,7 @@ def test_low_power_mode_reduces_consumption():
 
 **CODESTYLE.md Requirements**:
 
-- TDD with red-green-refactor cycle, functions ≥40 lines for testability
+- TDD with red-green-refactor cycle, functions ≤40 lines for testability
 - TypeScript: Explicit test interfaces, named exports for test utilities
 - Test organization: Co-located in **tests** directories per CODESTYLE.md structure
 - Coverage ratcheting: Automated enforcement in CI with brAInwav messaging
@@ -1641,7 +1641,7 @@ describe('Coverage Ratcheting', () => {
 **CODESTYLE.md Requirements**:
 
 - TDD enforcement: Red-green-refactor with mutation testing validation
-- Functions ≥40 lines for effective mutation coverage and test precision
+- Functions ≤40 lines for effective mutation coverage and test precision
 - Test structure: Organized by [feature-area]/[specific-concern].spec.ts pattern
 - Quality gates: Automated mutation score enforcement with brAInwav branding
 - Toolchain: Integrated with mise version management and CI workflows
@@ -1693,7 +1693,7 @@ it('should validate input', () => {
 
 - Functional test utilities: Pure functions for deterministic test scenarios
 - Replace sleep() with clock injection per CODESTYLE.md async patterns
-- Functions ≥40 lines, compose flake detection from atomic test analysis operations
+- Functions ≤40 lines, compose flake detection from atomic test analysis operations
 - Error handling: Guard clauses for test environment validation
 - brAInwav branding in flake reports and test reliability dashboards
 

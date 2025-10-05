@@ -2,6 +2,8 @@
  * Local insight helpers to avoid cross-domain imports.
  */
 
+import { getPrompt, validatePromptUsage } from '@cortex-os/prompts';
+
 interface EvidenceItem {
 	claim: string;
 	confidence: number;
@@ -35,9 +37,17 @@ export async function invokeRagAnalysis(
 	prompt?: string;
 	reasoning?: string;
 }> {
+	const promptRecord = getPrompt('sys.prp.insights');
+	if (!promptRecord) {
+		throw new Error('brAInwav insights: Prompt sys.prp.insights is not registered.');
+	}
+
+	validatePromptUsage('', 'sys.prp.insights');
+
 	return aiCapabilities.ragQuery({
 		query: `Analyze this evidence collection for task: ${taskContext}`,
-		systemPrompt: `You are an evidence analyst. Analyze the provided evidence collection and provide:\n  1. A concise summary of key findings\n  2. Risk assessment with specific risks and mitigations\n  3. Actionable recommendations\n  4. Confidence and reliability metrics\n\n    Evidence Collection:\n    ${evidenceSummary}`,
+		systemPromptId: 'sys.prp.insights',
+		systemPromptVariables: { evidenceSummary },
 	});
 }
 

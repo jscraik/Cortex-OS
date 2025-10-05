@@ -280,7 +280,7 @@ function createFetchTool(
 					status: response.status,
 					ok: response.ok,
 					body: bodyText,
-					headers: headersToObject(response.headers.entries()),
+					headers: headersToObject(response.headers),
 					elapsedMs: Date.now() - started,
 				};
 			} catch (error) {
@@ -299,8 +299,12 @@ function serializeRequestBody(body: KernelFetchInput['body']): string | undefine
 	return typeof body === 'string' ? body : JSON.stringify(body);
 }
 
-function headersToObject(entries: Iterable<[string, string]>): Record<string, string> {
-	return Object.fromEntries(entries);
+function headersToObject(headers: Headers): Record<string, string> {
+	const result: Record<string, string> = {};
+	headers.forEach((value, key) => {
+		result[key] = value;
+	});
+	return result;
 }
 
 function extractErrorMessage(error: unknown): string {

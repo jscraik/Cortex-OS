@@ -12,6 +12,7 @@ import * as path from 'node:path';
 import { type FSWatcher, watch } from 'chokidar';
 import * as yaml from 'yaml';
 import type { SubagentConfig } from '../lib/types.js';
+import { ensureAgentPromptRegistered } from '../prompt-registry.js';
 import type { BaseSubagent } from './BaseSubagent.js';
 
 export type SubagentFactory = (config: SubagentConfig) => BaseSubagent | Promise<BaseSubagent>;
@@ -355,7 +356,11 @@ export class SubagentManager extends EventEmitter {
 		const timeout = this.toPositiveInteger(raw.timeout ?? raw.timeout_ms, 60_000);
 		const tools = this.extractStringArray(raw.tools ?? raw.allowed_tools ?? raw['allowed-tools']);
 		const modelConfig = (raw.model_config as Record<string, unknown> | undefined) ?? {};
-		const prompt = this.pickString(raw.systemPrompt, body) ?? '';
+		const prompt = this.pickString(raw.systemPrompt, body);
+		if (!prompt) {
+			throw new Error(`Subagent template ${filePath} is missing a system prompt`);
+		}
+		const promptId = ensureAgentPromptRegistered(name, scope, prompt);
 
 		const config: SubagentConfig = {
 			name,
@@ -364,6 +369,7 @@ export class SubagentManager extends EventEmitter {
 			path: path.resolve(filePath),
 			maxConcurrency,
 			timeout,
+			systemPromptId: promptId,
 			systemPrompt: prompt,
 			scope,
 			model: this.pickString(raw.model),

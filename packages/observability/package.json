@@ -46,7 +46,7 @@
     "@opentelemetry/sdk-node": "^0.205.0",
     "@opentelemetry/sdk-trace-base": "^2.1.0",
     "@opentelemetry/semantic-conventions": "^1.37.0",
-    "pino": "^9.5.0",
+    "pino": "^10.0.0",
     "ulid": "^2.3.0",
     "zod": "^3.25.76",
     "@cortex-os/a2a-contracts": "workspace:*",

@@ -15,7 +15,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { safeErrorMessage, safeErrorStack } from '@cortex-os/utils';
 import winston from 'winston';
-import { spawnPythonProcess } from '../../../../libs/python/exec';
+import { spawnPythonProcess } from '../../../../libs/python/exec.js';
 
 export interface PythonAgentConfig {
 	pythonPath?: string;
@@ -276,20 +276,21 @@ export class PythonAgentBridge extends EventEmitter {
 			if (existingPyPath) pythonPathParts.push(existingPyPath);
 			const modulePath = pythonPathParts.join(path.delimiter);
 
-			this.pythonProcess = spawnPythonProcess(pythonArgs, {
+			const pythonProcess = spawnPythonProcess(pythonArgs, {
 				python: this.config.pythonPath,
 				setModulePath: modulePath,
 				envOverrides: {},
 			});
+			this.pythonProcess = pythonProcess;
 
 			// Handle process startup
-			this.pythonProcess.on('spawn', () => {
+			pythonProcess.on('spawn', () => {
 				this.logger.info('Python agent process spawned successfully');
 				this.setupProcessHandlers();
 				resolve();
 			});
 
-			this.pythonProcess.on('error', (error) => {
+			pythonProcess.on('error', (error) => {
 				this.logger.error('Python agent process error', {
 					brand: 'brAInwav',
 					message: safeErrorMessage(error),
@@ -299,7 +300,7 @@ export class PythonAgentBridge extends EventEmitter {
 			});
 
 			// Handle process exit during startup
-			this.pythonProcess.on('exit', (code, signal) => {
+			pythonProcess.on('exit', (code, signal) => {
 				if (!this.isInitialized) {
 					reject(
 						new Error(`Python agent process exited during startup: code=${code}, signal=${signal}`),

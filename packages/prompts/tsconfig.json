@@ -3,10 +3,13 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
+    "composite": true,
     "declaration": true,
+    "declarationMap": true,
     "emitDeclarationOnly": false,
+    "noEmit": false,
     "moduleResolution": "NodeNext",
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
     "module": "NodeNext"
   },
   "include": [

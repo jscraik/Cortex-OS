@@ -5,7 +5,7 @@ import {
 	type SecurityPolicyUpdatedEvent,
 	type SecurityScanStartedEvent,
 	type VulnerabilityFoundEvent,
-} from './cortex-sec-events.ts';
+} from './cortex-sec-events.js';
 
 export interface SecurityEventPublisher {
 	publishScanStarted: (event: SecurityScanStartedEvent) => Promise<void>;
