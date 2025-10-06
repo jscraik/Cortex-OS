@@ -32,7 +32,7 @@ jobs:
 
       - name: Run snyk (optional)
         if: ${{ secrets.SNYK_TOKEN != '' }}
-        uses: snyk/actions/node@e2221410bff24446ba09102212d8bc75a567237d
+        uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04
         with:
           args: test
         env:
