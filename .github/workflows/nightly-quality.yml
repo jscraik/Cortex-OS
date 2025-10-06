@@ -86,7 +86,7 @@ jobs:
           sarif_file: gitleaks.sarif
 
       - name: Install Syft
-        uses: anchore/sbom-action/download-syft@v0.17.5
+        uses: anchore/sbom-action/download-syft@v0.20.6
 
       - name: Generate SBOM (CycloneDX JSON)
         run: |
