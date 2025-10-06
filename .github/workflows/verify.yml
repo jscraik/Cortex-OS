@@ -231,7 +231,7 @@ jobs:
           subject-path: dist/**
       - name: Generate SBOM attestation
         if: hashFiles('compliance/sbom/**') != ''
-        uses: actions/attest-sbom@v1
+        uses: actions/attest-sbom@v3
         with:
           subject-path: dist/**
           sbom-path: compliance/sbom/**/*.json
