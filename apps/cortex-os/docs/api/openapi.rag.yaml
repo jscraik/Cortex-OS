@@ -1,0 +1,168 @@
+openapi: 3.1.0
+info:
+  title: brAInwav RAG HTTP API
+  version: 0.1.0
+  description: |
+    Fastify surfaces for brAInwav hybrid search and hierarchical ingestion.
+servers:
+  - url: http://localhost:4100
+    description: Local development server
+paths:
+  /rag/ingest:
+    post:
+      summary: Ingest a document with hierarchical chunking
+      tags:
+        - ingest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documentId, source, text]
+              properties:
+                documentId:
+                  type: string
+                source:
+                  type: string
+                text:
+                  type: string
+                metadata:
+                  type: object
+                  additionalProperties: true
+                hierarchical:
+                  type: boolean
+                  default: true
+                multimodal:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum: [image, audio, video, table, text]
+                      url:
+                        type: string
+                        format: uri
+                      content:
+                        type: string
+                      caption:
+                        type: string
+      responses:
+        '202':
+          description: Request accepted for ingestion
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, documentId, chunks, brAInwav]
+                properties:
+                  status:
+                    type: string
+                    example: accepted
+                  documentId:
+                    type: string
+                  chunks:
+                    type: integer
+                  metadata:
+                    type: object
+                    additionalProperties: true
+                  brAInwav:
+                    type: object
+                    properties:
+                      service:
+                        type: string
+                      ingestedAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: Validation error
+  /rag/hier-query:
+    post:
+      summary: Query hybrid + graph retrieval
+      tags:
+        - query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                top_k:
+                  type: integer
+                  minimum: 1
+                  maximum: 50
+                  default: 24
+                graph_walk:
+                  type: boolean
+                  default: false
+                multimodal:
+                  type: boolean
+                  default: false
+                self_rag:
+                  type: boolean
+                  default: false
+                namespace:
+                  type: string
+                filters:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Hybrid search result with citations
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [answer, citations, graph, metadata, brAInwav]
+                properties:
+                  answer:
+                    type: string
+                  citations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        path:
+                          type: string
+                        relevanceScore:
+                          type: number
+                        brainwavIndexed:
+                          type: boolean
+                        lines:
+                          type: string
+                  graph:
+                    type: object
+                    properties:
+                      focusNodes:
+                        type: integer
+                      expandedNodes:
+                        type: integer
+                      totalChunks:
+                        type: integer
+                      edgesTraversed:
+                        type: integer
+                  metadata:
+                    type: object
+                    additionalProperties: true
+                  brAInwav:
+                    type: object
+                    properties:
+                      service:
+                        type: string
+                      multimodal:
+                        type: boolean
+                      selfRag:
+                        type: boolean
+                      timestamp:
+                        type: string
+                        format: date-time
+        '400':
+          description: Validation error
+      security: []
+components:
+  securitySchemes: {}

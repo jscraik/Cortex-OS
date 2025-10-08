@@ -264,96 +264,112 @@ export class GitHubEventRouter {
 	private evaluateRule(envelope: A2AEventEnvelope, rule: CompiledRule): string[] {
 		const matched: string[] = [];
 
-		// Check event type
-		if (rule.compiledConditions.eventTypeRegex) {
-			if (rule.compiledConditions.eventTypeRegex.test(envelope.event.event_type)) {
-				matched.push('event_type');
-			}
+		// Check all conditions
+		if (this.matchesEventType(envelope, rule.compiledConditions.eventTypeRegex)) {
+			matched.push('event_type');
 		}
 
-		// Check action
-		if (rule.compiledConditions.actionRegex && 'action' in envelope.event) {
-			const eventWithAction = envelope.event as typeof envelope.event & {
-				action: string;
-			};
-			if (rule.compiledConditions.actionRegex.test(eventWithAction.action)) {
-				matched.push('action');
-			}
+		if (this.matchesAction(envelope, rule.compiledConditions.actionRegex)) {
+			matched.push('action');
 		}
 
-		// Check repository patterns
-		if (rule.compiledConditions.repositoryPatterns) {
-			const event = envelope.event;
-			if ('repository' in event && event.repository) {
-				const repoName = event.repository.full_name;
-				for (const pattern of rule.compiledConditions.repositoryPatterns) {
-					if (pattern.test(repoName)) {
-						matched.push('repository_pattern');
-						break;
-					}
-				}
-			}
+		if (this.matchesRepositoryPatterns(envelope, rule.compiledConditions.repositoryPatterns)) {
+			matched.push('repository_pattern');
 		}
 
-		// Check actor patterns
-		if (rule.compiledConditions.actorPatterns) {
-			const event = envelope.event;
-			if ('actor' in event && event.actor) {
-				const actorLogin = event.actor.login;
-				for (const pattern of rule.compiledConditions.actorPatterns) {
-					if (pattern.test(actorLogin)) {
-						matched.push('actor_pattern');
-						break;
-					}
-				}
-			}
+		if (this.matchesActorPatterns(envelope, rule.compiledConditions.actorPatterns)) {
+			matched.push('actor_pattern');
 		}
 
-		// Check labels
-		if (rule.compiledConditions.labels) {
-			let allLabelsMatch = true;
-			for (const [key, value] of Object.entries(rule.compiledConditions.labels)) {
-				if (envelope.metadata.labels[key] !== value) {
-					allLabelsMatch = false;
-					break;
-				}
-			}
-			if (allLabelsMatch) {
-				matched.push('labels');
-			}
+		if (this.matchesLabels(envelope, rule.compiledConditions.labels)) {
+			matched.push('labels');
 		}
 
-		// Check tags
-		if (rule.compiledConditions.tags) {
-			const hasAllTags = rule.compiledConditions.tags.every((tag) =>
-				envelope.metadata.tags.includes(tag),
-			);
-			if (hasAllTags) {
-				matched.push('tags');
-			}
+		if (this.matchesTags(envelope, rule.compiledConditions.tags)) {
+			matched.push('tags');
 		}
 
-		// Check priority levels
-		if (rule.compiledConditions.priorityLevels) {
-			if (rule.compiledConditions.priorityLevels.includes(envelope.priority)) {
-				matched.push('priority');
-			}
+		if (this.matchesPriorityLevels(envelope, rule.compiledConditions.priorityLevels)) {
+			matched.push('priority');
 		}
 
-		// Check time window
-		if (rule.compiledConditions.timeWindow) {
-			if (this.isInTimeWindow(envelope.created_at, rule.compiledConditions.timeWindow)) {
-				matched.push('time_window');
-			}
+		if (this.matchesTimeWindow(envelope, rule.compiledConditions.timeWindow)) {
+			matched.push('time_window');
 		}
 
 		// Rule matches if it has no conditions OR if any conditions matched
 		const hasConditions = Object.values(rule.conditions).some(
-			(condition) =>
-				condition !== undefined && (Array.isArray(condition) ? condition.length > 0 : true),
+			(condition) => condition != null && (Array.isArray(condition) ? condition.length > 0 : true),
 		);
 
 		return !hasConditions || matched.length > 0 ? matched : [];
+	}
+
+	private matchesEventType(envelope: A2AEventEnvelope, eventTypeRegex: RegExp | null): boolean {
+		return eventTypeRegex ? eventTypeRegex.test(envelope.event.event_type) : false;
+	}
+
+	private matchesAction(envelope: A2AEventEnvelope, actionRegex: RegExp | null): boolean {
+		if (!actionRegex || !('action' in envelope.event)) return false;
+
+		const eventWithAction = envelope.event as typeof envelope.event & { action: string };
+		return actionRegex.test(eventWithAction.action);
+	}
+
+	private matchesRepositoryPatterns(
+		envelope: A2AEventEnvelope,
+		repositoryPatterns?: RegExp[],
+	): boolean {
+		if (!repositoryPatterns) return false;
+
+		const event = envelope.event;
+		if ('repository' in event && event.repository) {
+			const repoName = event.repository.full_name;
+			return repositoryPatterns.some((pattern) => pattern.test(repoName));
+		}
+		return false;
+	}
+
+	private matchesActorPatterns(envelope: A2AEventEnvelope, actorPatterns?: RegExp[]): boolean {
+		if (!actorPatterns) return false;
+
+		const event = envelope.event;
+		if ('actor' in event && event.actor) {
+			const actorLogin = event.actor.login;
+			return actorPatterns.some((pattern) => pattern.test(actorLogin));
+		}
+		return false;
+	}
+
+	private matchesLabels(envelope: A2AEventEnvelope, labels?: Record<string, string>): boolean {
+		if (!labels) return false;
+
+		for (const [key, value] of Object.entries(labels)) {
+			if (envelope.metadata.labels[key] !== value) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private matchesTags(envelope: A2AEventEnvelope, tags?: string[]): boolean {
+		if (!tags) return false;
+
+		return tags.every((tag) => envelope.metadata.tags.includes(tag));
+	}
+
+	private matchesPriorityLevels(
+		envelope: A2AEventEnvelope,
+		priorityLevels?: Array<'low' | 'normal' | 'high' | 'critical'>,
+	): boolean {
+		return priorityLevels ? priorityLevels.includes(envelope.priority) : false;
+	}
+
+	private matchesTimeWindow(
+		envelope: A2AEventEnvelope,
+		timeWindow?: NonNullable<RoutingRule['conditions']['time_window']>,
+	): boolean {
+		return timeWindow ? this.isInTimeWindow(envelope.created_at, timeWindow) : false;
 	}
 
 	private isInTimeWindow(
@@ -545,7 +561,7 @@ export const DEFAULT_GITHUB_ROUTING_CONFIG: RoutingConfiguration = {
 		monitoring: {
 			type: 'http',
 			connection: {
-				base_url: 'http://monitoring-service:8080',
+				base_url: 'https://monitoring-service:8080',
 				api_key: '${MONITORING_API_KEY}',
 			},
 			health_check: {

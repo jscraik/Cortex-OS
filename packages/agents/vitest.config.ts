@@ -10,6 +10,7 @@ export default defineConfig({
 			'@cortex-os/model-gateway': resolve(__dirname, 'tests/stubs/model-gateway.ts'),
 			'@cortex-os/orchestration': resolve(__dirname, 'tests/stubs/orchestration.ts'),
 			'@cortex-os/hooks': resolve(__dirname, 'tests/stubs/hooks.ts'),
+			'@cortex-os/prompts': resolve(__dirname, '../prompts/src'),
 		},
 	},
 	test: {

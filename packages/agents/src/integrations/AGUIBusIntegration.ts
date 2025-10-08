@@ -178,7 +178,7 @@ export class AGUIBusIntegration extends EventEmitter {
 		// Publish component rendered event
 		await this.publishComponentRendered({
 			componentId,
-			type: componentData.type as any,
+			type: componentData.type as 'button' | 'form' | 'modal' | 'chart' | 'table' | 'custom',
 			name: `${componentData.type}-${componentId}`,
 			properties: componentData.properties,
 			parentId: componentData.parentId,
@@ -227,7 +227,14 @@ export class AGUIBusIntegration extends EventEmitter {
 		await this.publishUserInteraction({
 			interactionId,
 			componentId: interactionData.componentId,
-			action: interactionData.action as any,
+			action: interactionData.action as
+				| 'click'
+				| 'hover'
+				| 'focus'
+				| 'input'
+				| 'submit'
+				| 'drag'
+				| 'scroll',
 			value: interactionData.value,
 			coordinates: interactionData.coordinates,
 			interactedAt: new Date().toISOString(),

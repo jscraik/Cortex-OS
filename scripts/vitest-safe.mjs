@@ -10,27 +10,11 @@
  */
 
 import { execSync, spawn } from 'node:child_process';
-import fs from 'node:fs';
 import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadDotenv } from './utils/dotenv-loader.mjs';
 
-// Load .env.local early so MLX/HF paths are available to tests
-try {
-	const dotenv = await import('dotenv');
-	const cwd = process.cwd();
-	const localPath = join(cwd, '.env.local');
-	const envFile = fs.existsSync(localPath) ? localPath : join(cwd, '.env');
-	dotenv.config({ path: envFile });
-	// eslint-disable-next-line no-console
-	if (process.env.VITEST_SAFE_DEBUG_ENV === '1')
-		console.error('[vitest-safe] env loaded:', envFile);
-} catch {
-	// optional
-}
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const _rootDir = join(__dirname, '..');
+await loadDotenv({ debug: process.env.VITEST_SAFE_DEBUG_ENV === '1' });
 
 // CRITICAL MEMORY CONSTRAINTS - Never change these without system admin approval
 const MEMORY_SAFE_NODE_OPTIONS = [
@@ -263,11 +247,11 @@ function main() {
                 vitestCommand = process.execPath;
                 spawnArgs = [vitestEntrypoint, ...enforcedArgs];
         } catch {
-                // Fall back to expecting vitest on PATH when the module resolution fails
+				// Fall back to expecting vitest on PATH when the module resolution fails
         }
 
-        // Spawn vitest as a new process group; this allows killing the entire group on cleanup
-        const child = spawn(vitestCommand, spawnArgs, {
+			// Spawn vitest as a new process group; this allows killing the entire group on cleanup
+			const child = spawn(vitestCommand, spawnArgs, {
 		stdio: 'inherit',
 		env: {
 			...process.env,

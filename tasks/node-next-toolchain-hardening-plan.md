@@ -65,7 +65,7 @@ downstream regressions in agent and MCP tooling.
   - Add or update `"module": "NodeNext"` in the inheriting config. Prefer
     package-level or project-level edits over a repo-wide root change unless a
     domain-wide policy is required.
-  - Replace `"ignoreDeprecations": "6.0"` with `"5.0"`, or remove the
+  - Replace `"ignoreDeprecations": "5.0"` with `"5.0"`, or remove the
     setting when a package does not require it.
   - For layered `tsconfig`s (those that `extends` another file), prefer
     updating the highest-level `tsconfig.base.json` that expresses domain

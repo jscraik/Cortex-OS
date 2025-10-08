@@ -1,7 +1,7 @@
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import {
-	CapabilityDescriptor,
-	CapabilityTokenClaims,
+	type CapabilityDescriptor,
+	type CapabilityTokenClaims,
 	CapabilityTokenClaimsSchema,
 	CapabilityTokenError,
 } from '../types.js';
@@ -110,7 +110,23 @@ export class CapabilityTokenValidator {
 		private readonly clock: () => number = () => Date.now(),
 	) {}
 
+	private validateHeader(headerSegment: string): void {
+		try {
+			const headerBuffer = base64UrlDecode(headerSegment);
+			const header = JSON.parse(headerBuffer.toString('utf8')) as Record<string, unknown>;
+			if (header?.alg !== 'HS256') {
+				throw new CapabilityTokenError('Unsupported capability token algorithm', {
+					alg: header?.alg,
+				});
+			}
+		} catch (error) {
+			if (error instanceof CapabilityTokenError) throw error;
+			throw new CapabilityTokenError('Invalid capability token header', { error });
+		}
+	}
+
 	verify(token: string, options: VerifyCapabilityOptions = {}): CapabilityDescriptor {
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		if (!token || typeof token !== 'string') {
 			throw new CapabilityTokenError('Capability token must be a non-empty string');
 		}
@@ -121,17 +137,7 @@ export class CapabilityTokenValidator {
 		}
 
 		const [headerSegment, payloadSegment, signatureSegment] = segments;
-		try {
-			// Validate header structure
-			const headerBuffer = base64UrlDecode(headerSegment);
-			const header = JSON.parse(headerBuffer.toString('utf8')) as Record<string, unknown>;
-			if (header?.alg !== 'HS256') {
-				throw new CapabilityTokenError('Unsupported capability token algorithm', { alg: header?.alg });
-			}
-		} catch (error) {
-			if (error instanceof CapabilityTokenError) throw error;
-			throw new CapabilityTokenError('Invalid capability token header', { error });
-		}
+		this.validateHeader(headerSegment);
 
 		// Verify signature
 		const signingInput = `${headerSegment}.${payloadSegment}`;
@@ -178,7 +184,10 @@ export class CapabilityTokenValidator {
 			});
 		}
 
-		if (options.requiredResourcePrefix && !claims.resourcePrefix.startsWith(options.requiredResourcePrefix)) {
+		if (
+			options.requiredResourcePrefix &&
+			!claims.resourcePrefix.startsWith(options.requiredResourcePrefix)
+		) {
 			throw new CapabilityTokenError('Capability token resource prefix mismatch', {
 				requiredResourcePrefix: options.requiredResourcePrefix,
 				claimResourcePrefix: claims.resourcePrefix,

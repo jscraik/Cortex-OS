@@ -21,6 +21,7 @@ export interface PlannerSessionState {
         steps: PlannerStepRecord[];
         facts: string[];
         lastUpdated: string;
+        reasoning?: PlannerReasoning;
 }
 
 export interface PlannerEvent {
@@ -124,6 +125,30 @@ export interface PlannerGoal {
         objective: string;
         requiredCapabilities: string[];
         input?: Record<string, unknown>;
+        strategy?: PlannerStrategy;
+}
+
+export type PlannerStrategy = 'chain-of-thought' | 'tree-of-thought';
+
+export interface PlannerThought {
+        id: string;
+        capability?: string;
+        text: string;
+        score?: number;
+}
+
+export interface PlannerAlternative {
+        path: string[];
+        score: number;
+        summary: string;
+}
+
+export interface PlannerReasoning {
+        strategy: PlannerStrategy;
+        thoughts: PlannerThought[];
+        decision: string;
+        alternatives?: PlannerAlternative[];
+        vendorWeighting?: Record<string, number>;
 }
 
 export interface PlannerStepRecord {
@@ -140,12 +165,36 @@ export interface PlannerPlan {
         goal: PlannerGoal;
         steps: PlannerStepRecord[];
         retrievedContext: readonly RagDocument[];
+        reasoning: PlannerReasoning;
 }
 
 export interface PlannerExecutionResult {
         goal: PlannerGoal;
         steps: PlannerStepRecord[];
         context: readonly RagDocument[];
+        reasoning: PlannerReasoning;
+}
+
+export interface ReflectionFeedback {
+        summary: string;
+        improvements: string[];
+        status: 'retry' | 'accepted';
+        createdAt: string;
+}
+
+export interface ReflectionContext {
+        goal: PlannerGoal;
+        plan: PlannerPlan;
+        lastResult: PlannerExecutionResult;
+}
+
+export interface ReflectionOutcome {
+        feedback: ReflectionFeedback;
+        nextGoal?: PlannerGoal;
+}
+
+export interface ReflectionModule {
+        reflect: (context: ReflectionContext) => Promise<ReflectionOutcome>;
 }
 
 export interface Planner {
@@ -165,8 +214,16 @@ export const PlannerGoalSchema = z
                 objective: z.string().min(1),
                 requiredCapabilities: z.array(z.string().min(1)).default([]),
                 input: z.record(z.any()).optional(),
+                strategy: z
+                        .enum(['chain-of-thought', 'tree-of-thought'] as const)
+                        .optional()
+                        .default('chain-of-thought'),
         })
-        .transform((goal) => ({ ...goal, requiredCapabilities: goal.requiredCapabilities ?? [] }));
+        .transform((goal) => ({
+                ...goal,
+                requiredCapabilities: goal.requiredCapabilities ?? [],
+                strategy: goal.strategy ?? 'chain-of-thought',
+        }));
 
 const handlerGuard = (value: unknown, label: string) => {
         if (typeof value !== 'function') {

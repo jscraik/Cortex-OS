@@ -6,15 +6,14 @@
 import { spawn } from 'node:child_process';
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import * as path from 'node:path';
+import { loadDotenv } from '@cortex-os/utils';
 import { Octokit } from '@octokit/rest';
 import { Webhooks } from '@octokit/webhooks';
-import dotenv from 'dotenv';
 import express, { type Application } from 'express';
 import * as fs from 'fs-extra';
 import { z } from 'zod';
 
-// Load environment variables from .env file
-dotenv.config();
+await loadDotenv();
 
 import { AutoFixEngine } from '../core/auto-fix-engine.js';
 import { CORTEX_STRUCTURE_RULES, StructureValidator } from '../core/structure-validator.js';

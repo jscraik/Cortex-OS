@@ -16,7 +16,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 import { z } from 'zod';
 
 // Qdrant types and interfaces
-interface SparseVector {
+export interface SparseVector {
 	indices: number[];
 	values: number[];
 }

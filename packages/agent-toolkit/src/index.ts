@@ -218,6 +218,7 @@ export {
 	type RunDiagnosticsOptions,
 	runDiagnostics,
 } from './diagnostics/diagnostics.js';
+export { AgentToolkitMcpRuntime } from './mcp/runtime.js';
 // A2A Events
 export {
 	type CodeModificationEvent,

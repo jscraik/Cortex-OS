@@ -2,6 +2,7 @@ import { createSessionContextManager } from '@cortex-os/agent-toolkit';
 import { createApprovalGate } from './approval-gate.js';
 import { createMemoryCoordinator } from './memory-adapter.js';
 import { createPlanner } from './planner.js';
+import { createReflectionModule } from './reflection.js';
 import { createToolRouter } from './tool-router.js';
 import { ModernAgentSystemConfigSchema, type ModernAgentSystem, type ModernAgentSystemConfig } from './types.js';
 import { createWorkerRegistry } from './worker-registry.js';

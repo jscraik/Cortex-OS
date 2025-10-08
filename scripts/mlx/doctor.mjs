@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { loadDotenv } from '../utils/dotenv-loader.mjs';
 
-// Load .env.local if present to pick up MLX_* and HF_* vars
-try {
-	const dotenv = await import('dotenv');
-	dotenv.config({ path: resolve(process.cwd(), '.env.local') });
-	console.log('✅ .env.local loaded successfully');
-} catch {
-	console.warn('⚠️  .env.local not found or failed to load');
+const envOutcome = await loadDotenv({ debug: Boolean(process.env.DEBUG || process.env.VERBOSE) });
+if (!envOutcome.skipped) {
+	console.log(`✅ brAInwav env loaded from ${envOutcome.path}`);
+} else if (envOutcome.reason === 'fifo') {
+	console.warn('⚠️  brAInwav env points to a FIFO. Run `op run --env-file=<file> -- <command>` first.');
+} else if (envOutcome.reason === 'dotenv-error') {
+	console.warn('⚠️  brAInwav env failed to load via dotenv. Check file permissions and syntax.');
+} else {
+	console.warn('⚠️  No brAInwav .env file detected. Proceeding without MLX-specific overrides.');
 }
 
 const envKeys = [

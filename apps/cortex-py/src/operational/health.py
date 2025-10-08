@@ -47,33 +47,22 @@ class HealthService:
         Comprehensive health check with all components.
         
         Returns:
-            Health response with status and checks
-        
-        Following CODESTYLE.md: Guard clauses
+            Health response with status and component detail
         """
-        # Run all component checks
-        checks = {
+        components = {
             "memory": check_memory_health(),
             "embeddings": check_embeddings_health(),
             "database": check_database_health(),
         }
 
-        # Determine overall status
-        overall_status = self._aggregate_status(checks)
+        overall_status = self._aggregate_status(components)
 
-        # Build response
-        health_response = {
+        return {
             "status": overall_status,
-            "version": self.version,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "checks": checks,
-            "brAInwav": {
-                "service": "cortex-py",
-                "company": "brAInwav",
-            },
+            "components": components,
+            "service": self._service_info(),
         }
-
-        return health_response
 
     def check_readiness(self) -> Dict[str, Any]:
         """
@@ -81,51 +70,45 @@ class HealthService:
         
         Returns:
             Readiness response
-        
-        Following CODESTYLE.md: Guard clauses
         """
-        # Guard: if explicitly set not ready
         if not self._ready:
             return {
                 "status": "unhealthy",
                 "ready": False,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "message": "brAInwav: Service not ready",
+                "components": {},
+                "service": self._service_info(),
             }
 
-        # Check critical dependencies
-        checks = {
+        components = {
             "memory": check_memory_health(),
             "embeddings": check_embeddings_health(),
         }
 
-        # Ready if all critical checks pass
         all_healthy = all(
-            check["status"] == "healthy" for check in checks.values()
+            component["status"] == "healthy" for component in components.values()
         )
 
         return {
             "status": "healthy" if all_healthy else "unhealthy",
             "ready": all_healthy,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "checks": checks,
+            "components": components,
+            "service": self._service_info(),
         }
 
     def check_liveness(self) -> Dict[str, Any]:
         """
         Simple liveness check.
         
-        If we can respond, we're alive. No complex checks.
-        
         Returns:
             Liveness response
-        
-        Following CODESTYLE.md: Simple and fast
         """
         return {
             "status": "healthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "brAInwav": True,
+            "service": self._service_info(),
         }
 
     def set_ready(self, ready: bool):
@@ -136,6 +119,14 @@ class HealthService:
             ready: True if service ready
         """
         self._ready = ready
+
+    def _service_info(self) -> Dict[str, str]:
+        """Return consistent service metadata."""
+        return {
+            "name": "brAInwav Cortex-Py Runtime",
+            "brand": "brAInwav",
+            "version": self.version,
+        }
 
     def _aggregate_status(
         self, checks: Dict[str, Dict[str, Any]]

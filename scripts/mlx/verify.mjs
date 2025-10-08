@@ -2,16 +2,9 @@
 import { spawnSync } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadDotenv } from '../utils/dotenv-loader.mjs';
 
-// Auto-load .env.local if present (for MLX_* envs like MLX_MODEL_PATH)
-try {
-	const dotenv = await import('dotenv');
-	dotenv.config({ path: resolve(process.cwd(), '.env.local') });
-} catch (err) {
-	if (process.env.DEBUG || process.env.VERBOSE) {
-		console.warn('[mlx:verify] dotenv not loaded:', err?.message ?? String(err));
-	}
-}
+await loadDotenv({ debug: Boolean(process.env.DEBUG || process.env.VERBOSE) });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

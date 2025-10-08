@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 import os
 import sys as _sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path as _Path
 from typing import Any
+from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -20,6 +24,16 @@ if str(_HERE) not in _sys.path:
 
 logger = logging.getLogger(__name__)
 FAST_TEST = os.getenv("CORTEX_PY_FAST_TEST") == "1"
+
+from multimodal.embedding_service import (  # noqa: E402
+    EmbeddingError as MultimodalEmbeddingError,
+    EmbeddingRequest,
+    MultimodalEmbeddingService,
+)
+from multimodal.types import Modality
+from multimodal.validation import validate_multimodal_file, ValidationError
+
+multimodal_service = MultimodalEmbeddingService()
 
 from cortex_py.a2a import (  # noqa: E402
     A2ABus,
@@ -52,11 +66,14 @@ except ImportError:
 
 # Phase 6: Observability and metrics
 try:
-    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-    from src.observability.metrics import get_metrics_registry
+    from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+    from src.observability.metrics import get_metrics_registry, track_http_request
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
+
+    def track_http_request(*_args, **_kwargs):
+        return None
 
 
 class EmbedRequest(BaseModel):
@@ -174,8 +191,6 @@ def create_app(
         if text is None:
             return _validation_error("text field missing")
         try:
-            import time
-
             start_time = time.time()
             result = embedding_service.generate_single(
                 text, normalize=req.normalize is not False
@@ -208,8 +223,6 @@ def create_app(
         if req.texts is None or not req.texts:
             return _validation_error("texts field must be a non-empty list")
         try:
-            import time
-
             start_time = time.time()
             result = embedding_service.generate_batch(
                 req.texts, normalize=req.normalize is not False
@@ -242,54 +255,123 @@ def create_app(
 
     # Phase 5.1: Health/Readiness/Liveness Endpoints
     health_service = HealthService(version="1.0.0") if HealthService else None
+    if health_service:
+        app.state.health_service = health_service
+
+    @app.middleware("http")
+    async def observability_middleware(request: Request, call_next):
+        request_id = f"brAInwav-{uuid4()}"
+        start = time.perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception as exc:  # pragma: no cover - propagated to FastAPI handlers
+            duration = time.perf_counter() - start
+            if PROMETHEUS_AVAILABLE:
+                track_http_request(request.method, request.url.path, 500, duration)
+            error_payload = {
+                "brand": "brAInwav",
+                "level": "error",
+                "type": "http.server.request",
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status": 500,
+                "duration_ms": round(duration * 1000, 3),
+                "error": str(exc),
+            }
+            logger.error(json.dumps(error_payload))
+            raise
+
+        duration = time.perf_counter() - start
+        if PROMETHEUS_AVAILABLE:
+            track_http_request(
+                request.method, request.url.path, response.status_code, duration
+            )
+
+        log_payload = {
+            "brand": "brAInwav",
+            "level": "info",
+            "type": "http.server.request",
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status": response.status_code,
+            "duration_ms": round(duration * 1000, 3),
+        }
+        logger.info(json.dumps(log_payload))
+        return response
 
     @app.get("/health")
     def health():
         """Comprehensive health check with component validation"""
         if health_service:
-            # Use Phase 5 comprehensive health check
-            return health_service.check_health()
-        
-        # Fallback to original hybrid health check
+            result = health_service.check_health()
+            status_code = 503 if result.get("status") == "unhealthy" else 200
+            return JSONResponse(status_code=status_code, content=result)
+
         health_info = hybrid_config.get_health_info()
         embedding_config = hybrid_config.get_embedding_config()
-
-        return {
+        fallback = {
             "status": "healthy",
-            "service": "brAInwav Cortex-OS MLX",
-            "company": hybrid_config.company,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "components": {
+                "hybrid": {"status": health_info.get("status", "healthy")},
+            },
+            "service": {
+                "name": "brAInwav Cortex-OS MLX",
+                "brand": "brAInwav",
+                "version": "1.0.0",
+            },
             "hybrid_config": health_info,
             "embedding_config": embedding_config,
             "mlx_first_priority": hybrid_config.mlx_priority,
             "deployment_ready": health_info["status"] in ["healthy", "degraded"],
         }
+        return JSONResponse(status_code=200, content=fallback)
 
     @app.get("/health/ready")
+    @app.get("/ready")
     def readiness():
         """Kubernetes readiness probe - service ready for traffic"""
         if not health_service:
-            return {"status": "healthy", "ready": True, "message": "brAInwav: Health service not available"}
-        
-        readiness_result = health_service.check_readiness()
-        
-        # Return 503 if not ready
-        if not readiness_result.get("ready", False):
-            from fastapi import Response
-            return Response(
-                content=str(readiness_result),
-                status_code=503,
-                media_type="application/json"
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "status": "healthy",
+                    "ready": True,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "service": {
+                        "name": "brAInwav Cortex-OS MLX",
+                        "brand": "brAInwav",
+                        "version": "1.0.0",
+                    },
+                    "message": "brAInwav: Health service not available",
+                },
             )
-        
-        return readiness_result
+
+        readiness_result = health_service.check_readiness()
+        status_code = 200 if readiness_result.get("ready", False) else 503
+        return JSONResponse(status_code=status_code, content=readiness_result)
 
     @app.get("/health/live")
+    @app.get("/live")
     def liveness():
         """Kubernetes liveness probe - service not deadlocked"""
         if not health_service:
-            return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
-        
-        return health_service.check_liveness()
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "status": "healthy",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "service": {
+                        "name": "brAInwav Cortex-OS MLX",
+                        "brand": "brAInwav",
+                        "version": "1.0.0",
+                    },
+                },
+            )
+
+        return JSONResponse(status_code=200, content=health_service.check_liveness())
 
     @app.get("/models")
     def models():
@@ -405,24 +487,42 @@ def create_app(
     # Phase 5.2: Register graceful shutdown handler
     if get_shutdown_manager:
         shutdown_manager = get_shutdown_manager(timeout=30)
-        
+        app.state.shutdown_manager = shutdown_manager
+
+        if health_service:
+            async def mark_service_unready() -> None:
+                """Set readiness flag to false before draining."""
+                logger.info("brAInwav: Marking Cortex-Py service not ready for shutdown")
+                health_service.set_ready(False)
+
+            shutdown_manager.register_cleanup(mark_service_unready)
+
         # Register cleanup tasks
-        async def cleanup_embedding_service():
+        async def cleanup_embedding_service() -> None:
             """Cleanup embedding service resources"""
             logger.info("brAInwav: Cleaning up embedding service")
-            # Close any open resources
-            pass
-        
-        async def cleanup_a2a():
+
+        async def cleanup_a2a() -> None:
             """Cleanup A2A bus connections"""
             logger.info("brAInwav: Cleaning up A2A connections")
-            # Close A2A connections
-            pass
-        
+
         shutdown_manager.register_cleanup(cleanup_embedding_service)
         shutdown_manager.register_cleanup(cleanup_a2a)
         shutdown_manager.register_signal_handlers()
-        
+
+        @app.middleware("http")
+        async def enforce_shutdown_guard(request: Request, call_next):
+            if shutdown_manager.is_shutting_down():
+                return JSONResponse(
+                    status_code=503,
+                    content={
+                        "status": "unavailable",
+                        "message": "brAInwav: service shutting down",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    },
+                )
+            return await call_next(request)
+
         @app.on_event("shutdown")
         async def on_shutdown():
             """FastAPI shutdown event handler"""
@@ -430,6 +530,16 @@ def create_app(
             await shutdown_manager.shutdown()
     
     # Phase 6.1: Prometheus metrics endpoint
+    if os.getenv("CORTEX_PY_ENABLE_TEST_ROUTES") == "1":
+        @app.get("/test/slow")
+        async def test_slow_endpoint(delay: float = 0.05):
+            await asyncio.sleep(delay)
+            return {
+                "status": "ok",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "message": "brAInwav: slow test endpoint complete",
+            }
+
     if PROMETHEUS_AVAILABLE:
         from fastapi import Response
         

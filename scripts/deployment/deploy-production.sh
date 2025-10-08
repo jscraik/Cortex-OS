@@ -23,19 +23,19 @@ BUILD_TARGET="${BUILD_TARGET:-production}"
 
 # Logging functions
 log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+    echo -e "${BLUE}[brAInwav][INFO]${NC} $1"
 }
 
 log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    echo -e "${GREEN}[brAInwav][SUCCESS]${NC} $1"
 }
 
 log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}[brAInwav][WARN]${NC} $1"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo -e "${RED}[brAInwav][ERROR]${NC} $1"
 }
 
 # Error handling
@@ -51,6 +51,49 @@ trap 'handle_error $LINENO' ERR
 cleanup_on_error() {
     log_warning "Cleaning up failed deployment..."
     # Add cleanup logic here if needed
+}
+
+load_env_overrides() {
+    log_info "Loading brAInwav environment overrides..."
+
+    local root_dir
+    root_dir="$(pwd)"
+    local candidates=()
+    local override="${BRAINWAV_ENV_FILE:-}"
+
+    if [[ -n "$override" ]]; then
+        if [[ "$override" != /* ]]; then
+            override="$root_dir/$override"
+        fi
+        candidates+=("$override")
+    fi
+
+    candidates+=(
+        "$root_dir/.env.${DEPLOYMENT_ENV}"
+        "$root_dir/.env.production"
+        "$root_dir/.env.local"
+        "$root_dir/.env"
+    )
+
+    for candidate in "${candidates[@]}"; do
+        if [[ -z "$candidate" ]]; then
+            continue
+        fi
+        if [[ -p "$candidate" ]]; then
+            log_warning "Detected FIFO env file at $candidate. Use 'op run --env-file=$candidate -- ./scripts/deployment/deploy-production.sh' to stream secrets safely."
+            return
+        fi
+        if [[ -f "$candidate" ]]; then
+            set -a
+            # shellcheck disable=SC1091
+            source "$candidate"
+            set +a
+            log_info "Loaded brAInwav environment overrides from $candidate"
+            return
+        fi
+    done
+
+    log_warning "No brAInwav env overrides detected (.env.*)."
 }
 
 # Check prerequisites
@@ -400,6 +443,7 @@ main() {
     log_info "  - Skip Docker Build: $SKIP_DOCKER_BUILD"
     
     check_prerequisites
+    load_env_overrides
     optimize_system
     install_dependencies
     run_quality_gates

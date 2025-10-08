@@ -1,0 +1,7 @@
+{
+  "mode": "legacy",
+  "provider": "openai",
+  "llm": "gpt-4o-mini",
+  "embed_model": "text-embedding-3-large",
+  "callback_manager": null
+}

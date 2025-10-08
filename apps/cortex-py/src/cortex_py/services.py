@@ -121,7 +121,7 @@ class EmbeddingService:
     # Public API -----------------------------------------------------------------
 
     def generate_single(
-        self, text: str, *, normalize: bool = True
+        self, text: str, *, normalize: bool = True, seed: int | None = None
     ) -> EmbeddingServiceResult:
         sanitized = self._sanitize_text(text)
         self._run_security_checks([sanitized])
@@ -142,7 +142,13 @@ class EmbeddingService:
         self._audit("embedding.single", [sanitized])
 
         try:
-            embedding = generator.generate_embedding(sanitized)
+            if seed is not None:
+                try:
+                    embedding = generator.generate_embedding(sanitized, seed=seed)
+                except TypeError:
+                    embedding = generator.generate_embedding(sanitized)
+            else:
+                embedding = generator.generate_embedding(sanitized)
         except Exception as exc:  # pragma: no cover - delegated failure
             raise ServiceError(f"embedding generation failed: {exc}") from exc
 

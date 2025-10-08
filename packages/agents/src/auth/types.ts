@@ -19,7 +19,7 @@ export const JWTPayloadSchema = z
 	.passthrough(); // Allow additional properties for flexibility
 
 export type JWTPayload = z.infer<typeof JWTPayloadSchema> & {
-	[key: string]: any; // Allow additional properties for testing and extensions
+	[key: string]: unknown; // Allow additional properties for testing and extensions
 };
 
 // User context from authentication

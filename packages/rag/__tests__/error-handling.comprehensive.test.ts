@@ -175,16 +175,15 @@ describe('RAG Error Handling Coverage', () => {
 			const store = memoryStore();
 
 			// Test null inputs
-			await expect(store.upsert(null as never)).rejects.toThrow();
-			await expect(store.query(null as never, 5)).rejects.toThrow();
+			await expect(store.upsert(null as never)).rejects.toThrow(/array of chunks/i);
+			await expect(store.query(null as never, 5)).rejects.toThrow(/embedding vector/i);
 
 			// Test undefined inputs
-			await expect(store.upsert(undefined as never)).rejects.toThrow();
-			await expect(store.query(undefined as never, 5)).rejects.toThrow();
+			await expect(store.upsert(undefined as never)).rejects.toThrow(/array of chunks/i);
+			await expect(store.query(undefined as never, 5)).rejects.toThrow(/embedding vector/i);
 
-			// Test empty arrays
-			const emptyResult = await store.upsert([]);
-			expect(emptyResult).toBeDefined();
+			// Test empty arrays (should be a no-op)
+			await expect(store.upsert([])).resolves.toBeUndefined();
 		});
 
 		it('handles malformed embedding vectors', async () => {

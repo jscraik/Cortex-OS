@@ -302,11 +302,30 @@ export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
 
 	// Add jitter if enabled
 	if (jitter) {
-		const jitterAmount = delay * 0.1 * Math.random();
+		const rand = randomFraction();
+		const jitterAmount = delay * 0.1 * rand;
 		delay += jitterAmount;
 	}
 
 	return Math.floor(delay);
+}
+
+
+/**
+ * Returns an unbiased random float in [0, 1) using cryptographically secure random numbers.
+ */
+function randomFraction(): number {
+	// Use rejection sampling to avoid bias.
+	const cryptoObj = typeof crypto !== 'undefined' ? crypto : (typeof window !== 'undefined' ? window.crypto : undefined);
+	if (!cryptoObj) {
+		throw new Error('crypto.getRandomValues is unavailable');
+	}
+	const range = 0xFFFFFFFF;
+	let x: number;
+	do {
+		x = cryptoObj.getRandomValues(new Uint32Array(1))[0];
+	} while (x === range); // Reject max value to keep it in [0, range)
+	return x / range;
 }
 
 // Envelope Transformation Helpers
@@ -390,65 +409,73 @@ export interface EnvelopeFilter {
 }
 
 export function matchesFilter(envelope: A2AEventEnvelope, filter: EnvelopeFilter): boolean {
-	if (filter.eventType && !filter.eventType.includes(envelope.event.event_type)) {
-		return false;
-	}
+	return (
+		matchesEventType(envelope, filter.eventType) &&
+		matchesPriority(envelope, filter.priority) &&
+		matchesTopics(envelope, filter.topics) &&
+		matchesRepositoryIds(envelope, filter.repositoryIds) &&
+		matchesActorIds(envelope, filter.actorIds) &&
+		matchesTags(envelope, filter.tags) &&
+		matchesLabels(envelope, filter.labels) &&
+		matchesAge(envelope, filter.minAge, filter.maxAge)
+	);
+}
 
-	if (filter.priority && !filter.priority.includes(envelope.priority)) {
-		return false;
-	}
+function matchesEventType(envelope: A2AEventEnvelope, eventTypes?: string[]): boolean {
+	return !eventTypes || eventTypes.includes(envelope.event.event_type);
+}
 
-	if (filter.topics && !filter.topics.includes(envelope.routing.topic)) {
-		return false;
-	}
+function matchesPriority(envelope: A2AEventEnvelope, priorities?: EventPriority[]): boolean {
+	return !priorities || priorities.includes(envelope.priority);
+}
 
-	if (filter.repositoryIds) {
-		const event = envelope.event;
-		if ('repository' in event && event.repository) {
-			if (!filter.repositoryIds.includes(event.repository.id)) {
-				return false;
-			}
-		} else {
+function matchesTopics(envelope: A2AEventEnvelope, topics?: string[]): boolean {
+	return !topics || topics.includes(envelope.routing.topic);
+}
+
+function matchesRepositoryIds(envelope: A2AEventEnvelope, repositoryIds?: number[]): boolean {
+	if (!repositoryIds) return true;
+
+	const event = envelope.event;
+	if ('repository' in event && event.repository) {
+		return repositoryIds.includes(event.repository.id);
+	}
+	return false;
+}
+
+function matchesActorIds(envelope: A2AEventEnvelope, actorIds?: number[]): boolean {
+	if (!actorIds) return true;
+
+	const event = envelope.event;
+	if ('actor' in event && event.actor) {
+		return actorIds.includes(event.actor.id);
+	}
+	return false;
+}
+
+function matchesTags(envelope: A2AEventEnvelope, tags?: string[]): boolean {
+	if (!tags || tags.length === 0) return true;
+
+	return tags.every((tag) => envelope.metadata.tags.includes(tag));
+}
+
+function matchesLabels(envelope: A2AEventEnvelope, labels?: Record<string, string>): boolean {
+	if (!labels) return true;
+
+	for (const [key, value] of Object.entries(labels)) {
+		if (envelope.metadata.labels[key] !== value) {
 			return false;
 		}
 	}
+	return true;
+}
 
-	if (filter.actorIds) {
-		const event = envelope.event;
-		if ('actor' in event && event.actor) {
-			if (!filter.actorIds.includes(event.actor.id)) {
-				return false;
-			}
-		} else {
-			return false;
-		}
-	}
+function matchesAge(envelope: A2AEventEnvelope, minAge?: number, maxAge?: number): boolean {
+	if (minAge === undefined && maxAge === undefined) return true;
 
-	if (filter.tags && filter.tags.length > 0) {
-		const hasAllTags = filter.tags.every((tag) => envelope.metadata.tags.includes(tag));
-		if (!hasAllTags) {
-			return false;
-		}
-	}
-
-	if (filter.labels) {
-		for (const [key, value] of Object.entries(filter.labels)) {
-			if (envelope.metadata.labels[key] !== value) {
-				return false;
-			}
-		}
-	}
-
-	if (filter.minAge !== undefined || filter.maxAge !== undefined) {
-		const age = getEnvelopeAge(envelope);
-		if (filter.minAge !== undefined && age < filter.minAge) {
-			return false;
-		}
-		if (filter.maxAge !== undefined && age > filter.maxAge) {
-			return false;
-		}
-	}
-
+	const age = getEnvelopeAge(envelope);
+	if (minAge !== undefined && age < minAge) return false;
+	if (maxAge !== undefined && age > maxAge) return false;
 	return true;
 }
 

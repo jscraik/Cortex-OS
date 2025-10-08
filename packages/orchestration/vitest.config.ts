@@ -30,6 +30,8 @@ export default defineConfig({
 			'@cortex-os/orchestration': resolve(__dirname, './src'),
 			'@cortex-os/model-gateway': resolve(__dirname, '../model-gateway/src'),
 			'@cortex-os/commands': resolve(__dirname, '../commands/src'),
+			'@cortex-os/prompts': resolve(__dirname, '../prompts/src'),
+			'@cortex-os/utils': resolve(__dirname, '../utils/src'),
 			'@cortex-os/contracts': resolve(
 				__dirname,
 				'..',

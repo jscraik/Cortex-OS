@@ -41,13 +41,35 @@ check_docker() {
 }
 
 load_local_env() {
-    if [[ -f "$ROOT_DIR/.env.local" ]]; then
-        set -a
-        # shellcheck disable=SC1091
-        source "$ROOT_DIR/.env.local"
-        set +a
-        log_info "Loaded overrides from .env.local for brAInwav Docker workflow"
+    local candidates=()
+    local override="${BRAINWAV_ENV_FILE:-}"
+    if [[ -n "$override" ]]; then
+        if [[ "$override" != /* ]]; then
+            override="$ROOT_DIR/$override"
+        fi
+        candidates+=("$override")
     fi
+    candidates+=("$ROOT_DIR/.env.local" "$ROOT_DIR/.env")
+
+    for candidate in "${candidates[@]}"; do
+        if [[ -z "$candidate" ]]; then
+            continue
+        fi
+        if [[ -p "$candidate" ]]; then
+            log_warning "Detected FIFO env file at $candidate. Use 'op run --env-file=$candidate -- ./scripts/deployment/docker-dev.sh <command>' to stream secrets safely."
+            return
+        fi
+        if [[ -f "$candidate" ]]; then
+            set -a
+            # shellcheck disable=SC1091
+            source "$candidate"
+            set +a
+            log_info "Loaded overrides from $candidate for brAInwav Docker workflow"
+            return
+        fi
+    done
+
+    log_warning "No brAInwav env overrides detected (.env.local or .env)."
 }
 
 validate_environment() {

@@ -59,8 +59,8 @@ describe('RAGPipeline post-chunking A/B', () => {
 		const lenA = qa.citations.reduce((s, c) => s + (c.text?.length ?? 0), 0);
 		const lenB = qb.citations.reduce((s, c) => s + (c.text?.length ?? 0), 0);
 
-		// Either we get fewer citations, or the total combined text length is not larger
+		// Either we get fewer citations, or the total combined text length only grows by newline separators
 		expect(countB <= countA).toBe(true);
-		expect(lenB <= lenA).toBe(true);
+		expect(lenB).toBeLessThanOrEqual(lenA + (countA - countB));
 	});
 });

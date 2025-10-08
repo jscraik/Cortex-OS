@@ -62,7 +62,8 @@ describe('brAInwav Cortex-OS Basic Runtime', () => {
 
 		const health = await response.json();
 		expect(health).toMatchObject({
-			status: 'ok',
+			status: 'healthy',
+			service: { brand: 'brAInwav' },
 			timestamp: expect.any(String),
 		});
 	});

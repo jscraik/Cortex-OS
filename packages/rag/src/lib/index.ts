@@ -1,6 +1,7 @@
 export * from './citation-bundler.js';
 export * from './embed-query.js';
 export * from './generate-answer.js';
+export * from './llama-index-bridge.js';
 export * from './rerank-docs.js';
 export * from './retrieve-docs.js';
 export * from './run-process.js';

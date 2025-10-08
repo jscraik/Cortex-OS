@@ -7,6 +7,7 @@ to communicate with TypeScript A2A infrastructure.
 
 import asyncio
 import logging
+import uuid
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
@@ -96,15 +97,17 @@ class A2ABus:
                     envelope.source = self.source
                 if not envelope.time:
                     envelope.time = datetime.utcnow().isoformat() + "Z"
+                if not envelope.correlationId:
+                    envelope.correlationId = str(uuid.uuid4())
 
                 # Send to A2A endpoint
                 response = await self._client.post(
                     f"{self.a2a_endpoint}/publish",
-                    json=envelope.dict(),
+                    json=envelope.model_dump(),
                     headers={"Content-Type": "application/json"},
                 )
 
-                if response.status_code == 200:
+                if 200 <= response.status_code < 300:
                     logger.debug(f"Published A2A message: {envelope.type}")
                     return True
                 else:

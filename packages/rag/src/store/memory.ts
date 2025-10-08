@@ -1,9 +1,46 @@
 import type { Chunk, Store } from '../lib/index.js';
+import { z } from 'zod';
 
 export function memoryStore(): Store {
 	const items: Array<Chunk & { embedding?: number[] }> = [];
+
+	// Define a Zod schema for a Chunk. Adjust as needed for your actual Chunk type.
+	const ChunkSchema = z.object({
+		id: z.string(),
+		content: z.string(),
+		// Add other required properties as needed, e.g.:
+		// updatedAt: z.number().optional(),
+		// metadata: z.any().optional(),
+	});
+
+	function assertChunkArray(input: unknown): asserts input is Chunk[] {
+		if (!Array.isArray(input)) {
+			throw new TypeError('memoryStore.upsert expects an array of chunks');
+		}
+		for (const value of input) {
+			const result = ChunkSchema.safeParse(value);
+			if (!result.success) {
+				throw new TypeError(
+					`memoryStore.upsert received an invalid chunk payload: ${result.error.message}`
+				);
+			}
+		}
+	}
+
+	function assertEmbeddingVector(input: unknown): asserts input is number[] {
+		if (!Array.isArray(input) || input.length === 0) {
+			throw new TypeError('memoryStore.query requires a non-empty embedding vector');
+		}
+		for (const value of input) {
+			if (typeof value !== 'number' || !Number.isFinite(value)) {
+				throw new TypeError('memoryStore.query received a non-finite embedding value');
+			}
+		}
+	}
+
 	const base: Store = {
 		async upsert(chunks: Chunk[]) {
+			assertChunkArray(chunks);
 			for (const c of chunks) {
 				const cc = { ...c, updatedAt: c.updatedAt ?? Date.now() } as Chunk;
 				const i = items.findIndex((x) => x.id === c.id);
@@ -12,6 +49,7 @@ export function memoryStore(): Store {
 			}
 		},
 		async query(embedding: number[], k = 5) {
+			assertEmbeddingVector(embedding);
 			function sim(a: number[], b: number[]) {
 				if (!a || !b || a.length !== b.length) return 0;
 				let dot = 0,

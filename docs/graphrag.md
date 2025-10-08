@@ -50,11 +50,13 @@ Ensure MCP and REST adapters emit brAInwav-branded headers and structured JSON r
 - Run `pnpm --filter @cortex-os/memory-core test -- --runInBand` for GraphRAG unit tests.
 - Exercise REST endpoints with supertest or curl against the local server.
 - Validate swagger updates via `pnpm --filter @cortex-os/memory-rest-api test` (if available).
+- When live Qdrant/Neo4j stacks are running, set `CORTEX_RAG_E2E=true` and run `pnpm test:rag:e2e` for end-to-end verification.
 
 ## Operational Notes
 
 - Configure `MEMORY_GRAPH_DB_URL` to target the dedicated Prisma datasource when running GraphRAG independently; falls back to `DATABASE_URL`.
 - Ensure `QDRANT_URL` and embedding environment variables are set for production deployments.
+- Enable Neo4j enrichment by setting `EXTERNAL_KG_ENABLED=true` alongside `NEO4J_URI`, `NEO4J_USER`, and `NEO4J_PASSWORD`; GraphRAG will merge Neo4j neighborhoods into query citations automatically.
 - For staging, throttle ingestion jobs to avoid Qdrant hot spots; neighbor caps prevent hub overload.
 
 For additional guidance, consult the GraphRAG tests and policy file, and file issues in the `project-documentation/` area when expanding schema coverage.

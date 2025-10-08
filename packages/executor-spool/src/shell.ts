@@ -55,7 +55,10 @@ interface ListenerContext {
 	stderrHandler?: (chunk: Buffer) => void;
 }
 
-const quote = (value: string): string => `'${value.replaceAll("'", `'"'"'`)}'`;
+const quote = (value: string): string => {
+	const escapedQuote = `'"'"'`;
+	return `'${value.replaceAll("'", escapedQuote)}'`;
+};
 
 const stringifyCommand = (command: string | string[]): string => {
 	if (Array.isArray(command)) {
@@ -120,9 +123,14 @@ class PersistentShellImpl implements PersistentShell {
 		this.allowed = new Set(options.allowedCommands ?? DEFAULT_ALLOWED);
 		this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 		this.maxBufferBytes = options.maxBufferBytes ?? DEFAULT_BUFFER_BYTES;
+		// eslint-disable-next-line sonarjs/no-os-command-from-path
 		this.proc = spawn('bash', ['--noprofile', '--norc'], {
 			cwd: this.root,
-			env: { ...process.env, ...options.env },
+			env: {
+				...Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== 'PATH')),
+				PATH: '/usr/local/bin:/usr/bin:/bin',
+				...options.env,
+			},
 			stdio: 'pipe',
 		});
 		this.proc.stdin.write('set -eo pipefail\n');

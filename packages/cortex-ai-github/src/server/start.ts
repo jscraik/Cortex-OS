@@ -3,17 +3,16 @@
  * Reads env vars, initializes the AI app, and starts the webhook server.
  */
 
-import dotenv from 'dotenv';
+import { loadDotenv } from '@cortex-os/utils';
 import { CortexAiGitHubApp } from '../core/ai-github-app.js';
 import type { GitHubModel } from '../types/github-models.js';
 import { CortexWebhookServer } from './webhook-server.js';
 
-// Load environment variables from .env file
-dotenv.config();
+await loadDotenv();
 
 const required = (name: string, value: string | undefined) => {
 	if (!value || value.trim() === '') {
-		console.error(`[startup] Missing required environment variable: ${name}`);
+		console.error(`[brAInwav][startup] Missing required environment variable: ${name}`);
 		process.exit(1);
 	}
 	return value;
@@ -41,11 +40,11 @@ async function main() {
 
 	await server.start(port);
 	console.log(
-		`[startup] cortex-ai-github listening on :${port} (hosted via Cloudflare Tunnel if configured)`,
+		`[brAInwav][startup] cortex-ai-github listening on :${port} (hosted via Cloudflare Tunnel if configured)`,
 	);
 
 	const shutdown = async (signal: string) => {
-		console.log(`[shutdown] ${signal} received, stopping server...`);
+		console.log(`[brAInwav][shutdown] ${signal} received, stopping server...`);
 		try {
 			await server.stop();
 		} finally {
@@ -58,6 +57,6 @@ async function main() {
 }
 
 main().catch((err) => {
-	console.error('[startup] Failed to start server:', err);
+	console.error('[brAInwav][startup] Failed to start server:', err);
 	process.exit(1);
 });

@@ -29,6 +29,9 @@ describe('MultiModelGenerator', () => {
 	it('propagates generation options to Ollama API', async () => {
 		const fetchMock = vi.fn().mockResolvedValue({
 			ok: true,
+			status: 200,
+			statusText: 'OK',
+			headers: new Headers({ 'content-type': 'application/json' }),
 			json: async () => ({ response: 'ok' }),
 		}) as unknown as typeof fetch;
 		const originalFetch = global.fetch;

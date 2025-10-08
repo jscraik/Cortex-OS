@@ -1,3 +1,4 @@
+import type { Context, Next } from 'hono';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { FeatureFlags } from './flags.js';
@@ -68,7 +69,7 @@ const UpdateFlagSchema = CreateFlagSchema.partial();
 export function createFeatureFlagsAdminRouter(
 	featureFlags: FeatureFlags,
 	options: {
-		authenticate?: (c: any, next: any) => Promise<void> | void;
+		authenticate?: (c: Context, next: Next) => Promise<void> | void;
 		basePath?: string;
 	} = {},
 ) {
@@ -140,7 +141,7 @@ export function createFeatureFlagsAdminRouter(
 	// POST /flags - Create new flag
 	router.post(basePath, async (c) => {
 		try {
-			let body: any;
+			let body: unknown;
 			try {
 				body = await c.req.json();
 			} catch (_jsonError) {
@@ -166,7 +167,7 @@ export function createFeatureFlagsAdminRouter(
 				);
 			}
 
-			const flagName = body.name || `flag-${Date.now()}`;
+			const flagName = (body as Record<string, unknown>).name || `flag-${Date.now()}`;
 			await featureFlags.setFlag(flagName, result.data);
 
 			const createdFlag = await featureFlags.getFlag(flagName);
@@ -198,7 +199,7 @@ export function createFeatureFlagsAdminRouter(
 	router.put(`${basePath}/:name`, async (c) => {
 		try {
 			const flagName = c.req.param('name');
-			let body: any;
+			let body: unknown;
 			try {
 				body = await c.req.json();
 			} catch (_jsonError) {
@@ -299,7 +300,7 @@ export function createFeatureFlagsAdminRouter(
 	router.post(`${basePath}/:name/evaluate`, async (c) => {
 		try {
 			const flagName = c.req.param('name');
-			let body: any;
+			let body: unknown;
 			try {
 				body = await c.req.json();
 			} catch (_jsonError) {
@@ -312,7 +313,7 @@ export function createFeatureFlagsAdminRouter(
 				);
 			}
 
-			const { userId, attributes = {} } = body;
+			const { userId, attributes = {} } = body as Record<string, unknown>;
 
 			if (!userId) {
 				return c.json(

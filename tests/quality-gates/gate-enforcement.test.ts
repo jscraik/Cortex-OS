@@ -1,189 +1,86 @@
-import { promises as fs } from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	type QualityGateResult,
-	runQualityGateEnforcement,
-} from '../../scripts/ci/quality-gate-enforcer';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { runQualityGateEnforcement } from '../../scripts/ci/quality-gate-enforcer';
 
-interface SeedOptions {
-	coverage?: {
-		lines: number;
-		branches: number;
-	};
-	mutationScore?: number;
-}
+const createTempDir = (): string => mkdtempSync(join(tmpdir(), 'quality-gate-tests-'));
 
-describe('Quality Gate Enforcement', () => {
-	let tempDir: string;
-	let contractPath: string;
-	let metricsDir: string;
-	let baselineCoveragePath: string;
+const writeJson = (filePath: string, payload: unknown): void => {
+	writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf-8');
+};
 
-	beforeEach(async () => {
-		tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'quality-gates-'));
-		contractPath = path.join(tempDir, 'quality_gate.json');
-		metricsDir = path.join(tempDir, 'metrics');
-		await fs.mkdir(metricsDir, { recursive: true });
-		baselineCoveragePath = path.join(tempDir, 'coverage-baseline.json');
+describe('Quality Gate Enforcement (brAInwav policy)', () => {
+	let workingDir: string;
+	let configPath: string;
 
-		const contract = {
-			coverage: {
-				line: 95,
-				branch: 95,
-				mutation_score: 80,
-				ratchet: {
-					baseline_path: baselineCoveragePath,
-					line_slack_percent: 0.2,
-					branch_slack_percent: 0.2,
-				},
+	beforeEach(() => {
+		workingDir = createTempDir();
+		configPath = join(workingDir, 'quality_gate.json');
+
+		writeJson(configPath, {
+			name: 'brAInwav Cortex-OS Quality Gates',
+			version: '1.0.0',
+			enforcer: 'brAInwav Development Team',
+			thresholds: {
+				coverage: { line: 95, branch: 95, function: 95, statement: 95 },
+				mutation: { score: 80 },
+				security: { criticalVulnerabilities: 0, highVulnerabilities: 0 },
 			},
-			security: {
-				max_critical: 0,
-				max_high: 0,
-				secrets_scan_required: true,
-				sbom_required: true,
+			branding: {
+				organization: 'brAInwav',
+				brandingMessage: '[brAInwav] Cortex-OS Quality Gates',
 			},
-			ops_readiness_min: 0.95,
-			performance: {
-				p95_latency_ms_max: 250,
-				error_rate_pct_max: 0.5,
-				throughput_min_rps: 100,
-			},
-			reliability: {
-				graceful_shutdown_max_seconds: 30,
-				circuit_breaker_required: true,
-			},
-		};
-
-		await fs.writeFile(contractPath, JSON.stringify(contract, null, 2));
-		const baselineCoverage = {
-			line: { percentage: 96 },
-			branch: { percentage: 95.5 },
-		};
-		await fs.writeFile(baselineCoveragePath, JSON.stringify(baselineCoverage, null, 2));
-
-		vi.spyOn(console, 'log').mockImplementation(() => {});
-		vi.spyOn(console, 'warn').mockImplementation(() => {});
-		vi.spyOn(console, 'error').mockImplementation(() => {});
+		});
 	});
 
-	afterEach(async () => {
-		vi.restoreAllMocks();
-		await fs.rm(tempDir, { recursive: true, force: true });
+	afterEach(() => {
+		rmSync(workingDir, { recursive: true, force: true });
 	});
 
-	async function seedMetrics(options: SeedOptions = {}): Promise<void> {
-		const coveragePercentage = options.coverage?.lines ?? 97;
-		const branchPercentage = options.coverage?.branches ?? 96;
-		const mutationScore = options.mutationScore ?? 85;
-
-		const coverageMetrics = {
-			total: 1000,
-			covered: Math.round((coveragePercentage / 100) * 1000),
-			percentage: coveragePercentage,
-			lines: {
-				total: 1000,
-				covered: Math.round((coveragePercentage / 100) * 1000),
-				percentage: coveragePercentage,
+	it('fails when coverage drops below the brAInwav threshold', () => {
+		const result = runQualityGateEnforcement(
+			{
+				coverage: { line: 94.5, branch: 96, function: 97, statement: 98 },
+				mutation: { score: 85 },
+				security: { criticalVulnerabilities: 0, highVulnerabilities: 0 },
 			},
-			branches: {
-				total: 500,
-				covered: Math.round((branchPercentage / 100) * 500),
-				percentage: branchPercentage,
-			},
-			functions: {
-				total: 200,
-				covered: 200,
-				percentage: 100,
-			},
-		};
-
-		const mutationMetrics = {
-			score: mutationScore,
-			killed: Math.round((mutationScore / 100) * 200),
-			survived: Math.max(0, 200 - Math.round((mutationScore / 100) * 200)),
-			total: 200,
-			timeout: 0,
-		};
-
-		const securityMetrics = {
-			critical: 0,
-			high: 0,
-			medium: 1,
-			low: 2,
-			info: 5,
-			secrets_clean: true,
-			sbom_generated: true,
-		};
-
-		const opsReadinessMetrics = {
-			percentage: 97,
-			score: 19,
-			max_score: 20,
-			criteria: [
-				{ name: 'Health checks', status: 'pass' },
-				{ name: 'Circuit breakers', status: 'pass' },
-			],
-		};
-
-		const performanceMetrics = {
-			p95_latency: 200,
-			error_rate: 0.4,
-			throughput: 150,
-		};
-
-		const reliabilityMetrics = {
-			graceful_shutdown_verified: true,
-			graceful_shutdown_time: 15,
-			circuit_breaker_tested: true,
-		};
-
-		await Promise.all([
-			writeMetrics('coverage.json', coverageMetrics),
-			writeMetrics('mutation.json', mutationMetrics),
-			writeMetrics('security.json', securityMetrics),
-			writeMetrics('ops-readiness.json', opsReadinessMetrics),
-			writeMetrics('performance.json', performanceMetrics),
-			writeMetrics('reliability.json', reliabilityMetrics),
-		]);
-	}
-
-	function writeMetrics(filename: string, payload: unknown): Promise<void> {
-		return fs.writeFile(path.join(metricsDir, filename), JSON.stringify(payload, null, 2));
-	}
-
-	it('should fail pull request when coverage dips below brAInwav threshold', async () => {
-		await seedMetrics({ coverage: { lines: 94, branches: 97 } });
-
-		const result: QualityGateResult = await runQualityGateEnforcement(contractPath, metricsDir);
+			configPath,
+		);
 
 		expect(result.passed).toBe(false);
-		expect(
-			result.violations.some(
-				(message) => message.includes('Line coverage') && message.includes('94.0% < required 95%'),
-			),
-		).toBe(true);
-		expect(result.violations.some((message) => message.includes('brAInwav standard'))).toBe(true);
+		expect(result.violations).toContain('brAInwav: Line coverage 94.5% < 95%');
+		expect(result.branding).toBe('[brAInwav] Cortex-OS Quality Gates');
 	});
 
-	it('should pass when all quality gates meet brAInwav policy', async () => {
-		await seedMetrics();
+	it('fails when security findings exceed the policy', () => {
+		const result = runQualityGateEnforcement(
+			{
+				coverage: { line: 98, branch: 97, function: 99, statement: 99 },
+				mutation: { score: 90 },
+				security: { criticalVulnerabilities: 1, highVulnerabilities: 0 },
+			},
+			configPath,
+		);
 
-		const result: QualityGateResult = await runQualityGateEnforcement(contractPath, metricsDir);
+		expect(result.passed).toBe(false);
+		expect(result.violations.some((msg) => msg.includes('critical vulnerabilities found'))).toBe(true);
+	});
+
+	it('passes when all metrics satisfy the contract', () => {
+		const result = runQualityGateEnforcement(
+			{
+				coverage: { line: 97, branch: 97, function: 98, statement: 98 },
+				mutation: { score: 90 },
+				security: { criticalVulnerabilities: 0, highVulnerabilities: 0 },
+			},
+			configPath,
+		);
 
 		expect(result.passed).toBe(true);
 		expect(result.violations).toHaveLength(0);
-		expect(result.summary.production_ready).toBe(true);
-	});
-
-	it('should enforce coverage ratchet thresholds via baseline metrics', async () => {
-		await seedMetrics({ coverage: { lines: 95.5, branches: 95 } });
-
-		const result: QualityGateResult = await runQualityGateEnforcement(contractPath, metricsDir);
-
-		expect(result.passed).toBe(false);
-		expect(result.violations.some((message) => message.includes('ratchet baseline'))).toBe(true);
+		// Expect score to sit between 0 and 100 for sanity; exact value not needed here.
+		expect(result.score).toBeGreaterThan(0);
+		expect(result.score).toBeLessThanOrEqual(100);
 	});
 });

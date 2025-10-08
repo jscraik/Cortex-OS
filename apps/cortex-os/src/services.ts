@@ -1,5 +1,3 @@
-import os from 'node:os';
-import { join } from 'node:path';
 import {
 	provideOrchestration as coreProvideOrchestration,
 	type OrchestrationFacade,
@@ -12,10 +10,12 @@ import { ArtifactRepository } from './persistence/artifact-repository.js';
 import { EvidenceRepository } from './persistence/evidence-repository.js';
 import { ProfileRepository } from './persistence/profile-repository.js';
 import { TaskRepository } from './persistence/task-repository.js';
+import { RunBundleRecorder } from './run-bundle/recorder.js';
+import { getRunsRoot } from './run-bundle/paths.js';
 import { initRunBundle } from './run-bundle/writer.js';
 
 const DEFAULT_IMPORTANCE = 5;
-const RUNS_ROOT = process.env.CORTEX_RUNS_DIR ?? join(os.homedir(), '.Cortex-OS', 'runs');
+const RUNS_ROOT = getRunsRoot();
 
 type NormalizedMemoryResponse = { data?: unknown };
 
@@ -197,16 +197,39 @@ export function provideOrchestration(): OrchestrationFacade {
 			const runId =
 				task.id ?? `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 			const bundle = await initRunBundle({ id: runId, rootDir: RUNS_ROOT });
-			const result = (await facade.run(task, agents, context, neurons)) as {
-				ctx?: { promptCaptures?: PromptCapture[] };
-			};
-			const promptCaptures = Array.isArray(result.ctx?.promptCaptures)
-				? (result.ctx!.promptCaptures as PromptCapture[])
-				: [];
-			if (promptCaptures.length > 0) {
-				await bundle.writePrompts(promptCaptures);
+			const contextSnapshot =
+				context && typeof context === 'object' && !Array.isArray(context)
+					? { ...(context as Record<string, unknown>), neurons }
+					: { value: context, neurons };
+			const recorder = new RunBundleRecorder({
+				runId,
+				writer: bundle,
+				task,
+				agents,
+				context: contextSnapshot,
+			});
+
+			await recorder.start();
+			await recorder.recordPrompts([]);
+
+			try {
+				const result = (await facade.run(task, agents, context, neurons)) as {
+					ctx?: { promptCaptures?: PromptCapture[] };
+				};
+				const promptCaptures = Array.isArray(result.ctx?.promptCaptures)
+					? (result.ctx!.promptCaptures as PromptCapture[])
+					: [];
+				await recorder.recordPrompts(promptCaptures);
+				await recorder.complete(result);
+				return result;
+			} catch (error) {
+				try {
+					await recorder.fail(error);
+				} catch (recordError) {
+					console.warn('cortex-os run bundle recorder failed to persist error state', recordError);
+				}
+				throw error;
 			}
-			return result;
 		},
 	};
 }

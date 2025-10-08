@@ -124,36 +124,33 @@ export function isMcpErrorEvent(data: unknown): data is McpErrorEvent {
 	return McpErrorEventSchema.safeParse(data).success;
 }
 
+// Type alias for union type to reduce cognitive complexity
+export type McpEventMetadataKeys = 'event_id' | 'event_type' | 'source' | 'timestamp';
+
 // Helper object to create MCP events
 export const createMcpEvent = {
-	toolExecution: (
-		data: Omit<McpToolExecutionEvent, 'event_id' | 'event_type' | 'source' | 'timestamp'>,
-	) => ({
+	toolExecution: (data: Omit<McpToolExecutionEvent, McpEventMetadataKeys>) => ({
 		event_id: crypto.randomUUID(),
 		event_type: 'cortex.mcp.tool.execution' as const,
 		source: 'cortex-mcp' as const,
 		timestamp: new Date().toISOString(),
 		...data,
 	}),
-	toolResponse: (
-		data: Omit<McpToolResponseEvent, 'event_id' | 'event_type' | 'source' | 'timestamp'>,
-	) => ({
+	toolResponse: (data: Omit<McpToolResponseEvent, McpEventMetadataKeys>) => ({
 		event_id: crypto.randomUUID(),
 		event_type: 'cortex.mcp.tool.response' as const,
 		source: 'cortex-mcp' as const,
 		timestamp: new Date().toISOString(),
 		...data,
 	}),
-	contextCreated: (
-		data: Omit<McpContextCreatedEvent, 'event_id' | 'event_type' | 'source' | 'timestamp'>,
-	) => ({
+	contextCreated: (data: Omit<McpContextCreatedEvent, McpEventMetadataKeys>) => ({
 		event_id: crypto.randomUUID(),
 		event_type: 'cortex.mcp.context.created' as const,
 		source: 'cortex-mcp' as const,
 		timestamp: new Date().toISOString(),
 		...data,
 	}),
-	error: (data: Omit<McpErrorEvent, 'event_id' | 'event_type' | 'source' | 'timestamp'>) => ({
+	error: (data: Omit<McpErrorEvent, McpEventMetadataKeys>) => ({
 		event_id: crypto.randomUUID(),
 		event_type: 'cortex.mcp.error' as const,
 		source: 'cortex-mcp' as const,

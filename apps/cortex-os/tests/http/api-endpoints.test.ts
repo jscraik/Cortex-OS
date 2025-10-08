@@ -45,7 +45,10 @@ describe('brAInwav HTTP API Endpoints (Working Implementation)', () => {
 
 		const health = await response.json();
 		expect(health).toMatchObject({
-			status: 'ok',
+			status: 'healthy',
+			service: {
+				brand: 'brAInwav',
+			},
 			timestamp: expect.any(String),
 		});
 	});

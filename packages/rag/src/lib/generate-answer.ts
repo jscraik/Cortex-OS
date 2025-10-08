@@ -1,5 +1,13 @@
+import {
+	capturePromptUsage,
+	getPrompt,
+	renderPrompt,
+	validatePromptUsage,
+} from '@cortex-os/prompts';
 import type { MultiModelGenerator } from '../generation/multi-model.js';
 import type { Document } from './types.js';
+
+const DEFAULT_RAG_PROMPT_ID = 'sys.a2a.rag-default' as const;
 
 function buildContext(documents: Document[], maxLength?: number): string {
 	const contexts = documents.map((doc, index) => `[Document ${index + 1}]\n${doc.content}\n`);
@@ -10,10 +18,35 @@ function buildContext(documents: Document[], maxLength?: number): string {
 	return context;
 }
 
+function resolveSystemPrompt(customPrompt?: string): string {
+	if (customPrompt) {
+		const registered = getPrompt(customPrompt);
+		if (registered) {
+			const rendered = renderPrompt(registered, {});
+			validatePromptUsage(rendered, registered.id);
+			capturePromptUsage(registered);
+			return rendered;
+		}
+
+		validatePromptUsage(customPrompt);
+		return customPrompt;
+	}
+
+	const defaultRecord = getPrompt(DEFAULT_RAG_PROMPT_ID);
+	if (!defaultRecord) {
+		throw new Error(
+			`brAInwav RAG prompt '${DEFAULT_RAG_PROMPT_ID}' must be registered in the prompt library`,
+		);
+	}
+
+	const rendered = renderPrompt(defaultRecord, {});
+	validatePromptUsage(rendered, defaultRecord.id);
+	capturePromptUsage(defaultRecord);
+	return rendered;
+}
+
 function buildPrompt(query: string, context: string, customPrompt?: string): string {
-	const systemPrompt =
-		customPrompt ||
-		`You are a helpful AI assistant. Answer the user's question based on the provided context. If the context doesn't contain enough information to answer the question, say so clearly.`;
+	const systemPrompt = resolveSystemPrompt(customPrompt);
 	return `${systemPrompt}\n\nContext:\n${context}\n\nQuestion: ${query}\n\nAnswer:`;
 }
 

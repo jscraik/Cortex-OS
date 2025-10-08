@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 // Guarded: skip if hnswlib-node is unavailable
 async function hasHnsw() {
 	try {
+		await import('hnswlib-node');
 		await import('../hnsw-index');
 		return true;
 	} catch {

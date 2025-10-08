@@ -40,7 +40,8 @@ export function extractGitHubEventType(envelope: Envelope): string | null {
 export function isGitHubEventEnvelope(envelope: Envelope): boolean {
 	return (
 		envelope.type.startsWith('github.') &&
-		envelope.headers?.['github-delivery'] !== undefined &&
-		envelope.headers?.['github-event'] !== undefined
+		envelope.headers &&
+		'github-delivery' in envelope.headers &&
+		'github-event' in envelope.headers
 	);
 }

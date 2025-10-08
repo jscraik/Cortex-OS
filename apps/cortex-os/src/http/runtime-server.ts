@@ -1,28 +1,55 @@
 import { randomUUID } from 'node:crypto';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { URL } from 'node:url';
+import { performance } from 'node:perf_hooks';
 import type { OrchestrationFacade, RoutingDecision, RoutingRequest } from '@cortex-os/orchestration';
+import type { ObservabilityBus } from '@cortex-os/observability';
+import { OBSERVABILITY_EVENT_TYPES } from '@cortex-os/observability';
+import { z } from 'zod';
+import { createHealthService, type HealthService } from '../operational/health-service.js';
+import type { ShutdownResult } from '../operational/shutdown-result.js';
 import type { ArtifactRepository } from '../persistence/artifact-repository.js';
+import { createRequestId, logHttpError, logHttpInfo } from '../observability/logger.js';
+import { recordHttpMetrics, getMetricsContentType, getMetricsSnapshot } from '../observability/metrics.js';
+import { completeHttpTrace, startHttpTrace } from '../observability/tracing.js';
 import { OptimisticLockError } from '../persistence/errors.js';
 import type { EvidenceRepository, SaveEvidenceInput } from '../persistence/evidence-repository.js';
 import type { ProfileRecord, ProfileRepository } from '../persistence/profile-repository.js';
 import type { TaskRecord, TaskRepository } from '../persistence/task-repository.js';
+import { resolveRunPath } from '../run-bundle/paths.js';
+import {
+	loadRunRecord,
+	REQUIRED_FILES,
+	RunBundleNotFoundError,
+	RunBundleValidationError,
+	streamRunBundleArchive,
+} from '../run-bundle/exporter.js';
 import { AuthHttpError, authenticateRequest } from '../security/auth.js';
 
 export interface RuntimeHttpServer {
 	listen(port: number, host?: string): Promise<{ port: number }>;
 	close(): Promise<void>;
+	beginShutdown(options?: { timeoutMs?: number }): Promise<ShutdownResult>;
 	broadcast(event: { type: string; data: unknown }): void;
 	dependencies: RuntimeHttpDependencies;
 }
 
 export interface RuntimeHttpDependencies {
-\ttasks: TaskRepository;
-\tprofiles: ProfileRepository;
-\tartifacts: ArtifactRepository;
-\tevidence: EvidenceRepository;
-\torchestration: OrchestrationFacade;
+	tasks: TaskRepository;
+	profiles: ProfileRepository;
+	artifacts: ArtifactRepository;
+	evidence: EvidenceRepository;
+	orchestration: OrchestrationFacade;
+	observability?: ObservabilityBus;
 }
+
+interface RequestLifecycleControl {
+	isShuttingDown(): boolean;
+	sendUnavailable(res: ServerResponse): void;
+}
+
+
+const SERVICE_NAME = 'cortex-os/runtime-http';
 
 class HttpError extends Error {
 	public code: string;
@@ -39,6 +66,12 @@ class HttpError extends Error {
 
 const CORS_ALLOWED_METHODS = 'GET,POST,PUT,DELETE,OPTIONS';
 const CORS_ALLOWED_HEADERS = 'Content-Type, Authorization, Accept';
+
+const RUN_ID_SCHEMA = z
+	.string()
+	.min(1)
+	.max(128)
+	.regex(/^[A-Za-z0-9._-]+$/);
 
 function applyCors(req: IncomingMessage, res: ServerResponse): void {
 	const origin = req.headers.origin ?? '*';
@@ -62,20 +95,208 @@ function handleCorsPreflight(req: IncomingMessage, res: ServerResponse): boolean
 
 export function createRuntimeHttpServer(dependencies: RuntimeHttpDependencies): RuntimeHttpServer {
 	const clients = new Set<ServerResponse>();
+	const healthService = createHealthService(dependencies);
+
+	let activeRequests = 0;
+	let shuttingDown = false;
+	let shutdownPromise: Promise<ShutdownResult> | undefined;
+	let resolveShutdown: ((result: ShutdownResult) => void) | undefined;
+	let shutdownTimer: NodeJS.Timeout | undefined;
+
+	const pendingRequests = () => activeRequests + clients.size;
+
+	const completeShutdown = (completed: boolean) => {
+		if (!resolveShutdown) return;
+		const resolver = resolveShutdown;
+		resolveShutdown = undefined;
+		if (shutdownTimer) {
+			clearTimeout(shutdownTimer);
+			shutdownTimer = undefined;
+		}
+		resolver({ completed, pendingRequests: pendingRequests() });
+	};
+
+	const checkShutdownCompletion = () => {
+		if (!shuttingDown) return;
+		if (pendingRequests() === 0) {
+			completeShutdown(true);
+		}
+	};
+
+	const trackRequest = (res: ServerResponse) => {
+		activeRequests += 1;
+		let finished = false;
+		const finalize = () => {
+			if (finished) return;
+			finished = true;
+			activeRequests = Math.max(0, activeRequests - 1);
+			checkShutdownCompletion();
+		};
+		res.once('close', finalize);
+		res.once('finish', finalize);
+		res.once('error', finalize);
+	};
+
+	const sendUnavailable = (res: ServerResponse) => {
+		sendJson(res, 503, {
+			status: 'unavailable',
+			message: 'brAInwav: runtime shutting down',
+			timestamp: new Date().toISOString(),
+		});
+	};
+
+	const signalClients = () => {
+		const payload =
+			'event: shutdown\ndata: {"message":"brAInwav: runtime shutting down"}\n\n';
+		for (const client of [...clients]) {
+			try {
+				client.write(payload);
+			} catch (error) {
+				console.warn('brAInwav shutdown: SSE client close failed', error);
+			}
+			clients.delete(client);
+			client.end();
+		}
+		checkShutdownCompletion();
+	};
+
+	const onClientClosed = () => {
+		checkShutdownCompletion();
+	};
 
 	const server = createServer((req, res) => {
 		void (async () => {
+			const requestId = createRequestId();
+			const method = (req.method ?? 'UNKNOWN').toUpperCase();
+			const startTime = performance.now();
+			let path = '/unknown';
+			let errorMessage: string | undefined;
+			let traceContext: ReturnType<typeof startHttpTrace> | undefined;
+
+			trackRequest(res);
+
 			try {
+				if (!req.url) {
+					throw new HttpError(400, 'Request URL missing');
+				}
+
+				const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
+				path = normalizePath(url.pathname);
+
 				if (handleCorsPreflight(req, res)) {
 					return;
 				}
+
 				applyCors(req, res);
-				await handleRequest(req, res, clients, dependencies);
+
+				traceContext = startHttpTrace(
+					dependencies.observability,
+					`HTTP ${method} ${path}`,
+					SERVICE_NAME,
+					{ method, path, requestId },
+				);
+
+				await handleRequest(
+					req,
+					res,
+					clients,
+					dependencies,
+					healthService,
+					{
+						isShuttingDown: () => shuttingDown,
+						sendUnavailable,
+					},
+					onClientClosed,
+					url,
+				);
 			} catch (error) {
+				errorMessage = error instanceof Error ? error.message : String(error);
 				handleError(res, error);
+			} finally {
+				const durationMs = performance.now() - startTime;
+				const status = res.statusCode ?? 500;
+
+				recordHttpMetrics({
+					service: SERVICE_NAME,
+					method,
+					path,
+					status,
+					durationMs,
+				});
+
+				if (dependencies.observability) {
+					const timestamp = new Date().toISOString();
+					void dependencies.observability
+						.publish(OBSERVABILITY_EVENT_TYPES.METRIC_RECORDED, {
+							name: 'http.server.duration_ms',
+							value: durationMs,
+							type: 'histogram',
+							timestamp,
+							tags: {
+								service: SERVICE_NAME,
+								method,
+								path,
+								status: String(status),
+							},
+						})
+						.catch((publishError) => {
+							console.warn('brAInwav observability: metric publish failed', publishError);
+						});
+				}
+
+				if (status >= 500 && errorMessage) {
+					logHttpError({
+						service: SERVICE_NAME,
+						method,
+						path,
+						status,
+						durationMs,
+						requestId,
+						error: errorMessage,
+					});
+				}
+
+				logHttpInfo({
+					service: SERVICE_NAME,
+					method,
+					path,
+					status,
+					durationMs,
+					requestId,
+					message: errorMessage ? 'HTTP request completed with error' : 'HTTP request completed',
+					metadata: { shuttingDown },
+				});
+
+				if (traceContext) {
+					completeHttpTrace(dependencies.observability, traceContext, durationMs, status < 500);
+				}
 			}
 		})();
 	});
+
+	const beginShutdown = ({
+		timeoutMs = 30_000,
+	}: { timeoutMs?: number } = {}): Promise<ShutdownResult> => {
+		if (shutdownPromise) {
+			return shutdownPromise;
+		}
+		shuttingDown = true;
+		signalClients();
+		server.close((error) => {
+			if (error) {
+				console.warn('brAInwav runtime shutdown: server close error', error);
+			}
+			checkShutdownCompletion();
+		});
+		shutdownPromise = new Promise<ShutdownResult>((resolve) => {
+			resolveShutdown = resolve;
+			if (timeoutMs >= 0) {
+				shutdownTimer = setTimeout(() => completeShutdown(false), timeoutMs);
+			}
+			checkShutdownCompletion();
+		});
+		return shutdownPromise;
+	};
 
 	return {
 		dependencies,
@@ -90,14 +311,9 @@ export function createRuntimeHttpServer(dependencies: RuntimeHttpDependencies): 
 			return { port };
 		},
 		async close() {
-			await new Promise<void>((resolve, reject) => {
-				server.close((err) => (err ? reject(err) : resolve()));
-			});
-			for (const client of clients) {
-				client.end();
-			}
-			clients.clear();
+			await beginShutdown({ timeoutMs: 0 });
 		},
+		beginShutdown,
 		broadcast(event) {
 			const payload = `event: ${event.type}\ndata: ${JSON.stringify(event.data)}\n\n`;
 			for (const client of clients) {
@@ -112,20 +328,33 @@ async function handleRequest(
 	res: ServerResponse,
 	clients: Set<ServerResponse>,
 	dependencies: RuntimeHttpDependencies,
+	health: HealthService,
+	lifecycle: RequestLifecycleControl,
+	onClientClosed: () => void,
+	url: URL,
 ): Promise<void> {
-	if (!req.url) {
-		throw new HttpError(400, 'Request URL missing');
+	if (lifecycle.isShuttingDown()) {
+		lifecycle.sendUnavailable(res);
+		return;
 	}
 
-	const url = new URL(req.url, `http://${req.headers.host ?? 'localhost'}`);
-
 	if (req.method === 'GET' && url.pathname === '/health') {
-		handleHealth(res);
+		await respondWithHealth(res, health);
+		return;
+	}
+
+	if (req.method === 'GET' && (url.pathname === '/ready' || url.pathname === '/health/ready')) {
+		await respondWithReadiness(res, health);
+		return;
+	}
+
+	if (req.method === 'GET' && (url.pathname === '/live' || url.pathname === '/health/live')) {
+		respondWithLiveness(res, health);
 		return;
 	}
 
 	if (req.method === 'GET' && url.pathname === '/metrics') {
-		handleMetrics(res);
+		await handleMetrics(res);
 		return;
 	}
 
@@ -134,7 +363,7 @@ async function handleRequest(
 		url.pathname === '/v1/events' &&
 		url.searchParams.get('stream') === 'sse'
 	) {
-		handleSse(req, res, clients);
+		handleSse(req, res, clients, onClientClosed);
 		return;
 	}
 
@@ -186,6 +415,9 @@ async function handleApiRequest(
 			return;
 		case 'evidence':
 			await handleEvidenceRoute(req, res, url, segments, dependencies.evidence);
+			return;
+		case 'runs':
+			await handleRunsRoute(req, res, segments);
 			return;
 		default:
 			sendNotFound(res, `Unknown resource '${resource}'`);
@@ -648,11 +880,95 @@ async function handleEvidenceRoute(
 	sendNotFound(res, 'Unsupported evidence route');
 }
 
-function handleHealth(res: ServerResponse) {
-	sendJson(res, 200, { status: 'ok', timestamp: new Date().toISOString() });
+async function handleRunsRoute(
+	req: IncomingMessage,
+	res: ServerResponse,
+	segments: string[],
+): Promise<void> {
+	if (segments.length === 4 && segments[3] === 'bundle') {
+		if (req.method !== 'GET') {
+			throw new HttpError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
+		}
+		const idResult = RUN_ID_SCHEMA.safeParse(segments[2]);
+		if (!idResult.success) {
+			throw new HttpError(400, 'Invalid run identifier', 'RUN_ID_INVALID');
+		}
+		const runId = idResult.data;
+		const runDir = resolveRunPath(runId);
+
+		let summary: Awaited<ReturnType<typeof loadRunRecord>>;
+		try {
+			summary = await loadRunRecord(runDir);
+		} catch (error) {
+			if (error instanceof RunBundleNotFoundError) {
+				throw new HttpError(404, error.message, 'RUN_BUNDLE_NOT_FOUND');
+			}
+			if (error instanceof RunBundleValidationError) {
+				throw new HttpError(422, error.message, 'RUN_BUNDLE_INVALID');
+			}
+			throw error;
+		}
+
+		if (summary.id !== runId) {
+			throw new HttpError(409, 'Run metadata mismatch', 'RUN_ID_MISMATCH');
+		}
+
+		if (summary.status === 'running') {
+			throw new HttpError(409, 'Run bundle not finalized', 'RUN_NOT_FINALIZED');
+		}
+
+		res.writeHead(200, {
+			'Content-Type': 'application/zip',
+			'Content-Disposition': `attachment; filename="${runId}.pbrun"`,
+			'Cache-Control': 'no-store',
+			'X-Run-Id': runId,
+			'X-Run-Status': summary.status,
+			'X-Run-Started-At': summary.startedAt ?? '',
+			'X-Run-Finished-At': summary.finishedAt ?? '',
+			'X-Run-Duration-Ms': summary.durationMs !== undefined ? String(summary.durationMs) : '0',
+			'X-Run-Prompt-Count': summary.promptCount !== undefined ? String(summary.promptCount) : '0',
+			'X-Run-Message-Count': summary.messageCount !== undefined ? String(summary.messageCount) : '0',
+			'X-Run-Energy-Sample-Count': summary.energySampleCount !== undefined
+				? String(summary.energySampleCount)
+				: '0',
+			'X-Run-Bundle-Entries': String(REQUIRED_FILES.length),
+		});
+
+		try {
+			await streamRunBundleArchive({ runDir, output: res });
+		} catch (error) {
+			if (!res.headersSent) {
+				throw error;
+			}
+			res.destroy(error as Error);
+		}
+		return;
+	}
+
+	sendNotFound(res, 'Unsupported runs route');
 }
 
-function handleSse(req: IncomingMessage, res: ServerResponse, clients: Set<ServerResponse>) {
+async function respondWithHealth(res: ServerResponse, health: HealthService) {
+	const { statusCode, payload } = await health.checkHealth();
+	sendJson(res, statusCode, payload);
+}
+
+async function respondWithReadiness(res: ServerResponse, health: HealthService) {
+	const { statusCode, payload } = await health.checkReadiness();
+	sendJson(res, statusCode, payload);
+}
+
+function respondWithLiveness(res: ServerResponse, health: HealthService) {
+	const { statusCode, payload } = health.checkLiveness();
+	sendJson(res, statusCode, payload);
+}
+
+function handleSse(
+	req: IncomingMessage,
+	res: ServerResponse,
+	clients: Set<ServerResponse>,
+	onClientClosed: () => void,
+) {
 	res.writeHead(200, {
 		'Content-Type': 'text/event-stream',
 		'Cache-Control': 'no-cache',
@@ -665,7 +981,7 @@ function handleSse(req: IncomingMessage, res: ServerResponse, clients: Set<Serve
 
 	const onClose = () => {
 		clients.delete(res);
-		res.end();
+		onClientClosed();
 	};
 
 	req.on('close', onClose);
@@ -713,18 +1029,40 @@ function sendText(res: ServerResponse, status: number, body: string): void {
 	res.end(body);
 }
 
-function handleMetrics(res: ServerResponse): void {
-	const lines = [
-		'# HELP cortex_runtime_health Runtime health status (1=ok)',
-		'# TYPE cortex_runtime_health gauge',
-		'cortex_runtime_health 1',
-	];
-	sendText(res, 200, `${lines.join('\n')}\n`);
+async function handleMetrics(res: ServerResponse): Promise<void> {
+	try {
+		const snapshot = await getMetricsSnapshot();
+		res.writeHead(200, {
+			'Content-Type': getMetricsContentType(),
+			'Content-Length': Buffer.byteLength(snapshot),
+		});
+		res.end(snapshot);
+	} catch (error) {
+		console.warn('brAInwav metrics: failed to collect snapshot', error);
+		sendJson(res, 500, {
+			status: 'error',
+			message: 'brAInwav: failed to collect metrics snapshot',
+			timestamp: new Date().toISOString(),
+		});
+	}
 }
 
 function sendNoContent(res: ServerResponse): void {
 	res.writeHead(204);
 	res.end();
+}
+
+function normalizePath(pathname: string): string {
+	if (!pathname || pathname === '/') return '/';
+	const segments = pathname
+		.split('/')
+		.filter(Boolean)
+		.map((segment) => {
+			if (/^\d+$/.test(segment)) return ':param';
+			if (/^[0-9a-f-]{12,}$/i.test(segment)) return ':param';
+			return segment;
+		});
+	return segments.length > 0 ? `/${segments.join('/')}` : '/';
 }
 
 function sendNotFound(

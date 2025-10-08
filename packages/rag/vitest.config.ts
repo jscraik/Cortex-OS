@@ -7,6 +7,10 @@ const currentDir = dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
 	resolve: {
 		alias: {
+			'@cortex-os/prompts': resolve(currentDir, '../prompts/src'),
+			'@cortex-os/a2a-core/bus': resolve(currentDir, '__tests__/stubs/a2a-core.ts'),
+			'@cortex-os/a2a-core/transport': resolve(currentDir, '__tests__/stubs/a2a-core-transport.ts'),
+			'@cortex-os/observability': resolve(currentDir, '../observability/src'),
 			'@cortex-os/agents': resolve(currentDir, '__tests__/stubs/agent-mcp-client.ts'),
 			'@cortex-os/a2a-contracts': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
 			'@cortex-os/a2a-contracts/dist/src': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
@@ -28,7 +32,7 @@ export default defineConfig({
 				'__tests__/stubs/a2a-contracts.ts',
 			),
 			'../a2a-contracts/src/envelope.ts': resolve(currentDir, '__tests__/stubs/a2a-contracts.ts'),
-			'@cortex-os/a2a-core': resolve(currentDir, '../a2a/a2a-core/src'),
+			'@cortex-os/a2a-core': resolve(currentDir, '__tests__/stubs/a2a-core.ts'),
 			'@cortex-os/a2a-transport': resolve(currentDir, '../a2a/a2a-transport/src'),
 			// Some internal packages import the built contracts dist path; map it to src for tests
 			'@cortex-os/contracts/dist/src': resolve(
@@ -70,6 +74,15 @@ export default defineConfig({
 				'libs',
 				'typescript',
 				'contracts',
+				'src',
+			),
+			'@cortex-os/utils': resolve(
+				currentDir,
+				'..',
+				'..',
+				'libs',
+				'typescript',
+				'utils',
 				'src',
 			),
 		},

@@ -15,14 +15,14 @@ export interface StreamingEvent {
 	type: 'start' | 'node_start' | 'node_finish' | 'token' | 'error' | 'finish';
 	timestamp: string;
 	threadId: string;
-	data: any;
+	data?: unknown;
 }
 
 export interface NodeStartEvent extends StreamingEvent {
 	type: 'node_start';
 	data: {
 		nodeName: string;
-		input: any;
+		input: unknown;
 	};
 }
 
@@ -30,7 +30,7 @@ export interface NodeFinishEvent extends StreamingEvent {
 	type: 'node_finish';
 	data: {
 		nodeName: string;
-		output: any;
+		output: unknown;
 		duration: number;
 	};
 }
@@ -110,18 +110,18 @@ export class StreamingManager extends EventEmitter {
 	 * Stream agent execution with real-time events
 	 */
 	async streamExecution(
-		graph: StateGraph<any>,
+		graph: StateGraph<unknown>,
 		initialState: CortexState,
 		config: RunnableConfig & { threadId: string },
 	): Promise<CortexState> {
 		if (!this.config.enabled) {
 			// Check if invoke method exists
-			if (typeof (graph as any).invoke === 'function') {
-				return (graph as any).invoke(initialState, config);
+			if ('invoke' in graph && typeof graph.invoke === 'function') {
+				return graph.invoke(initialState, config) as Promise<CortexState>;
 			}
 			// Fallback to compiled graph
 			const compiledGraph = graph.compile();
-			return compiledGraph.invoke(initialState, config);
+			return compiledGraph.invoke(initialState, config) as Promise<CortexState>;
 		}
 
 		const threadId = config.threadId;
@@ -136,18 +136,18 @@ export class StreamingManager extends EventEmitter {
 		});
 
 		// Create stream
-		let stream;
+		let stream: AsyncIterable<unknown>;
 		try {
 			// Try to use stream method if available
-			if (typeof (graph as any).stream === 'function') {
-				stream = (graph as any).stream(initialState, {
+			if ('stream' in graph && typeof graph.stream === 'function') {
+				stream = await graph.stream(initialState, {
 					...config,
 				});
 			} else {
 				// Fallback to compiled graph
 				const compiledGraph = graph.compile();
-				if (typeof (compiledGraph as any).stream === 'function') {
-					stream = (compiledGraph as any).stream(initialState, {
+				if ('stream' in compiledGraph && typeof compiledGraph.stream === 'function') {
+					stream = await compiledGraph.stream(initialState, {
 						...config,
 					});
 				} else {
@@ -159,7 +159,7 @@ export class StreamingManager extends EventEmitter {
 						threadId,
 						data: { result },
 					});
-					return result;
+					return result as CortexState;
 				}
 			}
 		} catch (error) {

@@ -12,8 +12,9 @@ export interface RunBundleInit {
 }
 
 export class RunBundleWriter {
-	private paths: RunBundlePaths;
-	constructor(private init: RunBundleInit) {
+	private readonly paths: RunBundlePaths;
+
+	constructor(private readonly init: RunBundleInit) {
 		this.paths = { root: join(init.rootDir, init.id) };
 	}
 
@@ -27,20 +28,40 @@ export class RunBundleWriter {
 		await fs.writeFile(file, JSON.stringify(data, null, 2), 'utf8');
 	}
 
+	async writeJSONLines(rel: string, records: unknown[]): Promise<void> {
+		const file = join(this.paths.root, rel);
+		await fs.mkdir(dirname(file), { recursive: true });
+		if (records.length === 0) {
+			await fs.writeFile(file, '', 'utf8');
+			return;
+		}
+		const serialized = `${records.map((record) => JSON.stringify(record)).join('\n')}\n`;
+		await fs.writeFile(file, serialized, 'utf8');
+	}
+
 	async appendJSONL(rel: string, record: unknown): Promise<void> {
 		const file = join(this.paths.root, rel);
 		await fs.mkdir(dirname(file), { recursive: true });
-		await fs.appendFile(file, JSON.stringify(record) + '\n', 'utf8');
+		await fs.appendFile(file, `${JSON.stringify(record)}\n`, 'utf8');
 	}
 
-	// New: capture prompts.json
+	async writeText(rel: string, contents: string): Promise<void> {
+		const file = join(this.paths.root, rel);
+		await fs.mkdir(dirname(file), { recursive: true });
+		await fs.writeFile(file, contents, 'utf8');
+	}
+
 	async writePrompts(captures: PromptCapture[]): Promise<void> {
 		await this.writeJSON('prompts.json', captures);
+	}
+
+	get root(): string {
+		return this.paths.root;
 	}
 }
 
 export async function initRunBundle(init: RunBundleInit): Promise<RunBundleWriter> {
-	const w = new RunBundleWriter(init);
-	await w.ensure();
-	return w;
+	const writer = new RunBundleWriter(init);
+	await writer.ensure();
+	return writer;
 }

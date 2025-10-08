@@ -132,3 +132,18 @@ logs/*.log
 *.swp
 *.swo
 
+.vscode/settings.backup.json
+.vscode/performance.json
+.vscode/.tscache
+.vscode/typescript*
+
+# VS Code performance files
+.vscode/.tscache
+.vscode/typescript*
+.vscode/.extensions
+.vscode/.logs
+.vscode/.test
+.vscode/settings.backup.json
+.vscode/settings.optimized.json
+.vscode/performance.json
+emergency-code.sh

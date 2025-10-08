@@ -10,7 +10,7 @@ from .health import (
     check_embeddings_health,
     check_database_health,
 )
-from .graceful_shutdown import GracefulShutdown, get_shutdown_manager
+from .graceful_shutdown import GracefulShutdown, get_shutdown_manager, reset_shutdown_manager
 
 __all__ = [
     "HealthService",
@@ -19,4 +19,5 @@ __all__ = [
     "check_database_health",
     "GracefulShutdown",
     "get_shutdown_manager",
+    "reset_shutdown_manager",
 ]
