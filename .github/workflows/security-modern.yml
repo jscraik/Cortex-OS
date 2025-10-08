@@ -31,14 +31,14 @@ jobs:
           fetch-depth: 0
 
       - name: Full-stack setup (minimal)
-        uses: ./.github/workflows/reusable-full-stack-setup.yml
+        uses: ./.github/actions/full-stack-setup
         with:
           node-version: "22"
           pnpm-version: "9"
           python-version: "3.11"
-          uv: true
-          run-install: false # Just cache warming
-          cache-warm: true
+          uv: 'true'
+          run-install: 'false' # Just cache warming
+          cache-warm: 'true'
 
       - name: Gitleaks (PR diff only)
         uses: gitleaks/gitleaks-action@v2
