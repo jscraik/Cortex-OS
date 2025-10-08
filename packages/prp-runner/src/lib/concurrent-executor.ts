@@ -27,17 +27,17 @@ export class ConcurrentExecutor {
 	}
 
 	/**
-	 * Execute multiple neurons concurrently with proper synchronization
+	 * Execute multiple subAgents concurrently with proper synchronization
 	 */
 	async executeConcurrently<T = unknown>(
-		neurons: Array<{
+		subAgents: Array<{
 			id: string;
 			execute: () => Promise<T>;
 		}>,
 		options: ExecuteOptions = {},
 	): Promise<Map<string, ExecutionResult<T>>> {
-		const promises = neurons.map(async (neuron) => {
-			const { id, execute } = neuron;
+		const promises = subAgents.map(async (subAgent) => {
+			const { id, execute } = subAgent;
 
 			// Acquire semaphore
 			const release = await this.semaphore.acquire();
@@ -140,14 +140,14 @@ export class ConcurrentExecutor {
 	}
 
 	/**
-	 * Get currently executing neuron IDs
+	 * Get currently executing subAgent IDs
 	 */
 	getExecutingNeurons(): Set<string> {
 		return new Set(this.executing);
 	}
 
 	/**
-	 * Check if a neuron is currently executing
+	 * Check if a subAgent is currently executing
 	 */
 	isExecuting(neuronId: string): boolean {
 		return this.executing.has(neuronId);

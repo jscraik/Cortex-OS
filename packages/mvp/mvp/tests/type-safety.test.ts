@@ -3,7 +3,7 @@ import { SimplePRPGraph } from '../src/graph-simple.js';
 import { MCPAdapter } from '../src/mcp/adapter.js';
 
 describe('Type Safety Fixes', () => {
-	it('should create valid Neuron objects from MCP tools', () => {
+	it('should create valid SubAgent objects from MCP tools', () => {
 		const adapter = new MCPAdapter();
 		const mockTool = {
 			name: 'test-tool',
@@ -12,22 +12,22 @@ describe('Type Safety Fixes', () => {
 			execute: async () => ({ result: 'success' }),
 		};
 
-		const neuron = adapter.createNeuronFromTool(mockTool, 'strategy');
+		const subAgent = adapter.createNeuronFromTool(mockTool, 'strategy');
 
 		// All required properties should exist
-		expect(neuron).toHaveProperty('id');
-		expect(neuron).toHaveProperty('role');
-		expect(neuron).toHaveProperty('phase');
-		expect(neuron).toHaveProperty('dependencies');
-		expect(neuron).toHaveProperty('tools');
-		expect(neuron).toHaveProperty('execute');
-		expect(typeof neuron.execute).toBe('function');
+		expect(subAgent).toHaveProperty('id');
+		expect(subAgent).toHaveProperty('role');
+		expect(subAgent).toHaveProperty('phase');
+		expect(subAgent).toHaveProperty('dependencies');
+		expect(subAgent).toHaveProperty('tools');
+		expect(subAgent).toHaveProperty('execute');
+		expect(typeof subAgent.execute).toBe('function');
 	});
 
 	it('should match PRPOrchestrator interface from prp-runner', () => {
 		const mockOrchestrator = {
 			getNeuronCount: () => 3,
-			executeNeuron: async () => ({}), // Add missing method
+			executeSubAgent: async () => ({}), // Add missing method
 		};
 
 		const graph = new SimplePRPGraph(mockOrchestrator);

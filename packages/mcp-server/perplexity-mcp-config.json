@@ -1,0 +1,9 @@
+{
+  "command": "/Users/jamiecraik/.Cortex-OS/packages/mcp-server/scripts/start-stdio.sh",
+  "args": [],
+  "env": {
+    "LOCAL_MEMORY_BASE_URL": "http://localhost:9400",
+    "PIECES_MCP_ENABLED": "false",
+    "MCP_LOG_LEVEL": "error"
+  }
+}

@@ -21,7 +21,7 @@ describe('@cortex-os/prp-runner public API', () => {
         "compileEnforcementProfile",
         "createExecutionContext",
         "createPRPOrchestrator",
-        "executeNeuron",
+        "executeSubAgent",
         "generatePRPMarkdown",
         "generateReviewJSON",
         "loadInitialMd",

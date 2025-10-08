@@ -21,7 +21,7 @@ describe('PRP Orchestrator E2E', () => {
 		ollamaGenerateMock = async () => ({ response: 'ok' });
 	});
 
-	it('runs a full cycle with an LLM-backed neuron', async () => {
+	it('runs a full cycle with an LLM-backed subAgent', async () => {
 		const orchestrator = createPRPOrchestrator();
 
 		// Configure LLM (Ollama mocked)
@@ -31,7 +31,7 @@ describe('PRP Orchestrator E2E', () => {
 			model: 'llama3',
 		});
 
-		// Register a simple neuron that uses the LLM bridge
+		// Register a simple subAgent that uses the LLM bridge
 		orchestrator.registerNeuron({
 			id: 'strategy-llm',
 			role: 'strategy',
@@ -71,7 +71,7 @@ describe('PRP Orchestrator E2E', () => {
 		expect(result.outputs).toHaveProperty('strategy-llm');
 	});
 
-	it('runs an MLX-backed neuron using mocked adapter', async () => {
+	it('runs an MLX-backed subAgent using mocked adapter', async () => {
 		// Mock MLX adapter
 		const checkHealth = vi.fn().mockResolvedValue({ healthy: true, message: 'ok' });
 		const generate = vi.fn().mockResolvedValue('mlx-ok');
@@ -84,7 +84,7 @@ describe('PRP Orchestrator E2E', () => {
 		orchestrator.configureLLM({ provider: 'mlx', mlxModel: 'QWEN_SMALL' });
 
 		orchestrator.registerNeuron({
-			id: 'mlx-neuron',
+			id: 'mlx-subAgent',
 			role: 'build',
 			phase: 'build',
 			dependencies: [],
@@ -119,10 +119,10 @@ describe('PRP Orchestrator E2E', () => {
 
 		const result = await orchestrator.executePRPCycle(blueprint);
 		expect(result.status).toBe('completed');
-		expect(result.outputs).toHaveProperty('mlx-neuron');
+		expect(result.outputs).toHaveProperty('mlx-subAgent');
 	});
 
-	it('executes neurons respecting dependencies across phases', async () => {
+	it('executes subAgents respecting dependencies across phases', async () => {
 		const orchestrator = createPRPOrchestrator();
 
 		// Ollama mocked already
@@ -136,7 +136,7 @@ describe('PRP Orchestrator E2E', () => {
 		const execLog: Array<{ id: string; seq: number }> = [];
 		let execSeq = 0;
 
-		// Register three neurons across phases with dependencies: n1(strategy) -> n2(build) -> n3(evaluation)
+		// Register three subAgents across phases with dependencies: n1(strategy) -> n2(build) -> n3(evaluation)
 		orchestrator.registerNeuron({
 			id: 'n1',
 			role: 'strategy',
@@ -244,7 +244,7 @@ describe('PRP Orchestrator E2E', () => {
 
 	it('fails fast when LLM is misconfigured', async () => {
 		const orchestrator = createPRPOrchestrator();
-		// Register a neuron requiring LLM but do not configure it
+		// Register a subAgent requiring LLM but do not configure it
 		orchestrator.registerNeuron({
 			id: 'needs-llm',
 			role: 'strategy',
@@ -264,7 +264,7 @@ describe('PRP Orchestrator E2E', () => {
 		};
 
 		await expect(orchestrator.executePRPCycle(blueprint)).rejects.toThrow(
-			'LLM configuration required for LLM-powered neurons',
+			'LLM configuration required for LLM-powered subAgents',
 		);
 	});
 });

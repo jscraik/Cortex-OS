@@ -283,23 +283,24 @@ For ChatGPT, remote IDEs:
 PORT=3024 node dist/index.js
 ```
 
-### ChatGPT Configuration
+### ChatGPT Desktop Configuration
 
-Add to ChatGPT MCP configuration:
+**Important:** ChatGPT Desktop uses **remote SSE servers**, not local STDIO like Claude.
 
-```json
-{
-  "mcpServers": {
-    "cortex-mcp": {
-      "command": "/path/to/.Cortex-OS/scripts/start-mcp-server-stdio.sh",
-      "env": {
-        "LOCAL_MEMORY_BASE_URL": "http://localhost:3028/api/v1",
-        "PIECES_MCP_ENABLED": "true"
-      }
-    }
-  }
-}
+#### Setup Instructions:
+
+1. Open **ChatGPT Desktop** → **Settings** → **Connectors**
+2. Click **"+ Add Connector"** or **"Import MCP Server"**
+3. Enter the following details:
+
 ```
+Server URL: https://cortex-mcp.brainwav.io/sse
+Server Name: brAInwav Cortex Memory
+```
+
+**Note:** The `/sse` endpoint is automatically available when running in `httpStream` mode. Your server is accessible via Cloudflare Tunnel at `cortex-mcp.brainwav.io`.
+
+See [CHATGPT_CONNECTION_GUIDE.md](./CHATGPT_CONNECTION_GUIDE.md) for detailed setup and troubleshooting.
 
 ## 🧪 Development
 

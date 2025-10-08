@@ -28,7 +28,7 @@ export {
 	type TaskExecutedEvent,
 } from './events/prp-runner-events.js';
 export { createExecutionContext } from './lib/create-execution-context.js';
-export { executeNeuron } from './lib/execute-neuron.js';
+export { executeSubAgent } from './lib/execute-sub-agent.js';
 
 // New architecture components
 export * from './lib/index.js';
@@ -41,9 +41,9 @@ export type {
 	ExecutionContext,
 	ExecutionMetrics,
 	ExecutionState,
-	Neuron,
-	NeuronResult,
 	PRPExecutionResult,
 	PRPOrchestrator,
+	SubAgent,
+	SubAgentResult,
 } from './orchestrator.js';
 export { createPRPOrchestrator } from './orchestrator.js';

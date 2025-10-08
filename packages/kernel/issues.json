@@ -74,10 +74,10 @@
 		"lines": "124-168",
 		"severity": "high",
 		"category": "type-safety-violation",
-		"description": "createNeuronFromTool returns untyped object that doesn't match Neuron interface",
-		"evidence": "Line 124-168: returned object structure doesn't match Neuron interface from prp-runner",
-		"fix": "Import Neuron interface and ensure returned object implements it correctly",
-		"tests_to_add": "Test MCP neuron creation with type checking"
+		"description": "createNeuronFromTool returns untyped object that doesn't match Sub-agent interface",
+		"evidence": "Line 124-168: returned object structure doesn't match Sub-agent interface from prp-runner",
+		"fix": "Import Sub-agent interface and ensure returned object implements it correctly",
+		"tests_to_add": "Test MCP sub-agent creation with type checking"
 	},
 	{
 		"file": "/Users/jamiecraik/.cortex-os/apps/cortex-os/packages/kernel/src/teaching/behavior-extension.ts",

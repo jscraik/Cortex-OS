@@ -11,6 +11,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### PRP Runner ↔ Task Management Integration - Phase 1 Complete (2025-01-30)
+
+- **New Package: @cortex-os/workflow-common**
+  - Created shared validation package for PRP Runner and Task Management
+  - Location: `packages/workflow-common/`
+  - Exports: Coverage, Performance, Security, and Accessibility validation functions
+  - Evidence tracking: Unified evidence index for cross-referencing gates and phases
+  - Test coverage: 100% (8/8 tests passing)
+  - brAInwav branding: Consistently applied across all validators
+
+- **Shared Validation Functions**:
+  - `validateCoverage()`: Coverage validation (lines/branches/functions/statements)
+  - `validatePerformance()`: Performance budget validation (LCP/TBT/FCP/TTI)
+  - `validateSecurity()`: Security vulnerability validation (Critical/High/Medium/Low)
+  - `validateAccessibility()`: Accessibility validation (WCAG 2.2 AA compliance)
+  - All validators return `ValidationResult` with passed/failures/warnings/metadata
+
+- **Evidence Tracking System**:
+  - `EvidenceIndex`: Links PRP gate evidence to task artifacts
+  - `createEvidenceIndexEntry()`: Creates cross-referenced evidence entries
+  - `linkGateToTask()`: Maps PRP gates to task management phases
+  - Query functions: `findEvidenceByTask()`, `findEvidenceByGate()`, `findEvidenceByPhase()`
+
+### Changed
+
+#### PRP Runner Integration
+
+- **Updated G4 Verification Gate** (`packages/prp-runner/src/gates/g4-verification.ts`)
+  - Replaced simulated validation with real validation using `@cortex-os/workflow-common`
+  - Added `CoverageValidationCheck`: Uses shared `validateCoverage()`
+  - Added `PerformanceValidationCheck`: Uses shared `validatePerformance()`
+  - Added `SecurityValidationCheck`: Uses shared `validateSecurity()`
+  - All checks now provide brAInwav-branded output and evidence artifacts
+
+- **New Integration Adapter** (`packages/prp-runner/src/integrations/task-management-adapter.ts`)
+  - `blueprintToConstitution()`: Maps G0 blueprint to Task Phase 0 constitution
+  - `enforcementProfileToQualityRequirements()`: Converts enforcement profile to quality requirements
+  - `extractCoverageRequirements()`: Extracts coverage requirements from enforcement profile
+  - `extractPerformanceBudget()`: Extracts performance budget from enforcement profile
+  - `extractAccessibilityRequirements()`: Extracts a11y requirements from enforcement profile
+  - `getDefaultSecurityRequirements()`: Returns brAInwav security standards
+
+- **Updated package.json**:
+  - Added dependency: `"@cortex-os/workflow-common": "workspace:*"`
+
+#### Task Management Templates
+
+- **Updated TDD Plan Template** (`.cortex/templates/tdd-plan-template.md`)
+  - Added "PRP Gate Alignment" section
+  - References enforcement profile for coverage/performance/a11y targets
+  - Documents cross-references to PRP gates (G0, G1, G2, G4)
+  - Evidence trail tracking via `.cortex/evidence-index.json`
+  - Updated success criteria to align with PRP gate validation
+
+### Terminology
+
+- **Replaced "neuron" → "sub-agent"** across entire codebase (~73 files)
+  - Type names: `Neuron` → `SubAgent` (PascalCase)
+  - Variables: `neuron` → `subAgent` (camelCase)
+  - Functions: `executeNeuron` → `executeSubAgent`
+  - User-facing strings: "neuron" → "sub-agent" (hyphenated)
+  - File renamed: `execute-neuron.ts` → `execute-sub-agent.ts`
+  - All imports and references updated
+
+### Documentation
+
+- **Created**:
+  - `packages/workflow-common/README.md`: Comprehensive package documentation
+  - `packages/prp-runner/src/integrations/task-management-adapter.ts`: Fully documented adapter
+  - `tasks/prp-runner-task-management-integration-phase1-complete.md`: Implementation summary
+  - `packages/workflow-common/src/*.ts`: Inline documentation for all validators
+
+- **Updated**:
+  - `.cortex/templates/tdd-plan-template.md`: Added PRP gate alignment guidance
+  - All workflow-common source files: JSDoc comments with examples
+
 ### Security
 
 #### CVE-2025-57319 (fast-redact) Fixed - Zero Vulnerabilities Achieved (2025-01-21)

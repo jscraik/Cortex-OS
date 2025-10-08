@@ -32,7 +32,7 @@ export interface OrchestrationFacade {
 		task: Task,
 		agents: Agent[],
 		context?: Partial<PlanningContext>,
-		neurons?: unknown[],
+		subAgents?: unknown[],
 	) => Promise<unknown>;
 	router: PolicyRouter;
 	shutdown: () => Promise<void>;

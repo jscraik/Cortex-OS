@@ -1,7 +1,7 @@
 {
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"title": "Cortex-OS Review Evidence",
-	"description": "A schema for machine-readable review evidence emitted by the Reviewer neuron.",
+	"description": "A schema for machine-readable review evidence emitted by the Reviewer sub-agent.",
 	"type": "object",
 	"properties": {
 		"run_id": {

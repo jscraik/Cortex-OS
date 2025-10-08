@@ -9,7 +9,7 @@ export type PRPPhase = 'strategy' | 'build' | 'evaluation';
 import { loadConfig } from './config/index.js';
 import { ConcurrentExecutor } from './lib/concurrent-executor.js';
 import { createExecutionContext } from './lib/create-execution-context.js';
-import { executeNeuron } from './lib/execute-neuron.js';
+import { executeSubAgent } from './lib/execute-sub-agent.js';
 import { LLMBridge, type LLMConfig } from './llm-bridge.js';
 
 export interface Blueprint {
@@ -39,17 +39,17 @@ export interface PRPExecutionResult extends ExecutionState {
 	status: 'completed' | 'failed';
 }
 
-export interface Neuron {
+export interface SubAgent {
 	id: string;
 	role: string;
 	phase: PRPPhase;
 	dependencies: string[];
 	tools: string[];
 	requiresLLM?: boolean;
-	execute(state: ExecutionState, context: ExecutionContext): Promise<NeuronResult>;
+	execute(state: ExecutionState, context: ExecutionContext): Promise<SubAgentResult>;
 }
 
-export interface NeuronResult {
+export interface SubAgentResult {
 	output: unknown;
 	evidence: unknown[];
 	nextSteps: string[];
@@ -69,8 +69,8 @@ export interface ExecutionMetrics {
 
 export interface PRPOrchestrator {
 	getNeuronCount(): number;
-	registerNeuron(neuron: Neuron): void;
-	getNeuronsByPhase(phase: PRPPhase): Neuron[];
+	registerNeuron(subAgent: SubAgent): void;
+	getNeuronsByPhase(phase: PRPPhase): SubAgent[];
 	configureLLM(config: LLMConfig): void;
 	getLLMConfig(): LLMConfig | undefined;
 	createLLMBridge(): LLMBridge;
@@ -78,32 +78,33 @@ export interface PRPOrchestrator {
 	generateProductRequirementsPrompt(blueprint: Blueprint): Promise<string>;
 }
 
-function register(neurons: Map<string, Neuron>, neuron: Neuron): void {
-	if (neurons.has(neuron.id)) {
-		throw new Error(`Neuron with ID ${neuron.id} already registered`);
+function register(subAgents: Map<string, SubAgent>, subAgent: SubAgent): void {
+	if (subAgents.has(subAgent.id)) {
+		throw new Error(`SubAgent with ID ${subAgent.id} already registered`);
 	}
-	neurons.set(neuron.id, neuron);
+	subAgents.set(subAgent.id, subAgent);
 }
 
-function getByPhase(neurons: Map<string, Neuron>, phase: PRPPhase): Neuron[] {
-	return Array.from(neurons.values()).filter((n) => n.phase === phase);
+function getByPhase(subAgents: Map<string, SubAgent>, phase: PRPPhase): SubAgent[] {
+	return Array.from(subAgents.values()).filter((n) => n.phase === phase);
 }
 
 function sanitizeKey(input: string): string {
 	return input.replace(/\W/g, '_').toUpperCase();
 }
 
-function initGraph(neurons: Map<string, Neuron>): {
+function initGraph(subAgents: Map<string, SubAgent>): {
 	ids: string[];
 	indegree: Map<string, number>;
 	dependents: Map<string, string[]>;
 } {
-	const ids = Array.from(neurons.keys());
+	const ids = Array.from(subAgents.keys());
 	const indegree = new Map<string, number>(ids.map((id) => [id, 0]));
 	const dependents = new Map<string, string[]>();
-	for (const n of neurons.values()) {
+	for (const n of subAgents.values()) {
 		for (const dep of n.dependencies) {
-			if (!neurons.has(dep)) throw new Error(`Unknown dependency '${dep}' for neuron '${n.id}'`);
+			if (!subAgents.has(dep))
+				throw new Error(`Unknown dependency '${dep}' for subAgent '${n.id}'`);
 			indegree.set(n.id, (indegree.get(n.id) || 0) + 1);
 			dependents.set(dep, [...(dependents.get(dep) || []), n.id]);
 		}
@@ -115,8 +116,8 @@ function nextReady(ids: string[], indegree: Map<string, number>, visited: Set<st
 	return ids.filter((id) => !visited.has(id) && (indegree.get(id) || 0) === 0);
 }
 
-function buildLevels(neurons: Map<string, Neuron>): string[][] {
-	const { ids, indegree, dependents } = initGraph(neurons);
+function buildLevels(subAgents: Map<string, SubAgent>): string[][] {
+	const { ids, indegree, dependents } = initGraph(subAgents);
 	const levels: string[][] = [];
 	const visited = new Set<string>();
 	let ready = nextReady(ids, indegree, visited);
@@ -138,38 +139,38 @@ function buildLevels(neurons: Map<string, Neuron>): string[][] {
 }
 
 async function executeCycle(
-	neurons: Map<string, Neuron>,
+	subAgents: Map<string, SubAgent>,
 	llmConfig: LLMConfig | undefined,
 	llmBridge: LLMBridge | undefined,
 	blueprint: Blueprint,
 ): Promise<PRPExecutionResult> {
-	if (neurons.size === 0) throw new Error('No neurons registered');
-	const llmNeurons = Array.from(neurons.values()).filter((n) => n.requiresLLM);
+	if (subAgents.size === 0) throw new Error('No subAgents registered');
+	const llmNeurons = Array.from(subAgents.values()).filter((n) => n.requiresLLM);
 	if (llmNeurons.length > 0 && !llmConfig) {
-		throw new Error('LLM configuration required for LLM-powered neurons');
+		throw new Error('LLM configuration required for LLM-powered subAgents');
 	}
 	const context = createExecutionContext(llmBridge);
 	const cycleId = `prp-${Date.now()}`;
 
 	const executor = new ConcurrentExecutor(4);
-	const levels = buildLevels(neurons);
+	const levels = buildLevels(subAgents);
 	const outputs: Record<string, unknown> = {};
 	let hasFailures = false;
 
 	for (const level of levels) {
 		const tasks = level.map((id) => {
-			const neuron = neurons.get(id);
-			if (!neuron) throw new Error(`Neuron '${id}' not found`);
+			const subAgent = subAgents.get(id);
+			if (!subAgent) throw new Error(`SubAgent '${id}' not found`);
 			return {
 				id,
 				execute: async () => {
 					const state: ExecutionState = {
 						id: cycleId,
-						phase: neuron.phase,
+						phase: subAgent.phase,
 						blueprint,
 						outputs: {},
 					};
-					return await executeNeuron(neuron, state, context);
+					return await executeSubAgent(subAgent, state, context);
 				},
 			};
 		});
@@ -178,7 +179,7 @@ async function executeCycle(
 			if (result.success) {
 				outputs[neuronId] = result.result;
 			} else {
-				console.error(`Neuron ${neuronId} failed:`, result.error);
+				console.error(`SubAgent ${neuronId} failed:`, result.error);
 				hasFailures = true;
 				outputs[neuronId] = { error: result.error?.message, failed: true };
 			}
@@ -195,7 +196,7 @@ async function executeCycle(
 }
 
 export function createPRPOrchestrator(): PRPOrchestrator {
-	const neurons = new Map<string, Neuron>();
+	const subAgents = new Map<string, SubAgent>();
 	let llmConfig: LLMConfig | undefined;
 	let llmBridge: LLMBridge | undefined;
 
@@ -223,9 +224,9 @@ export function createPRPOrchestrator(): PRPOrchestrator {
 	}
 
 	return {
-		getNeuronCount: () => neurons.size,
-		registerNeuron: (neuron) => register(neurons, neuron),
-		getNeuronsByPhase: (phase) => getByPhase(neurons, phase),
+		getNeuronCount: () => subAgents.size,
+		registerNeuron: (subAgent) => register(subAgents, subAgent),
+		getNeuronsByPhase: (phase) => getByPhase(subAgents, phase),
 		configureLLM: (config) => {
 			// Apply defaults for MLX provider
 			if (config.provider === 'mlx' && !config.endpoint) {
@@ -254,7 +255,7 @@ export function createPRPOrchestrator(): PRPOrchestrator {
 			if (!llmBridge) throw new Error('LLM must be configured before creating bridge');
 			return llmBridge;
 		},
-		executePRPCycle: (blueprint) => executeCycle(neurons, llmConfig, llmBridge, blueprint),
+		executePRPCycle: (blueprint) => executeCycle(subAgents, llmConfig, llmBridge, blueprint),
 		generateProductRequirementsPrompt: async (blueprint: Blueprint) => {
 			// Basic validation similar to tests' expectations
 			if (
@@ -266,7 +267,7 @@ export function createPRPOrchestrator(): PRPOrchestrator {
 				throw new Error('Invalid blueprint');
 			}
 
-			const strategyNeurons = getByPhase(neurons, 'strategy');
+			const strategyNeurons = getByPhase(subAgents, 'strategy');
 			const strategyIds = strategyNeurons.map((n) => n.id);
 
 			const lines: string[] = [];

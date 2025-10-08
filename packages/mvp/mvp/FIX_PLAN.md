@@ -10,17 +10,17 @@ This document outlines the specific fixes needed to address the critical issues 
 
 #### Issues Identified:
 
-1. MCP adapter creates Neuron objects with incomplete interface implementation
-2. Missing execute method in Neuron objects
+1. MCP adapter creates Sub-agent objects with incomplete interface implementation
+2. Missing execute method in Sub-agent objects
 3. Interface mismatch with prp-runner
 
 #### Implementation Steps:
 
-1. **Update Neuron Interface** (`src/mcp/adapter.ts`):
+1. **Update Sub-agent Interface** (`src/mcp/adapter.ts`):
 
 ```typescript
-// Add missing properties to Neuron interface
-interface Neuron {
+// Add missing properties to Sub-agent interface
+interface Sub-agent {
   id: string;
   role: string;
   phase: 'strategy' | 'build' | 'evaluation';
@@ -34,7 +34,7 @@ interface Neuron {
 2. **Fix createNeuronFromTool Method**:
 
 ```typescript
-createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): Neuron {
+createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): Sub-agent {
   return {
     id: `mcp-${tool.name}`,
     role: `mcp-tool-${tool.name}`,
@@ -79,7 +79,7 @@ createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'):
           },
         };
       } catch (error) {
-        throw new Error(`Neuron execution failed: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`Sub-agent execution failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     },
   };

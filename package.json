@@ -480,7 +480,10 @@
     "typescript-eslint": "^8.1.0",
     "uuid": "13.0.0",
     "vitest": "^3.2.4",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "@modelcontextprotocol/server-github": "2025.4.8",
+    "mcp-remote": "0.1.29",
+    "nx-mcp": "0.6.12"
   },
   "pnpm": {
     "overrides": {

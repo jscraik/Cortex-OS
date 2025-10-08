@@ -73,8 +73,8 @@ describe('LLM Integration - TDD Implementation', () => {
 
 		it('should require LLM configuration before execution', async () => {
 			// RED: This test should fail - no LLM requirement check
-			const neuron = createLLMNeuron('strategy-llm', 'strategy');
-			orchestrator.registerNeuron(neuron);
+			const subAgent = createLLMNeuron('strategy-llm', 'strategy');
+			orchestrator.registerNeuron(subAgent);
 
 			await expect(
 				orchestrator.executePRPCycle({
@@ -82,7 +82,7 @@ describe('LLM Integration - TDD Implementation', () => {
 					description: 'Missing LLM config',
 					requirements: [],
 				}),
-			).rejects.toThrow('LLM configuration required for LLM-powered neurons');
+			).rejects.toThrow('LLM configuration required for LLM-powered subAgents');
 		});
 	});
 
@@ -138,9 +138,9 @@ describe('LLM Integration - TDD Implementation', () => {
 		});
 	});
 
-	describe('LLM-Powered Neuron Execution', () => {
-		it('should execute neuron with LLM generation', async () => {
-			// RED: This test should fail - neurons not connected to LLM
+	describe('LLM-Powered SubAgent Execution', () => {
+		it('should execute subAgent with LLM generation', async () => {
+			// RED: This test should fail - subAgents not connected to LLM
 			const ollamaConfig = {
 				provider: 'ollama' as const,
 				endpoint: 'http://127.0.0.1:11434',
@@ -171,7 +171,7 @@ describe('LLM Integration - TDD Implementation', () => {
 			expect(strategyResult.output.content).toContain('strategy');
 		});
 
-		it('should include LLM evidence in neuron results', async () => {
+		it('should include LLM evidence in subAgent results', async () => {
 			// RED: This test should fail - no LLM evidence tracking
 			const mlxConfig = {
 				provider: 'mlx' as const,
@@ -205,7 +205,7 @@ describe('LLM Integration - TDD Implementation', () => {
 	});
 });
 
-// Helper function to create LLM-powered neurons for testing
+// Helper function to create LLM-powered subAgents for testing
 interface LLMNeuronState {
 	blueprint?: unknown;
 }

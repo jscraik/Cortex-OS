@@ -46,7 +46,7 @@ Wiring sketch (MCP/A2A)
 
 What/Why/Where/How/Result
 
-- What: Unified orchestration of multiple tools as disciplined neurons.
+- What: Unified orchestration of multiple tools as disciplined sub-agents.
 - Why: Solo dev productivity with team-grade governance and repeatability.
 - Where: Local MLX first; remote tools via MCP; storage in encrypted memory-core.
 - How: Typed plans → deterministic steps → evidence → gated apply.
@@ -62,7 +62,7 @@ Improvements: Add schema registry + contract tests per adapter. Expand simlab sc
 
 Missed opportunities: No DLQ/outbox yet for the bus; add to orchestration. Limited telemetry taxonomy; define issue categories.
 
-Moving forward: Start with three adapters (codegen, review, docs). Enable review-neuron JSON gating in CI. Add MCP marketplace index.
+Moving forward: Start with three adapters (codegen, review, docs). Enable review-sub-agent JSON gating in CI. Add MCP marketplace index.
 
 Standards check
 

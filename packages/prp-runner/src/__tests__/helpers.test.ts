@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createExecutionContext } from '../lib/create-execution-context.js';
-import { executeNeuron } from '../lib/execute-neuron.js';
-import type { ExecutionState, Neuron } from '../orchestrator.js';
+import { executeSubAgent } from '../lib/execute-subAgent.js';
+import type { ExecutionState, SubAgent } from '../orchestrator.js';
 
 describe('helper functions', () => {
 	it('creates an execution context', () => {
@@ -9,8 +9,8 @@ describe('helper functions', () => {
 		expect(context).toHaveProperty('workingDirectory', process.cwd());
 	});
 
-	it('executes a neuron and returns its result', async () => {
-		const neuron: Neuron = {
+	it('executes a subAgent and returns its result', async () => {
+		const subAgent: SubAgent = {
 			id: 'n1',
 			role: 'test',
 			phase: 'strategy',
@@ -42,9 +42,9 @@ describe('helper functions', () => {
 
 		const context = createExecutionContext();
 
-		const result = await executeNeuron(neuron, state, context);
+		const result = await executeSubAgent(subAgent, state, context);
 
-		expect(neuron.execute).toHaveBeenCalledWith(state, context);
+		expect(subAgent.execute).toHaveBeenCalledWith(state, context);
 		expect(result.output).toEqual({ success: true });
 	});
 });

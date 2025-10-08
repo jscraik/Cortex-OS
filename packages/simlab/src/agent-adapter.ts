@@ -4,7 +4,7 @@
  */
 
 // Import PRP runner from package boundary (avoid deep relative imports)
-import { type Blueprint, createPRPOrchestrator, type Neuron } from '@cortex-os/prp-runner';
+import { type Blueprint, createPRPOrchestrator, type SubAgent } from '@cortex-os/prp-runner';
 import { agentRequestSchema } from './schemas.js';
 import type { SimScenario, SimTurn } from './types.js';
 
@@ -130,7 +130,7 @@ export class RealPRPExecutor implements PRPExecutor {
 	private readonly orchestrator = createPRPOrchestrator();
 
 	constructor() {
-		const neuron: Neuron = {
+		const subAgent: SubAgent = {
 			id: 'simple',
 			role: 'responder',
 			phase: 'strategy',
@@ -158,7 +158,7 @@ export class RealPRPExecutor implements PRPExecutor {
 				};
 			},
 		};
-		this.orchestrator.registerNeuron(neuron);
+		this.orchestrator.registerNeuron(subAgent);
 	}
 
 	async executePRP({ scenario }: AgentRequest): Promise<AgentResponse> {
