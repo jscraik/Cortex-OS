@@ -228,3 +228,9 @@ def get_shutdown_manager(timeout: int = 30) -> GracefulShutdown:
         _shutdown_manager = GracefulShutdown(shutdown_timeout=timeout)
 
     return _shutdown_manager
+
+
+def reset_shutdown_manager() -> None:
+    """Reset the global shutdown manager (testing utility)."""
+    global _shutdown_manager
+    _shutdown_manager = None

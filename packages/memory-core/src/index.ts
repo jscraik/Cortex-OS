@@ -4,13 +4,22 @@ export {
         resolveCheckpointPolicy, type CheckpointManagerOptions,
         type CheckpointRuntimePolicy
 } from './checkpoints/index.js';
+export {
+        GraphRAGService,
+        createGraphRAGService,
+        type GraphRAGServiceConfig,
+        type GraphRAGQueryRequest,
+        type GraphRAGResult
+} from './services/GraphRAGService.js';
+export {
+        GraphRAGIngestService,
+        createGraphRAGIngestService,
+        type GraphRAGIngestRequest,
+        type GraphRAGIngestResult
+} from './services/GraphRAGIngestService.js';
 export { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 export { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';
-export type {
-        GraphRAGQueryRequest,
-        GraphRAGResult,
-        GraphRAGServiceConfig
-} from './services/GraphRAGService.js';
+
 export type {
         CheckpointBranchRequest,
         CheckpointBranchResult,

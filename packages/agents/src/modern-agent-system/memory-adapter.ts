@@ -83,8 +83,9 @@ export const createMemoryCoordinator = (
         };
         const persistPlan = async (plan: PlannerPlan) => {
                 const state = toState(await adapters.session.loadSession(plan.goal.sessionId));
-                state.steps = plan.steps;
-                state.lastUpdated = nowIso();
+        state.steps = plan.steps;
+        state.reasoning = plan.reasoning;
+        state.lastUpdated = nowIso();
                 await adapters.session.saveSession(plan.goal.sessionId, state);
                 if (!adapters.session.appendEvent) return;
                 await adapters.session.appendEvent(plan.goal.sessionId, {

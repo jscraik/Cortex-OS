@@ -24,7 +24,7 @@ describe('A2A bus (inproc) with schema registry + ACL', () => {
 		const env = createEnvelope({
 			type: 'cortex.health.check',
 			source: CORTEX_OS_EVENT_SOURCE,
-			data: { status: 'ok', timestamp: Date.now(), version: 'test' },
+			data: { status: 'healthy', timestamp: Date.now(), version: 'test' },
 		});
 		await bus.publish(env);
 

@@ -10,24 +10,9 @@ import { execSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { loadDotenv } from './utils/dotenv-loader.mjs';
 
-// Auto-load .env.local to propagate MLX/HF paths and other local settings into all Nx tasks
-try {
-	const dotenv = await import('dotenv');
-	// Prefer .env.local if present; fall back to .env
-	const localPath = path.resolve(process.cwd(), '.env.local');
-	const envFile = fs.existsSync(localPath) ? localPath : path.resolve(process.cwd(), '.env');
-	dotenv.config({ path: envFile });
-	if (process.env.NX_SMART_DEBUG_BOOT) {
-		console.error('[nx-smart][env] loaded', envFile);
-	}
-} catch (error) {
-	// optional - dotenv is not available
-	if (process.env.NX_SMART_DEBUG_BOOT) {
-		const message = error instanceof Error ? error.message : String(error);
-		console.error('[nx-smart][env] dotenv not available, skipping:', message);
-	}
-}
+await loadDotenv({ debug: Boolean(process.env.NX_SMART_DEBUG_BOOT) });
 
 // Lazy import telemetry only if enabled to avoid unnecessary startup cost in minimal environments.
 let telemetry;

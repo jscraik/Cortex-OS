@@ -44,7 +44,10 @@ describe('runtime bootstrap (integration)', () => {
 		});
 		expect(res.status).toBe(200);
 		const body = await res.json();
-		expect(body).toMatchObject({ status: 'ok' });
+		expect(body).toMatchObject({
+			status: 'healthy',
+			service: { brand: 'brAInwav' },
+		});
 		expect(typeof body.timestamp).toBe('string');
 	});
 

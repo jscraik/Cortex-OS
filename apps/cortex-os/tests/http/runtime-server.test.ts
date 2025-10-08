@@ -1,5 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
+import { resetMetricsForTest } from '../../src/observability/metrics.js';
 import { prepareLoopbackAuth } from '../setup.global.js';
 
 let authHeader: string;
@@ -31,6 +32,7 @@ describe('Runtime HTTP Server', () => {
 		if (runtime) {
 			await runtime.stop();
 		}
+		resetMetricsForTest();
 		// Clean up environment variables
 		delete process.env.CORTEX_HTTP_PORT;
 		delete process.env.CORTEX_MCP_MANAGER_PORT;
@@ -45,12 +47,17 @@ describe('Runtime HTTP Server', () => {
 
 		const health = await response.json();
 		expect(health).toMatchObject({
-			status: 'ok',
+			status: 'healthy',
+			service: {
+				brand: 'brAInwav',
+				name: expect.stringContaining('Cortex-OS'),
+			},
 			timestamp: expect.any(String),
 		});
 
 		// Verify timestamp is a valid ISO string
 		expect(new Date(health.timestamp).toISOString()).toBe(health.timestamp);
+		expect(health.components.tasks.status).toBe('healthy');
 	});
 
 	it('should serve task management endpoints', async () => {

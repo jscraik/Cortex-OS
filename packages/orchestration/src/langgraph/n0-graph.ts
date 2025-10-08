@@ -930,7 +930,20 @@ function ensureSystemPrompt(
 	const cloned = [...messages];
 	if (cloned.length === 0 || cloned[0].getType() !== 'system') {
 		cloned.unshift(new SystemMessage({ content: prompt }));
+	} else {
+		const first = cloned[0];
+		const firstContent = renderMessageContent(first.content).trim();
+		if (firstContent !== prompt.trim()) {
+			cloned[0] = new SystemMessage({
+				content: prompt,
+				additional_kwargs: {
+					...first.additional_kwargs,
+					'brAInwav-guarded': true,
+				},
+			});
+		}
 	}
+
 	const hasPlanInstruction = cloned.some(
 		(message) => message.getType() === 'system' && message.additional_kwargs?.['brAInwav-plan'],
 	);

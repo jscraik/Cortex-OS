@@ -51,6 +51,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### 1Password Environment Loader Integration (2025-02-06)
+
+- Introduced a shared dotenv loader (`scripts/utils/dotenv-loader.mjs`) to prevent draining 1Password FIFO secrets and emit `[brAInwav]` diagnostics.
+- Exposed TypeScript-friendly wrapper via `@cortex-os/utils` so services can `await loadDotenv()` without duplicating logic.
+- Updated GitHub automation packages (`cortex-ai-github`, `cortex-semgrep-github`,
+  `cortex-structure-github`) to use the shared helper with branded logging.
+- Added Vitest coverage under `tests/tools/dotenv-loader.test.ts` validating candidate order, FIFO handling, and wrapper delegation.
+- Documented operational guidance in `docs/development/1password-env.md` and linked from the top-level README.
+
 #### brAInwav Policy Enforcement Pack (2025-01-21)
 
 - **Semgrep Rule Pack**: 10 production-grade rules in `semgrep/brainwav.yml`
@@ -83,7 +92,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `examples/policy-violations.example.ts`: Demonstration file with violations and correct patterns
   - Updated `.semgrepignore` with test/docs exclusions
 
-**Impact**: Automated enforcement of brAInwav production standards preventing placeholder implementations, ensuring brand consistency, and mandating Smart Nx wrapper usage across the monorepo.
+**Impact**: Automated enforcement of brAInwav production standards preventing placeholder implementations,
+ensuring brand consistency, and mandating Smart Nx wrapper usage across the monorepo.
 
 #### Complete TDD Implementation Plan - All Phases Delivered (2025-10-02)
 

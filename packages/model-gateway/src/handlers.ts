@@ -1,4 +1,6 @@
+import { Buffer } from 'node:buffer';
 import type { IModelRouter as ModelRouter } from './model-router.js';
+import { createAttentionBridgeFromEnv } from './kv/attention-bridge.js';
 
 export async function embeddingsHandler(
 	router: ModelRouter,
@@ -59,12 +61,32 @@ export async function chatHandler(
 		throw new Error('No chat models available');
 	}
 
+	const attentionBridge = createAttentionBridgeFromEnv();
+	const bridgeRun = await attentionBridge.prepareRun(
+		`chat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+		{ model: body.model },
+	);
+
 	const result = await router.generateChat({
 		messages: body.msgs,
 		model: body.model,
 		max_tokens: 1000,
 		temperature: 0.7,
 	});
+
+	const content = result.content ?? '';
+	const tokens = Math.max(0, Math.floor(content.trim().split(/\s+/).length * 1.3));
+	await attentionBridge.captureKV(
+		{ step: 'chat-completion', role: 'assistant' },
+		bridgeRun,
+		{
+			tokensCaptured: tokens,
+			bytesCaptured: Buffer.byteLength(content, 'utf8'),
+			source: 'chat.output',
+		},
+	);
+	await attentionBridge.emitReceipt(bridgeRun);
+	await attentionBridge.close();
 
 	return {
 		content: result.content,

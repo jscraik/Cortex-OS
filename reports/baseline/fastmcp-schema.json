@@ -1,0 +1,51 @@
+{
+  "version": "2.12.4",
+  "tool_set": "cortex-py",
+  "tools": [
+    {
+      "name": "embedding.generate",
+      "description": "Generate a single embedding vector for the provided text.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "minLength": 1 },
+          "normalize": { "type": "boolean", "default": true },
+          "seed": { "type": "integer", "minimum": 1 }
+        },
+        "required": ["text"]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "embedding": { "type": "array", "items": { "type": "number" } },
+          "metadata": { "type": "object" }
+        }
+      }
+    },
+    {
+      "name": "embedding.batch",
+      "description": "Generate embeddings for a batch of texts with caching support.",
+      "input": {
+        "type": "object",
+        "properties": {
+          "texts": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "normalize": { "type": "boolean", "default": true }
+        },
+        "required": ["texts"]
+      },
+      "output": { "type": "object" }
+    },
+    {
+      "name": "model.info",
+      "description": "Return metadata about the active embedding model.",
+      "input": { "type": "object", "properties": {} },
+      "output": { "type": "object" }
+    },
+    {
+      "name": "health.status",
+      "description": "Report health, cache, and rate limit information for cortex-py.",
+      "input": { "type": "object", "properties": {} },
+      "output": { "type": "object" }
+    }
+  ]
+}

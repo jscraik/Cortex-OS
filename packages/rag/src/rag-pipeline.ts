@@ -80,9 +80,38 @@ export class RAGPipeline {
 	private readonly chunkOverlap: number;
 	private readonly freshnessOptions: FreshnessOptions;
 	private readonly evidenceGate: EvidenceGate;
-	private readonly allowedEmbeddingDims: number[];
+	private readonly allowedEmbeddingDims: Set<number>;
+	private readonly autoRegisterEmbeddingDims: boolean;
 	private readonly maxContentChars: number;
 	private readonly contentSecurity: ContentSecurityPolicy;
+	private static readonly MAX_DYNAMIC_EMBED_DIM = 4096;
+	private readonly assertEmbeddingDim = (vector: number[]): void => {
+		try {
+			validateEmbeddingDim(vector, Array.from(this.allowedEmbeddingDims));
+			return;
+		} catch (error) {
+			if (!this.autoRegisterEmbeddingDims) {
+				throw error;
+			}
+
+			const dimension = Array.isArray(vector) ? vector.length : 0;
+			if (!Number.isInteger(dimension) || dimension <= 0) {
+				throw error;
+			}
+
+			if (dimension > RAGPipeline.MAX_DYNAMIC_EMBED_DIM) {
+				throw new Error(
+					`Embedding dimension ${dimension} exceeds dynamic allowance of ${RAGPipeline.MAX_DYNAMIC_EMBED_DIM}`,
+				);
+			}
+
+			if (!this.allowedEmbeddingDims.has(dimension)) {
+				this.allowedEmbeddingDims.add(dimension);
+			}
+
+			validateEmbeddingDim(vector, Array.from(this.allowedEmbeddingDims));
+		}
+	};
 	private readonly postChunking?: PostChunkingOptions;
 	// Apply retry/breaker policies to an operation for a given edge
 	private async runWithPolicies<T>(
@@ -203,9 +232,13 @@ export class RAGPipeline {
 			maxContentChars?: number;
 			contentSecurity?: Partial<ContentSecurityConfig>;
 		};
-		this.allowedEmbeddingDims = Array.isArray(sec.allowedEmbeddingDims)
-			? sec.allowedEmbeddingDims
-			: DEFAULT_DIMS;
+		const userProvidedDims = Array.isArray(sec.allowedEmbeddingDims)
+			? sec.allowedEmbeddingDims.filter((dim) => Number.isInteger(dim) && dim > 0)
+			: undefined;
+		const hasExplicitDims = Array.isArray(sec.allowedEmbeddingDims) && (userProvidedDims?.length ?? 0) > 0;
+		const baseDims = hasExplicitDims ? (userProvidedDims as number[]) : DEFAULT_DIMS;
+		this.allowedEmbeddingDims = new Set(baseDims);
+		this.autoRegisterEmbeddingDims = !hasExplicitDims;
 		this.maxContentChars =
 			typeof sec.maxContentChars === 'number' && sec.maxContentChars > 0
 				? sec.maxContentChars
@@ -270,7 +303,7 @@ export class RAGPipeline {
 		recordLatency('rag.chunk.total_chars', totalChars, { component: 'rag' });
 		// Validate embedding dimensions
 		if (embeddings.length > 0) {
-			for (const v of embeddings) validateEmbeddingDim(v, this.allowedEmbeddingDims);
+			for (const v of embeddings) this.assertEmbeddingDim(v);
 		}
 		if (embeddings.length !== sanitizedChunks.length) {
 			throw new Error(
@@ -330,7 +363,7 @@ export class RAGPipeline {
 		const embedStart = Date.now();
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed, retrieveRunId));
 		recordLatency('rag.retrieve.embed_ms', Date.now() - embedStart, { component: 'rag' });
-		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
+		if (embs.length > 0) this.assertEmbeddingDim(embs[0]);
 		const emb = embs[0] ?? [];
 		const queryStart = Date.now();
 		let chunks = await this.queryMaybeHybrid(emb, sanitizedQuery, topK, retrieveRunId);
@@ -370,7 +403,7 @@ export class RAGPipeline {
 		validateContentSize(query, this.maxContentChars);
 		const doEmbed = async () => this.E.embed([query]);
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
-		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
+		if (embs.length > 0) this.assertEmbeddingDim(embs[0]);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
 		chunks = this.applyPostChunkingIfEnabled(chunks, query);
@@ -386,7 +419,7 @@ export class RAGPipeline {
 		validateContentSize(query, this.maxContentChars);
 		const doEmbed = async () => this.E.embed([query]);
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
-		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
+		if (embs.length > 0) this.assertEmbeddingDim(embs[0]);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
 		chunks = this.applyPostChunkingIfEnabled(chunks, query);
@@ -406,7 +439,7 @@ export class RAGPipeline {
 		validateContentSize(query, this.maxContentChars);
 		const doEmbed = async () => this.E.embed([query]);
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
-		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
+		if (embs.length > 0) this.assertEmbeddingDim(embs[0]);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
 		chunks = this.applyPostChunkingIfEnabled(chunks, query);
@@ -426,7 +459,7 @@ export class RAGPipeline {
 		validateContentSize(query, this.maxContentChars);
 		const doEmbed = async () => this.E.embed([query]);
 		const embs = await selfSafe(this.runWithPolicies('embedder', doEmbed));
-		if (embs.length > 0) validateEmbeddingDim(embs[0], this.allowedEmbeddingDims);
+		if (embs.length > 0) this.assertEmbeddingDim(embs[0]);
 		const emb = embs[0] ?? [];
 		let chunks = await this.queryMaybeHybrid(emb, query, topK);
 		if (this.hierarchical?.expandContext) {

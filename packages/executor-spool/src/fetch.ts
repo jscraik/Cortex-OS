@@ -63,6 +63,7 @@ const chooseResponseBody = (
 	buffer: Uint8Array,
 	contentType: string | undefined,
 ): string | Uint8Array => {
+	// eslint-disable-line sonarjs/function-return-type
 	if (!contentType) {
 		return buffer;
 	}

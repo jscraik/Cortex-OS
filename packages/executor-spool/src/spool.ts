@@ -87,7 +87,9 @@ export class FilesystemSpool implements SpoolFs {
 	}
 
 	public touchedFiles(): string[] {
-		return [...this.entries.keys()].filter((path) => touched(this.entries.get(path)!)).sort();
+		return [...this.entries.keys()]
+			.filter((path) => touched(this.entries.get(path)!))
+			.sort((a, b) => a.localeCompare(b));
 	}
 
 	public async write(
@@ -106,10 +108,13 @@ export class FilesystemSpool implements SpoolFs {
 		const location = ensureRooted(this.root, path);
 		const entry = await this.loadEntry(location.relative, location.absolute);
 		const baseline = entry.after ?? entry.before ?? '';
-		const matcher =
-			typeof options.match === 'string'
-				? new RegExp(options.match, options.all ? 'g' : '')
-				: options.match;
+		let matcher: string | RegExp;
+		if (typeof options.match === 'string') {
+			const flags = options.all ? 'g' : '';
+			matcher = new RegExp(options.match, flags);
+		} else {
+			matcher = options.match;
+		}
 		const result = baseline.replace(matcher, options.replacement);
 		if (result === baseline) {
 			if (options.required === true) {

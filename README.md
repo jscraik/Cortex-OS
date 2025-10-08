@@ -102,7 +102,7 @@ pnpm readiness:check
 
 # Start development server
 pnpm dev
-```
+```text
 
 ### Using Just (Quick Commands)
 
@@ -175,7 +175,7 @@ Cortex-OS implements a unified memory architecture with strict governance:
                      └─────────────────────┘
 ```
 
-### Core Principles
+### Architecture Principles Recap
 
 - **Single Source of Truth**: All business logic in `memory-core`
 - **Thin Adapter Pattern**: MCP, REST, and toolkit delegate to core
@@ -265,6 +265,7 @@ just verify changed.txt                        # Auto-validation
 - **[AGENTS.md](./AGENTS.md)** – Agent workflows and governance
 - **[CONTRIBUTING.md](./CONTRIBUTING.md)** – Contribution guidelines
 - **[NAMING_CONVENTIONS.md](./NAMING_CONVENTIONS.md)** – File and code naming rules
+- **[1Password Env Integration](./docs/development/1password-env.md)** – Shared dotenv loader and FIFO safeguards
 
 ### Additional Resources
 

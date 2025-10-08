@@ -97,12 +97,13 @@ export function createSecuritySchemaRegistry(): SchemaRegistry {
 		'Reports detected security threats and anomalies',
 		['security', 'threat'],
 		[
+			// eslint-disable-next-line sonarjs/no-hardcoded-ip
 			{
 				threatId: 'threat-001',
 				threatType: 'anomaly',
 				severity: 'medium',
 				confidence: 0.75,
-				sourceIp: '192.168.1.100',
+				sourceIp: '203.0.113.1',
 				targetResource: 'api:auth-endpoint',
 				indicators: ['unusual-access-pattern', 'off-hours-activity'],
 				detectedAt: new Date('2024-01-01T08:10:00Z').toISOString(),

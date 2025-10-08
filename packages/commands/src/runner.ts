@@ -94,7 +94,7 @@ async function expandBangs(
 }
 
 async function expandAtRefs(tpl: string, ctx: RenderContext): Promise<string> {
-	const re = /@([^\s`]+)(?:`|\b)/g; // matches @path or @path`
+	const re = /@([\w./-]+)(?:`|\b)/g; // matches @path or @path`
 	if (!ctx.readFileCapped) return tpl;
 	const maxPer = ctx.timeoutMs ?? DEFAULT_INCLUDE_LIMIT;
 	const totalCap = ctx.maxIncludeBytes ?? DEFAULT_TOTAL_LIMIT;

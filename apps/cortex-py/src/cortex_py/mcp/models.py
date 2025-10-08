@@ -11,6 +11,11 @@ class EmbeddingToolInput(BaseModel):
 
     text: str = Field(..., description="Input text to embed", min_length=1)
     normalize: bool = Field(default=True, description="Normalize resulting vector")
+    seed: int | None = Field(
+        default=None,
+        ge=1,
+        description="Optional deterministic seed for FastMCP clients",
+    )
 
     @field_validator("text")
     @classmethod
@@ -26,6 +31,11 @@ class BatchEmbeddingToolInput(BaseModel):
 
     texts: list[str] = Field(..., description="Texts to embed")
     normalize: bool = Field(default=True, description="Normalize vectors where supported")
+    seed: int | None = Field(
+        default=None,
+        ge=1,
+        description="Optional deterministic seed for FastMCP clients",
+    )
 
     @field_validator("texts")
     @classmethod

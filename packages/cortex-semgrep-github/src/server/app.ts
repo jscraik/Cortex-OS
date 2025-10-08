@@ -3,16 +3,15 @@
  * @description GitHub App for automated security scanning with Semgrep
  */
 
+import { loadDotenv } from '@cortex-os/utils';
 import { Octokit } from '@octokit/rest';
 import { type EmitterWebhookEvent, Webhooks } from '@octokit/webhooks';
-import dotenv from 'dotenv';
 import express from 'express';
 import { z } from 'zod';
 import { generateScanComment } from '../lib/comment-formatter.js';
 import { runSemgrepScan, type SecurityScanResult } from '../lib/semgrep-scanner.js';
 
-// Load environment variables from .env file
-dotenv.config();
+await loadDotenv();
 
 const app = express();
 // Security: do not reveal Express signature header

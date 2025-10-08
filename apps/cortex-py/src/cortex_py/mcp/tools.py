@@ -43,14 +43,24 @@ class CortexPyMCPTools:
         self.service = service
         self.logger = logger or LOGGER
 
-    async def embedding_generate(self, *, text: str, normalize: bool = True) -> EmbeddingToolResponse | ToolErrorResponse:
+    async def embedding_generate(
+        self,
+        *,
+        text: str,
+        normalize: bool = True,
+        seed: int | None = None,
+    ) -> EmbeddingToolResponse | ToolErrorResponse:
         try:
-            payload = EmbeddingToolInput(text=text, normalize=normalize)
+            payload = EmbeddingToolInput(text=text, normalize=normalize, seed=seed)
         except ValidationError as exc:
             return self._error("VALIDATION_ERROR", "Invalid payload", details={"errors": exc.errors()})
 
         try:
-            result = self.service.generate_single(payload.text, normalize=payload.normalize)
+            result = self.service.generate_single(
+                payload.text,
+                normalize=payload.normalize,
+                seed=payload.seed,
+            )
         except ServiceValidationError as exc:
             return self._error("VALIDATION_ERROR", str(exc))
         except SecurityViolation as exc:

@@ -9,15 +9,18 @@
  * 5. brAInwav-branded response with optional citations
  */
 
-import { GraphEdgeType, type GraphNodeType } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
+import { GraphEdgeType, GraphNodeType, Prisma } from '@prisma/client';
 import { z } from 'zod';
+import { SecureNeo4j } from '@cortex-os/utils';
 import { prisma, shutdownPrisma } from '../db/prismaClient.js';
 import { assembleContext } from '../retrieval/contextAssembler.js';
 import { expandNeighbors } from '../retrieval/expandGraph.js';
 import {
-	type GraphRAGSearchResult,
 	QdrantConfigSchema,
 	QdrantHybridSearch,
+	type GraphRAGSearchResult,
+	type SparseVector,
 } from '../retrieval/QdrantHybrid.js';
 
 const DEFAULT_QDRANT_CONFIG = {
@@ -57,6 +60,20 @@ export const GraphRAGServiceConfigSchema = z.object({
 		sourceAttribution: z.string().default('brAInwav Cortex-OS GraphRAG'),
 		emitBrandedEvents: z.boolean().default(true),
 	}),
+	externalKg: z
+		.object({
+			enabled: z.boolean().default(false),
+			uri: z.string().min(1).optional(),
+			user: z.string().min(1).optional(),
+			password: z.string().min(1).optional(),
+			maxDepth: z.number().int().min(1).max(3).default(1),
+			citationPrefix: z.string().default('neo4j'),
+		})
+		.default({
+			enabled: false,
+			maxDepth: 1,
+			citationPrefix: 'neo4j',
+		}),
 });
 
 export type GraphRAGServiceConfig = z.infer<typeof GraphRAGServiceConfigSchema>;
@@ -110,6 +127,7 @@ export interface GraphRAGResult {
 		retrievalDurationMs: number;
 		queryTimestamp: string;
 		brainwavSource: string;
+		externalKgEnriched?: boolean;
 	};
 	citations?: Array<{
 		path: string;
@@ -126,14 +144,36 @@ interface QueryReservation {
 	release: () => void;
 }
 
+const MAX_EXTERNAL_CITATIONS = 16;
+
 export class GraphRAGService {
 	private readonly qdrant: QdrantHybridSearch;
 	private readonly config: GraphRAGServiceConfig;
 	private readonly activeQueries = new Set<string>();
+	private readonly externalKg?: {
+		driver: SecureNeo4j;
+		maxDepth: number;
+		prefix: string;
+	};
 
 	constructor(config: GraphRAGServiceConfig) {
 		this.config = GraphRAGServiceConfigSchema.parse(config);
 		this.qdrant = new QdrantHybridSearch(this.config.qdrant);
+
+		if (this.config.externalKg.enabled) {
+			const { uri, user, password, maxDepth, citationPrefix } = this.config.externalKg;
+			if (uri && user && password) {
+				this.externalKg = {
+					driver: new SecureNeo4j(uri, user, password),
+					maxDepth,
+					prefix: citationPrefix,
+				};
+			} else {
+				console.warn(
+					'brAInwav GraphRAG external KG is enabled but Neo4j credentials are incomplete; skipping external enrichment.',
+				);
+			}
+		}
 	}
 
 	async initialize(
@@ -166,10 +206,25 @@ export class GraphRAGService {
 				seeds,
 			);
 
-			const result = this.buildResult(context, expansion, reservation.startTime, seeds);
+		const result = this.buildResult(context, expansion, reservation.startTime, seeds);
 
 			if (validated.includeCitations) {
 				result.citations = this.formatCitations(context.chunks);
+			}
+
+			if (this.externalKg && focusNodeIds.length > 0) {
+				const kgCitations = await this.fetchExternalCitations(focusNodeIds);
+				if (kgCitations.length > 0) {
+					const existing = result.citations ?? [];
+					const combined = [...existing];
+					for (const citation of kgCitations) {
+						if (!combined.some((c) => c.path === citation.path && c.nodeType === citation.nodeType)) {
+							combined.push(citation);
+						}
+					}
+					result.citations = combined;
+					result.metadata.externalKgEnriched = true;
+				}
 			}
 
 			if (this.config.branding.emitBrandedEvents) {
@@ -263,6 +318,7 @@ export class GraphRAGService {
 
 	async close(): Promise<void> {
 		await this.qdrant.close();
+		await this.externalKg?.driver.close();
 		await shutdownPrisma();
 		if (this.config.branding.enabled) {
 			console.log('brAInwav GraphRAG service closed');
@@ -348,6 +404,46 @@ export class GraphRAGService {
 		}));
 	}
 
+	private async fetchExternalCitations(nodeIds: string[]): Promise<GraphRAGResult['citations']> {
+		if (!this.externalKg) return [];
+
+		const citations: GraphRAGResult['citations'] = [];
+		const seenPaths = new Set<string>();
+
+		for (const nodeId of nodeIds) {
+			try {
+				const neighborhood = await this.externalKg.driver.neighborhood(
+					nodeId,
+					this.externalKg.maxDepth,
+				);
+				const nodes = neighborhood?.nodes ?? [];
+				for (const node of nodes) {
+					const label = typeof node.label === 'string' && node.label.length > 0 ? node.label : node.id;
+					const path = `${this.externalKg.prefix}:${label}`;
+					if (seenPaths.has(path) || citations.length >= MAX_EXTERNAL_CITATIONS) {
+						continue;
+					}
+					seenPaths.add(path);
+					citations.push({
+						path,
+						lines: undefined,
+						nodeType: GraphNodeType.DOC,
+						relevanceScore: 0,
+						brainwavIndexed: false,
+					});
+				}
+			} catch (error) {
+				console.warn('brAInwav GraphRAG external KG enrichment failed', error);
+			}
+
+			if (citations.length >= MAX_EXTERNAL_CITATIONS) {
+				break;
+			}
+		}
+
+		return citations;
+	}
+
 	private async emitQueryEvent(
 		type: 'completed' | 'failed',
 		data: Record<string, unknown>,
@@ -397,6 +493,20 @@ export function createGraphRAGService(config?: Partial<GraphRAGServiceConfig>): 
 			sourceAttribution: 'brAInwav Cortex-OS GraphRAG',
 			emitBrandedEvents: true,
 		},
+		externalKg: {
+			enabled: false,
+			maxDepth: 1,
+			citationPrefix: 'neo4j',
+		},
+	};
+
+	const externalKgBase = {
+		enabled: process.env.EXTERNAL_KG_ENABLED === 'true',
+		uri: process.env.NEO4J_URI,
+		user: process.env.NEO4J_USER,
+		password: process.env.NEO4J_PASSWORD,
+		maxDepth: 1,
+		citationPrefix: 'neo4j',
 	};
 
 	const mergedConfig: GraphRAGServiceConfig = {
@@ -404,6 +514,7 @@ export function createGraphRAGService(config?: Partial<GraphRAGServiceConfig>): 
 		expansion: { ...baseConfig.expansion, ...config?.expansion },
 		limits: { ...baseConfig.limits, ...config?.limits },
 		branding: { ...baseConfig.branding, ...config?.branding },
+		externalKg: { ...externalKgBase, ...config?.externalKg },
 	};
 
 	return new GraphRAGService(mergedConfig);

@@ -229,47 +229,46 @@ export function filterGitHubEvents(
 	events: GitHubEvent[],
 	filter: GitHubEventFilter,
 ): GitHubEvent[] {
-	return events.filter((event) => {
-		// Filter by event type
-		if (filter.eventTypes && !filter.eventTypes.includes(event.event_type)) {
-			return false;
-		}
+	return events.filter((event) => matchesGitHubEventFilter(event, filter));
+}
 
-		// Filter by action
-		if (filter.actions && hasAction(event)) {
-			const action = event.action;
-			if (!filter.actions.includes(action)) {
-				return false;
-			}
-		}
+function matchesGitHubEventFilter(event: GitHubEvent, filter: GitHubEventFilter): boolean {
+	return (
+		matchesEventTypes(event, filter.eventTypes) &&
+		matchesActions(event, filter.actions) &&
+		matchesRepositoryNames(event, filter.repositoryNames) &&
+		matchesActorLogins(event, filter.actorLogins) &&
+		matchesDateRange(event, filter.dateRange)
+	);
+}
 
-		// Filter by repository
-		if (filter.repositoryNames && 'repository' in event && event.repository) {
-			if (!filter.repositoryNames.includes(event.repository.full_name)) {
-				return false;
-			}
-		}
+function matchesEventTypes(event: GitHubEvent, eventTypes?: string[]): boolean {
+	return !eventTypes || eventTypes.includes(event.event_type);
+}
 
-		// Filter by actor
-		if (filter.actorLogins && 'actor' in event && event.actor) {
-			if (!filter.actorLogins.includes(event.actor.login)) {
-				return false;
-			}
-		}
+function matchesActions(event: GitHubEvent, actions?: string[]): boolean {
+	if (!actions || !hasAction(event)) return true;
+	return actions.includes(event.action);
+}
 
-		// Filter by date range
-		if (filter.dateRange) {
-			const eventTime = new Date(event.timestamp);
-			const startTime = new Date(filter.dateRange.start);
-			const endTime = new Date(filter.dateRange.end);
+function matchesRepositoryNames(event: GitHubEvent, repositoryNames?: string[]): boolean {
+	if (!repositoryNames || !('repository' in event) || !event.repository) return true;
+	return repositoryNames.includes(event.repository.full_name);
+}
 
-			if (eventTime < startTime || eventTime > endTime) {
-				return false;
-			}
-		}
+function matchesActorLogins(event: GitHubEvent, actorLogins?: string[]): boolean {
+	if (!actorLogins || !('actor' in event) || !event.actor) return true;
+	return actorLogins.includes(event.actor.login);
+}
 
-		return true;
-	});
+function matchesDateRange(event: GitHubEvent, dateRange?: { start: string; end: string }): boolean {
+	if (!dateRange) return true;
+
+	const eventTime = new Date(event.timestamp);
+	const startTime = new Date(dateRange.start);
+	const endTime = new Date(dateRange.end);
+
+	return eventTime >= startTime && eventTime <= endTime;
 }
 
 // Batch Processing Utilities

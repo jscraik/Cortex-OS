@@ -9,7 +9,6 @@
     "skipLibCheck": true,
     "rootDir": "./src",
     "moduleResolution": "NodeNext",
-    "ignoreDeprecations": "6.0",
     "module": "NodeNext"
   },
   "include": [

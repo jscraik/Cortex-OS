@@ -20,7 +20,7 @@
         "rootDir": ".",
         "composite": true,
         "tsBuildInfoFile": "../../.tsbuildinfo-scripts-ci",
-        "ignoreDeprecations": "6.0"
+        "ignoreDeprecations": "5.0"
     },
     "include": [
         "**/*.ts",

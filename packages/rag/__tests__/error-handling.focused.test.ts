@@ -58,24 +58,20 @@ describe('RAG Error Handling', () => {
 			const store = memoryStore();
 
 			// Memory store should throw TypeError for non-iterable inputs
-			await expect(store.upsert(null as never)).rejects.toThrow('not iterable');
+			await expect(store.upsert(null as never)).rejects.toThrow(/array of chunks/i);
 
-			// Query with null should return empty results
-			const queryResult = await store.query(null as never, 5);
-			expect(queryResult).toBeDefined();
-			expect(Array.isArray(queryResult)).toBe(true);
+			// Query with null should surface an input validation error
+			await expect(store.query(null as never, 5)).rejects.toThrow(/embedding vector/i);
 		});
 
 		it('handles undefined inputs gracefully', async () => {
 			const store = memoryStore();
 
 			// Memory store should throw TypeError for non-iterable inputs
-			await expect(store.upsert(undefined as never)).rejects.toThrow('not iterable');
+			await expect(store.upsert(undefined as never)).rejects.toThrow(/array of chunks/i);
 
-			// Query with undefined should return empty results
-			const queryResult = await store.query(undefined as never, 5);
-			expect(queryResult).toBeDefined();
-			expect(Array.isArray(queryResult)).toBe(true);
+			// Query with undefined should surface an input validation error
+			await expect(store.query(undefined as never, 5)).rejects.toThrow(/embedding vector/i);
 		});
 
 		it('handles empty arrays', async () => {

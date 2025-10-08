@@ -154,47 +154,39 @@ export function isApiJobCreatedEvent(data: unknown): data is ApiJobCreatedEvent 
 	return ApiJobCreatedEventSchema.safeParse(data).success;
 }
 
+export type ApiEventMetadataKeys = 'event_id' | 'event_type' | 'source' | 'timestamp';
+
 // Helper object to create API events
 export const createApiEvent = {
-	requestReceived: (
-		data: Omit<ApiRequestReceivedEvent, 'event_id' | 'event_type' | 'source' | 'timestamp'>,
-	) => ({
+	requestReceived: (data: Omit<ApiRequestReceivedEvent, ApiEventMetadataKeys>) => ({
 		event_id: crypto.randomUUID(),
 		event_type: 'cortex.api.request.received' as const,
 		source: 'cortex-api' as const,
 		timestamp: new Date().toISOString(),
 		...data,
 	}),
-	requestRouted: (
-		data: Omit<ApiRequestRoutedEvent, 'event_id' | 'event_type' | 'source' | 'timestamp'>,
-	) => ({
+	requestRouted: (data: Omit<ApiRequestRoutedEvent, ApiEventMetadataKeys>) => ({
 		event_id: crypto.randomUUID(),
 		event_type: 'cortex.api.request.routed' as const,
 		source: 'cortex-api' as const,
 		timestamp: new Date().toISOString(),
 		...data,
 	}),
-	responseGenerated: (
-		data: Omit<ApiResponseGeneratedEvent, 'event_id' | 'event_type' | 'source' | 'timestamp'>,
-	) => ({
+	responseGenerated: (data: Omit<ApiResponseGeneratedEvent, ApiEventMetadataKeys>) => ({
 		event_id: crypto.randomUUID(),
 		event_type: 'cortex.api.response.generated' as const,
 		source: 'cortex-api' as const,
 		timestamp: new Date().toISOString(),
 		...data,
 	}),
-	webhookReceived: (
-		data: Omit<ApiWebhookReceivedEvent, 'event_id' | 'event_type' | 'source' | 'timestamp'>,
-	) => ({
+	webhookReceived: (data: Omit<ApiWebhookReceivedEvent, ApiEventMetadataKeys>) => ({
 		event_id: crypto.randomUUID(),
 		event_type: 'cortex.api.webhook.received' as const,
 		source: 'cortex-api' as const,
 		timestamp: new Date().toISOString(),
 		...data,
 	}),
-	jobCreated: (
-		data: Omit<ApiJobCreatedEvent, 'event_id' | 'event_type' | 'source' | 'timestamp'>,
-	) => ({
+	jobCreated: (data: Omit<ApiJobCreatedEvent, ApiEventMetadataKeys>) => ({
 		event_id: crypto.randomUUID(),
 		event_type: 'cortex.api.job.created' as const,
 		source: 'cortex-api' as const,

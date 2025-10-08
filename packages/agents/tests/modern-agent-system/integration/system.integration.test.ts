@@ -73,8 +73,11 @@ describe('createModernAgentSystem', () => {
                 expect(result.steps[0].status).toBe('completed');
                 expect(result.steps[0].output).toMatchObject({ summary: { text: expect.stringContaining('summary:Refine') } });
                 expect(approvalSpy).toHaveBeenCalledOnce();
+                expect(result.reasoning.strategy).toBe('chain-of-thought');
+                expect(result.reasoning.thoughts[0]?.text).toContain('Refine integration flow');
 
                 const stored = store.get(goal.sessionId);
                 expect(stored?.steps[0]?.status).toBe('completed');
+                expect(stored?.reasoning?.strategy).toBe('chain-of-thought');
         });
 });

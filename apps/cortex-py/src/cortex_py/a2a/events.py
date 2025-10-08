@@ -5,7 +5,7 @@ Defines MLX-specific event types and factory functions for A2A communication.
 """
 
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 
 from .models import A2AEnvelope, MLXEmbeddingEvent, MLXModelEvent, MLXThermalEvent
@@ -45,12 +45,13 @@ def create_mlx_thermal_event(
     elif status == "critical":
         event_type = MLXEventTypes.THERMAL_CRITICAL
 
+    correlation = correlation_id or str(uuid.uuid4())
     thermal_data = MLXThermalEvent(
         device_id=device_id,
         temperature=temperature,
         threshold=threshold,
         status=status,
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(UTC).isoformat(),
         action_taken=action_taken,
     )
 
@@ -58,9 +59,9 @@ def create_mlx_thermal_event(
         type=event_type,
         source=source,
         id=str(uuid.uuid4()),
-        time=datetime.utcnow().isoformat() + "Z",
-        data=thermal_data.dict(),
-        correlationId=correlation_id,
+        time=datetime.now(UTC).isoformat(),
+        data=thermal_data.model_dump(),
+        correlationId=correlation,
         traceparent=traceparent,
     )
 
@@ -86,6 +87,7 @@ def create_mlx_model_event(
 
     a2a_event_type = type_mapping.get(event_type, MLXEventTypes.MODEL_ERROR)
 
+    correlation = correlation_id or str(uuid.uuid4())
     model_data = MLXModelEvent(
         model_id=model_id,
         model_name=model_name,
@@ -93,16 +95,16 @@ def create_mlx_model_event(
         memory_usage=memory_usage,
         load_time=load_time,
         error_message=error_message,
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(UTC).isoformat(),
     )
 
     return A2AEnvelope(
         type=a2a_event_type,
         source=source,
         id=str(uuid.uuid4()),
-        time=datetime.utcnow().isoformat() + "Z",
-        data=model_data.dict(),
-        correlationId=correlation_id,
+        time=datetime.now(UTC).isoformat(),
+        data=model_data.model_dump(),
+        correlationId=correlation,
         traceparent=traceparent,
     )
 
@@ -131,6 +133,7 @@ def create_mlx_embedding_event(
     if not success:
         event_type = MLXEventTypes.EMBEDDING_FAILED
 
+    correlation = correlation_id or str(uuid.uuid4())
     embedding_data = MLXEmbeddingEvent(
         request_id=request_id,
         text_count=text_count,
@@ -140,15 +143,15 @@ def create_mlx_embedding_event(
         dimension=dimension,
         success=success,
         error_message=error_message,
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(UTC).isoformat(),
     )
 
     return A2AEnvelope(
         type=event_type,
         source=source,
         id=str(uuid.uuid4()),
-        time=datetime.utcnow().isoformat() + "Z",
-        data=embedding_data.dict(),
-        correlationId=correlation_id,
+        time=datetime.now(UTC).isoformat(),
+        data=embedding_data.model_dump(),
+        correlationId=correlation,
         traceparent=traceparent,
     )

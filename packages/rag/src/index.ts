@@ -88,6 +88,7 @@ export { createHealthServer } from './server/health-server.js';
 export { fileStore } from './store/file.js';
 export { HierarchicalStore } from './store/hierarchical-store.js';
 export { memoryStore } from './store/memory.js';
+export { createSelfRagController, type SelfRagController, type SelfRagPolicy } from './self-rag/controller.js';
 // Workspace scoping
 export { createWorkspaceManager, WorkspaceManager } from './workspace/manager.js';
 export { createScopedStore, ScopedStore } from './workspace/scoped-store.js';

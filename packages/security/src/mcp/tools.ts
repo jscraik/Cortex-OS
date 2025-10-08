@@ -228,6 +228,7 @@ function evaluateAccessControl(input: z.infer<typeof securityAccessControlToolSc
 	riskScore: number;
 	checks: Record<string, boolean>;
 } {
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const privilegedRoles = new Set([
 		'security-admin',
 		'security-incident-responder',

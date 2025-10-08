@@ -12,10 +12,12 @@ import type { ProfileRepository } from './persistence/profile-repository.js';
 import type { TaskRepository } from './persistence/task-repository.js';
 import { setA2aPublishers } from './services.js';
 import { TOKENS } from './tokens.js';
+import { startRagHttpSurface } from './rag/runtime-http.js';
 
 export interface RuntimeHandle {
 	httpUrl: string;
 	mcpUrl: string;
+	ragUrl: string;
 	stop: () => Promise<void>;
 	events: EventManager;
 }
@@ -51,10 +53,14 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 	const envSchema = z.object({
 		CORTEX_HTTP_PORT: z.coerce.number().int().min(0).max(65535).default(7439),
 		CORTEX_HTTP_HOST: z.string().default('127.0.0.1'),
-		CORTEX_MCP_MANAGER_PORT: z.coerce.number().int().min(0).max(65535).default(3000),
+		CORTEX_MCP_MANAGER_PORT: z.coerce.number().int().min(0).max(65535).default(3024),
 		CORTEX_MCP_MANAGER_HOST: z.string().default('127.0.0.1'),
 		CORTEX_MCP_PUBLIC_URL: z.string().url().optional(),
 		CORTEX_PRIVACY_MODE: z.enum(['true', 'false']).optional().default('false'),
+		CORTEX_RAG_HTTP_PORT: z.coerce.number().int().min(0).max(65535).default(7645),
+		CORTEX_RAG_HTTP_HOST: z.string().default('127.0.0.1'),
+		CORTEX_RAG_CHUNK_SIZE: z.coerce.number().int().min(200).max(2000).default(800),
+		EXTERNAL_KG_ENABLED: z.enum(['true', 'false']).default('false'),
 	});
 
 	const {
@@ -64,6 +70,10 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 		CORTEX_MCP_MANAGER_HOST: mcpHost,
 		CORTEX_MCP_PUBLIC_URL,
 		CORTEX_PRIVACY_MODE: privacyMode,
+		CORTEX_RAG_HTTP_PORT: ragPort,
+		CORTEX_RAG_HTTP_HOST: ragHost,
+		CORTEX_RAG_CHUNK_SIZE: ragChunkSize,
+		EXTERNAL_KG_ENABLED: externalKg,
 	} = envSchema.parse(process.env);
 
 	const httpServer = createRuntimeHttpServer({
@@ -72,6 +82,7 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 		artifacts: artifactRepository,
 		evidence: evidenceRepository,
 		orchestration,
+		observability: observabilityBus,
 	});
 	const eventManager = createEventManager({ httpServer });
 
@@ -159,6 +170,15 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 	const { port: boundHttpPort } = await httpServer.listen(httpPort, httpHost);
 	const httpUrl = `http://${httpHost}:${boundHttpPort}`;
 
+	const ragSurface = await startRagHttpSurface({
+		host: ragHost,
+		port: ragPort,
+		chunkSize: ragChunkSize,
+		enableNeo4j: externalKg === 'true',
+	});
+	const ragUrl = ragSurface.url;
+	console.log(`📡 brAInwav RAG HTTP surface available at ${ragUrl}`);
+
 	const mcpServer = createMcpHttpServer(mcpGateway);
 	const { port: boundMcpPort } = await mcpServer.listen(mcpPort, mcpHost);
 	const mcpUrl = `http://${mcpHost}:${boundMcpPort}`;
@@ -180,18 +200,33 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 		data: {
 			httpUrl,
 			mcpUrl,
+			ragUrl,
 			startedAt: new Date().toISOString(),
 		},
 	});
 
-	const stop = async () => {
-		await Promise.all([httpServer.close(), mcpServer.close()]);
+	const stop = async ({ graceMs = 0 }: { graceMs?: number } = {}) => {
+		const [http, mcp, rag] = await Promise.all([
+			httpServer.beginShutdown({ timeoutMs: graceMs }),
+			mcpServer.beginShutdown({ timeoutMs: graceMs }),
+			ragSurface.beginShutdown({ timeoutMs: graceMs }),
+		]);
+		return { http, mcp, rag };
 	};
 
 	const shutdown = async (signal: string) => {
 		console.log(`\n🛑 Received ${signal}, shutting down gracefully...`);
-		await stop();
-		console.log('✅ Servers closed');
+		const results = await stop({ graceMs: 30_000 });
+		const incomplete = Object.entries(results).filter(([, result]) => !result.completed);
+		if (incomplete.length > 0) {
+			for (const [surface, result] of incomplete) {
+				console.warn(
+					`⚠️ brAInwav runtime shutdown timed out on ${surface} surface with ${result.pendingRequests} pending request(s)`,
+				);
+			}
+		} else {
+			console.log('✅ brAInwav control-plane surfaces closed gracefully');
+		}
 		process.exit(0);
 	};
 
@@ -205,11 +240,20 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 	return {
 		httpUrl,
 		mcpUrl,
+		ragUrl,
 		events: eventManager,
 		stop: async () => {
 			process.removeListener('SIGTERM', onSignal);
 			process.removeListener('SIGINT', onSignal);
-			await stop();
+			const results = await stop();
+			const incomplete = Object.entries(results).filter(([, result]) => !result.completed);
+			if (incomplete.length > 0) {
+				for (const [surface, result] of incomplete) {
+					console.warn(
+						`⚠️ brAInwav runtime stop timed out on ${surface} surface with ${result.pendingRequests} pending request(s)`,
+					);
+				}
+			}
 		},
 	};
 }

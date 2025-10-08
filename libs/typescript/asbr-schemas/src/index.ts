@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-export type UUID = string;
 export type EvidenceRisk = 'low' | 'medium' | 'high' | 'unknown';
 export type TaskStatus =
 	| 'queued'
