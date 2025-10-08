@@ -86,7 +86,7 @@ export function createServer(options: RagHttpServerOptions): FastifyInstance {
 
   if (options.enableCors !== false) {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    fastify.register(cors, { origin: true });
+    fastify.register(cors, { origin: options.corsOrigin ?? false });
   }
 
   fastify.setErrorHandler(async (error, request, reply) => {
