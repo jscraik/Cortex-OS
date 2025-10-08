@@ -13,7 +13,7 @@
 
 This plan structures the upgrade and refactor of `apps/cortex-os` (Node/TypeScript) and `apps/cortex-py` (Python) using strict Test-Driven Development. All changes follow the brAInwav quality gates and **CODESTYLE.md conventions** at every step.
 
-**Key Principles**:w  
+**Key Principles**:  
 
 - **CODESTYLE.md Compliance**: Every code change must follow functional-first patterns, ≤40 line functions, named exports, async/await, and guard clauses per CODESTYLE.md
 - Write failing test → minimal implementation → refactor → commit
