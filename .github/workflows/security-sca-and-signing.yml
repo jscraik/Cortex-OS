@@ -20,12 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Full-stack setup
-        uses: ./.github/workflows/reusable-full-stack-setup.yml
+        uses: ./.github/actions/full-stack-setup
         with:
           node-version: '20'  # Updated from 18
           pnpm-version: '9'
           python-version: '3.11'
-          uv: true
+          uv: 'true'
 
       - name: Run npm audit
         run: pnpm audit --audit-level=moderate || true

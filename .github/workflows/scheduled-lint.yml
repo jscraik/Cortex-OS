@@ -24,12 +24,12 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Setup Environment
-        uses: ./.github/workflows/reusable-full-stack-setup.yml
+        uses: ./.github/actions/full-stack-setup
         with:
           node-version: '20'
           pnpm-version: '10.3.0'
-          setup-python: true
-          setup-rust: false
+          setup-python: 'true'
+          setup-rust: 'false'
 
       - name: Biome (changed files baseline)
         run: pnpm biome:ci || true

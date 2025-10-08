@@ -16,12 +16,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Setup Environment
-        uses: ./.github/workflows/reusable-full-stack-setup.yml
+        uses: ./.github/actions/full-stack-setup
         with:
           node-version: '20'
           pnpm-version: '9'
-          setup-python: false
-          setup-rust: false
+          setup-python: 'false'
+          setup-rust: 'false'
 
       - name: Run tests (coverage)
         run: pnpm test:coverage || true

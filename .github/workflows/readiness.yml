@@ -16,11 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Environment
-        uses: ./.github/workflows/reusable-full-stack-setup.yml
+        uses: ./.github/actions/full-stack-setup
         with:
           node-version: '20'
-          setup-python: false
-          setup-rust: false
+          setup-python: 'false'
+          setup-rust: 'false'
           
       - name: Generate readiness.yml files (if missing)
         run: node tools/readiness/generate-readiness-yml.mjs
