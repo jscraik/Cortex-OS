@@ -302,7 +302,8 @@ export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
 
 	// Add jitter if enabled
 	if (jitter) {
-		const jitterAmount = (delay * 0.1 * crypto.getRandomValues(new Uint32Array(1))[0]) / 0xffffffff;
+		const rand = crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000;
+		const jitterAmount = delay * 0.1 * rand;
 		delay += jitterAmount;
 	}
 
