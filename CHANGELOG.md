@@ -11,6 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+#### Test Quality Improvements (2025-01-22)
+
+- **Improved Test Mock Pattern in http-surface.test.ts**:
+  - Replaced stub return value with fail-fast error throwing in self-rag test mock
+  - Changed mock from returning 'Should not be called' to throwing explicit error
+  - Error message: "graph.query should not be called in self-rag mode"
+  - Removed unnecessary `satisfies GraphRagResult` type assertion
+  - Follows TypeScript and Vitest best practices for test mocks
+  
+- **Benefits**:
+  - Tests fail immediately with clear error if mock is unexpectedly called
+  - Makes test intent explicit and easier to understand
+  - Improves debuggability for future maintainers
+  - Minimal change: 3 lines added, 6 lines removed
+
+**Impact**: Enhanced test quality and maintainability following brAInwav testing standards. Test continues to validate that graph.query is not called in self-rag mode, but now fails fast with descriptive error if this contract is violated.
+
 ### Security
 
 #### CVE-2025-57319 (fast-redact) Fixed - Zero Vulnerabilities Achieved (2025-01-21)
