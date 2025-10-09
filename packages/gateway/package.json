@@ -22,7 +22,6 @@
     "@cortex-os/contracts": "workspace:*",
     "@cortex-os/lib": "workspace:*",
     "@cortex-os/mcp-core": "workspace:*",
-    "@cortex-os/mcp-bridge": "workspace:*",
     "@cortex-os/rag": "workspace:*",
     "@cortex-os/simlab": "workspace:*",
     "fastify": "^4.28.1",

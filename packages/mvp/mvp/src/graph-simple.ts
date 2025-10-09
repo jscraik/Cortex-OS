@@ -124,7 +124,7 @@ export class SimplePRPGraph {
 		const strategySpan = startSpan('prp.strategy');
 
 		try {
-			// Call getsub-agentCount to trigger any errors
+			// Call getNeuronCount to trigger any errors
 			this.orchestrator.getNeuronCount();
 
 			const newState: PRPState = {
@@ -132,7 +132,7 @@ export class SimplePRPGraph {
 				phase: 'strategy',
 				metadata: {
 					...state.metadata,
-					currentNeuron: 'strategy-subAgent',
+					currentNeuron: 'strategy-neuron',
 				},
 			};
 
@@ -180,7 +180,7 @@ export class SimplePRPGraph {
 				phase: 'build',
 				metadata: {
 					...state.metadata,
-					currentNeuron: 'build-subAgent',
+					currentNeuron: 'build-neuron',
 				},
 			};
 
@@ -228,7 +228,7 @@ export class SimplePRPGraph {
 				phase: 'evaluation',
 				metadata: {
 					...state.metadata,
-					currentNeuron: 'evaluation-subAgent',
+					currentNeuron: 'evaluation-neuron',
 				},
 			};
 

@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2025-10-09T14:16:53.926Z",
+  "generatedAt": "2025-10-02T21:35:49.297Z",
   "coverage": {
-    "generatedAt": "2025-10-09T14:16:53.926Z",
+    "generatedAt": "2025-10-02T21:35:49.295Z",
     "line": {
-      "percentage": 85.0,
+      "percentage": 29.98,
       "available": true,
       "source": "out/coverage-summary.json",
-      "covered": 635,
+      "covered": 224,
       "total": 747
     },
     "branch": {
-      "percentage": 80.75,
+      "percentage": 63.23,
       "available": true,
       "source": "out/coverage-summary.json",
-      "covered": 55,
+      "covered": 43,
       "total": 68
     },
     "mutation": {

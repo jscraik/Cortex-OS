@@ -6,7 +6,7 @@ Import the orchestrator to build custom workflows.
 import { createExecutionContext, executeNeuron } from "@cortex-os/prp-runner";
 
 const ctx = await createExecutionContext();
-const result = await executeNeuron(ctx, "example-sub-agent", { input: "hello" });
+const result = await executeNeuron(ctx, "example-neuron", { input: "hello" });
 ```
 
-For advanced usage, explore exports like `orchestrator`, `sub-agents`, and `validation`.
+For advanced usage, explore exports like `orchestrator`, `neurons`, and `validation`.

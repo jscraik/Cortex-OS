@@ -27,23 +27,23 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 			expect(typeof orchestrator.getNeuronCount).toBe('function');
 		});
 
-		it('should start with zero subAgents registered', () => {
-			// RED: This should fail - no getsub-agentCount method
+		it('should start with zero neurons registered', () => {
+			// RED: This should fail - no getNeuronCount method
 			expect(orchestrator.getNeuronCount()).toBe(0);
 		});
 
-		it('should fail to execute without any subAgents', async () => {
+		it('should fail to execute without any neurons', async () => {
 			// RED: This should fail - no executePRPCycle method
 			await expect(orchestrator.executePRPCycle({} as any)).rejects.toThrow(
-				'No subAgents registered',
+				'No neurons registered',
 			);
 		});
 	});
 
 	describe('PRP Execution - Core Functionality', () => {
-		it('should execute PRP cycle with registered subAgents', async () => {
+		it('should execute PRP cycle with registered neurons', async () => {
 			// Arrange
-			const mockNeuron = createMockNeuron('strategy-subAgent', 'strategy');
+			const mockNeuron = createMockNeuron('strategy-neuron', 'strategy');
 			orchestrator.registerNeuron(mockNeuron);
 
 			const blueprint = {
@@ -65,7 +65,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 		});
 
 		it('should generate a product requirements prompt', async () => {
-			const mockNeuron = createMockNeuron('strategy-subAgent', 'strategy');
+			const mockNeuron = createMockNeuron('strategy-neuron', 'strategy');
 			orchestrator.registerNeuron(mockNeuron);
 
 			const blueprint = {
@@ -76,22 +76,22 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 
 			const prompt = await orchestrator.generateProductRequirementsPrompt(blueprint);
 			expect(prompt).toContain('Product Requirements for');
-			expect(prompt).toContain('strategy-subAgent');
+			expect(prompt).toContain('strategy-neuron');
 		});
 
 		it('should validate blueprint structure', async () => {
-			const mockNeuron = createMockNeuron('strategy-subAgent', 'strategy');
+			const mockNeuron = createMockNeuron('strategy-neuron', 'strategy');
 			orchestrator.registerNeuron(mockNeuron);
 
 			await expect(orchestrator.generateProductRequirementsPrompt({} as any)).rejects.toThrow();
 		});
 	});
 
-	describe('SubAgent Registration - Core Functionality', () => {
-		it('should register a single subAgent', () => {
-			// RED: This should fail - no registersub-agent method
+	describe('Neuron Registration - Core Functionality', () => {
+		it('should register a single neuron', () => {
+			// RED: This should fail - no registerNeuron method
 			const mockNeuron = {
-				id: 'test-subAgent',
+				id: 'test-neuron',
 				role: 'tester',
 				phase: 'strategy' as const,
 				dependencies: [],
@@ -117,10 +117,10 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 			expect(orchestrator.getNeuronCount()).toBe(1);
 		});
 
-		it('should register multiple subAgents', () => {
+		it('should register multiple neurons', () => {
 			// RED: This should fail initially
-			const neuron1 = createMockNeuron('subAgent-1', 'strategy');
-			const neuron2 = createMockNeuron('subAgent-2', 'build');
+			const neuron1 = createMockNeuron('neuron-1', 'strategy');
+			const neuron2 = createMockNeuron('neuron-2', 'build');
 
 			orchestrator.registerNeuron(neuron1);
 			orchestrator.registerNeuron(neuron2);
@@ -128,7 +128,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 			expect(orchestrator.getNeuronCount()).toBe(2);
 		});
 
-		it('should prevent duplicate subAgent IDs', () => {
+		it('should prevent duplicate neuron IDs', () => {
 			// RED: This should fail - no duplicate detection
 			const neuron1 = createMockNeuron('duplicate-id', 'strategy');
 			const neuron2 = createMockNeuron('duplicate-id', 'build');
@@ -136,12 +136,12 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 			orchestrator.registerNeuron(neuron1);
 
 			expect(() => orchestrator.registerNeuron(neuron2)).toThrow(
-				'SubAgent with ID duplicate-id already registered',
+				'Neuron with ID duplicate-id already registered',
 			);
 		});
 
-		it('should list registered subAgents by phase', () => {
-			// RED: This should fail - no getsub-agentsByPhase method
+		it('should list registered neurons by phase', () => {
+			// RED: This should fail - no getNeuronsByPhase method
 			const strategyNeuron = createMockNeuron('strategy-1', 'strategy');
 			const buildNeuron = createMockNeuron('build-1', 'build');
 
@@ -159,7 +159,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 	});
 });
 
-// Helper function to create mock subAgents for testing
+// Helper function to create mock neurons for testing
 function createMockNeuron(id: string, phase: 'strategy' | 'build' | 'evaluation') {
 	return {
 		id,

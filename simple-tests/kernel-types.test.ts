@@ -6,10 +6,10 @@
 import { describe, expect, it } from 'vitest';
 
 describe('Kernel Types Definition', () => {
-	it('should define SubAgent interface locally to break circular dependency', () => {
+	it('should define Neuron interface locally to break circular dependency', () => {
 		// This test ensures we break the circular dependency by defining types locally
 		const mockNeuron = {
-			id: 'test-subAgent',
+			id: 'test-neuron',
 			execute: async () => ({
 				output: 'test',
 				evidence: [],
@@ -27,7 +27,7 @@ describe('Kernel Types Definition', () => {
 			}),
 		};
 
-		expect(mockNeuron.id).toBe('test-subAgent');
+		expect(mockNeuron.id).toBe('test-neuron');
 		expect(typeof mockNeuron.execute).toBe('function');
 	});
 });

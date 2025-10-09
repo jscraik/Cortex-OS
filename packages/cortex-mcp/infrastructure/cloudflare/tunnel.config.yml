@@ -10,8 +10,7 @@ credentials-file: /Users/jamiecraik/.cloudflared/af4eed03-2d4e-4683-8cb7-6d4b8e4
 
 ingress:
   # Public hostname for cortex-mcp via Cloudflare Tunnel
-  # Routes through ChatGPT compatibility proxy on port 3025
-  # which adds missing Accept headers before forwarding to MCP server on 3024
   - hostname: cortex-mcp.brainwav.io
-    service: http://localhost:3025
+    # MCP server listens on port 3024 (as per config/ports.env)
+    service: http://localhost:3024
   - service: http_status:404

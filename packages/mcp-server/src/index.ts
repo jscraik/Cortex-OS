@@ -372,10 +372,6 @@ server.on('disconnect', () => {
 });
 
 async function main(): Promise<void> {
-	// Detect if we're being run via STDIO (for Perplexity, Claude, etc.)
-	// or HTTP mode (for standalone server)
-	const isStdio = process.env.MCP_TRANSPORT === 'stdio' || !process.stdin.isTTY;
-
 	const parsedPort = Number.parseInt(process.env.PORT ?? '', 10);
 	const port = Number.isNaN(parsedPort) ? 3024 : parsedPort;
 	const host = DEFAULT_HTTP_HOST;
@@ -414,41 +410,24 @@ async function main(): Promise<void> {
 		logger.info({ toolCount: remoteTools.length }, 'Successfully registered remote Pieces tools');
 	}
 
-	// Start server with appropriate transport
-	if (isStdio) {
-		// STDIO mode for Perplexity, Claude Desktop, etc.
-		await server.start({
-			transportType: 'stdio',
-		});
-		logger.info(
-			{ branding: BRAND.prefix },
-			`${BRAND.prefix} FastMCP v3 server started with STDIO transport`,
-		);
-	} else {
-		// HTTP mode for standalone server
-		await server.start({
-			transportType: 'httpStream',
-			httpStream: {
-				port,
-				host,
-				endpoint: DEFAULT_HTTP_ENDPOINT as `/${string}`,
-				enableJsonResponse: true,
-				stateless: true,
-			},
-		});
-		logger.info(
-			{ branding: BRAND.prefix, port, host, endpoint: DEFAULT_HTTP_ENDPOINT },
-			`${BRAND.prefix} FastMCP v3 server started with HTTP/SSE transport`,
-		);
-		logger.info(
-			{ branding: BRAND.prefix },
-			`${BRAND.prefix} server ready for ChatGPT connections - CORS enabled by default`,
-		);
-		logger.info(
-			{ branding: BRAND.prefix, port, host },
-			`${BRAND.healthMessage} - http://${host}:${port}/health`,
-		);
-	}
+	await server.start({
+		transportType: 'httpStream',
+		httpStream: {
+			port,
+			host,
+			endpoint: DEFAULT_HTTP_ENDPOINT as `/${string}`,
+			enableJsonResponse: true,
+			stateless: false,
+		},
+	});
+	logger.info(
+		{ branding: BRAND.prefix, port, host, endpoint: DEFAULT_HTTP_ENDPOINT },
+		`${BRAND.prefix} FastMCP v3 server started with HTTP/SSE transport`,
+	);
+	logger.info(
+		{ branding: BRAND.prefix },
+		`${BRAND.prefix} server ready for ChatGPT connections - CORS enabled by default`,
+	);
 	logger.info(
 		{ branding: BRAND.prefix, port, host },
 		`${BRAND.healthMessage} - http://${host}:${port}/health`,

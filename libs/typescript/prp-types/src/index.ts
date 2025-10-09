@@ -7,7 +7,7 @@ export interface PRPState {
 	updatedAt?: string;
 }
 
-export interface SubAgent<Input = unknown, Output = unknown> {
+export interface Neuron<Input = unknown, Output = unknown> {
 	name: string;
 	run: (input: Input) => Promise<Output>;
 }

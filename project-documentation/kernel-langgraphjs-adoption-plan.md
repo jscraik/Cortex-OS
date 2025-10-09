@@ -21,10 +21,10 @@ Goal: Rebuild `@cortex-os/kernel` as the deterministic execution core for LangGr
    - Tests: verify graph emits history entries via the existing `history` helpers.
    - Implementation: hook graph transitions to `createHistory/addToHistory` and limit history length (configurable).
 
-## Phase 2 – Sub-agent Execution Bridge (3 commits)
+## Phase 2 – Neuron Execution Bridge (3 commits)
 1. **Orchestrator Adapter**
-   - Tests: failing integration test asserting `KernelRuntime` calls `orchestrator.executePRPCycle()` with blueprint + sub-agents.
-   - Implementation: build adapter bridging LangGraph nodes to orchestrator sub-agents; remove hardcoded validation results.
+   - Tests: failing integration test asserting `KernelRuntime` calls `orchestrator.executePRPCycle()` with blueprint + neurons.
+   - Implementation: build adapter bridging LangGraph nodes to orchestrator neurons; remove hardcoded validation results.
 2. **Voltage Agent Dispatch Hook**
    - Tests: ensures LangGraph nodes emit tasks that orchestration/agents can subscribe to; failing until implemented.
    - Implementation: publish events (via kernel event bus) for strategy/build/evaluation nodes, allowing orchestration to attach agent runners.

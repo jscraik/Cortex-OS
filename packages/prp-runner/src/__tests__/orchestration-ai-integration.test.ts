@@ -9,8 +9,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type AICoreCapabilities, createAICapabilities } from '../ai-capabilities.js';
 import { createASBRAIIntegration } from '../asbr-ai-integration.js';
+import { createNeuronRegistry } from '../neurons/index';
 import { createPRPOrchestrator, type PRPOrchestrator } from '../orchestrator.js';
-import { createNeuronRegistry } from '../subAgents/index';
 
 // Mock orchestration types to avoid external dependencies
 interface OrchestrationTask {
@@ -54,15 +54,15 @@ vi.mock('../orchestrator.js', () => ({
 			phase: 'completed',
 			blueprint: { title: 'Test Task', requirements: ['text-generation'] },
 			outputs: {
-				'strategy-subAgent': {
+				'strategy-neuron': {
 					content: 'Strategy output',
 					evidence: ['req1', 'req2'],
 				},
-				'build-subAgent': {
+				'build-neuron': {
 					content: 'Build output',
 					evidence: ['impl1', 'impl2'],
 				},
-				'evaluation-subAgent': {
+				'evaluation-neuron': {
 					content: 'Evaluation output',
 					evidence: ['test1', 'test2'],
 				},
@@ -94,15 +94,12 @@ vi.mock('../orchestrator.js', () => ({
 	})),
 }));
 
-vi.mock('../subAgents/index.js', () => ({
+vi.mock('../neurons/index.js', () => ({
 	createNeuronRegistry: vi.fn().mockReturnValue(
 		new Map([
-			['strategy-subAgent', { id: 'strategy-subAgent', phase: 'strategy', type: 'ai-enhanced' }],
-			['build-subAgent', { id: 'build-subAgent', phase: 'build', type: 'ai-enhanced' }],
-			[
-				'evaluation-subAgent',
-				{ id: 'evaluation-subAgent', phase: 'evaluation', type: 'ai-enhanced' },
-			],
+			['strategy-neuron', { id: 'strategy-neuron', phase: 'strategy', type: 'ai-enhanced' }],
+			['build-neuron', { id: 'build-neuron', phase: 'build', type: 'ai-enhanced' }],
+			['evaluation-neuron', { id: 'evaluation-neuron', phase: 'evaluation', type: 'ai-enhanced' }],
 		]),
 	),
 }));
@@ -144,9 +141,9 @@ class AIEnhancedOrchestrationEngine {
 		this.prpOrchestrator = createPRPOrchestrator();
 		this.neuronRegistry = createNeuronRegistry();
 
-		// Register AI-enhanced subAgents
-		for (const [_id, subAgent] of this.neuronRegistry) {
-			this.prpOrchestrator.registerNeuron(subAgent);
+		// Register AI-enhanced neurons
+		for (const [_id, neuron] of this.neuronRegistry) {
+			this.prpOrchestrator.registerNeuron(neuron);
 		}
 	}
 

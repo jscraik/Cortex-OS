@@ -2,8 +2,8 @@
 
 PRP Runner is composed of:
 
-- **Orchestrator** – schedules sub-agent execution and maintains state.
-- **Sub-agents** – pluggable modules that perform atomic tasks.
+- **Orchestrator** – schedules neuron execution and maintains state.
+- **Neurons** – pluggable modules that perform atomic tasks.
 - **Adapters** – bridge to external models such as Ollama or MLX.
 - **Enforcement Hooks** – validate inputs and outputs before execution.
 

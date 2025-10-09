@@ -15,7 +15,7 @@ from multimodal.embedding_service import (
     EmbeddingResponse,
     MultimodalEmbeddingService as BackendEmbeddingService,
 )
-from multimodal.modalities import Modality
+from multimodal.types import Modality
 
 
 @dataclass(slots=True)

@@ -1,102 +1,27 @@
 {
-  "timestamp": "2025-10-09T14:08:29.666314+00:00",
+  "timestamp": "2025-10-08T16:00:14.155968+00:00",
   "exitstatus": 0,
   "summary": {
-    "total": 18,
-    "passed": 18,
+    "total": 3,
+    "passed": 3,
     "failed": 0,
     "skipped": 0
   },
   "results": [
     {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_image_embedding_success",
+      "nodeid": "tests/test_fastmcp_schema_upgrade.py::test_tool_contract_schema_exposes_seed_field",
       "outcome": "passed",
-      "duration": 0.000985541999398265
+      "duration": 5.845900159329176e-05
     },
     {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_audio_embedding_success",
+      "nodeid": "tests/test_fastmcp_schema_upgrade.py::test_embedding_tool_input_rejects_non_positive_seed",
       "outcome": "passed",
-      "duration": 0.0007363330005318858
+      "duration": 5.945899829384871e-05
     },
     {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_video_embedding_success",
+      "nodeid": "tests/test_fastmcp_schema_upgrade.py::test_tool_invocation_passes_seed_through_service",
       "outcome": "passed",
-      "duration": 0.0008833750034682453
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_text_embedding_success",
-      "outcome": "passed",
-      "duration": 0.00041229199996450916
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_invalid_modality_raises",
-      "outcome": "passed",
-      "duration": 0.00028412499523255974
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_timeout_handling",
-      "outcome": "passed",
-      "duration": 0.0014044170020497404
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_get_model_info",
-      "outcome": "passed",
-      "duration": 0.0001913330052047968
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_supported_modalities",
-      "outcome": "passed",
-      "duration": 0.0001466249959776178
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_file_validator_size_limit",
-      "outcome": "passed",
-      "duration": 9.93329958873801e-05
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_file_validator_format",
-      "outcome": "passed",
-      "duration": 6.679200305370614e-05
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_service_is_available",
-      "outcome": "passed",
-      "duration": 0.00013700000272365287
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_image_embedding_failure_corrupted_file",
-      "outcome": "passed",
-      "duration": 0.00017070799367502332
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_audio_embedding_failure_invalid_format",
-      "outcome": "passed",
-      "duration": 0.00018325000564800575
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_video_embedding_failure_too_large",
-      "outcome": "passed",
-      "duration": 0.011755084000469651
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_text_embedding_failure_too_large",
-      "outcome": "passed",
-      "duration": 0.00044195800001034513
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_embedding_timeout_with_custom_timeout",
-      "outcome": "passed",
-      "duration": 0.05141195799660636
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_embedding_response_contains_brAInwav_metadata",
-      "outcome": "passed",
-      "duration": 0.0005460000029415824
-    },
-    {
-      "nodeid": "tests/test_multimodal_embedding_service.py::test_embedding_without_normalization",
-      "outcome": "passed",
-      "duration": 0.0005998330016154796
+      "duration": 0.0004288340023776982
     }
   ]
 }

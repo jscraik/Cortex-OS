@@ -120,7 +120,7 @@
 		"tests_to_add": "Test case for line counting functionality"
 	},
 	{
-		"file": "src/sub-agents/backend-engineer-production.ts",
+		"file": "src/neurons/backend-engineer-production.ts",
 		"lines": "519",
 		"severity": "high",
 		"category": "runtime-failure",
@@ -130,7 +130,7 @@
 		"tests_to_add": "Test case for UUID generation in generated handlers"
 	},
 	{
-		"file": "src/sub-agents/backend-engineer-production.ts",
+		"file": "src/neurons/backend-engineer-production.ts",
 		"lines": "960",
 		"severity": "high",
 		"category": "runtime-failure",
@@ -160,7 +160,7 @@
 		"tests_to_add": "Test case with actual security vulnerabilities that should be detected"
 	},
 	{
-		"file": "src/sub-agents/evaluation-production.ts",
+		"file": "src/neurons/evaluation-production.ts",
 		"lines": "388",
 		"severity": "medium",
 		"category": "architecture-violation",
@@ -170,7 +170,7 @@
 		"tests_to_add": "Test case verifying reports are written to correct output directory"
 	},
 	{
-		"file": "src/sub-agents/evaluation-production.ts",
+		"file": "src/neurons/evaluation-production.ts",
 		"lines": "641",
 		"severity": "medium",
 		"category": "architecture-violation",
@@ -180,7 +180,7 @@
 		"tests_to_add": "Test case verifying reports are written to correct output directory"
 	},
 	{
-		"file": "src/sub-agents/evaluation-production.ts",
+		"file": "src/neurons/evaluation-production.ts",
 		"lines": "855",
 		"severity": "medium",
 		"category": "architecture-violation",
@@ -204,13 +204,13 @@
 		"lines": "18-29",
 		"severity": "medium",
 		"category": "export-inconsistency",
-		"description": "Exports reference sub-agents with inconsistent naming and locations",
+		"description": "Exports reference neurons with inconsistent naming and locations",
 		"evidence": "Lines 18-29: ProductionSecurityAnalystNeuron, ProductionUXDesignerNeuron etc. exported but actually defined in strategy-production.ts",
-		"fix": "Update exports to match actual file structure or reorganize sub-agent files for consistency",
+		"fix": "Update exports to match actual file structure or reorganize neuron files for consistency",
 		"tests_to_add": "Test case verifying all exports can be imported successfully"
 	},
 	{
-		"file": "src/sub-agents/backend-engineer-production.ts",
+		"file": "src/neurons/backend-engineer-production.ts",
 		"lines": "627-660",
 		"severity": "medium",
 		"category": "security-inadequate",
@@ -236,7 +236,7 @@
 		"category": "tdd-violation",
 		"description": "Production system has zero tests despite claiming TDD compliance",
 		"evidence": "No test files exist in codebase, violates fundamental TDD principle",
-		"fix": "Create comprehensive test suite covering all sub-agents, orchestrator, and tools",
+		"fix": "Create comprehensive test suite covering all neurons, orchestrator, and tools",
 		"tests_to_add": "Unit tests for all classes, integration tests for full PRP cycles, mock tool execution tests"
 	},
 	{
@@ -320,13 +320,13 @@
 		"tests_to_add": "Test workflow initialization with various mock mode configurations"
 	},
 	{
-		"file": "src/sub-agents/",
+		"file": "src/neurons/",
 		"lines": "*.legacy files",
 		"severity": "low",
 		"category": "cruft-removal",
-		"description": "Legacy sub-agent files serve no purpose and create confusion",
+		"description": "Legacy neuron files serve no purpose and create confusion",
 		"evidence": "Files backend-engineer.ts.legacy, frontend-engineer.ts.legacy, etc. exist but are not used",
 		"fix": "Delete all .legacy files to clean up codebase",
-		"tests_to_add": "Test case verifying only production sub-agents are loaded"
+		"tests_to_add": "Test case verifying only production neurons are loaded"
 	}
 ]

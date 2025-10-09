@@ -9,7 +9,7 @@ ingress:
 # Optional: set to true for quick local dev; disable in production
 no-autoupdate: true
 
-# Remove metrics here and rely on the MCP server's own /metrics endpoint
+metrics: 127.0.0.1:40713
 
 tunnel: cortex-mcp
 # Provide credentials via CLOUDFLARE_TUNNEL_TOKEN or cert.pem

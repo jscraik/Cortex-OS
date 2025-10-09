@@ -120,7 +120,7 @@ cortex dev:test && cortex dev:review && cortex dev:build && cortex dev:release
 - MCP in/out: `packages/mcp` (clients + outbound servers)
 - A2A bus: `packages/a2a` (typed events, DLQ/outbox via a2a-services)
 - Agents: `packages/agents` call MCP, emit A2A
-- Models: `packages/model-gateway` on http://127.0.0.1:8081 (`/embeddings`, `/rerank`, `/chat`)
+- Models: `packages/model-gateway` on <http://127.0.0.1:8081> (`/embeddings`, `/rerank`, `/chat`)
 
 Note: Feature mounts under `apps/cortex-os/packages/` (evidence, ingest, planner, rag) are coordinated by ASBR; cross-feature imports are forbidden.
 

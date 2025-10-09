@@ -5,17 +5,17 @@
 
 import type { PRPState } from '../state.js';
 
-export interface SubAgent {
+export interface Neuron {
 	id: string;
 	role: string;
 	phase: 'strategy' | 'build' | 'evaluation';
 	dependencies: string[];
 	tools: string[];
 	requiresLLM?: boolean;
-	execute(state: unknown, context: unknown): Promise<SubAgentResult>;
+	execute(state: unknown, context: unknown): Promise<NeuronResult>;
 }
 
-export interface SubAgentResult {
+export interface NeuronResult {
 	output: unknown;
 	evidence: unknown[];
 	nextSteps: string[];
@@ -71,7 +71,7 @@ export interface MCPContext {
 
 export interface PRPOrchestrator {
 	getNeuronCount(): number;
-	executeSubAgent?(neuronId: string, state: PRPState, context: unknown): Promise<unknown>;
+	executeNeuron?(neuronId: string, state: PRPState, context: unknown): Promise<unknown>;
 }
 
 export class MCPAdapter {
@@ -139,7 +139,7 @@ export class MCPAdapter {
 		return { result, evidence };
 	}
 
-	createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): SubAgent {
+	createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): Neuron {
 		return {
 			id: `mcp-${tool.name}`,
 			role: `mcp-tool-${tool.name}`,

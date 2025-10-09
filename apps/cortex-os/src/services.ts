@@ -10,8 +10,8 @@ import { ArtifactRepository } from './persistence/artifact-repository.js';
 import { EvidenceRepository } from './persistence/evidence-repository.js';
 import { ProfileRepository } from './persistence/profile-repository.js';
 import { TaskRepository } from './persistence/task-repository.js';
-import { getRunsRoot } from './run-bundle/paths.js';
 import { RunBundleRecorder } from './run-bundle/recorder.js';
+import { getRunsRoot } from './run-bundle/paths.js';
 import { initRunBundle } from './run-bundle/writer.js';
 
 const DEFAULT_IMPORTANCE = 5;
@@ -193,14 +193,14 @@ export function provideOrchestration(): OrchestrationFacade {
 	const facade = coreProvideOrchestration();
 	return {
 		...facade,
-		run: async (task, agents, context = {}, subAgents = []) => {
+		run: async (task, agents, context = {}, neurons = []) => {
 			const runId =
 				task.id ?? `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 			const bundle = await initRunBundle({ id: runId, rootDir: RUNS_ROOT });
 			const contextSnapshot =
 				context && typeof context === 'object' && !Array.isArray(context)
-					? { ...(context as Record<string, unknown>), subAgents }
-					: { value: context, subAgents };
+					? { ...(context as Record<string, unknown>), neurons }
+					: { value: context, neurons };
 			const recorder = new RunBundleRecorder({
 				runId,
 				writer: bundle,
@@ -213,7 +213,7 @@ export function provideOrchestration(): OrchestrationFacade {
 			await recorder.recordPrompts([]);
 
 			try {
-				const result = (await facade.run(task, agents, context, subAgents)) as {
+				const result = (await facade.run(task, agents, context, neurons)) as {
 					ctx?: { promptCaptures?: PromptCapture[] };
 				};
 				const promptCaptures = Array.isArray(result.ctx?.promptCaptures)

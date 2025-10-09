@@ -23,7 +23,7 @@ import { execSync } from 'node:child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const ROOT_DIR = join(__dirname, '..');
+const ROOT_DIR = join(__dirname, '..', '..');
 const TASKS_DIR = join(ROOT_DIR, 'tasks');
 const TEMPLATES_DIR = join(ROOT_DIR, '.cortex', 'templates');
 

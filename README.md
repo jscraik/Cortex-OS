@@ -58,7 +58,6 @@ Built as a governed monorepo with strict architectural boundaries, Cortex-OS pro
 ### Core Capabilities
 
 - **🤖 AI Agent Orchestration** – Multi-agent workflows with advanced coordination and A2A communication
-- **🔄 Unified Workflow Engine** – Integrated PRP Runner and Task Management with state machine orchestration
 - **🧠 Multimodal AI Processing** – Support for images, audio, PDFs with OCR, vision analysis, and cross-modal search
 - **🔍 Advanced RAG System** – Retrieval-Augmented Generation with unified embeddings and citation tracking
 - **🔌 MCP Integration** – Standardized tool integration via Model Context Protocol with FastMCP v3

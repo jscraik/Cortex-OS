@@ -19,7 +19,6 @@
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-transport": "workspace:*",
     "@cortex-os/mcp-core": "workspace:*",
-    "@cortex-os/mcp-bridge": "workspace:*",
     "@types/chokidar": "^2.1.7",
     "axios": "^1.12.2",
     "chokidar": "^3.6.0",

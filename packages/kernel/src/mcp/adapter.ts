@@ -12,17 +12,17 @@ import { runCommand } from '../lib/run-command.js';
 import type { Evidence, PRPState } from '../state.js';
 import { generateId } from '../utils/id.js';
 
-interface SubAgent {
+interface Neuron {
 	id: string;
 	role: string;
 	phase: 'strategy' | 'build' | 'evaluation';
 	dependencies: string[];
 	tools: string[];
 	requiresLLM?: boolean;
-	execute(state: PRPState, context: { workingDirectory?: string }): Promise<SubAgentResult>;
+	execute(state: PRPState, context: { workingDirectory?: string }): Promise<NeuronResult>;
 }
 
-interface SubAgentResult {
+interface NeuronResult {
 	output: unknown;
 	evidence: Evidence[];
 	nextSteps: string[];
@@ -258,9 +258,9 @@ export class MCPAdapter {
 	}
 
 	/**
-	 * Convert MCP tools to kernel-compatible subAgents
+	 * Convert MCP tools to kernel-compatible neurons
 	 */
-	createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): SubAgent {
+	createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation'): Neuron {
 		return {
 			id: `mcp-${tool.name}`,
 			role: `mcp-tool-${tool.name}`,
@@ -289,7 +289,7 @@ export class MCPAdapter {
 					commandsExecuted: 1,
 				};
 
-				const result: SubAgentResult = {
+				const result: NeuronResult = {
 					output: {
 						toolName: tool.name,
 						result: execution.result,

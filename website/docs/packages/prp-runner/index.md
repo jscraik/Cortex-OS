@@ -14,7 +14,7 @@ sidebar_label: Index
 `@cortex-os/prp-runner` is the production reference implementation of the PRP (Prompt-Response Processing) neural orchestration engine.
 
 ### Current Features
-- Orchestrates pluggable "sub-agents" as execution units.
+- Orchestrates pluggable "neurons" as execution units.
 - CLI demos for semantic search and MCP HTTP service.
 - Type-safe API for embedding and LLM adapters.
 

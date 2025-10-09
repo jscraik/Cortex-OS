@@ -24,20 +24,6 @@ Strict domain separation with controlled interfaces:
 - Shared utilities via common interfaces
 - Clear separation of concerns between agent types
 
-## Authentication
-
-- HTTP transports must set `MCP_API_KEY` at startup; startup fails fast when the key is missing.
-- Clients may supply the key via `X-API-Key: <key>`.
-- `Authorization: Bearer <key>` is accepted for compatibility with generic HTTP tooling.
-- `Authorization: Basic <user>:<key>` is accepted; only the password segment is compared to the configured key.
-- Authentication failures and successes are logged with aggregated telemetry to surface abuse or drift.
-
-## Networking
-
-- STDIO transport remains available for local agents; HTTP + SSE endpoints default to `/mcp` and `/sse` on port `3024`.
-- Cloudflare tunnels must target the service defined in `config/cloudflared/mcp-tunnel.yml`; hostname or port changes require updating that file.
-- SSE responses share the same authentication guard as HTTP requests and are exposed via the `/sse` path.
-
 ## Inputs
 
 All agent inputs must be validated:

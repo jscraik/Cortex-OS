@@ -265,14 +265,6 @@ services:
 
 ## 📡 Transport Modes
 
-### Transport precedence
-
-1. `MCP_TRANSPORT=stdio` → use STDIO transport exclusively.
-2. `MCP_TRANSPORT=http|sse|all` or unset → start HTTP/SSE transport (default).
-3. Any other value → log a warning and fall back to HTTP/SSE.
-
-Setting `MCP_TRANSPORT=all` keeps HTTP/SSE as the active transport and logs guidance to run a second STDIO process if needed.
-
 ### STDIO (Local Clients)
 
 For Claude Desktop, local IDEs:
@@ -291,24 +283,23 @@ For ChatGPT, remote IDEs:
 PORT=3024 node dist/index.js
 ```
 
-### ChatGPT Desktop Configuration
+### ChatGPT Configuration
 
-**Important:** ChatGPT Desktop uses **remote SSE servers**, not local STDIO like Claude.
+Add to ChatGPT MCP configuration:
 
-#### Setup Instructions:
-
-1. Open **ChatGPT Desktop** → **Settings** → **Connectors**
-2. Click **"+ Add Connector"** or **"Import MCP Server"**
-3. Enter the following details:
-
+```json
+{
+  "mcpServers": {
+    "cortex-mcp": {
+      "command": "/path/to/.Cortex-OS/scripts/start-mcp-server-stdio.sh",
+      "env": {
+        "LOCAL_MEMORY_BASE_URL": "http://localhost:3028/api/v1",
+        "PIECES_MCP_ENABLED": "true"
+      }
+    }
+  }
+}
 ```
-Server URL: https://cortex-mcp.brainwav.io/sse
-Server Name: brAInwav Cortex Memory
-```
-
-**Note:** The `/sse` endpoint is automatically available when running in `httpStream` mode. Your server is accessible via Cloudflare Tunnel at `cortex-mcp.brainwav.io`.
-
-See [CHATGPT_CONNECTION_GUIDE.md](./CHATGPT_CONNECTION_GUIDE.md) for detailed setup and troubleshooting.
 
 ## 🧪 Development
 

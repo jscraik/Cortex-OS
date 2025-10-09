@@ -89,8 +89,15 @@ kubectl create secret generic cortex-secrets \
   --from-literal=encryption-key=$ENCRYPTION_KEY \
   --from-literal=oauth-client-secret=$OAUTH_CLIENT_SECRET
 
-# Deploy Cortex MCP server (includes Deployment, Service, HPA)
-kubectl apply -k k8s/overlays/prod
+# Deploy core services in order
+kubectl apply -f k8s/persistent-volumes.yaml
+kubectl apply -f k8s/database.yaml
+kubectl apply -f k8s/mcp-server.yaml
+kubectl apply -f k8s/services.yaml
+kubectl apply -f k8s/ingress.yaml
+
+# Enable autoscaling
+kubectl apply -f k8s/horizontal-pod-autoscaler.yaml
 
 # Verify deployment
 kubectl get pods -n cortex-os
@@ -671,28 +678,7 @@ curl http://postgres:5432/monitoring
 
 ```yaml
 # Prometheus alerting rules
-# The Cortex MCP overlay ships `k8s/overlays/prod/prometheus-rules.yaml` with MCP-specific alerts.
 groups:
-- name: cortex-mcp.rules
-  rules:
-  - alert: MCPPiecesProxyDown
-    expr: avg_over_time(brainwav_mcp_pieces_proxy_up[5m]) < 0.5
-    for: 5m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Pieces proxy unavailable for Cortex MCP server"
-      description: "brainwav_mcp_pieces_proxy_up has been < 0.5 for 5m; remote Pieces tools are degraded."
-
-  - alert: MCPPiecesProxyFlapping
-    expr: changes(brainwav_mcp_pieces_proxy_up[15m]) > 6
-    for: 5m
-    labels:
-      severity: warning
-    annotations:
-      summary: "Pieces proxy connection flapping"
-      description: "The Pieces proxy has changed state more than 6 times in 15 minutes. Investigate connectivity to the remote Pieces MCP endpoint."
-
 - name: cortex-os.rules
   rules:
   - alert: ServiceDown

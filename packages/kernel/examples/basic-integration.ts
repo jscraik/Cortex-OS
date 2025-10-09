@@ -18,15 +18,15 @@ async function basicIntegrationExample() {
 	// 1. Create a mock orchestrator (in real usage, this would be the PRP runner)
 	const mockOrchestrator = {
 		getNeuronCount: () => 5,
-		executeSubAgent: async (id: string, input: any) => {
-			console.log(`   🔄 Executing subAgent: ${id}`);
+		executeNeuron: async (id: string, input: any) => {
+			console.log(`   🔄 Executing neuron: ${id}`);
 			return { result: `Processed by ${id}`, input };
 		},
 	};
 
 	// 2. Initialize the kernel
 	const kernel = new CortexKernel(mockOrchestrator);
-	console.log(`✅ Kernel initialized with ${kernel.getNeuronCount()} subAgents\n`);
+	console.log(`✅ Kernel initialized with ${kernel.getNeuronCount()} neurons\n`);
 
 	// 3. Define a sample project blueprint
 	const blueprint = {

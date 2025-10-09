@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-10-09T14:16:53.926Z",
+  "timestamp": "2025-10-06T07:51:32.146Z",
   "branding": "brAInwav Development Team - Cortex-OS Baseline",
   "coverage": {
     "line": 85,
@@ -22,7 +22,7 @@
     }
   },
   "dependencies": {
-    "total": 126,
+    "total": 121,
     "outdated": 12,
     "vulnerabilities": {
       "critical": 0,

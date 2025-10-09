@@ -20,11 +20,7 @@ export interface CapturedExample {
 		inputState: Partial<PRPState>;
 	};
 	userAction: {
-		type:
-			| 'validation_override'
-			| 'gate_adjustment'
-			| 'sub-agent_guidance'
-			| 'workflow_modification';
+		type: 'validation_override' | 'gate_adjustment' | 'neuron_guidance' | 'workflow_modification';
 		description: string;
 		parameters: any;
 		timestamp: string;
@@ -155,7 +151,7 @@ export class ExampleCaptureSystem {
 	captureWorkflowModification(
 		prpState: PRPState,
 		modification: {
-			type: 'gate_adjustment' | 'sub-agent_reordering' | 'phase_skipping';
+			type: 'gate_adjustment' | 'neuron_reordering' | 'phase_skipping';
 			description: string;
 			changes: any;
 		},
