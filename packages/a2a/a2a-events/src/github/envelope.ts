@@ -302,11 +302,30 @@ export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
 
 	// Add jitter if enabled
 	if (jitter) {
-		const jitterAmount = (delay * 0.1 * crypto.getRandomValues(new Uint32Array(1))[0]) / 0xffffffff;
+		const rand = randomFraction();
+		const jitterAmount = delay * 0.1 * rand;
 		delay += jitterAmount;
 	}
 
 	return Math.floor(delay);
+}
+
+
+/**
+ * Returns an unbiased random float in [0, 1) using cryptographically secure random numbers.
+ */
+function randomFraction(): number {
+	// Use rejection sampling to avoid bias.
+	const cryptoObj = typeof crypto !== 'undefined' ? crypto : (typeof window !== 'undefined' ? window.crypto : undefined);
+	if (!cryptoObj) {
+		throw new Error('crypto.getRandomValues is unavailable');
+	}
+	const range = 0xFFFFFFFF;
+	let x: number;
+	do {
+		x = cryptoObj.getRandomValues(new Uint32Array(1))[0];
+	} while (x === range); // Reject max value to keep it in [0, range)
+	return x / range;
 }
 
 // Envelope Transformation Helpers

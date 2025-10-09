@@ -38,12 +38,12 @@ jobs:
       security-events: write
     steps:
       - name: Full Stack Setup
-        uses: ./.github/workflows/reusable-full-stack-setup.yml
+        uses: ./.github/actions/full-stack-setup
         with:
           node-version: '20.11.1'
           pnpm-version: '9.9.0'
-          setup-python: false
-          setup-rust: false
+          setup-python: 'false'
+          setup-rust: 'false'
 
       - name: Security audit
         run: pnpm audit --audit-level moderate
@@ -69,12 +69,12 @@ jobs:
         test-type: [unit, integration, e2e]
     steps:
       - name: Full Stack Setup
-        uses: ./.github/workflows/reusable-full-stack-setup.yml
+        uses: ./.github/actions/full-stack-setup
         with:
           node-version: '20.11.1'
           python-version: '3.11.13'
           pnpm-version: '9.9.0'
-          setup-rust: false
+          setup-rust: 'false'
 
       - name: Run tests
         run: pnpm run test:${{ matrix.test-type }}

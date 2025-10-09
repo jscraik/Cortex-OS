@@ -208,12 +208,9 @@ describe('RAG HTTP surfaces', () => {
 
   it('skips retrieval when self-rag controller provides cached answer (AT-SRAG-04)', async () => {
     const graph: GraphService = {
-      query: vi.fn(async () => ({
-        answer: 'Should not be called',
-        sources: [],
-        graphContext: { focusNodes: 0, expandedNodes: 0, totalChunks: 0, edgesTraversed: 0 },
-        metadata: {},
-      } satisfies GraphRagResult),
+      query: vi.fn(async () => {
+        throw new Error('graph.query should not be called in self-rag mode');
+      }),
     };
 
     const controller: SelfRagController = {

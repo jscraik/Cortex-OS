@@ -1,15 +1,28 @@
 import type { Chunk, Store } from '../lib/index.js';
+import { z } from 'zod';
 
 export function memoryStore(): Store {
 	const items: Array<Chunk & { embedding?: number[] }> = [];
+
+	// Define a Zod schema for a Chunk. Adjust as needed for your actual Chunk type.
+	const ChunkSchema = z.object({
+		id: z.string(),
+		content: z.string(),
+		// Add other required properties as needed, e.g.:
+		// updatedAt: z.number().optional(),
+		// metadata: z.any().optional(),
+	});
 
 	function assertChunkArray(input: unknown): asserts input is Chunk[] {
 		if (!Array.isArray(input)) {
 			throw new TypeError('memoryStore.upsert expects an array of chunks');
 		}
 		for (const value of input) {
-			if (!value || typeof value !== 'object') {
-				throw new TypeError('memoryStore.upsert received an invalid chunk payload');
+			const result = ChunkSchema.safeParse(value);
+			if (!result.success) {
+				throw new TypeError(
+					`memoryStore.upsert received an invalid chunk payload: ${result.error.message}`
+				);
 			}
 		}
 	}

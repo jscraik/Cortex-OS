@@ -2,8 +2,8 @@
 
 // Test MCP SSE connection
 const { EventSource } = require('eventsource');
-
-const sessionId = 'test-session-' + Math.random().toString(36).substr(2, 9);
+const crypto = require('crypto');
+const sessionId = 'test-session-' + crypto.randomBytes(9).toString('hex');
 const url = `https://cortex-mcp.brainwav.io/mcp?sessionId=${sessionId}`;
 
 console.log(`Connecting to MCP server at: ${url}`);

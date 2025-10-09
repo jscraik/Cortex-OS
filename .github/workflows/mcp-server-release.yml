@@ -110,7 +110,7 @@ jobs:
             BRAINWAV_ENV=production
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@v0.15.10
+        uses: anchore/sbom-action@v0.20.6
         with:
           image: ${{ env.REGISTRY }}/${{ github.repository }}/mcp-server:${{ steps.version.outputs.version }}
           format: spdx-json

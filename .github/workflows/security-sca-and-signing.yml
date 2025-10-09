@@ -20,19 +20,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Full-stack setup
-        uses: ./.github/workflows/reusable-full-stack-setup.yml
+        uses: ./.github/actions/full-stack-setup
         with:
           node-version: '20'  # Updated from 18
           pnpm-version: '9'
           python-version: '3.11'
-          uv: true
+          uv: 'true'
 
       - name: Run npm audit
         run: pnpm audit --audit-level=moderate || true
 
       - name: Run snyk (optional)
         if: ${{ secrets.SNYK_TOKEN != '' }}
-        uses: snyk/actions/node@e2221410bff24446ba09102212d8bc75a567237d
+        uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04
         with:
           args: test
         env:

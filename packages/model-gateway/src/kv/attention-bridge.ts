@@ -72,6 +72,12 @@ export interface AttentionBridge {
 }
 
 const DEFAULT_SEGMENT_BYTES = 512 * 1024;
+/**
+ * Default maximum allowed overhead in milliseconds for attention bridge operations.
+ * This value sets a soft upper bound on the time (in ms) that auxiliary processing
+ * (such as logging or capturing attention data) is permitted to take per segment.
+ * The value 10 was chosen as a conservative default to minimize impact on overall latency.
+ */
 const DEFAULT_OVERHEAD_MS = 10;
 
 const readEnvBoolean = (value: string | undefined): boolean => value === '1' || value === 'true';

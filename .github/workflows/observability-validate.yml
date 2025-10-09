@@ -314,7 +314,7 @@ jobs:
           fi
 
       - name: Commit baseline dashboards
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v6
         with:
           commit_message: "chore: add baseline Grafana dashboards [skip ci]"
           file_pattern: "reports/grafana/dashboards/**/*.json"
