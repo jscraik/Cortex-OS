@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist-spec",
+    "composite": false,
+    "noEmit": true,
+    "sourceMap": true,
+    "types": ["vitest/globals", "node"]
+  },
+  "include": [
+    "tests/**/*",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts"
+  ]
+}
