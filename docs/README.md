@@ -31,6 +31,9 @@ Welcome to the Cortex-OS documentation hub. Cortex-OS is an **Autonomous Softwar
 - [Coding Standards](reference/standards/CODING_STANDARDS.md)
 - [Code Quality Guidelines](reference/standards/code-quality.md)
 - [Evaluation Gates](reference/standards/evals-and-gates.md)
+- **TypeScript Build System**
+  - [TypeScript Build Guide](typescript-build-guide.md) — Project references, incremental compilation, and best practices
+  - [TypeScript Configuration Troubleshooting](troubleshooting/typescript-config.md) — Common issues and solutions
 
 ### 🛠️ CLI & Tools
 - [CLI Comparison](reference/cli/cli-comparison.md)
