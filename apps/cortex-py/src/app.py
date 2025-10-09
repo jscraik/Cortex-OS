@@ -30,7 +30,7 @@ from multimodal.embedding_service import (  # noqa: E402
     EmbeddingRequest,
     MultimodalEmbeddingService,
 )
-from multimodal.types import Modality
+from multimodal.modalities import Modality
 from multimodal.validation import validate_multimodal_file, ValidationError
 
 multimodal_service = MultimodalEmbeddingService()
@@ -398,7 +398,7 @@ def create_app(
             content = await file.read()
             
             # Validate modality
-            from multimodal.types import Modality
+            from multimodal.modalities import Modality
             
             try:
                 mod = Modality[modality.upper()]

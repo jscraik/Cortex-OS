@@ -20,7 +20,7 @@ This report documents the complete transformation of the PRP Runner package from
 #### Specific Violations
 
 1. **orchestrator.ts**: 287 lines of complex logic with zero tests
-2. **neurons/**: 5 production neurons with zero validation
+2. **sub-agents/**: 5 production sub-agents with zero validation
 3. **tools/**: 982-line tool system with zero verification
 4. **Security Theater**: Mock OWASP compliance returning hardcoded `true` values
 5. **Fake A11y**: Regex-based accessibility checking claiming WCAG compliance
@@ -42,7 +42,7 @@ This report documents the complete transformation of the PRP Runner package from
 ```bash
 # Remove all untested code
 mv src/orchestrator.ts src/orchestrator.ts.untested
-mv src/neurons/ src/neurons.untested/
+mv src/sub-agents/ src/sub-agents.untested/
 mv src/tools/ src/tools.untested/
 
 # Start with failing tests
@@ -147,14 +147,14 @@ pnpm precommit        # Pre-commit TDD validation
 
 ```typescript
 // Tests defined the interface
-it('should register a single neuron', () => {
+it('should register a single sub-agent', () => {
   orchestrator.registerNeuron(mockNeuron);
   expect(orchestrator.getNeuronCount()).toBe(1);
 });
 
 // Implementation followed test requirements
-registerNeuron(neuron: Neuron): void {
-  this.neurons.set(neuron.id, neuron);
+registerNeuron(sub-agent: Sub-agent): void {
+  this.sub-agents.set(sub-agent.id, sub-agent);
 }
 ```
 
@@ -169,7 +169,7 @@ registerNeuron(neuron: Neuron): void {
 #### 1. SOLID Principles
 
 - **Single Responsibility**: Each class has one clear purpose
-- **Open/Closed**: Extensible through new neurons
+- **Open/Closed**: Extensible through new sub-agents
 - **Interface Segregation**: Minimal, focused interfaces
 
 #### 2. Test Pyramid Structure
@@ -227,13 +227,13 @@ class MegaOrchestrator {
 ```typescript
 // CORRECT: Simple, test-driven growth
 export class PRPOrchestrator {
-  private neurons: Map<string, Neuron> = new Map();
+  private sub-agents: Map<string, Sub-agent> = new Map();
 
   // Each method added via Red-Green-Refactor
   getNeuronCount(): number {
-    return this.neurons.size;
+    return this.sub-agents.size;
   }
-  registerNeuron(neuron: Neuron): void {
+  registerNeuron(sub-agent: Sub-agent): void {
     /* tested */
   }
   executePRPCycle(blueprint: any): Promise<any> {

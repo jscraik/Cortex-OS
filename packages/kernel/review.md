@@ -15,7 +15,7 @@ The Cortex Kernel package represents a well-structured attempt at creating a det
 
 ### 🚨 High Severity (1 issue)
 
-1. **Type Safety Violation in MCP Adapter** - `createNeuronFromTool` returns untyped object that doesn't implement the Neuron interface
+1. **Type Safety Violation in MCP Adapter** - `createNeuronFromTool` returns untyped object that doesn't implement the Sub-agent interface
 
 ### ⚠️ Medium Severity (7 issues)
 
@@ -82,12 +82,12 @@ interface PRPOrchestrator {
 
 ### Type Safety Violations
 
-The MCP adapter creates "neurons" that don't implement the required interface:
+The MCP adapter creates "sub-agents" that don't implement the required interface:
 
 ```typescript
-// VIOLATION: Returns untyped object claiming to be Neuron
+// VIOLATION: Returns untyped object claiming to be Sub-agent
 createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation') {
-  return { // ❌ This object doesn't implement Neuron interface
+  return { // ❌ This object doesn't implement Sub-agent interface
     id: `mcp-${tool.name}`,
     // ... missing required properties
   };
@@ -101,7 +101,7 @@ createNeuronFromTool(tool: MCPTool, phase: 'strategy' | 'build' | 'evaluation') 
 ### Immediate (Critical)
 
 1. **Fix Package Exports** - Align package.json exports with actual build structure
-2. **Implement Proper Neuron Interface** - Import from prp-runner and implement correctly
+2. **Implement Proper Sub-agent Interface** - Import from prp-runner and implement correctly
 3. **Remove Non-deterministic Elements** - Replace setTimeout and Date.now() with deterministic alternatives
 
 ### Short-term (Important)

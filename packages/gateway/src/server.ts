@@ -14,6 +14,7 @@ import { handleSimlab } from '@cortex-os/simlab';
 import Fastify from 'fastify';
 import client from 'prom-client';
 import { z } from 'zod';
+import { resolveTransport } from '@cortex-os/mcp-bridge/runtime/transport';
 import { getGatewayBus } from './a2a.js';
 import { createAgentRoute } from './lib/create-agent-route.js';
 
@@ -48,13 +49,31 @@ function buildHttpLikeServerInfo(
 }
 
 function getMCPServerInfo(): ServerInfo | null {
-	const transport = (process.env.MCP_TRANSPORT || '') as ServerInfo['transport'];
+	const rawTransport = process.env.MCP_TRANSPORT;
+	const { selected, warnings } = resolveTransport(rawTransport);
 	const name = process.env.MCP_NAME || 'gateway-mcp';
-	if (!transport) return null;
-	if (transport === 'stdio') return buildStdioServerInfo(name);
-	if (transport === 'sse' || transport === 'streamableHttp')
-		return buildHttpLikeServerInfo(name, transport);
-	return null;
+
+	for (const warning of warnings) {
+		if (warning === 'preferAll') {
+			console.warn('MCP_TRANSPORT=all requested; defaulting gateway MCP transport to HTTP.');
+		}
+		if (warning === 'unknownOverride') {
+			console.warn(
+				`Unknown MCP_TRANSPORT override "${rawTransport}". Falling back to HTTP transport.`,
+			);
+		}
+	}
+
+	if (selected === 'stdio') {
+		return buildStdioServerInfo(name);
+	}
+
+	const endpoint = process.env.MCP_ENDPOINT;
+	if (!endpoint) return null;
+	const explicit = rawTransport?.trim().toLowerCase();
+	const transport: 'sse' | 'streamableHttp' =
+		explicit === 'sse' ? 'sse' : 'streamableHttp';
+	return buildHttpLikeServerInfo(name, transport);
 }
 
 // The schema used in createAgentRoute is:

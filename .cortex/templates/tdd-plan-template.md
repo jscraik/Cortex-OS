@@ -3,7 +3,8 @@
 **Task ID**: `[task-id-slug]`  
 **Created**: [YYYY-MM-DD]  
 **Status**: [Draft / In Progress / Complete]  
-**Estimated Effort**: [X hours/days]
+**Estimated Effort**: [X hours/days]  
+**PRP Integration**: [G0-G7 gates this task supports]
 
 ---
 
@@ -15,6 +16,38 @@ Example: "Implement OAuth 2.1 PKCE authentication for brAInwav Local Memory REST
 
 ---
 
+## PRP Gate Alignment
+
+> **Integration Note**: This task aligns with PRP Runner quality gates to ensure consistent quality standards.
+
+### Enforcement Profile Reference
+- **Source**: `[path-to-enforcement-profile.json]` or Default brAInwav Profile
+- **Coverage Targets**: From PRP G2 (Test Plan gate)
+  - Lines: `[XX%]` (from `enforcementProfile.budgets.coverageLines`)
+  - Branches: `[XX%]` (from `enforcementProfile.budgets.coverageBranches`)
+  - Functions: 95% (brAInwav standard)
+  - Statements: 95% (brAInwav standard)
+- **Performance Budgets**: From PRP G2/G6
+  - LCP: `[XXXXms]` (from `enforcementProfile.budgets.performanceLCP`)
+  - TBT: `[XXXms]` (from `enforcementProfile.budgets.performanceTBT`)
+- **Accessibility Target**: From PRP G2
+  - Score: `[XX]` (from `enforcementProfile.budgets.a11yScore`)
+  - WCAG Level: AA (brAInwav standard)
+  - WCAG Version: 2.2 (brAInwav standard)
+- **Security**: brAInwav Zero-Tolerance Policy
+  - Critical: 0
+  - High: 0
+  - Medium: ≤5
+
+### Gate Cross-References
+- **G0 (Ideation)**: Blueprint → `tasks/[task-id]-constitution.md`
+- **G1 (Architecture)**: Policy compliance tracked in research phase
+- **G2 (Test Plan)**: This document fulfills test planning requirements
+- **G4 (Verification)**: Quality gates defined below align with G4 validation
+- **Evidence Trail**: All artifacts linked in `.cortex/evidence-index.json`
+
+---
+
 ## Scope & Goals
 
 ### In Scope
@@ -22,7 +55,7 @@ Example: "Implement OAuth 2.1 PKCE authentication for brAInwav Local Memory REST
 - ✅ [Specific deliverable 2]
 - ✅ [Specific deliverable 3]
 - ✅ brAInwav branding in all outputs and error messages
-- ✅ 90%+ test coverage
+- ✅ Coverage targets per enforcement profile
 - ✅ WCAG 2.2 AA compliance (if UI components)
 
 ### Out of Scope
@@ -33,10 +66,13 @@ Example: "Implement OAuth 2.1 PKCE authentication for brAInwav Local Memory REST
 ### Success Criteria
 1. All tests pass (100% green)
 2. Quality gates pass: `pnpm lint && pnpm test && pnpm security:scan`
-3. 90%+ test coverage maintained
-4. Constitution compliance verified
-5. No mock/placeholder code in production paths
-6. brAInwav branding consistently applied
+3. Coverage meets/exceeds enforcement profile targets
+4. Performance budgets satisfied (PRP G6 alignment)
+5. Security scan clean (PRP G3/G6 alignment)
+6. Constitution compliance verified
+7. No mock/placeholder code in production paths
+8. brAInwav branding consistently applied
+9. Evidence artifacts created and indexed
 
 ---
 
@@ -45,6 +81,7 @@ Example: "Implement OAuth 2.1 PKCE authentication for brAInwav Local Memory REST
 ### Required Research
 - [x] Research document completed: `tasks/[task-id].research.md`
 - [x] Approach selected and approved
+- [x] PRP G1 architecture policies reviewed
 - [ ] Open questions resolved
 
 ### Internal Dependencies

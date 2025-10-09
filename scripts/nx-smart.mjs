@@ -448,18 +448,10 @@ if (strategy === 'affected') {
 		}
 	}
 
-	// Handle dry-run mode - print affected summary and exit
+	// Handle dry-run mode - log only for human readability and skip invoking project executors.
 	if (isDryRun) {
-		if (strategy === 'affected') {
-			if (json) {
-				console.log(
-					JSON.stringify({
-						...meta,
-						strategy: 'dry-run-affected',
-						affectedProjects: affectedList,
-					}),
-				);
-			} else {
+		if (!json) {
+			if (strategy === 'affected') {
 				console.log('\n📋 Affected Projects Summary:');
 				console.log(`Target: ${target}`);
 				console.log(`Base: ${baseRef}`);
@@ -467,21 +459,20 @@ if (strategy === 'affected') {
 				console.log(`Changed files: ${files.length}`);
 				console.log(`Affected projects: ${affectedList.join(', ')}`);
 				console.log(`\n💡 To execute: pnpm ${target}:smart`);
+			} else {
+				console.log('\n📋 Fallback Strategy Summary:');
+				console.log(`[nx-smart][warn] affected strategy failed - would fall back to full run-many`);
+				console.log(`Target: ${target}`);
+				console.log(`Would execute: nx run-many -t ${target}`);
 			}
-		} else if (json) {
+		} else {
 			console.log(
 				JSON.stringify({
 					...meta,
-					strategy: 'dry-run-fallback',
-					wouldExecute: `nx run-many -t ${target} --parallel`,
+					strategy: strategy === 'affected' ? 'dry-run-affected' : 'dry-run-fallback',
+					affectedProjects: strategy === 'affected' ? affectedList : undefined,
 				}),
 			);
-		} else {
-			console.log('\n📋 Fallback Strategy Summary:');
-			console.log(`[nx-smart][warn] affected strategy failed - would fall back to full run-many`);
-			console.log(`Target: ${target}`);
-			console.log(`Would execute: nx run-many -t ${target} --parallel`);
-			console.log(`\n💡 To execute: pnpm ${target}`);
 		}
 		writeMetrics({ skipped: true, reason: 'dry-run' });
 		await finalizeAndExit(0, { skipped: true, reason: 'dry-run' });

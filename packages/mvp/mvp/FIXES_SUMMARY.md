@@ -12,11 +12,11 @@ This document summarizes the critical fixes implemented to improve the MVP packa
 
 **Issues Fixed**:
 
-- Ensured Neuron interface is properly implemented in MCP adapter
-- Verified all required properties exist on Neuron objects
+- Ensured Sub-agent interface is properly implemented in MCP adapter
+- Verified all required properties exist on Sub-agent objects
 - Confirmed execute method is properly implemented
 
-**Verification**: All Neuron interface tests pass
+**Verification**: All Sub-agent interface tests pass
 
 ### 2. Deterministic Execution
 
@@ -92,7 +92,7 @@ All 4 tests pass:
 
 #### Type Safety
 
-- **Before**: Potential type safety issues with Neuron interface
+- **Before**: Potential type safety issues with Sub-agent interface
 - **After**: Verified complete interface implementation
 - **Impact**: Better code reliability and IDE support
 

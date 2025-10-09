@@ -5,8 +5,8 @@ import { currentTimestamp } from '../utils/time.js';
 
 /**
  * Evaluation Phase Gates:
- * - ✅ All neurons pass TDD (Red → Green)
- * - ✅ Reviewer neuron issues ≤ 0 blockers, ≤ 3 majors
+ * - ✅ All subAgents pass TDD (Red → Green)
+ * - ✅ Reviewer subAgent issues ≤ 0 blockers, ≤ 3 majors
  * - ✅ A11y, perf, sec budgets all ≥ thresholds
  * - ✅ Cerebrum consensus: ship or recycle
  */

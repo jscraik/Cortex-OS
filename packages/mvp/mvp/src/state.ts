@@ -73,7 +73,7 @@ export const PRPStateSchema = z.object({
 		metadata: z.record(z.any()).optional(),
 	}),
 
-	// Execution outputs by neuron ID
+	// Execution outputs by subAgent ID
 	outputs: z.record(z.any()),
 
 	// Validation results by phase

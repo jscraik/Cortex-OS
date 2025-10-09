@@ -15,7 +15,7 @@ describe('SimplePRPGraph', () => {
 		resetTelemetry();
 	});
 
-	it.todo('executes neuron operations once orchestrator hooks are available');
+	it.todo('executes subAgent operations once orchestrator hooks are available');
 
 	it('runs deterministic workflow and records telemetry', async () => {
 		const orchestrator: PRPOrchestrator = {

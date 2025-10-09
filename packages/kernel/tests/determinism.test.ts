@@ -21,7 +21,7 @@ describe('Cortex Kernel Determinism', () => {
 		resetCounters();
 
 		mockOrchestrator = {
-			getNeuronCount: () => 3, // Mock orchestrator with 3 neurons
+			getNeuronCount: () => 3, // Mock orchestrator with 3 subAgents
 		};
 		kernel = createKernel(mockOrchestrator);
 	});

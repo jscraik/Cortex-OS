@@ -16,7 +16,7 @@ describe('Cortex Kernel Determinism', () => {
 
 	beforeEach(() => {
 		mockOrchestrator = {
-			getNeuronCount: () => 3, // Mock orchestrator with 3 neurons
+			getNeuronCount: () => 3, // Mock orchestrator with 3 subAgents
 		};
 		graph = new SimplePRPGraph(mockOrchestrator);
 	});

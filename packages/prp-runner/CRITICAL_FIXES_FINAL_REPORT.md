@@ -92,8 +92,8 @@ FAIL  should fail - evidence insights without comprehensive analysis
 **18 issues referenced files that don't exist in `/packages/prp-runner/`:**
 
 - `src/tools/index.ts` (string splitting issues)
-- `src/neurons/backend-engineer-production.ts` (ESM require errors)
-- `src/neurons/evaluation-production.ts` (hardcoded /tmp paths)
+- `src/sub-agents/backend-engineer-production.ts` (ESM require errors)
+- `src/sub-agents/evaluation-production.ts` (hardcoded /tmp paths)
 - `src/orchestrator.ts` (memory leaks)
 - Various other files in the broader codebase
 

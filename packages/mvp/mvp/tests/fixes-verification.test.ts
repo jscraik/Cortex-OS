@@ -85,7 +85,7 @@ describe('MVP Fixes Verification', () => {
 			expect((graph as any).getNeuronCount).toBeUndefined(); // Should not exist
 
 			// Direct access should be preferred
-			// expect((graph as any).orchestrator.getNeuronCount()).toBe(5); // Disabled: orchestrator is not public
+			// expect((graph as any).orchestrator.getsub-agentCount()).toBe(5); // Disabled: orchestrator is not public
 		});
 	});
 });

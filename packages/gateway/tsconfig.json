@@ -10,7 +10,14 @@
     "module": "NodeNext"
   },
   "include": [
-    "src",
-    "scripts"
+    "src/**/*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "tests/**/*",
+    "scripts/**/*"
   ]
 }

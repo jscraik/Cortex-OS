@@ -124,7 +124,7 @@ const executeStrategyPhase = async (
 			phase: 'strategy',
 			metadata: {
 				...state.metadata,
-				currentNeuron: 'strategy-neuron',
+				currentNeuron: 'strategy-subAgent',
 				executionContext: {
 					...state.metadata.executionContext,
 					counter: 0,
@@ -182,7 +182,7 @@ const executeBuildPhase = async (
 			phase: 'build',
 			metadata: {
 				...state.metadata,
-				currentNeuron: 'build-neuron',
+				currentNeuron: 'build-subAgent',
 			},
 		};
 
@@ -236,7 +236,7 @@ const executeEvaluationPhase = async (
 			phase: 'evaluation',
 			metadata: {
 				...state.metadata,
-				currentNeuron: 'evaluation-neuron',
+				currentNeuron: 'evaluation-subAgent',
 			},
 		};
 

@@ -13,9 +13,10 @@ import {
  * Provides secure Playwright-driven DOM extraction capabilities
  */
 export class BrowserExecutor {
-	private config: BrowserExecutorConfig;
-	private readonly processorName = 'brAInwav Browser Executor';
-	private activeBrowsers = 0;
+private config: BrowserExecutorConfig;
+private readonly processorName = 'brAInwav Browser Executor';
+private activeBrowsers = 0;
+private browserPool: Array<unknown> = [];
 
 	constructor(config: BrowserExecutorConfig) {
 		// Validate configuration

@@ -1,0 +1,40 @@
+{
+  "name": "@cortex-os/workflow-common",
+  "version": "1.0.0",
+  "description": "brAInwav Cortex-OS shared workflow primitives for PRP Runner and Task Management",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cortex-os/kernel": "workspace:*",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  },
+  "keywords": [
+    "brainwav",
+    "cortex-os",
+    "workflow",
+    "validation",
+    "quality-gates",
+    "prp-runner",
+    "task-management"
+  ],
+  "author": "brAInwav Development Team",
+  "license": "SEE LICENSE IN ../../LICENSE"
+}

@@ -47,7 +47,7 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
 	});
 
 	describe('[Critical] Type Safety Violations', () => {
-		it('should create valid Neuron objects from MCP tools', () => {
+		it('should create valid SubAgent objects from MCP tools', () => {
 			const adapter = new MCPAdapter();
 			const mockTool = {
 				name: 'test-tool',
@@ -55,16 +55,16 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
 				schema: { type: 'object' },
 			};
 
-			const neuron = adapter.createNeuronFromTool(mockTool, 'strategy');
+			const subAgent = adapter.createNeuronFromTool(mockTool, 'strategy');
 
 			// These assertions will FAIL due to missing interface implementation
-			expect(neuron).toHaveProperty('id');
-			expect(neuron).toHaveProperty('role');
-			expect(neuron).toHaveProperty('phase');
-			expect(neuron).toHaveProperty('dependencies');
-			expect(neuron).toHaveProperty('tools');
-			expect(neuron).toHaveProperty('execute'); // Missing method!
-			expect(typeof neuron.execute).toBe('function'); // Will throw TypeError
+			expect(subAgent).toHaveProperty('id');
+			expect(subAgent).toHaveProperty('role');
+			expect(subAgent).toHaveProperty('phase');
+			expect(subAgent).toHaveProperty('dependencies');
+			expect(subAgent).toHaveProperty('tools');
+			expect(subAgent).toHaveProperty('execute'); // Missing method!
+			expect(typeof subAgent.execute).toBe('function'); // Will throw TypeError
 		});
 
 		it('should match PRPOrchestrator interface from prp-runner', async () => {
@@ -178,11 +178,11 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
 	});
 
 	describe('[Critical] Interface Implementation Gaps', () => {
-		it('should implement all required Neuron interface methods', async () => {
+		it('should implement all required SubAgent interface methods', async () => {
 			const adapter = new MCPAdapter();
 			const mockTool = {
-				name: 'test-neuron',
-				description: 'Test neuron',
+				name: 'test-subAgent',
+				description: 'Test subAgent',
 				inputSchema: { type: 'object' },
 				execute: async (params: any, _context: any) => {
 					return { success: true, params };
@@ -192,11 +192,11 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
 			// Register the tool with the adapter
 			adapter.registerTool(mockTool);
 
-			const neuron = adapter.createNeuronFromTool(mockTool, 'build');
+			const subAgent = adapter.createNeuronFromTool(mockTool, 'build');
 
-			expect(neuron.dependencies).toBeInstanceOf(Array);
-			expect(neuron.tools).toBeInstanceOf(Array);
-			expect(neuron.phase).toBe('build');
+			expect(subAgent.dependencies).toBeInstanceOf(Array);
+			expect(subAgent.tools).toBeInstanceOf(Array);
+			expect(subAgent.phase).toBe('build');
 
 			const mockState = {
 				runId: 'run-test',
@@ -210,7 +210,7 @@ describe('🔴 TDD RED PHASE: Critical Issue Detection', () => {
 				metadata: { startTime: new Date().toISOString(), deterministic: false },
 			} as any;
 
-			await expect(neuron.execute(mockState, {})).resolves.toBeDefined();
+			await expect(subAgent.execute(mockState, {})).resolves.toBeDefined();
 		});
 	});
 });

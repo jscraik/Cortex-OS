@@ -146,7 +146,7 @@ export const PRPStateSchema = z.object({
 	// Human approvals tracking
 	approvals: z.array(HumanApprovalSchema).default([]),
 
-	// Execution outputs by neuron ID
+	// Execution outputs by subAgent ID
 	exports: z.record(z.unknown()).default({}),
 
 	// Outputs for validation

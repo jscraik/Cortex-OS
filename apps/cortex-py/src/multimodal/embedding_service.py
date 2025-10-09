@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 
-from .types import Modality
+from .modalities import Modality
 from .validation import (
     ValidationError,
     detect_file_type,

@@ -6,6 +6,7 @@
 import type { ServerInfo } from '@cortex-os/mcp-core';
 // Respect AGENTS.md boundaries: import from public exports
 import { createEnhancedClient } from '@cortex-os/mcp-core';
+import { resolveTransport } from '@cortex-os/mcp-bridge/runtime/transport';
 import type {
 	ChatRequest,
 	EmbeddingBatchRequest,
@@ -26,21 +27,33 @@ export interface MCPAdapter {
 }
 
 function getServerInfo(): ServerInfo | null {
-	const transport = (process.env.MCP_TRANSPORT || '').trim() as ServerInfo['transport'];
+	const rawTransport = process.env.MCP_TRANSPORT;
+	const { selected, warnings } = resolveTransport(rawTransport);
 	const name = process.env.MCP_NAME || 'model-gateway-mcp';
-	if (!transport) return null;
-	if (transport === 'stdio') {
+
+	for (const warning of warnings) {
+		if (warning === 'preferAll') {
+			console.warn('MCP_TRANSPORT=all is not directly supported; defaulting to HTTP transport.');
+		}
+		if (warning === 'unknownOverride') {
+			console.warn(
+				`Unknown MCP_TRANSPORT override "${rawTransport}". Falling back to HTTP transport.`,
+			);
+		}
+	}
+
+	if (selected === 'stdio') {
 		const command = process.env.MCP_COMMAND;
 		if (!command) return null;
 		const args = process.env.MCP_ARGS ? JSON.parse(process.env.MCP_ARGS) : undefined;
-		return { name, transport, command, args } as ServerInfo;
+		return { name, transport: 'stdio', command, args } as ServerInfo;
 	}
-	if (transport === 'sse' || transport === 'streamableHttp') {
-		const endpoint = process.env.MCP_ENDPOINT;
-		if (!endpoint) return null;
-		return { name, transport, endpoint } as ServerInfo;
-	}
-	return null;
+
+	const endpoint = process.env.MCP_ENDPOINT;
+	if (!endpoint) return null;
+	const httpTransport: ServerInfo['transport'] =
+		rawTransport?.trim().toLowerCase() === 'sse' ? 'sse' : 'streamableHttp';
+	return { name, transport: httpTransport, endpoint } as ServerInfo;
 }
 
 export function createMCPAdapter(): MCPAdapter {

@@ -96,7 +96,7 @@ describe('PRPOrchestrator - TDD Implementation', () => {
 ```typescript
 // WRONG: Building complex architecture without tests
 class ComplexOrchestrator {
-  private neurons: NeuronGraph;
+  private sub-agents: NeuronGraph;
   private phases: PhaseManager;
   private validation: ValidationEngine;
   // ... 500 lines of untested code
@@ -108,10 +108,10 @@ class ComplexOrchestrator {
 ```typescript
 // CORRECT: Simple implementation driven by tests
 export class PRPOrchestrator {
-  private neurons: Map<string, Neuron> = new Map();
+  private sub-agents: Map<string, Sub-agent> = new Map();
 
   getNeuronCount(): number {
-    return this.neurons.size; // Driven by test requirement
+    return this.sub-agents.size; // Driven by test requirement
   }
 }
 ```
@@ -120,7 +120,7 @@ export class PRPOrchestrator {
 
 ```typescript
 // WRONG: Testing mocks instead of real behavior
-it('should call neuron.execute()', () => {
+it('should call sub-agent.execute()', () => {
   const mockNeuron = { execute: vi.fn() };
   // Test passes but doesn't validate real integration
 });
@@ -130,9 +130,9 @@ it('should call neuron.execute()', () => {
 
 ```typescript
 // CORRECT: Test actual functionality
-it('should execute neuron and return result', async () => {
-  const neuron = createMockNeuron('test', 'strategy');
-  orchestrator.registerNeuron(neuron);
+it('should execute sub-agent and return result', async () => {
+  const sub-agent = createMockNeuron('test', 'strategy');
+  orchestrator.registerNeuron(sub-agent);
   const result = await orchestrator.executePRPCycle({});
   expect(result.status).toBe('completed');
 });

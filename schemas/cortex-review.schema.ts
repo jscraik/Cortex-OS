@@ -7,7 +7,7 @@ export const Evidence = z.object({
 	end: z.number().int().nonnegative(),
 	claim: z.string().min(1),
 	hash: z.string().min(8),
-	neuron: z.enum(['planner', 'fixer', 'runner', 'reviewer']).optional(),
+	subAgent: z.enum(['planner', 'fixer', 'runner', 'reviewer']).optional(),
 	timestamp: z.string().datetime().optional(),
 });
 
@@ -32,9 +32,9 @@ export const ValidationGate = z.object({
 	timestamp: z.string().datetime(),
 });
 
-// Neuron-specific evidence collection
+// SubAgent-specific evidence collection
 export const NeuronEvidence = z.object({
-	neuron: z.enum(['planner', 'fixer', 'runner', 'reviewer']),
+	subAgent: z.enum(['planner', 'fixer', 'runner', 'reviewer']),
 	symbol: z.enum(['◆', '●', '■', '#']),
 	tasks_completed: z.array(z.string()),
 	artifacts_produced: z.array(z.string()),
