@@ -1,14 +1,14 @@
-import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { performance } from 'node:perf_hooks';
-import type { Logger } from 'pino';
+import { fileURLToPath } from 'node:url';
 import { loadPolicy, type Policy as OPAPolicy } from '@open-policy-agent/opa-wasm';
+import type { Logger } from 'pino';
 import {
-	BudgetProfile,
-	BudgetUsage,
-	CapabilityDescriptor,
+	type BudgetProfile,
+	type BudgetUsage,
+	type CapabilityDescriptor,
 	CapabilityTokenError,
 } from '../types.js';
 
@@ -80,7 +80,10 @@ export class PolicyEngine {
 				this.policyHash = createHash('sha256').update(wasmBuffer).digest('hex');
 				const policy = await loadPolicy(wasmBuffer);
 				await policy.setData({});
-				this.logger.info({ policyVersion: this.policyVersion, policyHash: this.policyHash }, 'OPA policy loaded');
+				this.logger.info(
+					{ policyVersion: this.policyVersion, policyHash: this.policyHash },
+					'OPA policy loaded',
+				);
 				return policy;
 			})();
 		}
@@ -98,12 +101,15 @@ export class PolicyEngine {
 
 		const evaluationInput = this.buildInput(context);
 		const evaluation = await opa.evaluate(evaluationInput);
-		const decision = Array.isArray(evaluation) && evaluation.length > 0 ? evaluation[0]?.result ?? {} : {};
+		const decision =
+			Array.isArray(evaluation) && evaluation.length > 0 ? (evaluation[0]?.result ?? {}) : {};
 
 		const allowed = Boolean(decision?.allow);
 		const reason = typeof decision?.reason === 'string' ? decision.reason : undefined;
 		const auditRequired = Boolean(decision?.audit_required ?? context.requiresAudit);
-		const warnings = Array.isArray(decision?.warnings) ? decision.warnings : context.warnings ?? [];
+		const warnings = Array.isArray(decision?.warnings)
+			? decision.warnings
+			: (context.warnings ?? []);
 		const evaluationTimeMs = performance.now() - start;
 
 		return {
@@ -122,7 +128,10 @@ export class PolicyEngine {
 	}
 
 	updatePolicy(policy: BrainwavPolicy): void {
-		this.logger.info({ oldVersion: this.policyVersion, newVersion: policy.version }, 'Policy version updated');
+		this.logger.info(
+			{ oldVersion: this.policyVersion, newVersion: policy.version },
+			'Policy version updated',
+		);
 	}
 
 	private buildInput(context: PolicyEvaluationContext) {
@@ -149,10 +158,10 @@ export class PolicyEngine {
 			})),
 			budget: context.budget
 				? {
-					max_total_req: context.budget.maxTotalReq,
-					max_total_cost: context.budget.maxTotalCost,
-					max_total_duration_ms: context.budget.maxTotalDurationMs,
-				}
+						max_total_req: context.budget.maxTotalReq,
+						max_total_cost: context.budget.maxTotalCost,
+						max_total_duration_ms: context.budget.maxTotalDurationMs,
+					}
 				: undefined,
 			current_usage: {
 				total_req: currentUsage.totalReq,

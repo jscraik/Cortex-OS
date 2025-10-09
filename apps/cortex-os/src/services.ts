@@ -217,7 +217,7 @@ export function provideOrchestration(): OrchestrationFacade {
 					ctx?: { promptCaptures?: PromptCapture[] };
 				};
 				const promptCaptures = Array.isArray(result.ctx?.promptCaptures)
-					? (result.ctx!.promptCaptures as PromptCapture[])
+					? (result.ctx?.promptCaptures as PromptCapture[])
 					: [];
 				await recorder.recordPrompts(promptCaptures);
 				await recorder.complete(result);

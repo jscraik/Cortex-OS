@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { URL } from 'node:url';
-import type { McpGateway } from './gateway.js';
 import type { ShutdownResult } from '../operational/shutdown-result.js';
+import type { McpGateway } from './gateway.js';
 
 const MCP_CORS_METHODS = 'GET,POST,OPTIONS';
 const MCP_CORS_HEADERS = 'Content-Type, Authorization, Accept';
@@ -169,7 +169,7 @@ export function createMcpHttpServer(gateway: McpGateway): McpHttpServer {
 						service: 'cortex-mcp',
 						timestamp: new Date().toISOString(),
 						version: '0.1.0',
-						endpoints: ['/tools', '/tools/call', '/health']
+						endpoints: ['/tools', '/tools/call', '/health'],
 					});
 					return;
 				}
@@ -264,7 +264,11 @@ export function createMcpHttpServer(gateway: McpGateway): McpHttpServer {
 		})();
 	});
 
-	const beginShutdown = ({ timeoutMs = 30_000 }: { timeoutMs?: number } = {}): Promise<ShutdownResult> => {
+	const beginShutdown = ({
+		timeoutMs = 30_000,
+	}: {
+		timeoutMs?: number;
+	} = {}): Promise<ShutdownResult> => {
 		if (shutdownPromise) {
 			return shutdownPromise;
 		}

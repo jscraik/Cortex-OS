@@ -1,10 +1,10 @@
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import yauzl from 'yauzl';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RuntimeHandle } from '../../src/runtime.js';
+import yauzl from 'yauzl';
 import { REQUIRED_FILES } from '../../src/run-bundle/exporter.js';
+import type { RuntimeHandle } from '../../src/runtime.js';
 import { prepareLoopbackAuth } from '../setup.global.js';
 
 async function listZipEntries(buffer: Buffer): Promise<string[]> {
@@ -75,14 +75,11 @@ describe('GET /v1/runs/:id/bundle', () => {
 		const { startRuntime } = await import('../../src/runtime.js');
 		runtime = await startRuntime();
 
-		const response = await fetch(
-			`${runtime.httpUrl}/v1/runs/${task.id as string}/bundle`,
-			{
-				headers: {
-					Authorization: authHeader,
-				},
+		const response = await fetch(`${runtime.httpUrl}/v1/runs/${task.id as string}/bundle`, {
+			headers: {
+				Authorization: authHeader,
 			},
-		);
+		});
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get('content-type')).toBe('application/zip');

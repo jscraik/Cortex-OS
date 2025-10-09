@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cortex-os.dev/schemas/prompt.schema.json",
+  "title": "Cortex-OS Prompt Schema",
+  "description": "Schema for prompt definitions with optional versioning and examples support",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Prompt name (required)",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for prompt versioning (optional)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the prompt",
+      "minLength": 1
+    },
+    "variables": {
+      "type": "array",
+      "description": "Template variables used in the prompt",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Variable name",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "description": "Variable description"
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether variable is required",
+            "default": false
+          },
+          "default": {
+            "description": "Default value for variable"
+          }
+        },
+        "required": ["name"]
+      }
+    },
+    "examples": {
+      "type": "array",
+      "description": "Example prompt usages with argument interpolation",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Example name for reference"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of this example"
+          },
+          "args": {
+            "type": "object",
+            "description": "Argument values for this example",
+            "additionalProperties": true
+          },
+          "messages": {
+            "type": "array",
+            "description": "Example message sequence",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": ["system", "user", "assistant"],
+                  "description": "Message role"
+                },
+                "content": {
+                  "type": "array",
+                  "description": "Message content with support for multiple content types",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["text", "image", "audio"],
+                        "description": "Content type"
+                      },
+                      "text": {
+                        "type": "string",
+                        "description": "Text content (when type is 'text')"
+                      },
+                      "uri": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "Content URI (when type is 'image' or 'audio')"
+                      },
+                      "mimeType": {
+                        "type": "string",
+                        "description": "MIME type for the content"
+                      }
+                    },
+                    "required": ["type"],
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "type": { "const": "text" },
+                          "text": { "type": "string" }
+                        },
+                        "required": ["type", "text"]
+                      },
+                      {
+                        "properties": {
+                          "type": { "enum": ["image", "audio"] },
+                          "uri": { "type": "string", "format": "uri" }
+                        },
+                        "required": ["type", "uri"]
+                      }
+                    ]
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": ["role", "content"]
+            }
+          },
+          "expectedOutput": {
+            "description": "Expected output or response for this example"
+          }
+        },
+        "required": ["args", "messages"]
+      }
+    },
+    "returns": {
+      "type": "string",
+      "description": "Description of what this prompt returns or produces"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for categorizing and discovering prompts"
+    },
+    "audience": {
+      "type": "string",
+      "description": "Target audience for this prompt (e.g., 'developers', 'analysts', 'managers')"
+    },
+    "template": {
+      "type": "string",
+      "description": "Prompt template with variable placeholders (e.g., {{variable_name}})"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata for the prompt",
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "Prompt author or organization"
+        },
+        "category": {
+          "type": "string",
+          "description": "Prompt category"
+        },
+        "complexity": {
+          "type": "string",
+          "enum": ["basic", "intermediate", "advanced"],
+          "description": "Complexity level of the prompt"
+        },
+        "language": {
+          "type": "string",
+          "description": "Language of the prompt content",
+          "default": "en"
+        },
+        "license": {
+          "type": "string",
+          "description": "License for the prompt"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["name"],
+  "additionalProperties": false
+}

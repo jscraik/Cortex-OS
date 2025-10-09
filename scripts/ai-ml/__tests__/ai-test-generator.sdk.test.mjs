@@ -23,9 +23,9 @@ describe('extractAnthropicText', () => {
 	});
 
 	it('throws branded error when no textual response is present', () => {
-		expect(() => extractAnthropicText({ content: [{ type: 'tool_use', id: 't', name: 'n', input: {} }] })).toThrow(
-			/brAInwav Anthropic SDK response missing output text/,
-		);
+		expect(() =>
+			extractAnthropicText({ content: [{ type: 'tool_use', id: 't', name: 'n', input: {} }] }),
+		).toThrow(/brAInwav Anthropic SDK response missing output text/);
 	});
 });
 
@@ -47,7 +47,12 @@ describe('generateWithAnthropic', () => {
 			},
 		};
 		const source = 'export const answer = 42;';
-		const output = await generateWithAnthropic({ source, client, maxTokens: 256, model: DEFAULT_MODEL });
+		const output = await generateWithAnthropic({
+			source,
+			client,
+			maxTokens: 256,
+			model: DEFAULT_MODEL,
+		});
 
 		expect(client.messages.create).toHaveBeenCalledWith({
 			model: DEFAULT_MODEL,

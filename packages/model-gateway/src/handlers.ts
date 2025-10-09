@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer';
-import type { IModelRouter as ModelRouter } from './model-router.js';
 import { createAttentionBridgeFromEnv } from './kv/attention-bridge.js';
+import type { IModelRouter as ModelRouter } from './model-router.js';
 
 export async function embeddingsHandler(
 	router: ModelRouter,
@@ -76,15 +76,11 @@ export async function chatHandler(
 
 	const content = result.content ?? '';
 	const tokens = Math.max(0, Math.floor(content.trim().split(/\s+/).length * 1.3));
-	await attentionBridge.captureKV(
-		{ step: 'chat-completion', role: 'assistant' },
-		bridgeRun,
-		{
-			tokensCaptured: tokens,
-			bytesCaptured: Buffer.byteLength(content, 'utf8'),
-			source: 'chat.output',
-		},
-	);
+	await attentionBridge.captureKV({ step: 'chat-completion', role: 'assistant' }, bridgeRun, {
+		tokensCaptured: tokens,
+		bytesCaptured: Buffer.byteLength(content, 'utf8'),
+		source: 'chat.output',
+	});
 	await attentionBridge.emitReceipt(bridgeRun);
 	await attentionBridge.close();
 

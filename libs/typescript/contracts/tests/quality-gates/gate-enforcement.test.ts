@@ -30,7 +30,10 @@ describe('Quality Gate Enforcement', () => {
 	let metricsDir: string;
 
 	// Minimal, local implementation used for tests to avoid cross-package imports.
-	async function runQualityGateEnforcement(contractPath: string, metricsDir: string): Promise<QualityGateResult> {
+	async function runQualityGateEnforcement(
+		contractPath: string,
+		metricsDir: string,
+	): Promise<QualityGateResult> {
 		const contractRaw = await fs.readFile(contractPath, 'utf-8');
 		type Contract = { coverage?: { line?: number } };
 		const contract = JSON.parse(contractRaw) as Contract;
@@ -42,7 +45,11 @@ describe('Quality Gate Enforcement', () => {
 			coverage = JSON.parse(covRaw) as QualityMetrics;
 		} catch {
 			// missing metrics -> fail conservatively
-			return { passed: false, violations: ['Missing coverage metrics'], summary: { production_ready: false } };
+			return {
+				passed: false,
+				violations: ['Missing coverage metrics'],
+				summary: { production_ready: false },
+			};
 		}
 
 		const requiredLine = contract?.coverage?.line ?? 95;
@@ -166,7 +173,9 @@ describe('Quality Gate Enforcement', () => {
 
 		expect(result.passed).toBe(false);
 		expect(
-			result.violations.some((message) => message.includes('Line coverage') && message.includes('94.0%')),
+			result.violations.some(
+				(message) => message.includes('Line coverage') && message.includes('94.0%'),
+			),
 		).toBe(true);
 		expect(result.violations.some((message) => message.includes('brAInwav standard'))).toBe(true);
 	});

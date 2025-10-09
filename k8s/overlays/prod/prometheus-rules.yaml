@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: mcp-server
+  labels:
+    app: mcp-server
+spec:
+  groups:
+    - name: mcp-server.rules
+      interval: 1m
+      rules:
+        - alert: MCPPiecesProxyDown
+          expr: avg_over_time(brainwav_mcp_pieces_proxy_up[5m]) < 0.5
+          for: 5m
+          labels:
+            severity: page
+          annotations:
+            summary: "Pieces proxy unavailable for Cortex MCP server"
+            description: "brainwav_mcp_pieces_proxy_up has been < 0.5 for 5m; remote Pieces tools are degraded."
+        - alert: MCPPiecesProxyFlapping
+          expr: changes(brainwav_mcp_pieces_proxy_up[15m]) > 6
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pieces proxy connection flapping"
+            description: "The pieces proxy has not remained stable in the last 15 minutes. Investigate connectivity to Pieces MCP endpoint."

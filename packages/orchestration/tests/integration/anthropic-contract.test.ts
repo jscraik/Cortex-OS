@@ -48,7 +48,7 @@ describe('@anthropic-ai/sdk 0.69 contract', () => {
 		];
 
 		expect(() => parseAnthropicToolResponse(payload)).toThrowError(
-		'brAInwav Anthropic contract violation: response.output_text must be provided for tool_use blocks'
+			'brAInwav Anthropic contract violation: response.output_text must be provided for tool_use blocks',
 		);
 	});
 

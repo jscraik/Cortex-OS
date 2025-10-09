@@ -8,11 +8,11 @@ const distEntry = resolve(here, '../dist/index.js');
 const srcEntry = resolve(here, '../src/index.ts');
 
 async function main() {
-  const target = existsSync(distEntry) ? distEntry : srcEntry;
-  await import(pathToFileURL(target).href);
+	const target = existsSync(distEntry) ? distEntry : srcEntry;
+	await import(pathToFileURL(target).href);
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.stack ?? error.message : String(error));
-  process.exit(1);
+	console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+	process.exit(1);
 });

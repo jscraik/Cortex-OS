@@ -1,9 +1,8 @@
 export {
+	type BrainwavPolicy,
 	DEFAULT_BRAINWAV_POLICY,
 	PolicyEngine,
-	type BrainwavPolicy,
+	type PolicyEngineOptions,
 	type PolicyEvaluationContext,
 	type PolicyEvaluationResult,
-	type PolicyEngineOptions,
 } from './policy-engine.js';
-

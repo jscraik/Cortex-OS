@@ -2,7 +2,10 @@ import type { Envelope } from '@cortex-os/a2a-contracts';
 
 export interface Transport {
 	publish: (envelope: Envelope) => Promise<void> | void;
-	subscribe: (types: string[], handler: (envelope: Envelope) => Promise<void> | void) => Promise<() => Promise<void>>;
+	subscribe: (
+		types: string[],
+		handler: (envelope: Envelope) => Promise<void> | void,
+	) => Promise<() => Promise<void>>;
 }
 
 export function createInMemoryTransport(): Transport {

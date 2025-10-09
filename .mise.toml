@@ -7,11 +7,12 @@ MISE_RUST_VERSION = "1.80.1"
 
 [tools]
 node = "22.19.0"
-pnpm = "10.4.0"
+pnpm = "10.18.0"
 bun = "1.2.2"
 python = "3.12.6"
 uv = "latest"
 rust = "1.80.1"
+ripgrep = "14.1.1"
 
 [tasks]
 bootstrap = "corepack enable && pnpm install"
@@ -20,3 +21,4 @@ test = "nx run-many -t test --parallel"
 typecheck = "nx run-many -t typecheck --parallel"
 lint = "pnpm lint:quality && pnpm lint:security"
 biome = "biome"
+rg = "rg"

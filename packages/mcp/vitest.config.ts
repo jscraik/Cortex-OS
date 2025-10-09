@@ -12,13 +12,7 @@ export const mcpVitestConfig = defineConfig({
 		environment: 'node',
 		coverage: {
 			reporter: ['text', 'json', 'html'],
-			exclude: [
-				'node_modules/',
-				'**/__tests__/**',
-				'**/*.test.ts',
-				'**/*.spec.ts',
-				'**/dist/**',
-			],
+			exclude: ['node_modules/', '**/__tests__/**', '**/*.test.ts', '**/*.spec.ts', '**/dist/**'],
 			thresholds: {
 				global: {
 					branches: 90,

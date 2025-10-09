@@ -72,7 +72,9 @@ async function runCli(argv = process.argv) {
 			`brAInwav HNSW migration complete: ${result.count} vectors → ${outputPath} (dim=${result.dimension})`,
 		);
 	} catch (error) {
-		console.error(`brAInwav HNSW migration failed: ${(error instanceof Error ? error.message : String(error))}`);
+		console.error(
+			`brAInwav HNSW migration failed: ${error instanceof Error ? error.message : String(error)}`,
+		);
 		process.exitCode = 1;
 	}
 }

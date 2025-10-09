@@ -43,7 +43,7 @@ describe('MCP Server Consolidation - Phase 1.2', () => {
 			});
 
 			// Simulate what Python HTTP client should do
-			const response = await fetch('http://localhost:3025/mcp', {
+			const response = await fetch('http://localhost:3024/mcp', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ describe('MCP Server Consolidation - Phase 1.2', () => {
 			// Simulate multiple failures
 			for (let i = 0; i < 5; i++) {
 				await expect(
-					fetch('http://localhost:3025/mcp', {
+					fetch('http://localhost:3024/mcp', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ id: `fail-${i}`, method: 'ping' }),
@@ -94,7 +94,7 @@ describe('MCP Server Consolidation - Phase 1.2', () => {
 
 			// 6th call should trigger circuit breaker
 			await expect(
-				fetch('http://localhost:3025/mcp', {
+				fetch('http://localhost:3024/mcp', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ id: 'circuit-breaker', method: 'ping' }),
@@ -122,7 +122,7 @@ describe('MCP Server Consolidation - Phase 1.2', () => {
 				status: 200,
 			});
 
-			const response = await fetch('http://localhost:3025/mcp', {
+			const response = await fetch('http://localhost:3024/mcp', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ id: 'health-check', method: 'ping' }),
@@ -144,7 +144,7 @@ describe('MCP Server Consolidation - Phase 1.2', () => {
 				status: 200,
 			});
 
-			await fetch('http://localhost:3025/mcp', {
+			await fetch('http://localhost:3024/mcp', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ id: 'latency-test', method: 'ping' }),
@@ -159,7 +159,7 @@ describe('MCP Server Consolidation - Phase 1.2', () => {
 		it('should create HTTP client with brAInwav branding', async () => {
 			// This will guide the implementation of the Python HTTP client
 			const mockPythonClientConfig = {
-				baseUrl: 'http://localhost:3025/mcp',
+				baseUrl: 'http://localhost:3024/mcp',
 				maxRetries: 3,
 				retryDelayMs: 1000,
 				timeout: 30000,
@@ -169,7 +169,7 @@ describe('MCP Server Consolidation - Phase 1.2', () => {
 				},
 			};
 
-			expect(mockPythonClientConfig.baseUrl).toBe('http://localhost:3025/mcp');
+			expect(mockPythonClientConfig.baseUrl).toBe('http://localhost:3024/mcp');
 			expect(mockPythonClientConfig.headers['User-Agent']).toContain('brAInwav');
 			expect(mockPythonClientConfig.maxRetries).toBe(3);
 		});

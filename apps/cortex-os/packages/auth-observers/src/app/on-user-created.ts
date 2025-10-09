@@ -1,6 +1,6 @@
+import type { Envelope } from '@cortex-os/a2a-contracts';
 import { getAgentToolkit } from '../../../../src/bootstrap/agent-toolkit.js';
 import { buildUserNote, type UserProfileMinimalData } from '../domain/user-memory.js';
-import type { Envelope } from '@cortex-os/a2a-contracts';
 
 export const onUserCreated = async (evt: Envelope) => {
 	const tk = getAgentToolkit();

@@ -1,5 +1,5 @@
-import type { Chunk, Store } from '../lib/index.js';
 import { z } from 'zod';
+import type { Chunk, Store } from '../lib/index.js';
 
 export function memoryStore(): Store {
 	const items: Array<Chunk & { embedding?: number[] }> = [];
@@ -21,7 +21,7 @@ export function memoryStore(): Store {
 			const result = ChunkSchema.safeParse(value);
 			if (!result.success) {
 				throw new TypeError(
-					`memoryStore.upsert received an invalid chunk payload: ${result.error.message}`
+					`memoryStore.upsert received an invalid chunk payload: ${result.error.message}`,
 				);
 			}
 		}

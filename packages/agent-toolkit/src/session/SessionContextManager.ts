@@ -11,11 +11,11 @@ export interface ToolCallRecord {
 }
 
 export interface SessionContextOptions {
-        budget?: TokenBudgetConfig;
+	budget?: TokenBudgetConfig;
 }
 
 export interface SessionSnapshot {
-        toolCalls: ToolCallRecord[];
+	toolCalls: ToolCallRecord[];
 }
 
 const toTokenItem = (r: ToolCallRecord): TokenizedItem => ({
@@ -89,15 +89,17 @@ export const createSessionContextManager = (opts?: SessionContextOptions) => {
 	const addToolCall = makeAddCall(history, prune);
 	const getTotalTokens = makeGetTotal(budget, history);
 	const getRecentToolCalls = makeGetRecent(history);
-        const snapshot = (): SessionSnapshot => ({ toolCalls: history.list().map((entry) => entry.payload) });
-        const rehydrate = (snap: SessionSnapshot) => {
-                history.clear();
-                for (const call of snap.toolCalls) {
-                        history.addCall(call.id, call, call.tokenCount);
-                }
-                prune();
-        };
-        return { addToolCall, getTotalTokens, getRecentToolCalls, snapshot, rehydrate };
+	const snapshot = (): SessionSnapshot => ({
+		toolCalls: history.list().map((entry) => entry.payload),
+	});
+	const rehydrate = (snap: SessionSnapshot) => {
+		history.clear();
+		for (const call of snap.toolCalls) {
+			history.addCall(call.id, call, call.tokenCount);
+		}
+		prune();
+	};
+	return { addToolCall, getTotalTokens, getRecentToolCalls, snapshot, rehydrate };
 };
 
 export type SessionContextManager = ReturnType<typeof createSessionContextManager>;

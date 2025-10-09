@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cortex-os.dev/schemas/resource.meta.schema.json",
+  "title": "MCP Resource Metadata Schema",
+  "description": "Schema for MCP resource metadata with optional versioning support",
+  "type": "object",
+  "properties": {
+    "uri": {
+      "type": "string",
+      "format": "uri",
+      "description": "Resource URI (required)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name for the resource",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for resource versioning (optional)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the resource"
+    },
+    "mimeType": {
+      "type": "string",
+      "description": "MIME type of the resource content",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9!#$&\\-^_]*\\/[a-zA-Z0-9][a-zA-Z0-9!#$&\\-_.]*$"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata for the resource",
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "Resource author or organization"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for categorizing the resource"
+        },
+        "category": {
+          "type": "string",
+          "description": "Resource category"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Size of the resource in bytes"
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last modification timestamp"
+        },
+        "checksum": {
+          "type": "string",
+          "description": "Checksum for integrity verification (e.g., SHA-256)"
+        },
+        "license": {
+          "type": "string",
+          "description": "License for the resource"
+        },
+        "accessLevel": {
+          "type": "string",
+          "enum": ["public", "internal", "restricted", "confidential"],
+          "description": "Access level classification",
+          "default": "internal"
+        },
+        "language": {
+          "type": "string",
+          "description": "Language of the resource content (if applicable)"
+        },
+        "encoding": {
+          "type": "string",
+          "description": "Character encoding of the resource",
+          "default": "utf-8"
+        }
+      },
+      "additionalProperties": false
+    },
+    "_meta": {
+      "type": "object",
+      "description": "Extension metadata for versioning and compatibility (non-breaking extension)",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Resource version (extension field for backward compatibility)"
+        },
+        "compatibility": {
+          "type": "object",
+          "properties": {
+            "minClientVersion": {
+              "type": "string",
+              "description": "Minimum client version that can handle this resource"
+            },
+            "deprecated": {
+              "type": "boolean",
+              "description": "Whether this resource version is deprecated",
+              "default": false
+            },
+            "deprecationMessage": {
+              "type": "string",
+              "description": "Message shown when deprecated resource is accessed"
+            },
+            "replacedBy": {
+              "type": "string",
+              "description": "URI of the resource that replaces this one"
+            }
+          }
+        },
+        "cortex": {
+          "type": "object",
+          "description": "Cortex-OS specific metadata",
+          "properties": {
+            "autoRefresh": {
+              "type": "boolean",
+              "description": "Whether to automatically refresh this resource",
+              "default": false
+            },
+            "refreshInterval": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Auto-refresh interval in seconds"
+            },
+            "cachePolicy": {
+              "type": "string",
+              "enum": ["none", "memory", "disk", "distributed"],
+              "description": "Caching policy for this resource",
+              "default": "memory"
+            },
+            "securityContext": {
+              "type": "object",
+              "description": "Security context for resource access",
+              "properties": {
+                "requiredPermissions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Permissions required to access this resource"
+                },
+                "allowedRoles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Roles allowed to access this resource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["uri", "name"],
+  "additionalProperties": false
+}

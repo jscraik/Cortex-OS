@@ -1,0 +1,228 @@
+{
+  "version": "1.0.0",
+  "created": "2025-01-09",
+  "description": "Feature flags for LangGraph.js and Hybrid Router Integration",
+  "environment": "development",
+  "features": {
+    "context_graph_enabled": {
+      "enabled": true,
+      "description": "Enable/disable context graph operations",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": [],
+      "risk_level": "low"
+    },
+    "hybrid_routing_enabled": {
+      "enabled": true,
+      "description": "Enable hybrid model routing with MLX-first policy",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": ["context_graph_enabled"],
+      "risk_level": "medium"
+    },
+    "thermal_management_enabled": {
+      "enabled": true,
+      "description": "Enable thermal-aware context operations",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": ["context_graph_enabled"],
+      "risk_level": "low"
+    },
+    "evidence_gating_enabled": {
+      "enabled": true,
+      "description": "Enable evidence gating for all operations",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": ["context_graph_enabled"],
+      "risk_level": "medium"
+    },
+    "privacy_mode_enabled": {
+      "enabled": true,
+      "description": "Enable privacy mode for sensitive operations",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": ["context_graph_enabled"],
+      "risk_level": "high"
+    },
+    "langgraph_orchestration_enabled": {
+      "enabled": true,
+      "description": "Enable LangGraph.js state orchestration",
+      "rollout_percentage": 50,
+      "target_environments": ["development", "staging"],
+      "dependencies": ["context_graph_enabled", "hybrid_routing_enabled"],
+      "risk_level": "medium"
+    },
+    "a2a_events_enabled": {
+      "enabled": true,
+      "description": "Enable A2A event emission and monitoring",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": ["context_graph_enabled"],
+      "risk_level": "low"
+    },
+    "performance_monitoring_enabled": {
+      "enabled": true,
+      "description": "Enable performance monitoring and SLA tracking",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": ["context_graph_enabled"],
+      "risk_level": "low"
+    },
+    "security_monitoring_enabled": {
+      "enabled": true,
+      "description": "Enable security monitoring and violation detection",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": ["context_graph_enabled"],
+      "risk_level": "high"
+    },
+    "cost_tracking_enabled": {
+      "enabled": true,
+      "description": "Enable cost tracking and budget enforcement",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": ["hybrid_routing_enabled"],
+      "risk_level": "medium"
+    },
+    "audit_logging_enabled": {
+      "enabled": true,
+      "description": "Enable comprehensive audit logging",
+      "rollout_percentage": 100,
+      "target_environments": ["development", "staging", "production"],
+      "dependencies": ["context_graph_enabled", "evidence_gating_enabled"],
+      "risk_level": "low"
+    }
+  },
+  "rollout_strategy": {
+    "mode": "gradual",
+    "stages": [
+      {
+        "name": "initial_development",
+        "percentage": 10,
+        "duration_days": 1,
+        "target_environments": ["development"],
+        "validation_required": true
+      },
+      {
+        "name": "development_testing",
+        "percentage": 25,
+        "duration_days": 3,
+        "target_environments": ["development"],
+        "validation_required": true
+      },
+      {
+        "name": "staging_deployment",
+        "percentage": 75,
+        "duration_days": 5,
+        "target_environments": ["staging"],
+        "validation_required": true
+      },
+      {
+        "name": "production_rollout",
+        "percentage": 100,
+        "duration_days": 7,
+        "target_environments": ["production"],
+        "validation_required": true
+      }
+    ]
+  },
+  "rollback_strategy": {
+    "mode": "automatic",
+    "triggers": [
+      {
+        "condition": "error_rate > 5%",
+        "action": "rollback_to_previous_stage"
+      },
+      {
+        "condition": "sla_breach_rate > 2%",
+        "action": "rollback_to_previous_stage"
+      },
+      {
+        "condition": "critical_security_violation",
+        "action": "immediate_rollback"
+      }
+    ],
+    "max_rollback_stages": 2
+  },
+  "monitoring": {
+    "metrics": {
+      "error_rate": {
+        "threshold": 1.0,
+        "alert": true
+      },
+      "latency": {
+        "p99_threshold": 5000,
+        "alert": true
+      },
+      "throughput": {
+        "min_threshold": 10,
+        "alert": true
+      },
+      "cost": {
+        "hourly_threshold": 10.0,
+        "daily_threshold": 100.0,
+        "alert": true
+      },
+      "thermal": {
+        "temperature_threshold": 85,
+        "alert": true
+      }
+    },
+    "dashboards": [
+      {
+        "name": "Context Graph Operations",
+        "url": "/dashboards/context-graph",
+        "refresh_interval": 30
+      },
+      {
+        "name": "Model Routing Metrics",
+        "url": "/dashboards/model-routing",
+        "refresh_interval": 15
+      },
+      {
+        "name": "Thermal Management",
+        "url": "/dashboards/thermal",
+        "refresh_interval": 10
+      },
+      {
+        "name": "Security Monitoring",
+        "url": "/dashboards/security",
+        "refresh_interval": 60
+      }
+    ],
+    "alerts": [
+      {
+        "name": "High Error Rate",
+        "condition": "error_rate > 5%",
+        "severity": "warning",
+        "channels": ["email", "slack"]
+      },
+      {
+        "name": "SLA Breach",
+        "condition": "sla_met === false",
+        "severity": "critical",
+        "channels": ["email", "slack", "pagerduty"]
+      },
+      {
+        "name": "Thermal Emergency",
+        "condition": "thermal_zone === 'critical'",
+        "severity": "critical",
+        "channels": ["email", "slack", "pagerduty"]
+      },
+      {
+        "name": "Security Violation",
+        "condition": "security_violation === true",
+        "severity": "critical",
+        "channels": ["email", "slack", "security_team"]
+      }
+    ]
+  },
+  "compliance": {
+    "audit_retention_days": 90,
+    "data_residency": "local",
+    "privacy_compliance": "gdpr",
+    "security_standards": "owasp_llm_top10",
+    "documentation_required": true,
+    "penetration_testing": true
+  }
+}

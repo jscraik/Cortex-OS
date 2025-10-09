@@ -1,12 +1,12 @@
-import { readFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import yaml from 'yaml';
 import {
 	BudgetError,
-	BudgetProfile,
+	type BudgetProfile,
 	BudgetProfileSchema,
-	BudgetReconciliationResult,
-	BudgetUsage,
+	type BudgetReconciliationResult,
+	type BudgetUsage,
 	BudgetUsageSchema,
 } from '../types.js';
 
@@ -123,7 +123,11 @@ export class BudgetManager {
 			reason = 'max_total_req_exceeded';
 		}
 
-		if (!reason && profile.maxTotalDurationMs !== undefined && projected.totalDurationMs !== undefined) {
+		if (
+			!reason &&
+			profile.maxTotalDurationMs !== undefined &&
+			projected.totalDurationMs !== undefined
+		) {
 			if (projected.totalDurationMs > profile.maxTotalDurationMs) {
 				reason = 'max_total_duration_exceeded';
 			}
@@ -158,7 +162,10 @@ export interface BudgetLedgerRecordOptions {
 export class BudgetLedger {
 	private readonly usageByTenant = new Map<string, BudgetUsage>();
 
-	constructor(private readonly manager: BudgetManager, private readonly clock: () => number = () => Date.now()) {}
+	constructor(
+		private readonly manager: BudgetManager,
+		private readonly clock: () => number = () => Date.now(),
+	) {}
 
 	getUsage(tenantKey: string): BudgetUsage {
 		const usage = this.usageByTenant.get(tenantKey);
@@ -193,4 +200,3 @@ export class BudgetLedger {
 		this.usageByTenant.clear();
 	}
 }
-

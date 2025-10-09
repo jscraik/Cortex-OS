@@ -1,0 +1,13 @@
+# Dedicated Cloudflare Tunnel config for Prometheus scraping
+# Usage: run a second tunnel process bound to this config when
+# you need remote access to the MCP metrics endpoint.
+
+tunnel: cortex-mcp-metrics
+credentials-file: /Users/jamiecraik/.cloudflared/cortex-mcp-metrics.json
+
+ingress:
+  - hostname: cortex-mcp-metrics.brainwav.io
+    service: http://localhost:9464
+  - service: http_status:404
+
+no-autoupdate: true

@@ -6,15 +6,15 @@ import { Server } from '../server';
 import { createRoutingTools } from './routing-tools.js';
 
 interface AuthServerConfig {
-        jwt?: JWTAuth;
-        requireAuth?: boolean;
-        allowedOrigins?: string[];
-        rateLimit?: {
-                enabled: boolean;
-                windowMs: number;
-                max: number;
-        };
-        router?: PolicyRouter;
+	jwt?: JWTAuth;
+	requireAuth?: boolean;
+	allowedOrigins?: string[];
+	rateLimit?: {
+		enabled: boolean;
+		windowMs: number;
+		max: number;
+	};
+	router?: PolicyRouter;
 }
 
 export class AuthServer extends Server {
@@ -24,20 +24,20 @@ export class AuthServer extends Server {
 	private rateLimit: AuthServerConfig['rateLimit'];
 	private rateLimitStore: Map<string, { count: number; resetTime: number }> = new Map();
 
-        constructor(config: AuthServerConfig = {}) {
-                super();
+	constructor(config: AuthServerConfig = {}) {
+		super();
 
-                this.jwt = config.jwt || createJWTAuth();
-                this.requireAuth = config.requireAuth ?? true;
-                this.allowedOrigins = config.allowedOrigins || ['*'];
-                this.rateLimit = config.rateLimit || { enabled: true, windowMs: 60000, max: 100 };
+		this.jwt = config.jwt || createJWTAuth();
+		this.requireAuth = config.requireAuth ?? true;
+		this.allowedOrigins = config.allowedOrigins || ['*'];
+		this.rateLimit = config.rateLimit || { enabled: true, windowMs: 60000, max: 100 };
 
-                if (config.router) {
-                        for (const tool of createRoutingTools(config.router)) {
-                                this.registerTool(tool);
-                        }
-                }
-        }
+		if (config.router) {
+			for (const tool of createRoutingTools(config.router)) {
+				this.registerTool(tool);
+			}
+		}
+	}
 
 	/**
 	 * Override handleRequest to add authentication

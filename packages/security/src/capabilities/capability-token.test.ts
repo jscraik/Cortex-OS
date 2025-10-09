@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+	CapabilityTokenError,
 	CapabilityTokenIssuer,
 	CapabilityTokenValidator,
-	CapabilityTokenError,
 	createCapabilitySecret,
 } from './capability-token.js';
 
@@ -55,8 +55,11 @@ describe('CapabilityTokenIssuer & CapabilityTokenValidator', () => {
 			ttlSeconds: 1,
 		});
 
-		const futureValidator = new CapabilityTokenValidator(secret, 0, () => (1_700_000_000_000 + 10_000));
+		const futureValidator = new CapabilityTokenValidator(
+			secret,
+			0,
+			() => 1_700_000_000_000 + 10_000,
+		);
 		expect(() => futureValidator.verify(token)).toThrow(CapabilityTokenError);
 	});
 });
-

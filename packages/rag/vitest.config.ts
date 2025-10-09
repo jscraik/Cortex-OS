@@ -76,15 +76,7 @@ export default defineConfig({
 				'contracts',
 				'src',
 			),
-			'@cortex-os/utils': resolve(
-				currentDir,
-				'..',
-				'..',
-				'libs',
-				'typescript',
-				'utils',
-				'src',
-			),
+			'@cortex-os/utils': resolve(currentDir, '..', '..', 'libs', 'typescript', 'utils', 'src'),
 		},
 	},
 	test: {

@@ -208,8 +208,8 @@ export interface AgentToolkitMCPTool {
 
 // Circuit breaker configuration constants (UPPER_SNAKE_CASE per CODESTYLE.md)
 const CIRCUIT_BREAKER_THRESHOLD = 5;
-const MAX_TOKEN_LIMIT = 40000;
-const TRIM_TOKEN_LIMIT = 20000;
+const _MAX_TOKEN_LIMIT = 40000;
+const _TRIM_TOKEN_LIMIT = 20000;
 const CIRCUIT_BREAKER_RESET_TIMEOUT = 60000; // 1 minute
 
 /**
@@ -242,7 +242,6 @@ export class AgentToolkitMCPTools {
 	private readonly agentToolkit: AgentToolkitApi;
 	private eventBus?: { emit: (event: MCPEvent) => void };
 	private readonly circuitBreakers: Map<string, CircuitBreakerState>;
-	private totalTokenUsage: number;
 
 	constructor(toolsPath?: string, eventBus?: { emit: (event: MCPEvent) => void }) {
 		this.executionHistory = new Map();
@@ -901,26 +900,6 @@ export class AgentToolkitMCPTools {
 				state.isOpen = true;
 			}
 		}
-	}
-
-	/**
-	 * Token budget helper: Check if operation would exceed token limit
-	 * Following CODESTYLE.md: guard clauses, named constants
-	 */
-	private checkTokenBudget(estimatedTokens: number): { allowed: boolean; trimmed?: boolean } {
-		// Guard clause: if within normal limits, allow
-		if (this.totalTokenUsage + estimatedTokens <= MAX_TOKEN_LIMIT) {
-			return { allowed: true };
-		}
-
-		// If over limit, trim to TRIM_TOKEN_LIMIT
-		if (this.totalTokenUsage > TRIM_TOKEN_LIMIT) {
-			this.totalTokenUsage = TRIM_TOKEN_LIMIT;
-			console.warn(`brAInwav: Token usage trimmed to ${TRIM_TOKEN_LIMIT} tokens`);
-			return { allowed: true, trimmed: true };
-		}
-
-		return { allowed: true };
 	}
 
 	/**

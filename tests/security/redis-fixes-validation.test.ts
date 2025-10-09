@@ -25,10 +25,10 @@ describe('ReDoS Security Fixes Validation', () => {
 		// Test cases that could trigger catastrophic backtracking
 		const maliciousInputs = [
 			// Long repetitive sequences that could cause backtracking
-			'a'.repeat(100) + '/' + 'b'.repeat(100) + '/' + 'test'.repeat(50),
-			'/'.repeat(50) + 'test' + '/'.repeat(50),
-			'demo' + 'a'.repeat(200) + '/' + 'b'.repeat(200),
-			'path' + '/'.repeat(100) + 'README' + 'a'.repeat(100),
+			`${'a'.repeat(100)}/${'b'.repeat(100)}/${'test'.repeat(50)}`,
+			`${'/'.repeat(50)}test${'/'.repeat(50)}`,
+			`demo${'a'.repeat(200)}/${'b'.repeat(200)}`,
+			`path${'/'.repeat(100)}README${'a'.repeat(100)}`,
 		];
 
 		// Test vulnerable patterns (should timeout or take very long)
@@ -36,15 +36,17 @@ describe('ReDoS Security Fixes Validation', () => {
 			maliciousInputs.forEach((input) => {
 				const startTime = Date.now();
 				try {
-					const result = pattern.test(input);
+					const _result = pattern.test(input);
 					const endTime = Date.now();
 					const duration = endTime - startTime;
 
 					// Vulnerable patterns should take longer than 50ms on malicious input
 					if (duration > 50) {
-						console.log(`Vulnerable pattern ${index} took ${duration}ms on input: ${input.substring(0, 50)}...`);
+						console.log(
+							`Vulnerable pattern ${index} took ${duration}ms on input: ${input.substring(0, 50)}...`,
+						);
 					}
-				} catch (error) {
+				} catch (_error) {
 					// Some patterns might throw due to complexity
 					console.log(`Vulnerable pattern ${index} threw error on malicious input`);
 				}
@@ -52,10 +54,10 @@ describe('ReDoS Security Fixes Validation', () => {
 		});
 
 		// Test safe patterns (should complete quickly)
-		safePatterns.forEach((pattern, index) => {
+		safePatterns.forEach((pattern, _index) => {
 			maliciousInputs.forEach((input) => {
 				const startTime = Date.now();
-				const result = pattern.test(input);
+				const _result = pattern.test(input);
 				const endTime = Date.now();
 				const duration = endTime - startTime;
 
@@ -71,33 +73,33 @@ describe('ReDoS Security Fixes Validation', () => {
 			{
 				input: '/path/to/tests/file.test.ts',
 				shouldMatch: true,
-				description: 'Test file path'
+				description: 'Test file path',
 			},
 			{
 				input: '/path/to/__tests__/spec.ts',
 				shouldMatch: true,
-				description: 'Double underscore test path'
+				description: 'Double underscore test path',
 			},
 			{
 				input: '/path/to/README.md',
 				shouldMatch: true,
-				description: 'README file'
+				description: 'README file',
 			},
 			{
 				input: '/path/to/config.ts',
 				shouldMatch: true,
-				description: 'Config file'
+				description: 'Config file',
 			},
 			{
 				input: '/path/to/demo/example.js',
 				shouldMatch: true,
-				description: 'Demo folder'
+				description: 'Demo folder',
 			},
 			{
 				input: '/path/to/production/src/main.ts',
 				shouldMatch: false,
-				description: 'Production source file'
-			}
+				description: 'Production source file',
+			},
 		];
 
 		const safePatterns = [
@@ -108,8 +110,8 @@ describe('ReDoS Security Fixes Validation', () => {
 			/^(?:.*\/)?demo[^/]*\/.*$/,
 		];
 
-		testCases.forEach(testCase => {
-			const matches = safePatterns.some(pattern => pattern.test(testCase.input));
+		testCases.forEach((testCase) => {
+			const matches = safePatterns.some((pattern) => pattern.test(testCase.input));
 			expect(matches).toBe(testCase.shouldMatch);
 		});
 	});

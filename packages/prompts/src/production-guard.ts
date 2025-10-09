@@ -35,7 +35,7 @@ export class ProductionPromptGuard {
 	 * Validate that a prompt is using the registered prompt system
 	 * Throws an error if ad-hoc prompts are detected in production
 	 */
-	validatePromptUsage(promptText: string, promptId?: string): void {
+	validatePromptUsage(_promptText: string, promptId?: string): void {
 		if (!this.config.enabled) {
 			return; // Guard disabled in non-production environments
 		}
@@ -106,7 +106,7 @@ export class ProductionPromptGuard {
 	/**
 	 * Get a safe prompt from the registry with validation
 	 */
-	getSafePrompt(promptId: string, variables: Record<string, unknown> = {}): string {
+	getSafePrompt(promptId: string, _variables: Record<string, unknown> = {}): string {
 		this.validatePromptUsage('', promptId); // Validate the ID exists
 
 		const prompt = getPrompt(promptId);

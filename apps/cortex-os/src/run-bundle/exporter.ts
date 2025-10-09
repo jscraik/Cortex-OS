@@ -75,7 +75,10 @@ export async function loadRunRecord(runDir: string): Promise<RunBundleSummary> {
 	return validated.data as RunBundleSummary;
 }
 
-export async function ensureBundleFiles(runDir: string, files: RequiredBundleFile[] = [...REQUIRED_BUNDLE_FILES]): Promise<void> {
+export async function ensureBundleFiles(
+	runDir: string,
+	files: RequiredBundleFile[] = [...REQUIRED_BUNDLE_FILES],
+): Promise<void> {
 	for (const file of files) {
 		const path = join(runDir, file);
 		try {
@@ -92,7 +95,11 @@ interface StreamRunBundleOptions {
 	output: Writable;
 }
 
-export async function streamRunBundleArchive({ runDir, files = [...REQUIRED_BUNDLE_FILES], output }: StreamRunBundleOptions): Promise<{ bytes: number }> {
+export async function streamRunBundleArchive({
+	runDir,
+	files = [...REQUIRED_BUNDLE_FILES],
+	output,
+}: StreamRunBundleOptions): Promise<{ bytes: number }> {
 	await ensureDirectoryExists(runDir);
 	await ensureBundleFiles(runDir, files);
 

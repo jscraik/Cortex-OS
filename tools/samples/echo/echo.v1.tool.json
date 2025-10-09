@@ -1,0 +1,26 @@
+{
+  "name": "echo",
+  "version": "1.0.0",
+  "description": "Simple echo tool that returns the input text with brAInwav branding",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string",
+        "description": "Text to echo back"
+      },
+      "prefix": {
+        "type": "string",
+        "description": "Optional prefix to add to the echoed text",
+        "default": "[brAInwav Echo]"
+      }
+    },
+    "required": ["text"]
+  },
+  "metadata": {
+    "author": "Cortex-OS Team",
+    "tags": ["utility", "demo", "echo"],
+    "securityLevel": "low",
+    "license": "MIT"
+  }
+}

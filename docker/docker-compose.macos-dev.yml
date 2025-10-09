@@ -44,7 +44,7 @@ services:
       context: ../packages/mcp-server
       dockerfile: Dockerfile.enhanced
     ports:
-      - '3025:3024'  # Use different port to avoid conflict
+      - '3024:3024'  # Mirror canonical MCP port for dev parity
     environment:
       - NODE_ENV=development
       - HTTP_PROXY=http://brainwav-egress-proxy:8888

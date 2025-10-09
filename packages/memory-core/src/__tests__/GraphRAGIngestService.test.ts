@@ -1,13 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { SparseVector } from '../retrieval/QdrantHybrid.js';
 import {
-	GraphRAGIngestService,
 	type GraphRAGIngestRequest,
+	GraphRAGIngestService,
 } from '../services/GraphRAGIngestService.js';
 
 describe('GraphRAGIngestService', () => {
-	const simpleDense = async (text: string): Promise<number[]> => Array.from({ length: 4 }, (_, i) => (text.length + i) % 5);
-	const simpleSparse = async (text: string): Promise<SparseVector> => ({ indices: [0], values: [Math.min(1, text.length / 10)] });
+	const simpleDense = async (text: string): Promise<number[]> =>
+		Array.from({ length: 4 }, (_, i) => (text.length + i) % 5);
+	const simpleSparse = async (text: string): Promise<SparseVector> => ({
+		indices: [0],
+		values: [Math.min(1, text.length / 10)],
+	});
 
 	it('ingests a document, removing previous chunks and persisting new payloads', async () => {
 		const persistence = {
@@ -51,15 +55,15 @@ describe('GraphRAGIngestService', () => {
 			expect.objectContaining({
 				id: 'chunk-1',
 				nodeId: 'node-1',
-				metadata: expect.objectContaining({ path: 'docs/runbook.md', nodeType: expect.any(String) }),
+				metadata: expect.objectContaining({
+					path: 'docs/runbook.md',
+					nodeType: expect.any(String),
+				}),
 			}),
 		]);
-		expect(persistence.replaceChunkRefs).toHaveBeenCalledWith(
-			'node-1',
-			[
-				expect.objectContaining({ qdrantId: 'chunk-1', path: 'docs/runbook.md' }),
-			],
-		);
+		expect(persistence.replaceChunkRefs).toHaveBeenCalledWith('node-1', [
+			expect.objectContaining({ qdrantId: 'chunk-1', path: 'docs/runbook.md' }),
+		]);
 		expect(neo4j.upsertDocument).toHaveBeenCalledWith(
 			expect.objectContaining({ documentId: 'doc-1', nodeId: 'node-1' }),
 		);
@@ -68,7 +72,11 @@ describe('GraphRAGIngestService', () => {
 
 	it('splits large paragraphs into multiple chunks respecting chunk size', async () => {
 		const persistence = {
-			ensureDocument: vi.fn(async () => ({ nodeId: 'node-2', nodeKey: 'doc-2', previousChunkIds: [] })),
+			ensureDocument: vi.fn(async () => ({
+				nodeId: 'node-2',
+				nodeKey: 'doc-2',
+				previousChunkIds: [],
+			})),
 			replaceChunkRefs: vi.fn(async () => {}),
 		};
 		const store = {

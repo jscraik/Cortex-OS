@@ -6,9 +6,17 @@ export {
 	createSecuritySchemaRegistry,
 	type SecurityBusConfig,
 } from './a2a.js';
+export * from './budget/budget-manager.js';
+// Capability Tokens & Budgets
+export * from './capabilities/capability-token.js';
 // Security Events
 export * from './events/security-event.js';
 export * from './events/security-events.js';
+export type {
+	SecurityTool,
+	SecurityToolError,
+	SecurityToolResponse,
+} from './mcp/tools.js';
 // MCP Tools for external AI agent integration
 export {
 	securityAccessControlTool,
@@ -24,19 +32,11 @@ export {
 	securityThreatDetectionToolSchema,
 	securityToolSchemas,
 } from './mcp/tools.js';
-export type {
-	SecurityTool,
-	SecurityToolError,
-	SecurityToolResponse,
-} from './mcp/tools.js';
 // mTLS Implementation
 export * from './mtls/index.js';
 export * from './spiffe/index.js';
 // Types and Interfaces
 export * from './types.js';
-// Capability Tokens & Budgets
-export * from './capabilities/capability-token.js';
-export * from './budget/budget-manager.js';
 // Security Utilities
 export * from './utils/index.js';
 // Workload Identity Management

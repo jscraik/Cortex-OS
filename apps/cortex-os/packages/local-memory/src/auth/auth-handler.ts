@@ -102,7 +102,6 @@ export class LocalMemoryAuthHandler {
 		}
 	}
 
-	
 	/**
 	 * Get authorization endpoint
 	 */

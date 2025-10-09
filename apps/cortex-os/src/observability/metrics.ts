@@ -1,4 +1,4 @@
-import { Counter, Histogram, Registry, collectDefaultMetrics } from 'prom-client';
+import { Counter, collectDefaultMetrics, Histogram, Registry } from 'prom-client';
 
 const registry = new Registry();
 collectDefaultMetrics({ register: registry });
@@ -26,10 +26,18 @@ export interface HttpMetricLabels {
 	durationMs: number;
 }
 
-export function recordHttpMetrics({ service, method, path, status, durationMs }: HttpMetricLabels): void {
+export function recordHttpMetrics({
+	service,
+	method,
+	path,
+	status,
+	durationMs,
+}: HttpMetricLabels): void {
 	const statusLabel = String(status);
 	HTTP_REQUEST_TOTAL.labels(service, method, path, statusLabel).inc();
-	HTTP_REQUEST_DURATION_SECONDS.labels(service, method, path, statusLabel).observe(durationMs / 1_000);
+	HTTP_REQUEST_DURATION_SECONDS.labels(service, method, path, statusLabel).observe(
+		durationMs / 1_000,
+	);
 }
 
 export function getMetricsSnapshot(): Promise<string> {

@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { busMetrics } from '@cortex-os/a2a-core/metrics';
 import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createService } from '../../src/service.js';
 
 // Helper to extract a single metric value from Prometheus text exposition

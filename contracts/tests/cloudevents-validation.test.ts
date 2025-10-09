@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import { describe, expect, it } from 'vitest';
 
 // Import schemas
 const agentCoordinationRequestedSchema = await import(

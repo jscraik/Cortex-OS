@@ -2,16 +2,17 @@
 
 import type { Logger } from 'pino';
 import { pino } from 'pino';
+import { loadHybridConfig } from './config/hybrid.js';
+import { loadOllamaConfig, type OllamaConfig } from './config/ollama.js';
+import { PiecesMCPProxy } from './pieces-proxy.js';
 import { createPrompts } from './prompts/index.js';
 import { createResources } from './resources/index.js';
 import { createServer } from './server/mcp-server.js';
-import { prewarm, scheduleHeartbeat } from './server/warmup.js';
 import { startTransport, type TransportController } from './server/transport.js';
-import { PiecesMCPProxy } from './pieces-proxy.js';
+import { prewarm, scheduleHeartbeat } from './server/warmup.js';
 import { registerPiecesTools, registerTools } from './tools/index.js';
-import { loadServerConfig, type ServerConfig } from './utils/config.js';
 import { BRAND, createBrandedLog } from './utils/brand.js';
-import { loadOllamaConfig, type OllamaConfig } from './config/ollama.js';
+import { loadServerConfig, type ServerConfig } from './utils/config.js';
 
 type HeartbeatStopper = () => void;
 
@@ -37,7 +38,11 @@ function createPiecesProxy(config: ServerConfig, logger: Logger): PiecesMCPProxy
 	});
 }
 
-async function attachPiecesTools(server: any, logger: Logger, proxy: PiecesMCPProxy | null): Promise<void> {
+async function attachPiecesTools(
+	server: any,
+	logger: Logger,
+	proxy: PiecesMCPProxy | null,
+): Promise<void> {
 	if (!proxy) {
 		return;
 	}
@@ -48,25 +53,87 @@ async function attachPiecesTools(server: any, logger: Logger, proxy: PiecesMCPPr
 		registerPiecesTools(server, logger, proxy);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		logger.warn(createBrandedLog('pieces_connect_failed', { error: message }), 'Pieces MCP proxy connection failed');
+		logger.warn(
+			createBrandedLog('pieces_connect_failed', { error: message }),
+			'Pieces MCP proxy connection failed',
+		);
 	}
 }
 
-async function maybeWarmupOllama(config: ServerConfig, ollama: OllamaConfig, logger: Logger): Promise<HeartbeatStopper | null> {
+async function maybeWarmupOllama(
+	config: ServerConfig,
+	ollama: OllamaConfig,
+	logger: Logger,
+): Promise<HeartbeatStopper | null> {
 	if (!config.ollamaEnabled || ollama.prewarmModels.length === 0) {
 		return null;
 	}
 
 	try {
 		await prewarm(ollama.prewarmModels, ollama.keepAlive, { baseUrl: ollama.baseUrl });
-		logger.info(createBrandedLog('ollama_prewarm_complete', { models: ollama.prewarmModels.length }), 'Ollama models prewarmed');
+		logger.info(
+			createBrandedLog('ollama_prewarm_complete', { models: ollama.prewarmModels.length }),
+			'Ollama models prewarmed',
+		);
 		return scheduleHeartbeat(ollama.prewarmModels, ollama.heartbeatInterval, ollama.keepAlive, {
 			baseUrl: ollama.baseUrl,
 		});
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		logger.warn(createBrandedLog('ollama_prewarm_failed', { error: message }), 'Ollama prewarm failed');
+		logger.warn(
+			createBrandedLog('ollama_prewarm_failed', { error: message }),
+			'Ollama prewarm failed',
+		);
 		return null;
+	}
+}
+
+async function validateOllamaDeployment(ollama: OllamaConfig, logger: Logger) {
+	const needsTags = ollama.requiredModels.length > 0;
+	const healthEndpoint = ollama.healthEndpoint;
+	if (!needsTags && !healthEndpoint) {
+		return;
+	}
+	try {
+		if (needsTags) {
+			const response = await fetch(`${ollama.baseUrl}/api/tags`);
+			if (!response.ok) {
+				logger.warn(
+					createBrandedLog('ollama_tags_unavailable', { status: response.status }),
+					'Ollama tag listing failed',
+				);
+			} else {
+				const payload = (await response.json()) as { models?: Array<{ name?: string }> };
+				const available = new Set(
+					(payload.models ?? []).map((model) => model.name).filter(Boolean) as string[],
+				);
+				const missing = ollama.requiredModels.filter((model) => !available.has(model));
+				if (missing.length > 0) {
+					logger.warn(
+						createBrandedLog('ollama_models_missing', { missing }),
+						'Required Ollama models missing',
+					);
+				}
+			}
+		}
+		if (healthEndpoint) {
+			const health = await fetch(healthEndpoint);
+			if (!health.ok) {
+				logger.warn(
+					createBrandedLog('ollama_health_failed', {
+						status: health.status,
+						endpoint: healthEndpoint,
+					}),
+					'Ollama health endpoint failed',
+				);
+			}
+		}
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		logger.warn(
+			createBrandedLog('ollama_validation_error', { error: message }),
+			'Failed to validate Ollama deployment',
+		);
 	}
 }
 
@@ -94,26 +161,34 @@ function setupShutdownHandlers(
 
 function setupProcessErrorHandlers(logger: Logger) {
 	process.on('uncaughtException', (error) => {
-		logger.error(createBrandedLog('uncaught_exception', { error }), 'Unhandled exception in MCP server');
+		logger.error(
+			createBrandedLog('uncaught_exception', { error }),
+			'Unhandled exception in MCP server',
+		);
 	});
 
 	process.on('unhandledRejection', (reason) => {
-		logger.error(createBrandedLog('unhandled_rejection', { reason }), 'Unhandled rejection in MCP server');
+		logger.error(
+			createBrandedLog('unhandled_rejection', { reason }),
+			'Unhandled rejection in MCP server',
+		);
 	});
 }
 
 async function main() {
 	const config = loadServerConfig();
 	const logger = createLogger(config.logLevel);
-	const ollama = loadOllamaConfig();
+	const hybrid = loadHybridConfig(logger);
+	const ollama = loadOllamaConfig(hybrid);
 	const { server } = createServer(logger, config);
 	const piecesProxy = createPiecesProxy(config, logger);
 
-	registerTools(server, logger, { piecesProxy, config, ollama });
+	registerTools(server, logger, { piecesProxy, config, ollama, hybrid });
 	createPrompts(server, logger);
 	createResources(server, logger);
 
 	const heartbeatStopper = await maybeWarmupOllama(config, ollama, logger);
+	await validateOllamaDeployment(ollama, logger);
 	await attachPiecesTools(server, logger, piecesProxy);
 	const transport = await startTransport(server, logger, config);
 
@@ -124,6 +199,9 @@ async function main() {
 main().catch((error) => {
 	const logger = pino({ level: 'error' });
 	const message = error instanceof Error ? error.message : String(error);
-	logger.error(createBrandedLog('startup_failed', { error: message }), `${BRAND.prefix} failed to start MCP server`);
+	logger.error(
+		createBrandedLog('startup_failed', { error: message }),
+		`${BRAND.prefix} failed to start MCP server`,
+	);
 	process.exit(1);
 });

@@ -9,18 +9,16 @@
  * 5. brAInwav-branded response with optional citations
  */
 
-import { randomUUID } from 'node:crypto';
-import { GraphEdgeType, GraphNodeType, Prisma } from '@prisma/client';
-import { z } from 'zod';
 import { SecureNeo4j } from '@cortex-os/utils';
+import { GraphEdgeType, GraphNodeType } from '@prisma/client';
+import { z } from 'zod';
 import { prisma, shutdownPrisma } from '../db/prismaClient.js';
 import { assembleContext } from '../retrieval/contextAssembler.js';
 import { expandNeighbors } from '../retrieval/expandGraph.js';
 import {
+	type GraphRAGSearchResult,
 	QdrantConfigSchema,
 	QdrantHybridSearch,
-	type GraphRAGSearchResult,
-	type SparseVector,
 } from '../retrieval/QdrantHybrid.js';
 
 const DEFAULT_QDRANT_CONFIG = {
@@ -206,7 +204,7 @@ export class GraphRAGService {
 				seeds,
 			);
 
-		const result = this.buildResult(context, expansion, reservation.startTime, seeds);
+			const result = this.buildResult(context, expansion, reservation.startTime, seeds);
 
 			if (validated.includeCitations) {
 				result.citations = this.formatCitations(context.chunks);
@@ -218,7 +216,9 @@ export class GraphRAGService {
 					const existing = result.citations ?? [];
 					const combined = [...existing];
 					for (const citation of kgCitations) {
-						if (!combined.some((c) => c.path === citation.path && c.nodeType === citation.nodeType)) {
+						if (
+							!combined.some((c) => c.path === citation.path && c.nodeType === citation.nodeType)
+						) {
 							combined.push(citation);
 						}
 					}
@@ -418,7 +418,8 @@ export class GraphRAGService {
 				);
 				const nodes = neighborhood?.nodes ?? [];
 				for (const node of nodes) {
-					const label = typeof node.label === 'string' && node.label.length > 0 ? node.label : node.id;
+					const label =
+						typeof node.label === 'string' && node.label.length > 0 ? node.label : node.id;
 					const path = `${this.externalKg.prefix}:${label}`;
 					if (seenPaths.has(path) || citations.length >= MAX_EXTERNAL_CITATIONS) {
 						continue;

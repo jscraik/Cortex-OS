@@ -9,12 +9,12 @@ import {
 	SimlabCommandSchema,
 } from '@cortex-os/contracts';
 import { createJsonOutput } from '@cortex-os/lib';
+import { resolveTransport } from '@cortex-os/mcp-bridge/runtime/transport';
 import { createEnhancedClient, type ServerInfo } from '@cortex-os/mcp-core';
 import { handleSimlab } from '@cortex-os/simlab';
 import Fastify from 'fastify';
 import client from 'prom-client';
 import { z } from 'zod';
-import { resolveTransport } from '@cortex-os/mcp-bridge/runtime/transport';
 import { getGatewayBus } from './a2a.js';
 import { createAgentRoute } from './lib/create-agent-route.js';
 
@@ -71,8 +71,7 @@ function getMCPServerInfo(): ServerInfo | null {
 	const endpoint = process.env.MCP_ENDPOINT;
 	if (!endpoint) return null;
 	const explicit = rawTransport?.trim().toLowerCase();
-	const transport: 'sse' | 'streamableHttp' =
-		explicit === 'sse' ? 'sse' : 'streamableHttp';
+	const transport: 'sse' | 'streamableHttp' = explicit === 'sse' ? 'sse' : 'streamableHttp';
 	return buildHttpLikeServerInfo(name, transport);
 }
 

@@ -55,7 +55,12 @@ export const extractAnthropicText = (response) => {
 	throw new Error('brAInwav Anthropic SDK response missing output text');
 };
 
-export const generateWithAnthropic = async ({ source, client, maxTokens = DEFAULT_MAX_TOKENS, model = DEFAULT_MODEL }) => {
+export const generateWithAnthropic = async ({
+	source,
+	client,
+	maxTokens = DEFAULT_MAX_TOKENS,
+	model = DEFAULT_MODEL,
+}) => {
 	const prompt = buildPrompt(source);
 	const response = await client.messages.create({
 		model,

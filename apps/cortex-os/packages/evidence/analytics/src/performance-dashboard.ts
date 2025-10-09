@@ -25,7 +25,7 @@ export class PerformanceDashboard {
 			framework: agent.framework,
 			position: {
 				x: (index % 5) * 150,
-				y: Math.floor(index / 5) * 100
+				y: Math.floor(index / 5) * 100,
 			},
 			size: agent.workload * 50 + 20,
 			color: this.getAgentColor(agent.status),
@@ -33,8 +33,8 @@ export class PerformanceDashboard {
 			metrics: {
 				activity: agent.workload,
 				load: agent.workload,
-				health: agent.healthScore
-			}
+				health: agent.healthScore,
+			},
 		}));
 	}
 
@@ -47,7 +47,7 @@ export class PerformanceDashboard {
 			idle: '#FFC107',
 			busy: '#FF9800',
 			error: '#F44336',
-			offline: '#9E9E9E'
+			offline: '#9E9E9E',
 		};
 		return colors[status] || '#9E9E9E';
 	}
@@ -69,7 +69,7 @@ export class PerformanceDashboard {
 				source: 'system-monitor',
 				timestamp: new Date(),
 				acknowledged: false,
-				actions: ['Scale up agents', 'Investigate bottlenecks']
+				actions: ['Scale up agents', 'Investigate bottlenecks'],
 			});
 		}
 

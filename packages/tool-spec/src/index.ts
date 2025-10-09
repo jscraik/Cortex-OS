@@ -11,53 +11,53 @@ import memoryStoreSchema from './schemas/memory.store.schema.json' with { type: 
 
 // Generate Zod schemas from JSON schemas
 const MetadataSchema = z
-        .object({
-                sourceUri: z.string().url().max(2048).optional(),
-                contentSha: z.string().min(8).max(128).optional(),
-                tenant: z.string().min(1).max(100).optional(),
-                labels: z.array(z.string().min(1).max(50)).max(32).optional(),
-        })
-        .catchall(z.unknown());
+	.object({
+		sourceUri: z.string().url().max(2048).optional(),
+		contentSha: z.string().min(8).max(128).optional(),
+		tenant: z.string().min(1).max(100).optional(),
+		labels: z.array(z.string().min(1).max(50)).max(32).optional(),
+	})
+	.catchall(z.unknown());
 
 export const MemoryStoreInputSchema = z.object({
-        content: z.string().min(1).max(8192),
-        importance: z.number().int().min(1).max(10).default(5),
-        tags: z.array(z.string().min(1).max(50)).max(32).optional(),
-        domain: z
-                .string()
-                .min(1)
-                .max(100)
-                .regex(/^[a-zA-Z0-9._-]+$/)
-                .optional(),
-        metadata: MetadataSchema.optional(),
+	content: z.string().min(1).max(8192),
+	importance: z.number().int().min(1).max(10).default(5),
+	tags: z.array(z.string().min(1).max(50)).max(32).optional(),
+	domain: z
+		.string()
+		.min(1)
+		.max(100)
+		.regex(/^[a-zA-Z0-9._-]+$/)
+		.optional(),
+	metadata: MetadataSchema.optional(),
 });
 
 export const MemorySearchInputSchema = z
-        .object({
-                query: z.string().min(1).max(1000),
-                search_type: z.enum(['semantic', 'tags', 'hybrid', 'keyword']).default('semantic'),
-                tags: z.array(z.string().min(1).max(50)).max(10).optional(),
-                domain: z.string().optional(),
-                tenant: z.string().min(1).max(100).optional(),
-                labels: z.array(z.string().min(1).max(50)).max(16).optional(),
-                limit: z.number().int().min(1).max(100).default(10),
-                offset: z.number().int().min(0).default(0),
-                session_filter_mode: z.enum(['all', 'session']).default('all'),
-                score_threshold: z.number().min(0).max(1).default(0.5),
-                hybrid_weight: z.number().min(0).max(1).default(0.6),
-        })
-        .superRefine((value, ctx) => {
-                const hasDomain = Boolean(value.domain);
-                const hasTags = Array.isArray(value.tags) && value.tags.length > 0;
-                const hasTenant = Boolean(value.tenant);
-                const hasLabels = Array.isArray(value.labels) && value.labels.length > 0;
-                if (!hasDomain && !hasTags && !hasTenant && !hasLabels) {
-                        ctx.addIssue({
-                                code: z.ZodIssueCode.custom,
-                                message: 'domain, tags, labels, or tenant is required for memory search',
-                        });
-                }
-        });
+	.object({
+		query: z.string().min(1).max(1000),
+		search_type: z.enum(['semantic', 'tags', 'hybrid', 'keyword']).default('semantic'),
+		tags: z.array(z.string().min(1).max(50)).max(10).optional(),
+		domain: z.string().optional(),
+		tenant: z.string().min(1).max(100).optional(),
+		labels: z.array(z.string().min(1).max(50)).max(16).optional(),
+		limit: z.number().int().min(1).max(100).default(10),
+		offset: z.number().int().min(0).default(0),
+		session_filter_mode: z.enum(['all', 'session']).default('all'),
+		score_threshold: z.number().min(0).max(1).default(0.5),
+		hybrid_weight: z.number().min(0).max(1).default(0.6),
+	})
+	.superRefine((value, ctx) => {
+		const hasDomain = Boolean(value.domain);
+		const hasTags = Array.isArray(value.tags) && value.tags.length > 0;
+		const hasTenant = Boolean(value.tenant);
+		const hasLabels = Array.isArray(value.labels) && value.labels.length > 0;
+		if (!hasDomain && !hasTags && !hasTenant && !hasLabels) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'domain, tags, labels, or tenant is required for memory search',
+			});
+		}
+	});
 
 export const MemoryAnalysisInputSchema = z.object({
 	analysis_type: z

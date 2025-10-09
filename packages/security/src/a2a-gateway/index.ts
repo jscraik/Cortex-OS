@@ -7,4 +7,3 @@ export { RequestEnvelope, SignedEnvelopeValidator } from './envelope.js';
 export { A2AGateway, A2AGatewayConfig } from './gateway.js';
 export { A2AGatewayMiddleware } from './middleware.js';
 export * from './types.js';
-

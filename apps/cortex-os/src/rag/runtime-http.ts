@@ -1,13 +1,13 @@
-import { createServer } from '@cortex-os/rag-http';
-import type { FastifyInstance } from 'fastify';
 import {
-	GraphRAGIngestService,
-	GraphRAGService,
 	createGraphRAGIngestService,
 	createGraphRAGService,
+	type GraphRAGIngestService,
+	type GraphRAGService,
 } from '@cortex-os/memory-core';
-import { createGraphRagEmbeddings } from './embeddings.js';
+import { createServer } from '@cortex-os/rag-http';
+import type { FastifyInstance } from 'fastify';
 import type { ShutdownResult } from '../operational/shutdown-result.js';
+import { createGraphRagEmbeddings } from './embeddings.js';
 
 export interface RagSurfaceConfig {
 	host: string;
@@ -128,7 +128,11 @@ export async function startRagHttpSurface(config: RagSurfaceConfig): Promise<Rag
 	const displayHost = config.host === '0.0.0.0' ? '127.0.0.1' : config.host;
 	const url = `http://${displayHost}:${boundPort}`;
 
-	const beginShutdown = ({ timeoutMs = 30_000 }: { timeoutMs?: number } = {}): Promise<ShutdownResult> => {
+	const beginShutdown = ({
+		timeoutMs = 30_000,
+	}: {
+		timeoutMs?: number;
+	} = {}): Promise<ShutdownResult> => {
 		if (shutdownResultPromise) {
 			return shutdownResultPromise;
 		}
@@ -179,7 +183,11 @@ function resolveBoundPort(instance: FastifyInstance, fallback: number): number {
 	const addresses = instance.addresses?.();
 	if (Array.isArray(addresses) && addresses.length > 0) {
 		const first = addresses[0];
-		if (first && typeof first === 'object' && typeof (first as { port?: number }).port === 'number') {
+		if (
+			first &&
+			typeof first === 'object' &&
+			typeof (first as { port?: number }).port === 'number'
+		) {
 			return (first as { port: number }).port;
 		}
 	}

@@ -1,0 +1,58 @@
+{
+  "name": "@cortex-os/workflow-orchestrator",
+  "version": "1.0.0",
+  "description": "brAInwav Cortex-OS unified workflow orchestrator for PRP gates and task phases",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "cortex-workflow": "./dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@cortex-os/a2a": "workspace:*",
+    "@cortex-os/kernel": "workspace:*",
+    "@cortex-os/memories": "workspace:*",
+    "@cortex-os/memory-core": "workspace:*",
+    "@cortex-os/prp-runner": "workspace:*",
+    "@cortex-os/workflow-common": "workspace:*",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "ora": "^8.0.0",
+    "yaml": "^2.3.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^3.0.0",
+    "better-sqlite3": "^11.8.0",
+    "fast-check": "^3.0.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
+  },
+  "keywords": [
+    "brainwav",
+    "cortex-os",
+    "workflow",
+    "orchestrator",
+    "prp-runner",
+    "task-management",
+    "cli"
+  ],
+  "author": "brAInwav Development Team",
+  "license": "SEE LICENSE IN ../../LICENSE"
+}

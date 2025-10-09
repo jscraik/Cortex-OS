@@ -4,9 +4,6 @@
  */
 
 import {
-	formatCoverageValidationResult,
-	formatPerformanceValidationResult,
-	formatSecurityValidationResult,
 	validateCoverage,
 	validatePerformance,
 	validateSecurity,

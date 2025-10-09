@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
 import { resetMetricsForTest } from '../../src/observability/metrics.js';
+import { type RuntimeHandle, startRuntime } from '../../src/runtime.js';
 import { prepareLoopbackAuth } from '../setup.global.js';
 
 let authHeader: string;

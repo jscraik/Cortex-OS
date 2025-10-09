@@ -1,6 +1,6 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
@@ -18,7 +18,9 @@ const fixturePath = fileURLToPath(new URL('./fixtures/rotation.yml', import.meta
 describe('coverage rotation helpers', () => {
 	it('loads config and applies manual week override', () => {
 		const config = loadRotationConfig(fixturePath);
-		expect(resolveWeekIndex(config, { ROTATION_WEEK: '2' }, new Date('2025-01-06T00:00:00Z'))).toBe(1);
+		expect(resolveWeekIndex(config, { ROTATION_WEEK: '2' }, new Date('2025-01-06T00:00:00Z'))).toBe(
+			1,
+		);
 	});
 
 	it('computes week index based on elapsed time', () => {
@@ -63,10 +65,14 @@ describe('coverage rotation helpers', () => {
 	});
 
 	it('fails thresholds when coverage dips below minimum', () => {
-		expect(() => assertThresholds({ lines: 80 }, { lines: 90 }, 'weekly goal')).toThrow(/lines: 80\.00 < 90/);
+		expect(() => assertThresholds({ lines: 80 }, { lines: 90 }, 'weekly goal')).toThrow(
+			/lines: 80\.00 < 90/,
+		);
 	});
 
 	it('detects coverage regression beyond allowed drop', () => {
-		expect(() => enforceRegression({ lines: 92 }, { lines: 90.5 }, 0)).toThrow(/coverage regression detected/);
+		expect(() => enforceRegression({ lines: 92 }, { lines: 90.5 }, 0)).toThrow(
+			/coverage regression detected/,
+		);
 	});
 });

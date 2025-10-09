@@ -82,18 +82,24 @@ const normalizeToolInput = (input: Record<string, unknown>): Record<string, unkn
 export const parseAnthropicToolResponse = (payload: unknown): AnthropicContractSnapshot => {
 	try {
 		const message = AnthropicMessageSchema.parse(payload);
-		const toolBlocks = message.content.filter((block): block is z.infer<typeof ToolUseContentSchema> => {
-			return block.type === 'tool_use';
-		});
+		const toolBlocks = message.content.filter(
+			(block): block is z.infer<typeof ToolUseContentSchema> => {
+				return block.type === 'tool_use';
+			},
+		);
 
 		if (toolBlocks.length === 0) {
-			throw new Error('brAInwav Anthropic contract violation: tool_use block missing from response');
+			throw new Error(
+				'brAInwav Anthropic contract violation: tool_use block missing from response',
+			);
 		}
 
 		const toolCalls = toolBlocks.map((block) => {
 			const outputText = block.response?.output_text;
 			if (!outputText) {
-				throw new Error('brAInwav Anthropic contract violation: response.output_text missing after validation');
+				throw new Error(
+					'brAInwav Anthropic contract violation: response.output_text missing after validation',
+				);
 			}
 			return {
 				id: block.id,

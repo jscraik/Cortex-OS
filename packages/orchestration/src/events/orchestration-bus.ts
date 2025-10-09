@@ -4,49 +4,49 @@ import type { Transport } from '@cortex-os/a2a-core/transport';
 import { inproc } from '@cortex-os/a2a-transport/inproc';
 
 import {
-        type AgentAssignedEvent,
-        type AgentCoordinationStartedEvent,
-        type AgentFreedEvent,
-        type CoordinationStartedEvent,
-        type DecisionMadeEvent,
-        ORCHESTRATION_EVENT_SCHEMAS,
-        type OrchestrationEventType,
-        OrchestrationEventTypes,
-        type PlanCreatedEvent,
-        type PlanUpdatedEvent,
-        type ResourceAllocatedEvent,
-        type ScheduleAdjustedEvent,
-        type TaskCompletedEvent,
-        type TaskCreatedEvent,
-        type TaskFailedEvent,
-        type TaskStartedEvent,
-        type ToolLayerInvokedEvent,
+	type AgentAssignedEvent,
+	type AgentCoordinationStartedEvent,
+	type AgentFreedEvent,
+	type CoordinationStartedEvent,
+	type DecisionMadeEvent,
+	ORCHESTRATION_EVENT_SCHEMAS,
+	type OrchestrationEventType,
+	OrchestrationEventTypes,
+	type PlanCreatedEvent,
+	type PlanUpdatedEvent,
+	type ResourceAllocatedEvent,
+	type ScheduleAdjustedEvent,
+	type TaskCompletedEvent,
+	type TaskCreatedEvent,
+	type TaskFailedEvent,
+	type TaskStartedEvent,
+	type ToolLayerInvokedEvent,
 } from './orchestration-events.js';
 import type {
-        RoutingDecisionEvent,
-        RoutingFallbackEvent,
-        RoutingPlanEvent,
+	RoutingDecisionEvent,
+	RoutingFallbackEvent,
+	RoutingPlanEvent,
 } from './routing-events.js';
 
 type OrchestrationEventPayloadMap = {
-        [OrchestrationEventTypes.TaskCreated]: TaskCreatedEvent;
-        [OrchestrationEventTypes.TaskStarted]: TaskStartedEvent;
-        [OrchestrationEventTypes.TaskCompleted]: TaskCompletedEvent;
-        [OrchestrationEventTypes.TaskFailed]: TaskFailedEvent;
-        [OrchestrationEventTypes.AgentAssigned]: AgentAssignedEvent;
-        [OrchestrationEventTypes.AgentFreed]: AgentFreedEvent;
-        [OrchestrationEventTypes.PlanCreated]: PlanCreatedEvent;
-        [OrchestrationEventTypes.PlanUpdated]: PlanUpdatedEvent;
-        [OrchestrationEventTypes.CoordinationStarted]: CoordinationStartedEvent;
-        [OrchestrationEventTypes.DecisionMade]: DecisionMadeEvent;
-        [OrchestrationEventTypes.ResourceAllocated]: ResourceAllocatedEvent;
-        [OrchestrationEventTypes.RoutingPlan]: RoutingPlanEvent;
-        [OrchestrationEventTypes.RoutingDecision]: RoutingDecisionEvent;
-        [OrchestrationEventTypes.RoutingFallback]: RoutingFallbackEvent;
-        // nO Architecture Events
-        [OrchestrationEventTypes.AgentCoordinationStarted]: AgentCoordinationStartedEvent;
-        [OrchestrationEventTypes.ScheduleAdjusted]: ScheduleAdjustedEvent;
-        [OrchestrationEventTypes.ToolLayerInvoked]: ToolLayerInvokedEvent;
+	[OrchestrationEventTypes.TaskCreated]: TaskCreatedEvent;
+	[OrchestrationEventTypes.TaskStarted]: TaskStartedEvent;
+	[OrchestrationEventTypes.TaskCompleted]: TaskCompletedEvent;
+	[OrchestrationEventTypes.TaskFailed]: TaskFailedEvent;
+	[OrchestrationEventTypes.AgentAssigned]: AgentAssignedEvent;
+	[OrchestrationEventTypes.AgentFreed]: AgentFreedEvent;
+	[OrchestrationEventTypes.PlanCreated]: PlanCreatedEvent;
+	[OrchestrationEventTypes.PlanUpdated]: PlanUpdatedEvent;
+	[OrchestrationEventTypes.CoordinationStarted]: CoordinationStartedEvent;
+	[OrchestrationEventTypes.DecisionMade]: DecisionMadeEvent;
+	[OrchestrationEventTypes.ResourceAllocated]: ResourceAllocatedEvent;
+	[OrchestrationEventTypes.RoutingPlan]: RoutingPlanEvent;
+	[OrchestrationEventTypes.RoutingDecision]: RoutingDecisionEvent;
+	[OrchestrationEventTypes.RoutingFallback]: RoutingFallbackEvent;
+	// nO Architecture Events
+	[OrchestrationEventTypes.AgentCoordinationStarted]: AgentCoordinationStartedEvent;
+	[OrchestrationEventTypes.ScheduleAdjusted]: ScheduleAdjustedEvent;
+	[OrchestrationEventTypes.ToolLayerInvoked]: ToolLayerInvokedEvent;
 };
 
 export type OrchestrationEventEnvelope<

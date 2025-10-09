@@ -137,11 +137,6 @@ export function linkGateToTask(
 		case 'security':
 			evidenceType = 'test-result';
 			break;
-		case 'analysis':
-		case 'file':
-		case 'command':
-		case 'llm-generation':
-		case 'sbom':
 		default:
 			evidenceType = 'analysis';
 			break;

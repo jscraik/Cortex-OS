@@ -1,8 +1,8 @@
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { PromptCapture } from '@cortex-os/prompts';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { RunBundleRecorder } from '../../src/run-bundle/recorder.js';
 import { initRunBundle } from '../../src/run-bundle/writer.js';
 
@@ -75,7 +75,10 @@ describe('RunBundleRecorder', () => {
 			'run.json',
 		]);
 
-		const runRecord = JSON.parse(await readFile(join(runDir, 'run.json'), 'utf8')) as Record<string, unknown>;
+		const runRecord = JSON.parse(await readFile(join(runDir, 'run.json'), 'utf8')) as Record<
+			string,
+			unknown
+		>;
 		expect(runRecord.status).toBe('completed');
 		expect(runRecord.startedAt).toBe('2025-01-01T00:00:00.000Z');
 		expect(runRecord.finishedAt).toBe('2025-01-01T00:00:01.000Z');
@@ -85,22 +88,28 @@ describe('RunBundleRecorder', () => {
 		expect(runRecord.energySampleCount).toBe(1);
 		expect(runRecord.output).toBe('bundle-created');
 
-		const prompts = JSON.parse(await readFile(join(runDir, 'prompts.json'), 'utf8')) as PromptCapture[];
+		const prompts = JSON.parse(
+			await readFile(join(runDir, 'prompts.json'), 'utf8'),
+		) as PromptCapture[];
 		expect(prompts).toEqual([PROMPT_CAPTURE]);
 
-		const messageLines = (await readFile(join(runDir, 'messages.jsonl'), 'utf8')).trim().split('\n');
+		const messageLines = (await readFile(join(runDir, 'messages.jsonl'), 'utf8'))
+			.trim()
+			.split('\n');
 		expect(messageLines).toHaveLength(1);
 		const message = JSON.parse(messageLines[0]) as Record<string, unknown>;
 		expect(message.role).toBe('assistant');
 		expect(message.content).toBe('All good');
 
-		const citations = JSON.parse(await readFile(join(runDir, 'citations.json'), 'utf8')) as unknown[];
+		const citations = JSON.parse(
+			await readFile(join(runDir, 'citations.json'), 'utf8'),
+		) as unknown[];
 		expect(citations).toHaveLength(1);
 
-		const policyDecisions = JSON.parse(await readFile(join(runDir, 'policy_decisions.json'), 'utf8')) as unknown[];
-		expect(policyDecisions).toEqual([
-			{ selectedAgent: 'agent-1', confidence: 0.9 },
-		]);
+		const policyDecisions = JSON.parse(
+			await readFile(join(runDir, 'policy_decisions.json'), 'utf8'),
+		) as unknown[];
+		expect(policyDecisions).toEqual([{ selectedAgent: 'agent-1', confidence: 0.9 }]);
 
 		const energyLines = (await readFile(join(runDir, 'energy.jsonl'), 'utf8')).trim().split('\n');
 		expect(energyLines).toHaveLength(1);
@@ -126,14 +135,23 @@ describe('RunBundleRecorder', () => {
 		await recorder.fail(error);
 
 		const runDir = join(runsRoot, 'run-failure');
-		const runRecord = JSON.parse(await readFile(join(runDir, 'run.json'), 'utf8')) as Record<string, unknown>;
+		const runRecord = JSON.parse(await readFile(join(runDir, 'run.json'), 'utf8')) as Record<
+			string,
+			unknown
+		>;
 		expect(runRecord.status).toBe('failed');
 		expect(runRecord.error).toMatchObject({ name: 'Error', message: 'test failure' });
 		expect(runRecord.promptCount).toBe(0);
 		expect(runRecord.messageCount).toBe(0);
 		expect(runRecord.energySampleCount).toBe(0);
 
-		for (const filename of ['messages.jsonl', 'citations.json', 'policy_decisions.json', 'energy.jsonl', 'prompts.json']) {
+		for (const filename of [
+			'messages.jsonl',
+			'citations.json',
+			'policy_decisions.json',
+			'energy.jsonl',
+			'prompts.json',
+		]) {
 			const contents = await readFile(join(runDir, filename), 'utf8');
 			expect(contents).toBeTruthy();
 		}

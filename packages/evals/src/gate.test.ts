@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const mockSuite = () => ({
-        optionsSchema: { parse: vi.fn().mockReturnValue({}) },
-        run: vi.fn(),
+	optionsSchema: { parse: vi.fn().mockReturnValue({}) },
+	run: vi.fn(),
 });
 
 const ragSuiteMock = mockSuite();
@@ -18,11 +18,11 @@ vi.mock('./suites/redteam', () => ({ redteamSuite: redteamSuiteMock }));
 vi.mock('./suites/mcp-tools', () => ({ mcpToolsSuite: mcpToolsSuiteMock }));
 
 import { runGate } from './index.js';
-import { ragSuite } from './suites/rag.js';
-import { routerSuite } from './suites/router.js';
-import { promptSuite } from './suites/promptfoo.js';
-import { redteamSuite } from './suites/redteam.js';
 import { mcpToolsSuite } from './suites/mcp-tools.js';
+import { promptSuite } from './suites/promptfoo.js';
+import { ragSuite } from './suites/rag.js';
+import { redteamSuite } from './suites/redteam.js';
+import { routerSuite } from './suites/router.js';
 
 describe('runGate', () => {
 	const dataset = { docs: [], queries: [] };
@@ -40,47 +40,47 @@ describe('runGate', () => {
 			metrics: {},
 			notes: [],
 		});
-                vi.mocked(promptSuite.run).mockResolvedValueOnce({
-                        name: 'prompt',
-                        pass: true,
-                        metrics: {},
-                        notes: [],
-                });
-                vi.mocked(redteamSuite.run).mockResolvedValueOnce({
-                        name: 'redteam',
-                        pass: true,
-                        metrics: {},
-                        notes: [],
-                });
-                vi.mocked(mcpToolsSuite.run).mockResolvedValueOnce({
-                        name: 'mcpTools',
-                        pass: true,
-                        metrics: {},
-                        notes: [],
-                });
-                const cfg = {
-                        dataset,
-                        suites: [
-                                { name: 'rag', enabled: true, thresholds: {}, options: {} },
-                                { name: 'router', enabled: true, thresholds: {} },
-                                { name: 'prompt', enabled: true, thresholds: {}, options: {} },
-                                { name: 'redteam', enabled: true, thresholds: {}, options: {} },
-                                { name: 'mcpTools', enabled: true, thresholds: {}, options: {} },
-                                { name: 'router', enabled: false, thresholds: {} },
-                        ],
-                } as const;
-                const res = await runGate(cfg, {
-                        rag: {},
-                        router: {},
-                        prompt: {},
-                        redteam: {},
-                        mcpTools: {},
-                } as any);
-                expect(res.pass).toBe(true);
-        });
+		vi.mocked(promptSuite.run).mockResolvedValueOnce({
+			name: 'prompt',
+			pass: true,
+			metrics: {},
+			notes: [],
+		});
+		vi.mocked(redteamSuite.run).mockResolvedValueOnce({
+			name: 'redteam',
+			pass: true,
+			metrics: {},
+			notes: [],
+		});
+		vi.mocked(mcpToolsSuite.run).mockResolvedValueOnce({
+			name: 'mcpTools',
+			pass: true,
+			metrics: {},
+			notes: [],
+		});
+		const cfg = {
+			dataset,
+			suites: [
+				{ name: 'rag', enabled: true, thresholds: {}, options: {} },
+				{ name: 'router', enabled: true, thresholds: {} },
+				{ name: 'prompt', enabled: true, thresholds: {}, options: {} },
+				{ name: 'redteam', enabled: true, thresholds: {}, options: {} },
+				{ name: 'mcpTools', enabled: true, thresholds: {}, options: {} },
+				{ name: 'router', enabled: false, thresholds: {} },
+			],
+		} as const;
+		const res = await runGate(cfg, {
+			rag: {},
+			router: {},
+			prompt: {},
+			redteam: {},
+			mcpTools: {},
+		} as any);
+		expect(res.pass).toBe(true);
+	});
 
-        it('returns fail when a suite fails', async () => {
-                vi.mocked(ragSuite.run).mockResolvedValueOnce({
+	it('returns fail when a suite fails', async () => {
+		vi.mocked(ragSuite.run).mockResolvedValueOnce({
 			name: 'rag',
 			pass: false,
 			metrics: {},
@@ -92,44 +92,44 @@ describe('runGate', () => {
 			metrics: {},
 			notes: [],
 		});
-                vi.mocked(promptSuite.run).mockResolvedValueOnce({
-                        name: 'prompt',
-                        pass: true,
-                        metrics: {},
-                        notes: [],
-                });
-                vi.mocked(redteamSuite.run).mockResolvedValueOnce({
-                        name: 'redteam',
-                        pass: true,
-                        metrics: {},
-                        notes: [],
-                });
-                vi.mocked(mcpToolsSuite.run).mockResolvedValueOnce({
-                        name: 'mcpTools',
-                        pass: true,
-                        metrics: {},
-                        notes: [],
-                });
-                const cfg = {
-                        dataset,
-                        suites: [
-                                { name: 'rag', enabled: true, thresholds: {}, options: {} },
-                                { name: 'router', enabled: true, thresholds: {} },
-                                { name: 'prompt', enabled: true, thresholds: {}, options: {} },
-                                { name: 'redteam', enabled: true, thresholds: {}, options: {} },
-                                { name: 'mcpTools', enabled: true, thresholds: {}, options: {} },
-                                { name: 'router', enabled: false, thresholds: {} },
-                        ],
-                } as const;
-                const res = await runGate(cfg, {
-                        rag: {},
-                        router: {},
-                        prompt: {},
-                        redteam: {},
-                        mcpTools: {},
-                } as any);
-                expect(res.pass).toBe(false);
-        });
+		vi.mocked(promptSuite.run).mockResolvedValueOnce({
+			name: 'prompt',
+			pass: true,
+			metrics: {},
+			notes: [],
+		});
+		vi.mocked(redteamSuite.run).mockResolvedValueOnce({
+			name: 'redteam',
+			pass: true,
+			metrics: {},
+			notes: [],
+		});
+		vi.mocked(mcpToolsSuite.run).mockResolvedValueOnce({
+			name: 'mcpTools',
+			pass: true,
+			metrics: {},
+			notes: [],
+		});
+		const cfg = {
+			dataset,
+			suites: [
+				{ name: 'rag', enabled: true, thresholds: {}, options: {} },
+				{ name: 'router', enabled: true, thresholds: {} },
+				{ name: 'prompt', enabled: true, thresholds: {}, options: {} },
+				{ name: 'redteam', enabled: true, thresholds: {}, options: {} },
+				{ name: 'mcpTools', enabled: true, thresholds: {}, options: {} },
+				{ name: 'router', enabled: false, thresholds: {} },
+			],
+		} as const;
+		const res = await runGate(cfg, {
+			rag: {},
+			router: {},
+			prompt: {},
+			redteam: {},
+			mcpTools: {},
+		} as any);
+		expect(res.pass).toBe(false);
+	});
 
 	it('throws on invalid config', async () => {
 		await expect(runGate({} as any, {} as any)).rejects.toThrow();

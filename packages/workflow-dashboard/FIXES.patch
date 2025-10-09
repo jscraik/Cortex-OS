@@ -1,0 +1,106 @@
+# Patch Hints for brAInwav Policy Violations
+
+## Critical Fix 1: Remove TODO markers and fail fast
+
+--- a/packages/workflow-dashboard/src/server/index.ts
++++ b/packages/workflow-dashboard/src/server/index.ts
+@@ -38,7 +38,8 @@
+   
+   // List workflows
+   app.get('/api/workflows', async (_req: Request, res: Response) => {
+-    // TODO: Implement actual DB query
++    // Database integration pending - fail fast with brAInwav error
++    throw new Error('[brAInwav] Workflow list endpoint not yet implemented - database integration required');
+     const workflows = await getWorkflows();
+     
+     res.json({
+
+## Critical Fix 2: Wire to actual database (preferred solution)
+
+--- a/packages/workflow-dashboard/src/server/index.ts
++++ b/packages/workflow-dashboard/src/server/index.ts
+@@ -8,6 +8,7 @@
+ 
+ import express, { type Express, type Request, type Response } from 'express';
+ import { z } from 'zod';
++import { createDatabase, getWorkflow, listWorkflows } from '@cortex-os/workflow-orchestrator/persistence';
+ 
+ export interface ServerConfig {
+   port: number;
+@@ -38,8 +39,7 @@
+   
+   // List workflows
+   app.get('/api/workflows', async (_req: Request, res: Response) => {
+-    // TODO: Implement actual DB query
+-    const workflows = await getWorkflows();
++    const workflows = await listWorkflows(config.dbPath || '.workflow/state.db');
+     
+     res.json({
+       branding: 'brAInwav',
+
+## Critical Fix 3: Add brAInwav branding to errors
+
+--- a/packages/workflow-orchestrator/src/memory/LocalMemoryClient.ts
++++ b/packages/workflow-orchestrator/src/memory/LocalMemoryClient.ts
+@@ -91,7 +91,8 @@
+       });
+ 
+       if (!response.ok) {
+-        throw new Error(`HTTP ${response.status}`);
++        const statusText = response.statusText || 'Unknown error';
++        throw new Error(`[brAInwav] Memory API error: HTTP ${response.status} ${statusText}`);
+       }
+     } catch (error) {
+       this.handleStorageError(error, { type: 'workflow', data: insight, timestamp: new Date().toISOString() });
+
+## Critical Fix 4: Implement calculateProgress
+
+--- a/packages/workflow-dashboard/src/server/index.ts
++++ b/packages/workflow-dashboard/src/server/index.ts
+@@ -131,7 +131,12 @@
+ 
+ function calculateProgress(workflow: Record<string, unknown>): number {
+   const totalSteps = 14; // 8 gates + 6 phases
+-  const completed = 0; // TODO: Count completed steps
++  
++  // Count completed gates and phases
++  const gates = (workflow.gates as any[]) || [];
++  const phases = (workflow.phases as any[]) || [];
++  const completed = gates.filter(g => g.status === 'completed').length + 
++                    phases.filter(p => p.status === 'completed').length;
++  
+   return Math.round((completed / totalSteps) * 100);
+ }
+
+## Low Priority Fix: Parallel retry processing
+
+--- a/packages/workflow-orchestrator/src/memory/LocalMemoryClient.ts
++++ b/packages/workflow-orchestrator/src/memory/LocalMemoryClient.ts
+@@ -171,11 +171,15 @@
+     const pending = [...this.pendingQueue];
+     this.pendingQueue = [];
+ 
+-    for (const item of pending) {
+-      if (item.type === 'workflow') {
+-        await this.storeWorkflowInsight(item.data as WorkflowInsight);
+-      } else {
+-        await this.storeApprovalDecision(item.data as ApprovalDecision);
+-      }
+-    }
++    // Process retries in parallel for better performance
++    const retryPromises = pending.map(item => 
++      item.type === 'workflow' 
++        ? this.storeWorkflowInsight(item.data as WorkflowInsight)
++        : this.storeApprovalDecision(item.data as ApprovalDecision)
++    );
++    
++    const results = await Promise.allSettled(retryPromises);
++    
++    // Re-queue any that failed again
++    results.forEach((result, index) => {
++      if (result.status === 'rejected') {
++        this.pendingQueue.push(pending[index]);
++      }
++    });
+   }
+

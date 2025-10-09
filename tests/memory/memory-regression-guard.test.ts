@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
 
 // Lightweight re-implementation of parseJsonlPeak from memory-regression-guard for testing.
 function parseJsonlPeak(content: string) {

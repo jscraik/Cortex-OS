@@ -1,13 +1,13 @@
-import { describe, expect, it } from 'vitest';
-import {
-        createProofSession,
-        exportExecutionProofEnvelope,
-        finalizeProof,
-        verifyProof,
-} from '../../packages/kernel/src/proof/proofSystem.js';
-import { verifyProofEnvelope } from '@cortex-os/proof-artifacts';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { verifyProofEnvelope } from '@cortex-os/proof-artifacts';
+import { describe, expect, it } from 'vitest';
+import {
+	createProofSession,
+	exportExecutionProofEnvelope,
+	finalizeProof,
+	verifyProof,
+} from '../../packages/kernel/src/proof/proofSystem.js';
 
 /**
  * Module B – Proof System (Initial Failing Spec)
@@ -80,26 +80,26 @@ describe('Proof System (Module B)', () => {
 		expect(verification.valid).toBe(false);
 		expect(verification.issues).toContain('missing-claim:core.totalTasks');
 	});
-        it('creates a proof envelope referencing kernel digest', async () => {
-                const session = createProofSession({
-                        seed: 'proof-envelope',
-                        executionHash: 'hash',
-                        records: [],
-                });
-                session.addClaim('core.totalTasks', '0');
-                const artifact = await finalizeProof(session);
-                const baseDir = join(process.cwd(), 'test-temp');
-                mkdirSync(baseDir, { recursive: true });
-                const artifactPath = join(baseDir, 'simple-proof.json');
-                writeFileSync(artifactPath, JSON.stringify({ ok: true }));
-                const envelope = exportExecutionProofEnvelope(artifact, {
-                        artifactPath,
-                        artifactMime: 'application/json',
-                        publicContext: { instruction: 'simple' },
-                        evidence: [],
-                        runtime: { model: 'gpt-5-codex' },
-                });
-                const verification = verifyProofEnvelope(envelope);
-                expect(verification.valid).toBe(true);
-        });
+	it('creates a proof envelope referencing kernel digest', async () => {
+		const session = createProofSession({
+			seed: 'proof-envelope',
+			executionHash: 'hash',
+			records: [],
+		});
+		session.addClaim('core.totalTasks', '0');
+		const artifact = await finalizeProof(session);
+		const baseDir = join(process.cwd(), 'test-temp');
+		mkdirSync(baseDir, { recursive: true });
+		const artifactPath = join(baseDir, 'simple-proof.json');
+		writeFileSync(artifactPath, JSON.stringify({ ok: true }));
+		const envelope = exportExecutionProofEnvelope(artifact, {
+			artifactPath,
+			artifactMime: 'application/json',
+			publicContext: { instruction: 'simple' },
+			evidence: [],
+			runtime: { model: 'gpt-5-codex' },
+		});
+		const verification = verifyProofEnvelope(envelope);
+		expect(verification.valid).toBe(true);
+	});
 });

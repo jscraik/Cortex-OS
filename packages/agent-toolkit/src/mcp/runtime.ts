@@ -69,7 +69,11 @@ interface ExecutionContext {
 }
 
 const searchSchema = z.object({ pattern: z.string().min(1), path: z.string().min(1) });
-const codemodSchema = z.object({ find: z.string().min(1), replace: z.string(), path: z.string().min(1) });
+const codemodSchema = z.object({
+	find: z.string().min(1),
+	replace: z.string(),
+	path: z.string().min(1),
+});
 const validateSchema = z.object({ files: z.array(z.string().min(1)).min(1) });
 const codemapSchema = z.object({
 	repoPath: z.string().min(1),
@@ -137,7 +141,9 @@ export class AgentToolkitMcpRuntime {
 	}
 
 	public async batchSearch(requests: SearchInput[]): Promise<McpExecutionResult[]> {
-		const executions = await Promise.all(requests.map((req) => this.execute('agent_toolkit_search', req)));
+		const executions = await Promise.all(
+			requests.map((req) => this.execute('agent_toolkit_search', req)),
+		);
 		this.emit({
 			type: 'agent_toolkit.batch.completed',
 			data: {
@@ -173,7 +179,9 @@ export class AgentToolkitMcpRuntime {
 			byTool.set(record.tool, stats);
 		}
 		const totalExecutions = this.history.size;
-		const successfulExecutions = Array.from(this.history.values()).filter((r) => r.result.success).length;
+		const successfulExecutions = Array.from(this.history.values()).filter(
+			(r) => r.result.success,
+		).length;
 		const failedExecutions = totalExecutions - successfulExecutions;
 		return {
 			totalExecutions,
@@ -197,7 +205,10 @@ export class AgentToolkitMcpRuntime {
 		});
 	}
 
-	private async executeConfigured<Input>(config: ToolConfig<Input>, rawInput: unknown): Promise<McpExecutionResult> {
+	private async executeConfigured<Input>(
+		config: ToolConfig<Input>,
+		rawInput: unknown,
+	): Promise<McpExecutionResult> {
 		const parsed = config.schema.safeParse(rawInput);
 		if (!parsed.success) {
 			const failure = this.validationFailure(config.name, parsed.error);
@@ -231,7 +242,11 @@ export class AgentToolkitMcpRuntime {
 		);
 	}
 
-	private async invokeTool<Input>(config: ToolConfig<Input>, input: Input, ctx: ExecutionContext): Promise<McpExecutionResult> {
+	private async invokeTool<Input>(
+		config: ToolConfig<Input>,
+		input: Input,
+		ctx: ExecutionContext,
+	): Promise<McpExecutionResult> {
 		const started = this.clock();
 		try {
 			const result = await config.run(input);
@@ -263,7 +278,12 @@ export class AgentToolkitMcpRuntime {
 		});
 	}
 
-	private enrichResult(name: string, result: McpExecutionResult, ctx: ExecutionContext, started: number): McpExecutionResult {
+	private enrichResult(
+		name: string,
+		result: McpExecutionResult,
+		ctx: ExecutionContext,
+		started: number,
+	): McpExecutionResult {
 		const duration = this.clock() - started;
 		const metadata: ExecutionMetadata = {
 			correlationId: ctx.correlationId,
@@ -310,7 +330,11 @@ export class AgentToolkitMcpRuntime {
 	}
 
 	private recordExecutionResult(tool: string, success: boolean): void {
-		const state = this.circuitBreakers.get(tool) ?? { failureCount: 0, lastFailureTime: 0, isOpen: false };
+		const state = this.circuitBreakers.get(tool) ?? {
+			failureCount: 0,
+			lastFailureTime: 0,
+			isOpen: false,
+		};
 		if (success) {
 			state.failureCount = 0;
 			state.isOpen = false;
@@ -347,7 +371,12 @@ export class AgentToolkitMcpRuntime {
 		}
 	}
 
-	private emitStarted<Input>(config: ToolConfig<Input>, input: Input, correlationId: string, timestamp: string): void {
+	private emitStarted<Input>(
+		config: ToolConfig<Input>,
+		input: Input,
+		correlationId: string,
+		timestamp: string,
+	): void {
 		this.emit({
 			type: 'agent_toolkit.execution.started',
 			data: {
@@ -381,7 +410,11 @@ export class AgentToolkitMcpRuntime {
 			toolType: 'search',
 			eventToolName: 'ripgrep',
 			estimateTokens: (input) => input.pattern.length + input.path.length,
-			run: async (input) => this.wrapToolkitResult('agent_toolkit_search', await this.toolkit.search(input.pattern, input.path)),
+			run: async (input) =>
+				this.wrapToolkitResult(
+					'agent_toolkit_search',
+					await this.toolkit.search(input.pattern, input.path),
+				),
 		};
 	}
 
@@ -423,7 +456,11 @@ export class AgentToolkitMcpRuntime {
 			toolType: 'codemod',
 			eventToolName: 'comby',
 			estimateTokens: (input) => input.find.length + input.replace.length + input.path.length,
-			run: async (input) => this.wrapToolkitResult('agent_toolkit_codemod', await this.toolkit.codemod(input.find, input.replace, input.path)),
+			run: async (input) =>
+				this.wrapToolkitResult(
+					'agent_toolkit_codemod',
+					await this.toolkit.codemod(input.find, input.replace, input.path),
+				),
 			onSuccess: (input, result) => {
 				this.emit({
 					type: 'agent_toolkit.code.modified',
@@ -446,7 +483,8 @@ export class AgentToolkitMcpRuntime {
 			toolType: 'validate',
 			eventToolName: 'multi-validator',
 			estimateTokens: (input) => input.files.join(',').length,
-			run: async (input) => this.wrapToolkitResult('agent_toolkit_validate', await this.toolkit.validate(input.files)),
+			run: async (input) =>
+				this.wrapToolkitResult('agent_toolkit_validate', await this.toolkit.validate(input.files)),
 		};
 	}
 
@@ -458,14 +496,19 @@ export class AgentToolkitMcpRuntime {
 			toolType: 'codemap',
 			eventToolName: 'codemap',
 			estimateTokens: (input) => JSON.stringify(input).length,
-			run: async (input) => this.wrapToolkitResult('agent_toolkit_codemap', await this.toolkit.generateCodemap(input as any)),
+			run: async (input) =>
+				this.wrapToolkitResult(
+					'agent_toolkit_codemap',
+					await this.toolkit.generateCodemap(input as any),
+				),
 		};
 	}
 
 	private wrapToolkitResult(tool: string, raw: unknown): McpExecutionResult {
-		const error = typeof raw === 'object' && raw !== null && 'error' in (raw as Record<string, unknown>)
-			? (raw as Record<string, unknown>).error
-			: undefined;
+		const error =
+			typeof raw === 'object' && raw !== null && 'error' in (raw as Record<string, unknown>)
+				? (raw as Record<string, unknown>).error
+				: undefined;
 		const success = !error;
 		return {
 			success,

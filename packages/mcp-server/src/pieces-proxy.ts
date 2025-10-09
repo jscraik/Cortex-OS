@@ -1,6 +1,6 @@
-import type { Logger } from 'pino';
-import { RemoteToolProxy, type RemoteTool } from '@cortex-os/mcp-bridge/runtime/remote-proxy';
+import { type RemoteTool, RemoteToolProxy } from '@cortex-os/mcp-bridge/runtime/remote-proxy';
 import { setPiecesProxyStatus } from '@cortex-os/mcp-bridge/runtime/telemetry/metrics';
+import type { Logger } from 'pino';
 
 export interface PiecesMCPProxyConfig {
 	endpoint: string;

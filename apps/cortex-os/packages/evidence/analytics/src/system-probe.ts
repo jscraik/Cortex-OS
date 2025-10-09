@@ -72,7 +72,13 @@ export class NodeSystemProbe implements SystemProbe {
 		}
 
 		return {
-			cpuPercent, memoryPercent, gpuPercent: gpuPercent ?? this.lastGpuPercent, networkInboundBytesPerSecond: networkInbound, networkOutboundBytesPerSecond: networkOutbound, diskReadBytesPerSecond: diskRead, diskWriteBytesPerSecond: diskWrite
+			cpuPercent,
+			memoryPercent,
+			gpuPercent: gpuPercent ?? this.lastGpuPercent,
+			networkInboundBytesPerSecond: networkInbound,
+			networkOutboundBytesPerSecond: networkOutbound,
+			diskReadBytesPerSecond: diskRead,
+			diskWriteBytesPerSecond: diskWrite,
 		};
 	}
 
@@ -86,7 +92,9 @@ export class NodeSystemProbe implements SystemProbe {
 			uptimeSeconds <= 0 ? 0 : clamp((totalMicros / (uptimeSeconds * 1_000_000)) * 100);
 
 		return {
-			memory: Number(rssMb.toFixed(2)), cpu: Number(cpuPercent.toFixed(2)), gpu: this.lastGpuPercent ?? 0
+			memory: Number(rssMb.toFixed(2)),
+			cpu: Number(cpuPercent.toFixed(2)),
+			gpu: this.lastGpuPercent ?? 0,
 		};
 	}
 
@@ -94,10 +102,16 @@ export class NodeSystemProbe implements SystemProbe {
 		const cpuTimes = this.captureCpuTimes();
 		const memoryPercent = this.captureMemoryPercent();
 		const [networkBytes, diskBytes] = await Promise.all([
-			this.readNetworkCounters(), this.readDiskCounters(), ]);
+			this.readNetworkCounters(),
+			this.readDiskCounters(),
+		]);
 
 		return {
-			timestamp: Date.now(), cpuTimes, memoryPercent, networkBytes, diskBytes
+			timestamp: Date.now(),
+			cpuTimes,
+			memoryPercent,
+			networkBytes,
+			diskBytes,
 		};
 	}
 
@@ -106,7 +120,8 @@ export class NodeSystemProbe implements SystemProbe {
 			const times = cpu.times;
 			const total = times.user + times.nice + times.sys + times.irq + times.idle;
 			return {
-				idle: times.idle, total
+				idle: times.idle,
+				total,
 			};
 		});
 	}
@@ -205,7 +220,9 @@ export class NodeSystemProbe implements SystemProbe {
 
 		try {
 			const { stdout } = await execFileAsync('nvidia-smi', [
-				'--query-gpu=utilization.gpu', '--format=csv,noheader,nounits', ]);
+				'--query-gpu=utilization.gpu',
+				'--format=csv,noheader,nounits',
+			]);
 			const firstLine = stdout.trim().split(/\r?\n/)[0];
 			if (!firstLine) {
 				return undefined;

@@ -33,7 +33,7 @@ export type {
 	PredictiveModel,
 	ResourceUtilization,
 	TrendAnalysis,
-	WorkflowBottleneck
+	WorkflowBottleneck,
 } from './types.js';
 
 // Version information

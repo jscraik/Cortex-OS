@@ -14,7 +14,7 @@ export interface RunBundleInit {
 export class RunBundleWriter {
 	private readonly paths: RunBundlePaths;
 
-	constructor(private readonly init: RunBundleInit) {
+	constructor(readonly init: RunBundleInit) {
 		this.paths = { root: join(init.rootDir, init.id) };
 	}
 

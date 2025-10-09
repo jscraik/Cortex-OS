@@ -235,7 +235,8 @@ export class RAGPipeline {
 		const userProvidedDims = Array.isArray(sec.allowedEmbeddingDims)
 			? sec.allowedEmbeddingDims.filter((dim) => Number.isInteger(dim) && dim > 0)
 			: undefined;
-		const hasExplicitDims = Array.isArray(sec.allowedEmbeddingDims) && (userProvidedDims?.length ?? 0) > 0;
+		const hasExplicitDims =
+			Array.isArray(sec.allowedEmbeddingDims) && (userProvidedDims?.length ?? 0) > 0;
 		const baseDims = hasExplicitDims ? (userProvidedDims as number[]) : DEFAULT_DIMS;
 		this.allowedEmbeddingDims = new Set(baseDims);
 		this.autoRegisterEmbeddingDims = !hasExplicitDims;

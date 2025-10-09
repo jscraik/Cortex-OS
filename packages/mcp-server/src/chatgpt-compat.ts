@@ -21,7 +21,7 @@ import express from 'express';
  */
 export function chatGPTCompatibilityMiddleware(
 	req: Request,
-	res: Response,
+	_res: Response,
 	next: NextFunction,
 ): void {
 	// Check if request has Accept header
@@ -51,7 +51,7 @@ export function createChatGPTCompatibleApp(): express.Application {
 	const app = express();
 
 	// Add CORS headers for remote connections
-	app.use((req, res, next) => {
+	app.use((_req, res, next) => {
 		res.header('Access-Control-Allow-Origin', '*');
 		res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 		res.header('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');

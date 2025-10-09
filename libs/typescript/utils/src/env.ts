@@ -15,7 +15,10 @@ type DotenvLoaderModule = typeof import('../../../../scripts/utils/dotenv-loader
 export type LoadDotenvOptions = Parameters<DotenvLoaderModule['loadDotenv']>[0];
 export type LoadDotenvResult = Awaited<ReturnType<DotenvLoaderModule['loadDotenv']>>;
 
-const DOTENV_LOADER_SPECIFIER = new URL('../../../../scripts/utils/dotenv-loader.mjs', import.meta.url);
+const DOTENV_LOADER_SPECIFIER = new URL(
+	'../../../../scripts/utils/dotenv-loader.mjs',
+	import.meta.url,
+);
 
 let loaderPromise: Promise<DotenvLoaderModule> | undefined;
 
@@ -24,9 +27,7 @@ const ensureLoader = (): Promise<DotenvLoaderModule> => {
 	return loaderPromise;
 };
 
-export const loadDotenv = async (
-	options: LoadDotenvOptions = {},
-): Promise<LoadDotenvResult> => {
+export const loadDotenv = async (options: LoadDotenvOptions = {}): Promise<LoadDotenvResult> => {
 	const loader = await ensureLoader();
 	return loader.loadDotenv(options);
 };

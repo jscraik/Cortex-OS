@@ -8,9 +8,7 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-	MLOptimizationBridge,
-} from '../src/bridges/ml-optimization-bridge.js';
+import { MLOptimizationBridge } from '../src/bridges/ml-optimization-bridge.js';
 
 // Define enum values for testing
 const TASK_TYPES = {

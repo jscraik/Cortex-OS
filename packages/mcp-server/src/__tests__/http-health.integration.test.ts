@@ -1,11 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { AddressInfo } from 'node:net';
 import { createServer as createNetServer } from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
-import { FastMCP, type ContentResult } from 'fastmcp';
-import { z } from 'zod';
 import { LATEST_PROTOCOL_VERSION } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { type ContentResult, FastMCP } from 'fastmcp';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 const SERVER_START_TIMEOUT_MS = 20_000;
 const HEALTH_POLL_INTERVAL_MS = 250;
@@ -140,57 +140,57 @@ describe('brAInwav MCP HTTP transport', () => {
 	});
 
 	it('supports MCP HTTP streaming clients', async () => {
-	const mcpUrl = `http://127.0.0.1:${port}/mcp`;
-	const initializePayload = {
-		jsonrpc: '2.0',
-		id: 1,
-		method: 'initialize',
-		params: {
-			protocolVersion: LATEST_PROTOCOL_VERSION,
-			capabilities: {
-				tools: { listChanged: false },
-				resources: { subscribe: false, listChanged: false },
-				prompts: { listChanged: false },
-				roots: { listChanged: false },
+		const mcpUrl = `http://127.0.0.1:${port}/mcp`;
+		const initializePayload = {
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'initialize',
+			params: {
+				protocolVersion: LATEST_PROTOCOL_VERSION,
+				capabilities: {
+					tools: { listChanged: false },
+					resources: { subscribe: false, listChanged: false },
+					prompts: { listChanged: false },
+					roots: { listChanged: false },
+				},
+				clientInfo: {
+					name: 'integration-test-client',
+					title: 'Integration Test Client',
+					version: '1.0.0',
+				},
 			},
-			clientInfo: {
-				name: 'integration-test-client',
-				title: 'Integration Test Client',
-				version: '1.0.0',
-			},
-		},
-	};
+		};
 
-	const listPayload = {
-		jsonrpc: '2.0',
-		id: '2',
-		method: 'tools/list',
-	};
+		const listPayload = {
+			jsonrpc: '2.0',
+			id: '2',
+			method: 'tools/list',
+		};
 
-	const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
-	await transport.start();
-	const responses: Array<Record<string, unknown>> = [];
-	transport.onmessage = (message) => {
-		responses.push(message as Record<string, unknown>);
-	};
+		const transport = new StreamableHTTPClientTransport(new URL(mcpUrl));
+		await transport.start();
+		const responses: Array<Record<string, unknown>> = [];
+		transport.onmessage = (message) => {
+			responses.push(message as Record<string, unknown>);
+		};
 
-	await transport.send(initializePayload);
-	await waitFor(() => responses.length > 0, 'initialize response');
+		await transport.send(initializePayload);
+		await waitFor(() => responses.length > 0, 'initialize response');
 
-	const initMessage = responses.find((msg) => String(msg.id) === '1');
-	expect(initMessage).toBeDefined();
-	responses.length = 0;
+		const initMessage = responses.find((msg) => String(msg.id) === '1');
+		expect(initMessage).toBeDefined();
+		responses.length = 0;
 
-	await transport.send(listPayload);
-	await waitFor(() => responses.length > 0, 'tools/list response');
-	const listMessage = responses.find((msg) => String(msg.id) === '2');
-	expect(listMessage).toBeDefined();
-	const tools = (listMessage?.result as { tools?: Array<{ name: string }> })?.tools ?? [];
+		await transport.send(listPayload);
+		await waitFor(() => responses.length > 0, 'tools/list response');
+		const listMessage = responses.find((msg) => String(msg.id) === '2');
+		expect(listMessage).toBeDefined();
+		const tools = (listMessage?.result as { tools?: Array<{ name: string }> })?.tools ?? [];
 
-	expect(Array.isArray(tools)).toBe(true);
-	expect(tools.length).toBeGreaterThan(0);
-	expect(tools.map((tool) => tool.name)).toContain('brAInwav.test_tool');
+		expect(Array.isArray(tools)).toBe(true);
+		expect(tools.length).toBeGreaterThan(0);
+		expect(tools.map((tool) => tool.name)).toContain('brAInwav.test_tool');
 
-	await transport.close();
+		await transport.close();
 	});
 });

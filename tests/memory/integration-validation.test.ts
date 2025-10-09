@@ -5,8 +5,8 @@
  * Following CODESTYLE.md: functional-first, ≤40 lines per function, named exports
  */
 
-import { type ChildProcess, spawn } from 'child_process';
-import { join } from 'path';
+import { type ChildProcess, spawn } from 'node:child_process';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 describe('brAInwav Memory Integration Tests - Phase 1.2', () => {
@@ -242,7 +242,7 @@ describe('brAInwav Memory Integration Tests - Phase 1.2', () => {
 			memoryServer.kill('SIGTERM');
 
 			return new Promise((resolve) => {
-				memoryServer!.on('exit', () => {
+				memoryServer?.on('exit', () => {
 					memoryServer = null;
 					resolve();
 				});

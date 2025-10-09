@@ -310,17 +310,21 @@ export function calculateNextRetryDelay(envelope: A2AEventEnvelope): number {
 	return Math.floor(delay);
 }
 
-
 /**
  * Returns an unbiased random float in [0, 1) using cryptographically secure random numbers.
  */
 function randomFraction(): number {
 	// Use rejection sampling to avoid bias.
-	const cryptoObj = typeof crypto !== 'undefined' ? crypto : (typeof window !== 'undefined' ? window.crypto : undefined);
+	const cryptoObj =
+		typeof crypto !== 'undefined'
+			? crypto
+			: typeof window !== 'undefined'
+				? window.crypto
+				: undefined;
 	if (!cryptoObj) {
 		throw new Error('crypto.getRandomValues is unavailable');
 	}
-	const range = 0xFFFFFFFF;
+	const range = 0xffffffff;
 	let x: number;
 	do {
 		x = cryptoObj.getRandomValues(new Uint32Array(1))[0];

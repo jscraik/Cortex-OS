@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createMcpHttpServer } from '../../src/mcp/server.js';
 import type { McpGateway } from '../../src/mcp/gateway.js';
+import { createMcpHttpServer } from '../../src/mcp/server.js';
 
 interface Deferred<T = void> {
 	promise: Promise<T>;

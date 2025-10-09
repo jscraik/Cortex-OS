@@ -1,5 +1,11 @@
-const DEFAULT_DENSE_DIMENSION = Math.max(32, Number(process.env.GRAPH_RAG_DENSE_DIMENSION ?? '128'));
-const DEFAULT_SPARSE_BUCKETS = Math.max(512, Number(process.env.GRAPH_RAG_SPARSE_BUCKETS ?? '2048'));
+const DEFAULT_DENSE_DIMENSION = Math.max(
+	32,
+	Number(process.env.GRAPH_RAG_DENSE_DIMENSION ?? '128'),
+);
+const DEFAULT_SPARSE_BUCKETS = Math.max(
+	512,
+	Number(process.env.GRAPH_RAG_SPARSE_BUCKETS ?? '2048'),
+);
 
 export interface GraphRagEmbeddings {
 	dense: (text: string) => Promise<number[]>;
@@ -18,7 +24,10 @@ export function createGraphRagEmbeddings(): GraphRagEmbeddings {
 	};
 
 	const sparse = async (text: string): Promise<{ indices: number[]; values: number[] }> => {
-		const tokens = text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+		const tokens = text
+			.toLowerCase()
+			.split(/[^a-z0-9]+/)
+			.filter(Boolean);
 		const counts = new Map<number, number>();
 		for (const token of tokens) {
 			let hash = 0;

@@ -239,19 +239,19 @@ function main() {
 
 	// Resolve vitest binary directly to avoid npx/npm exec process indirection
 	// Prefer local binary from workspace. Fallback to require.resolve if not on PATH.
-        const require = createRequire(import.meta.url);
-        let vitestCommand = 'vitest';
-        let spawnArgs = [...enforcedArgs];
-        try {
-                const vitestEntrypoint = require.resolve('vitest/node');
-                vitestCommand = process.execPath;
-                spawnArgs = [vitestEntrypoint, ...enforcedArgs];
-        } catch {
-				// Fall back to expecting vitest on PATH when the module resolution fails
-        }
+	const require = createRequire(import.meta.url);
+	let vitestCommand = 'vitest';
+	let spawnArgs = [...enforcedArgs];
+	try {
+		const vitestEntrypoint = require.resolve('vitest/node');
+		vitestCommand = process.execPath;
+		spawnArgs = [vitestEntrypoint, ...enforcedArgs];
+	} catch {
+		// Fall back to expecting vitest on PATH when the module resolution fails
+	}
 
-			// Spawn vitest as a new process group; this allows killing the entire group on cleanup
-			const child = spawn(vitestCommand, spawnArgs, {
+	// Spawn vitest as a new process group; this allows killing the entire group on cleanup
+	const child = spawn(vitestCommand, spawnArgs, {
 		stdio: 'inherit',
 		env: {
 			...process.env,

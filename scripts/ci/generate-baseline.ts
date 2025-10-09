@@ -4,9 +4,9 @@
  * Following CODESTYLE.md: functional-first, ≤40 lines per function, named exports
  */
 
-import { execSync } from 'child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { execSync } from 'node:child_process';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 interface BaselineMetrics {
 	timestamp: string;

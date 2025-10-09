@@ -1,0 +1,139 @@
+[
+  {
+    "file": "packages/workflow-dashboard/src/server/index.ts",
+    "line": 41,
+    "end_line": 41,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "TODO comment in production path (getWorkflows route). Per brAInwav standards, production code paths must not contain TODO markers as they indicate incomplete implementation.",
+    "evidence": "// TODO: Implement actual DB query",
+    "fix": "Remove TODO and either: (1) implement the DB query using workflow-orchestrator's SQLite persistence, or (2) throw an explicit error with brAInwav branding if feature is truly not ready",
+    "tests_to_add": "Add integration test that calls GET /api/workflows and verifies it returns actual workflow data from DB, not empty array",
+    "rule": "brainwav.todo-in-prod-path"
+  },
+  {
+    "file": "packages/workflow-dashboard/src/server/index.ts",
+    "line": 58,
+    "end_line": 58,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "TODO comment in production path (getWorkflowById route). This endpoint returns null for all workflows, making the 404 error path unreachable except for actual missing workflows.",
+    "evidence": "// TODO: Implement actual DB query",
+    "fix": "Wire to workflow-orchestrator's SQLite getWorkflow() function or throw explicit error if not ready",
+    "tests_to_add": "Add test verifying GET /api/workflows/:id returns actual workflow data for existing ID",
+    "rule": "brainwav.todo-in-prod-path"
+  },
+  {
+    "file": "packages/workflow-dashboard/src/server/index.ts",
+    "line": 95,
+    "end_line": 95,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "TODO comment in production path (approval POST handler). Approvals are accepted but not persisted, creating a false positive for users.",
+    "evidence": "// TODO: Store approval and trigger workflow progression",
+    "fix": "Implement storeApproval() to persist to SQLite and emit A2A event to trigger workflow engine, or remove endpoint if not ready",
+    "tests_to_add": "Add test verifying POST /api/workflows/:id/approve actually stores approval and can be retrieved",
+    "rule": "brainwav.todo-in-prod-path"
+  },
+  {
+    "file": "packages/workflow-dashboard/src/server/index.ts",
+    "line": 129,
+    "end_line": 129,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "TODO comment in production function storeApproval(). Function is a no-op, violating brAInwav production standards.",
+    "evidence": "// TODO: Implement approval storage",
+    "fix": "Either implement approval storage using SQLite or throw error with brAInwav branding",
+    "tests_to_add": "Unit test for storeApproval() verifying it persists approval to database",
+    "rule": "brainwav.todo-in-prod-path"
+  },
+  {
+    "file": "packages/workflow-dashboard/src/server/index.ts",
+    "line": 134,
+    "end_line": 134,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "TODO comment in calculateProgress() causes all workflows to show 0% progress. This is misleading to users.",
+    "evidence": "const completed = 0; // TODO: Count completed steps",
+    "fix": "Implement actual progress calculation by counting completed gates/phases from workflow state",
+    "tests_to_add": "Unit test for calculateProgress() with mock workflow having 3/8 gates complete, expecting ~21% progress",
+    "rule": "brainwav.todo-in-prod-path"
+  },
+  {
+    "file": "packages/workflow-dashboard/src/server/index.ts",
+    "line": 111,
+    "end_line": 113,
+    "severity": "medium",
+    "category": "logic",
+    "description": "getWorkflows() returns empty array, making workflow list endpoint non-functional. While marked as stub, this creates misleading API behavior.",
+    "evidence": "async function getWorkflows(): Promise<Array<Record<string, unknown>>> {\n  return [];\n}",
+    "fix": "Import and call actual SQLite persistence layer from workflow-orchestrator package",
+    "tests_to_add": "Integration test verifying workflows from DB are returned via API"
+  },
+  {
+    "file": "packages/workflow-dashboard/src/server/index.ts",
+    "line": 115,
+    "end_line": 117,
+    "severity": "medium",
+    "category": "logic",
+    "description": "getWorkflowById() always returns null, making workflow detail endpoint always return 404. This breaks the API contract even for valid workflow IDs.",
+    "evidence": "async function getWorkflowById(id: string): Promise<Record<string, unknown> | null> {\n  return null;\n}",
+    "fix": "Wire to workflow-orchestrator's getWorkflow(db, id) from SQLite persistence",
+    "tests_to_add": "Integration test creating workflow then retrieving it by ID"
+  },
+  {
+    "file": "packages/workflow-orchestrator/src/memory/LocalMemoryClient.ts",
+    "line": 94,
+    "end_line": 94,
+    "severity": "low",
+    "category": "security",
+    "description": "Generic error message loses HTTP status detail. Error handling swallows specific HTTP failure information that could aid debugging.",
+    "evidence": "throw new Error(`HTTP ${response.status}`);",
+    "fix": "Include response.statusText and consider logging response body for debugging: throw new Error(`[brAInwav] Memory API HTTP ${response.status}: ${response.statusText}`)",
+    "tests_to_add": "Test storeWorkflowInsight with 500 server error, verify error message includes status details"
+  },
+  {
+    "file": "packages/workflow-orchestrator/src/memory/LocalMemoryClient.ts",
+    "line": 149,
+    "end_line": 149,
+    "severity": "low",
+    "category": "security",
+    "description": "Similar generic HTTP error in queryRelatedWorkflows. Missing brAInwav branding in thrown error.",
+    "evidence": "throw new Error(`HTTP ${response.status}`);",
+    "fix": "Add brAInwav branding: throw new Error(`[brAInwav] Memory search HTTP ${response.status}: ${response.statusText}`)",
+    "tests_to_add": "Test queryRelatedWorkflows with 403 forbidden, verify error includes brAInwav branding"
+  },
+  {
+    "file": "packages/workflow-orchestrator/src/memory/LocalMemoryClient.ts",
+    "line": 174,
+    "end_line": 180,
+    "severity": "low",
+    "category": "async",
+    "description": "retryPending() processes items sequentially. If retry queue is large, this could cause significant delays. Consider concurrent processing with Promise.allSettled().",
+    "evidence": "for (const item of pending) {\n  if (item.type === 'workflow') {\n    await this.storeWorkflowInsight(item.data as WorkflowInsight);\n  } else {\n    await this.storeApprovalDecision(item.data as ApprovalDecision);\n  }\n}",
+    "fix": "Use Promise.allSettled() for parallel retry: await Promise.allSettled(pending.map(item => item.type === 'workflow' ? this.storeWorkflowInsight(...) : this.storeApprovalDecision(...)))",
+    "tests_to_add": "Performance test with 10 queued items, verify parallel processing is faster than sequential"
+  },
+  {
+    "file": "packages/workflow-dashboard/src/client/components/ApprovalActions.tsx",
+    "line": 32,
+    "end_line": 32,
+    "severity": "low",
+    "category": "state",
+    "description": "onApprove callback fires even when announcement suggests validation will prevent it. State inconsistency between announcement and callback.",
+    "evidence": "onApprove?.(rationale);",
+    "fix": "Clear rationale after successful approval to prevent duplicate submissions: setRationale(''); after callback",
+    "tests_to_add": "Test that clicking approve twice with same rationale doesn't call onApprove twice"
+  },
+  {
+    "file": "packages/workflow-dashboard/src/server/index.ts",
+    "line": 119,
+    "end_line": 126,
+    "severity": "low",
+    "category": "quality",
+    "description": "getQualityMetrics() returns hardcoded zeros. This could mask real quality metric issues if function is called before implementation.",
+    "evidence": "return {\n  coverage: 0,\n  security: { critical: 0, high: 0, medium: 0 },\n  performance: { lcp: 0, tbt: 0 },\n  accessibility: 0,\n};",
+    "fix": "Throw explicit error with brAInwav branding: throw new Error('[brAInwav] Quality metrics not yet implemented')",
+    "tests_to_add": "Test GET /api/workflows/:id quality metrics, verify error is thrown not zeros returned"
+  }
+]

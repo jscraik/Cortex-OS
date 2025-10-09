@@ -1,11 +1,11 @@
+import type { OrchestrationFacade } from '@cortex-os/orchestration';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createRuntimeHttpServer, type RuntimeHttpServer } from '../../src/http/runtime-server.js';
+import { resetMetricsForTest } from '../../src/observability/metrics.js';
 import type { ArtifactRepository } from '../../src/persistence/artifact-repository.js';
 import type { EvidenceRepository } from '../../src/persistence/evidence-repository.js';
 import type { ProfileRepository } from '../../src/persistence/profile-repository.js';
 import type { TaskRepository } from '../../src/persistence/task-repository.js';
-import type { OrchestrationFacade } from '@cortex-os/orchestration';
-import { resetMetricsForTest } from '../../src/observability/metrics.js';
 
 interface TestServer {
 	server: RuntimeHttpServer;
@@ -30,10 +30,10 @@ async function startTestServer(
 		evidence: createRepositoryStub<EvidenceRepository>('list', overrides.evidence),
 		orchestration:
 			overrides.orchestration ??
-			(({
+			({
 				router: { policy: { version: 'test-policy' } },
 				shutdown: vi.fn(),
-			} as unknown) as OrchestrationFacade),
+			} as unknown as OrchestrationFacade),
 	};
 
 	const server = createRuntimeHttpServer(dependencies);
@@ -41,12 +41,9 @@ async function startTestServer(
 	return { server, url: `http://${BASE_HOST}:${port}` };
 }
 
-function createRepositoryStub<T>(
-	method: keyof T,
-	override?: T,
-): T {
+function createRepositoryStub<T>(method: keyof T, override?: T): T {
 	if (override) return override;
-	return ({ [method]: vi.fn().mockResolvedValue([]) } as unknown) as T;
+	return { [method]: vi.fn().mockResolvedValue([]) } as unknown as T;
 }
 
 function createDeferred<T = void>() {
@@ -88,9 +85,9 @@ describe('Runtime health probes', () => {
 	});
 
 	it('returns 503 for /ready when a critical dependency fails', async () => {
-		const failingTasks = ({
+		const failingTasks = {
 			list: vi.fn().mockRejectedValue(new Error('disk failure')),
-		} as unknown) as TaskRepository;
+		} as unknown as TaskRepository;
 		const { server, url } = await startTestServer({ tasks: failingTasks });
 		servers.push(server);
 
@@ -112,7 +109,7 @@ describe('Runtime health probes', () => {
 			await release.promise;
 			return [];
 		});
-		const slowTasks = ({ list: listMock } as unknown) as TaskRepository;
+		const slowTasks = { list: listMock } as unknown as TaskRepository;
 		const { server, url } = await startTestServer({ tasks: slowTasks });
 		servers.push(server);
 
@@ -139,10 +136,10 @@ describe('Runtime health probes', () => {
 	});
 
 	it('keeps readiness green and liveness healthy when orchestration is degraded', async () => {
-		const degradedOrchestration = ({
+		const degradedOrchestration = {
 			router: {},
 			shutdown: vi.fn(),
-		} as unknown) as OrchestrationFacade;
+		} as unknown as OrchestrationFacade;
 		const { server, url } = await startTestServer({ orchestration: degradedOrchestration });
 		servers.push(server);
 

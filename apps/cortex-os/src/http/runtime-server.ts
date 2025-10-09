@@ -1,22 +1,29 @@
 import { randomUUID } from 'node:crypto';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { URL } from 'node:url';
 import { performance } from 'node:perf_hooks';
-import type { OrchestrationFacade, RoutingDecision, RoutingRequest } from '@cortex-os/orchestration';
+import { URL } from 'node:url';
 import type { ObservabilityBus } from '@cortex-os/observability';
 import { OBSERVABILITY_EVENT_TYPES } from '@cortex-os/observability';
+import type {
+	OrchestrationFacade,
+	RoutingDecision,
+	RoutingRequest,
+} from '@cortex-os/orchestration';
 import { z } from 'zod';
+import { createRequestId, logHttpError, logHttpInfo } from '../observability/logger.js';
+import {
+	getMetricsContentType,
+	getMetricsSnapshot,
+	recordHttpMetrics,
+} from '../observability/metrics.js';
+import { completeHttpTrace, startHttpTrace } from '../observability/tracing.js';
 import { createHealthService, type HealthService } from '../operational/health-service.js';
 import type { ShutdownResult } from '../operational/shutdown-result.js';
 import type { ArtifactRepository } from '../persistence/artifact-repository.js';
-import { createRequestId, logHttpError, logHttpInfo } from '../observability/logger.js';
-import { recordHttpMetrics, getMetricsContentType, getMetricsSnapshot } from '../observability/metrics.js';
-import { completeHttpTrace, startHttpTrace } from '../observability/tracing.js';
 import { OptimisticLockError } from '../persistence/errors.js';
 import type { EvidenceRepository, SaveEvidenceInput } from '../persistence/evidence-repository.js';
 import type { ProfileRecord, ProfileRepository } from '../persistence/profile-repository.js';
 import type { TaskRecord, TaskRepository } from '../persistence/task-repository.js';
-import { resolveRunPath } from '../run-bundle/paths.js';
 import {
 	loadRunRecord,
 	REQUIRED_FILES,
@@ -24,6 +31,7 @@ import {
 	RunBundleValidationError,
 	streamRunBundleArchive,
 } from '../run-bundle/exporter.js';
+import { resolveRunPath } from '../run-bundle/paths.js';
 import { AuthHttpError, authenticateRequest } from '../security/auth.js';
 
 export interface RuntimeHttpServer {
@@ -47,7 +55,6 @@ interface RequestLifecycleControl {
 	isShuttingDown(): boolean;
 	sendUnavailable(res: ServerResponse): void;
 }
-
 
 const SERVICE_NAME = 'cortex-os/runtime-http';
 
@@ -146,8 +153,7 @@ export function createRuntimeHttpServer(dependencies: RuntimeHttpDependencies): 
 	};
 
 	const signalClients = () => {
-		const payload =
-			'event: shutdown\ndata: {"message":"brAInwav: runtime shutting down"}\n\n';
+		const payload = 'event: shutdown\ndata: {"message":"brAInwav: runtime shutting down"}\n\n';
 		for (const client of [...clients]) {
 			try {
 				client.write(payload);
@@ -276,7 +282,9 @@ export function createRuntimeHttpServer(dependencies: RuntimeHttpDependencies): 
 
 	const beginShutdown = ({
 		timeoutMs = 30_000,
-	}: { timeoutMs?: number } = {}): Promise<ShutdownResult> => {
+	}: {
+		timeoutMs?: number;
+	} = {}): Promise<ShutdownResult> => {
 		if (shutdownPromise) {
 			return shutdownPromise;
 		}
@@ -582,11 +590,11 @@ async function handleProfilesRoute(
 }
 
 async function handleArtifactsRoute(
-		req: IncomingMessage,
-		res: ServerResponse,
-		url: URL,
-		segments: string[],
-		artifacts: ArtifactRepository,
+	req: IncomingMessage,
+	res: ServerResponse,
+	url: URL,
+	segments: string[],
+	artifacts: ArtifactRepository,
 ): Promise<void> {
 	if (segments.length === 2) {
 		if (req.method === 'GET') {
@@ -692,11 +700,11 @@ async function handleArtifactsRoute(
 type OrchestrationRouter = OrchestrationFacade['router'];
 
 async function handleRoutingRoute(
-		req: IncomingMessage,
-		res: ServerResponse,
-		_url: URL,
-		segments: string[],
-		orchestration: OrchestrationFacade,
+	req: IncomingMessage,
+	res: ServerResponse,
+	_url: URL,
+	segments: string[],
+	orchestration: OrchestrationFacade,
 ): Promise<void> {
 	const router = orchestration?.router;
 	if (!router) {
@@ -714,9 +722,9 @@ async function handleRoutingRoute(
 }
 
 async function handleRoutingDryRun(
-		req: IncomingMessage,
-		res: ServerResponse,
-		router: OrchestrationRouter,
+	req: IncomingMessage,
+	res: ServerResponse,
+	router: OrchestrationRouter,
 ): Promise<void> {
 	if (req.method !== 'POST') {
 		throw new HttpError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
@@ -734,10 +742,10 @@ async function handleRoutingDryRun(
 }
 
 async function handleRoutingExplain(
-		req: IncomingMessage,
-		res: ServerResponse,
-		requestId: string,
-		router: OrchestrationRouter,
+	req: IncomingMessage,
+	res: ServerResponse,
+	requestId: string,
+	router: OrchestrationRouter,
 ): Promise<void> {
 	if (req.method !== 'GET') {
 		throw new HttpError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
@@ -927,10 +935,10 @@ async function handleRunsRoute(
 			'X-Run-Finished-At': summary.finishedAt ?? '',
 			'X-Run-Duration-Ms': summary.durationMs !== undefined ? String(summary.durationMs) : '0',
 			'X-Run-Prompt-Count': summary.promptCount !== undefined ? String(summary.promptCount) : '0',
-			'X-Run-Message-Count': summary.messageCount !== undefined ? String(summary.messageCount) : '0',
-			'X-Run-Energy-Sample-Count': summary.energySampleCount !== undefined
-				? String(summary.energySampleCount)
-				: '0',
+			'X-Run-Message-Count':
+				summary.messageCount !== undefined ? String(summary.messageCount) : '0',
+			'X-Run-Energy-Sample-Count':
+				summary.energySampleCount !== undefined ? String(summary.energySampleCount) : '0',
 			'X-Run-Bundle-Entries': String(REQUIRED_FILES.length),
 		});
 
@@ -1021,7 +1029,7 @@ function sendJson(res: ServerResponse, status: number, payload: unknown): void {
 	res.end(body);
 }
 
-function sendText(res: ServerResponse, status: number, body: string): void {
+function _sendText(res: ServerResponse, status: number, body: string): void {
 	res.writeHead(status, {
 		'Content-Type': 'text/plain; version=0.0.4',
 		'Content-Length': Buffer.byteLength(body),

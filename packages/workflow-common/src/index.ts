@@ -38,12 +38,34 @@ export {
 	formatPerformanceValidationResult,
 	validatePerformance,
 } from './performance-validation.js';
+export type { EnforcementProfile as EnforcementProfileSchema } from './schemas/enforcement-profile.js';
+// Enforcement profile schema and utilities
+export {
+	defaults as enforcementProfileDefaults,
+	diffFromDefaults as diffEnforcementProfileFromDefaults,
+	enforcementProfileSchema,
+} from './schemas/enforcement-profile.js';
 // Security validation
 export {
 	formatSecurityValidationResult,
 	type SecurityVulnerabilitySummary,
 	validateSecurity,
 } from './security-validation.js';
+// Workflow types
+export type {
+	EnforcementProfile,
+	GateId,
+	GateState,
+	PhaseId,
+	PhaseState,
+	PRPState,
+	Priority,
+	QualityMetrics,
+	StepStatus,
+	TaskState,
+	WorkflowState,
+	WorkflowStatus,
+} from './types.js';
 // Validation types
 export type {
 	AccessibilityRequirements,
@@ -53,27 +75,3 @@ export type {
 	SecurityRequirements,
 	ValidationResult,
 } from './validation-types.js';
-
-// Workflow types
-export type {
-	GateId,
-	PhaseId,
-	WorkflowStatus,
-	StepStatus,
-	Priority,
-	EnforcementProfile,
-	GateState,
-	PhaseState,
-	PRPState,
-	TaskState,
-	WorkflowState,
-	QualityMetrics
-} from './types.js';
-
-// Enforcement profile schema and utilities
-export {
-	enforcementProfileSchema,
-	defaults as enforcementProfileDefaults,
-	diffFromDefaults as diffEnforcementProfileFromDefaults
-} from './schemas/enforcement-profile.js';
-export type { EnforcementProfile as EnforcementProfileSchema } from './schemas/enforcement-profile.js';

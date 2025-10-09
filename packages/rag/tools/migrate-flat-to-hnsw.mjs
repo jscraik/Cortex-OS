@@ -68,7 +68,7 @@ async function runCli(argv = process.argv) {
 		);
 	} catch (error) {
 		console.error(
-			`brAInwav HNSW migration failed: ${(error instanceof Error ? error.message : String(error))}`,
+			`brAInwav HNSW migration failed: ${error instanceof Error ? error.message : String(error)}`,
 		);
 		process.exitCode = 1;
 	}

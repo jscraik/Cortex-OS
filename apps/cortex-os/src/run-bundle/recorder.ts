@@ -1,5 +1,5 @@
 import type { PromptCapture } from '@cortex-os/prompts';
-import { RunBundleWriter } from './writer.js';
+import type { RunBundleWriter } from './writer.js';
 
 interface RunRecorderInit {
 	runId: string;
@@ -96,7 +96,9 @@ export class RunBundleRecorder {
 		await this.ensureStarted();
 
 		const finishedAt = this.now().toISOString();
-		const durationMs = this.startedAt ? Math.max(0, new Date(finishedAt).getTime() - new Date(this.startedAt).getTime()) : undefined;
+		const durationMs = this.startedAt
+			? Math.max(0, new Date(finishedAt).getTime() - new Date(this.startedAt).getTime())
+			: undefined;
 		const ctx = extractContext(result);
 		const messages = extractMessages(result);
 		const citations = extractCitations(ctx);
@@ -144,7 +146,9 @@ export class RunBundleRecorder {
 		]);
 
 		const finishedAt = this.now().toISOString();
-		const durationMs = this.startedAt ? Math.max(0, new Date(finishedAt).getTime() - new Date(this.startedAt).getTime()) : undefined;
+		const durationMs = this.startedAt
+			? Math.max(0, new Date(finishedAt).getTime() - new Date(this.startedAt).getTime())
+			: undefined;
 
 		this.currentRecord = {
 			...(this.currentRecord ?? {
@@ -213,7 +217,10 @@ function extractCitations(ctx: Record<string, unknown>): RunBundleCitation[] {
 	if (!Array.isArray(candidate)) return [];
 	return candidate
 		.map((entry) => sanitize(entry))
-		.filter((entry): entry is RunBundleCitation => Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry));
+		.filter(
+			(entry): entry is RunBundleCitation =>
+				Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry),
+		);
 }
 
 function extractPolicyDecisions(ctx: Record<string, unknown>): RunBundlePolicyDecision[] {
@@ -306,7 +313,10 @@ function serializeMessage(message: unknown): RunBundleMessage | undefined {
 		type,
 		content: sanitize(content),
 		createdAt,
-		metadata: metadata && typeof metadata === 'object' && !Array.isArray(metadata) ? (metadata as Record<string, unknown>) : undefined,
+		metadata:
+			metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+				? (metadata as Record<string, unknown>)
+				: undefined,
 	};
 }
 
@@ -318,7 +328,8 @@ function sanitize(value: unknown, depth = 5, seen: WeakSet<object> = new WeakSet
 		const asNumber = Number(value);
 		return Number.isSafeInteger(asNumber) ? asNumber : value.toString();
 	}
-	if (valueType === 'undefined' || valueType === 'symbol' || valueType === 'function') return undefined;
+	if (valueType === 'undefined' || valueType === 'symbol' || valueType === 'function')
+		return undefined;
 	if (value instanceof Date) return value.toISOString();
 	if (Array.isArray(value)) {
 		if (depth <= 0) return value.length;

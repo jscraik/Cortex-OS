@@ -4,8 +4,8 @@
  * Following CODESTYLE.md: functional-first, ≤40 lines per function, named exports
  */
 
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 interface QualityGateConfig {
 	name: string;
@@ -176,7 +176,7 @@ export const calculateQualityScore = (metrics: QualityMetrics): number => {
 		const securityScore = Math.max(
 			0,
 			100 -
-			(metrics.security.criticalVulnerabilities * 20 + metrics.security.highVulnerabilities * 10),
+				(metrics.security.criticalVulnerabilities * 20 + metrics.security.highVulnerabilities * 10),
 		);
 		totalScore += securityScore * weights.security;
 		totalWeight += weights.security;

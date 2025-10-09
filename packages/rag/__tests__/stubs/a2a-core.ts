@@ -29,8 +29,7 @@ export function createBus(
 			await Promise.all(Array.from(listeners).map((listener) => listener(validated)));
 		},
 		async bind(handlers: Handler[]) {
-			const registrations: Array<{ type: string; listener: (msg: Envelope) => Promise<void> }>
-				= [];
+			const registrations: Array<{ type: string; listener: (msg: Envelope) => Promise<void> }> = [];
 			for (const handler of handlers) {
 				const listener = async (msg: Envelope) => {
 					await handler.handle(validate(msg));

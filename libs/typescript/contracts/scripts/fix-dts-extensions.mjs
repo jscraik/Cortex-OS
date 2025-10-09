@@ -29,7 +29,9 @@ async function fixDeclarationExtensions() {
 		} catch (readError) {
 			// If the index.d.ts file does not exist, skip the fix step instead of failing the build.
 			if (readError.code === 'ENOENT') {
-				console.warn(`Index declaration file not found (${indexPath}), skipping .d.ts extension fix.`);
+				console.warn(
+					`Index declaration file not found (${indexPath}), skipping .d.ts extension fix.`,
+				);
 				process.exit(0);
 			}
 			// Other errors should still fail the script

@@ -16,15 +16,17 @@ export function startHttpTrace(
 	const traceId = randomUUID();
 	const startTime = Date.now();
 	if (bus) {
-		void bus.publish(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED, {
-			traceId,
-			operationName,
-			service,
-			startTime: new Date(startTime).toISOString(),
-			tags,
-		}).catch((error) => {
-			console.warn('brAInwav observability: failed to publish TRACE_CREATED', error);
-		});
+		void bus
+			.publish(OBSERVABILITY_EVENT_TYPES.TRACE_CREATED, {
+				traceId,
+				operationName,
+				service,
+				startTime: new Date(startTime).toISOString(),
+				tags,
+			})
+			.catch((error) => {
+				console.warn('brAInwav observability: failed to publish TRACE_CREATED', error);
+			});
 	}
 	return { traceId, startTime };
 }

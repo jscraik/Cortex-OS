@@ -218,7 +218,6 @@ export {
 	type RunDiagnosticsOptions,
 	runDiagnostics,
 } from './diagnostics/diagnostics.js';
-export { AgentToolkitMcpRuntime } from './mcp/runtime.js';
 // A2A Events
 export {
 	type CodeModificationEvent,
@@ -227,6 +226,7 @@ export {
 	type ToolExecutionStartedEvent,
 	type ValidationReportEvent,
 } from './events/agent-toolkit-events.js';
+export { AgentToolkitMcpRuntime } from './mcp/runtime.js';
 // MCP Integration
 export { createAgentToolkitMcpTools } from './mcp/tools.js';
 // Resilient execution (Phase 3.5)
@@ -256,11 +256,11 @@ export {
 } from './semantics/TreeSitterBoundary.js';
 // Session management (Phase 1)
 export {
-        createSessionContextManager,
-        type SessionContextManager,
-        type SessionContextOptions,
-        type SessionSnapshot,
-        type ToolCallRecord,
+	createSessionContextManager,
+	type SessionContextManager,
+	type SessionContextOptions,
+	type SessionSnapshot,
+	type ToolCallRecord,
 } from './session/SessionContextManager.js';
 // Session persistence (Phase 3.3)
 export {

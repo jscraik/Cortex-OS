@@ -1,4 +1,4 @@
-import { createBus, type Handler } from '@cortex-os/a2a-core';
+import { createBus } from '@cortex-os/a2a-core';
 import { inproc } from '@cortex-os/a2a-transport';
 
 const bus = createBus(inproc());

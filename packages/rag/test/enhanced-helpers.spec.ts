@@ -1,9 +1,9 @@
-import { promptGuard } from '@cortex-os/prompts';
 import { readFileSync } from 'node:fs';
+import { promptGuard } from '@cortex-os/prompts';
 import { describe, expect, it, vi } from 'vitest';
+import { type Document, embedQuery, generateAnswer, rerankDocs, retrieveDocs } from '../src/lib';
 import { runLlamaIndexBridge } from '../src/lib/llama-index-bridge.js';
 import * as processModule from '../src/lib/run-process.js';
-import { type Document, embedQuery, generateAnswer, rerankDocs, retrieveDocs } from '../src/lib';
 
 describe('enhanced pipeline helpers', () => {
 	it('embeds query', async () => {
@@ -76,16 +76,17 @@ describe('enhanced pipeline helpers', () => {
 });
 
 describe('llama-index bridge', () => {
-	const fixtureUrl = new URL('../../../tests/rag/fixtures/llama-index-config-v013.json', import.meta.url);
+	const fixtureUrl = new URL(
+		'../../../tests/rag/fixtures/llama-index-config-v013.json',
+		import.meta.url,
+	);
 
 	it('invokes uv project bridge with structured payload', async () => {
-		const spy = vi
-			.spyOn(processModule, 'runProcess')
-			.mockResolvedValue({
-				status: 'ok',
-				settings: { mode: 'settings', provider: 'anthropic' },
-				runtime: 'llama-index-bridge',
-			});
+		const spy = vi.spyOn(processModule, 'runProcess').mockResolvedValue({
+			status: 'ok',
+			settings: { mode: 'settings', provider: 'anthropic' },
+			runtime: 'llama-index-bridge',
+		});
 		const payload = {
 			operation: 'settings',
 			config: { provider: 'anthropic', llm: 'claude-3-5-sonnet' },

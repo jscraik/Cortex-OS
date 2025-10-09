@@ -14,11 +14,12 @@ describe('AttentionBridge', () => {
 			budgets: { maxSegmentBytes: 1_024, maxOverheadMs: 20 },
 		});
 		const run = await bridge.prepareRun(randomRunId(), { model: 'retroinfer/test' });
-		await bridge.captureKV(
-			{ step: 'decode', role: 'assistant' },
-			run,
-			{ tokensCaptured: 256, bytesCaptured: 512, source: 'retroinfer', metadata: { layer: 3 } },
-		);
+		await bridge.captureKV({ step: 'decode', role: 'assistant' }, run, {
+			tokensCaptured: 256,
+			bytesCaptured: 512,
+			source: 'retroinfer',
+			metadata: { layer: 3 },
+		});
 
 		const receipt = await bridge.emitReceipt(run);
 		expect(receipt).not.toBeNull();
@@ -35,11 +36,7 @@ describe('AttentionBridge', () => {
 			budgets: { maxSegmentBytes: 128, maxOverheadMs: 10 },
 		});
 		const run = await bridge.prepareRun(randomRunId());
-		await bridge.captureKV(
-			{ step: 'large-step' },
-			run,
-			{ tokensCaptured: 32, bytesCaptured: 256 },
-		);
+		await bridge.captureKV({ step: 'large-step' }, run, { tokensCaptured: 32, bytesCaptured: 256 });
 		const receipt = await bridge.emitReceipt(run);
 		expect(receipt).not.toBeNull();
 		expect(receipt?.segments).toHaveLength(0);

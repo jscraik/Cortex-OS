@@ -350,7 +350,7 @@ export class TamperEvidentAuditSystem {
 	}
 
 	private async writeAuditRecord(record: TamperEvidentRecord): Promise<void> {
-		const logLine = JSON.stringify(record) + '\n';
+		const logLine = `${JSON.stringify(record)}\n`;
 		await appendFile(this.config.log_file_path, logLine, 'utf8');
 	}
 

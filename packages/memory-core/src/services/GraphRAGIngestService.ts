@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { GraphNodeType, Prisma } from '@prisma/client';
-import { z } from 'zod';
 import { SecureNeo4j } from '@cortex-os/utils';
+import { GraphNodeType, type Prisma } from '@prisma/client';
+import { z } from 'zod';
 import { prisma } from '../db/prismaClient.js';
 import {
-	QdrantHybridSearch,
 	type QdrantConfig,
+	QdrantHybridSearch,
 	type SparseVector,
 } from '../retrieval/QdrantHybrid.js';
 
@@ -140,15 +140,15 @@ class PrismaGraphPersistence implements GraphPersistence {
 			prisma.chunkRef.deleteMany({ where: { nodeId } }),
 			...(refs.length
 				? [
-					prisma.chunkRef.createMany({
-						data: refs.map((ref) => ({
-							nodeId,
-							qdrantId: ref.qdrantId,
-							path: ref.path,
-							meta: ref.meta,
-						})),
-					}),
-				]
+						prisma.chunkRef.createMany({
+							data: refs.map((ref) => ({
+								nodeId,
+								qdrantId: ref.qdrantId,
+								path: ref.path,
+								meta: ref.meta,
+							})),
+						}),
+					]
 				: []),
 		]);
 	}
@@ -240,13 +240,17 @@ class Neo4jKnowledgeGraphAdapter implements KnowledgeGraphAdapter {
 	}
 }
 
-function buildNeo4jAdapter(options?: GraphRAGIngestServiceOptions['neo4j']): KnowledgeGraphAdapter | undefined {
+function buildNeo4jAdapter(
+	options?: GraphRAGIngestServiceOptions['neo4j'],
+): KnowledgeGraphAdapter | undefined {
 	if (!options?.enabled) return undefined;
 	const uri = options.uri ?? process.env.NEO4J_URI;
 	const user = options.user ?? process.env.NEO4J_USER;
 	const password = options.password ?? process.env.NEO4J_PASSWORD;
 	if (!uri || !user || !password) {
-		console.warn('EXTERNAL_KG_ENABLED=true but Neo4j credentials are incomplete; disabling adapter');
+		console.warn(
+			'EXTERNAL_KG_ENABLED=true but Neo4j credentials are incomplete; disabling adapter',
+		);
 		return undefined;
 	}
 	const driver = new SecureNeo4j(uri, user, password);
@@ -328,15 +332,19 @@ export class GraphRAGIngestService {
 		nodeId: string,
 		nodeKey: string,
 		drafts: ChunkDraft[],
-	): Promise<{ qdrantPayloads: QdrantChunkPayload[]; chunkRefs: GraphChunkRefInput[]; label: string }> {
+	): Promise<{
+		qdrantPayloads: QdrantChunkPayload[];
+		chunkRefs: GraphChunkRefInput[];
+		label: string;
+	}> {
 		const qdrantPayloads: QdrantChunkPayload[] = [];
 		const chunkRefs: GraphChunkRefInput[] = [];
 		let label = nodeKey;
 		for (const draft of drafts) {
 			const id = this.deps.idFactory();
 			const [vector, sparse] = await Promise.all([
-				this.embedDense!(draft.content),
-				this.embedSparse!(draft.content),
+				this.embedDense?.(draft.content),
+				this.embedSparse?.(draft.content),
 			]);
 			const metadata = {
 				path: draft.path,

@@ -3,10 +3,10 @@
  * Supports embeddings, chat, and reranking by delegating to MCP tools
  */
 
+import { resolveTransport } from '@cortex-os/mcp-bridge/runtime/transport';
 import type { ServerInfo } from '@cortex-os/mcp-core';
 // Respect AGENTS.md boundaries: import from public exports
 import { createEnhancedClient } from '@cortex-os/mcp-core';
-import { resolveTransport } from '@cortex-os/mcp-bridge/runtime/transport';
 import type {
 	ChatRequest,
 	EmbeddingBatchRequest,

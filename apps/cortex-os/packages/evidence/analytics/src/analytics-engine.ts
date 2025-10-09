@@ -35,7 +35,8 @@ export class AnalyticsEngine extends EventEmitter {
 		super();
 		this.config = createAnalyticsConfig(config);
 		this.logger = pino({
-			name: 'orchestration-analytics-engine', level: 'info'
+			name: 'orchestration-analytics-engine',
+			level: 'info',
 		});
 
 		// Initialize components
@@ -57,7 +58,11 @@ export class AnalyticsEngine extends EventEmitter {
 
 			// Forward to optimization engine
 			this.optimizationEngine.addHistoricalData(
-				data.agentMetrics, data.orchestrationMetrics, [], [], );
+				data.agentMetrics,
+				data.orchestrationMetrics,
+				[],
+				[],
+			);
 
 			// Emit consolidated event
 			this.emit('dataCollected', data);
@@ -168,13 +173,18 @@ export class AnalyticsEngine extends EventEmitter {
 		const patternStats = this.patternAnalyzer.getAnalysisStatistics();
 
 		return {
-			timestamp: new Date(), overview: {
-				totalOrchestrations: metricsStats.bufferedMetrics, activeAgents: patternStats.storedData.patterns, averagePerformance: 0.85, // Calculated from metrics
+			timestamp: new Date(),
+			overview: {
+				totalOrchestrations: metricsStats.bufferedMetrics,
+				activeAgents: patternStats.storedData.patterns,
+				averagePerformance: 0.85, // Calculated from metrics
 				systemLoad: 0.65, // Calculated from resource utilization
-			}, agentStatuses: [], // Would be populated from metrics
-			performanceMetrics: this.metricsCollector.getCurrentPerformanceMetrics(), interactionGraph: [], // Would be generated from patterns
+			},
+			agentStatuses: [], // Would be populated from metrics
+			performanceMetrics: this.metricsCollector.getCurrentPerformanceMetrics(),
+			interactionGraph: [], // Would be generated from patterns
 			alerts: [], // Would be generated based on thresholds
-			recommendations: this.optimizationEngine.getRecommendations().slice(0, 10)
+			recommendations: this.optimizationEngine.getRecommendations().slice(0, 10),
 		};
 	}
 
@@ -183,9 +193,13 @@ export class AnalyticsEngine extends EventEmitter {
 	 */
 	getStatistics() {
 		return {
-			isRunning: this.isRunning, config: this.config, components: {
-				metricsCollector: this.metricsCollector.getCollectionStatistics(), patternAnalyzer: this.patternAnalyzer.getAnalysisStatistics(), optimizationEngine: this.optimizationEngine.getOptimizationStatistics()
-			}
+			isRunning: this.isRunning,
+			config: this.config,
+			components: {
+				metricsCollector: this.metricsCollector.getCollectionStatistics(),
+				patternAnalyzer: this.patternAnalyzer.getAnalysisStatistics(),
+				optimizationEngine: this.optimizationEngine.getOptimizationStatistics(),
+			},
 		};
 	}
 

@@ -1,9 +1,9 @@
 import { performance } from 'node:perf_hooks';
+import type { OrchestrationFacade } from '@cortex-os/orchestration';
 import type { ArtifactRepository } from '../persistence/artifact-repository.js';
 import type { EvidenceRepository } from '../persistence/evidence-repository.js';
 import type { ProfileRepository } from '../persistence/profile-repository.js';
 import type { TaskRepository } from '../persistence/task-repository.js';
-import type { OrchestrationFacade } from '@cortex-os/orchestration';
 
 export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy';
 
@@ -129,10 +129,7 @@ function buildServiceInfo(version: string) {
 	};
 }
 
-function createPayloadBuilder(
-	now: () => Date,
-	service: ReturnType<typeof buildServiceInfo>,
-) {
+function createPayloadBuilder(now: () => Date, service: ReturnType<typeof buildServiceInfo>) {
 	return <TPayload extends { timestamp: string; service: typeof service }>(
 		payload: Omit<TPayload, 'timestamp' | 'service'>,
 	): TPayload => ({
@@ -159,8 +156,7 @@ function createComponentDefinitions(
 		{
 			id: 'artifacts',
 			category: 'critical',
-			check: () =>
-				checkFileRepository('Artifacts repository', () => dependencies.artifacts.list()),
+			check: () => checkFileRepository('Artifacts repository', () => dependencies.artifacts.list()),
 		},
 		{
 			id: 'evidence',
@@ -175,13 +171,13 @@ function createComponentDefinitions(
 	];
 }
 
-async function evaluateComponents(
-	components: ComponentDefinition[],
-): Promise<Array<{
-	id: string;
-	category: ComponentDefinition['category'];
-	result: ComponentResult;
-}>> {
+async function evaluateComponents(components: ComponentDefinition[]): Promise<
+	Array<{
+		id: string;
+		category: ComponentDefinition['category'];
+		result: ComponentResult;
+	}>
+> {
 	return Promise.all(
 		components.map(async (component) => ({
 			id: component.id,
@@ -220,9 +216,7 @@ function checkFileRepository(
 		.catch((error: unknown) => buildFailureResult(start, description, error));
 }
 
-async function checkEvidenceRepository(
-	repository: EvidenceRepository,
-): Promise<ComponentResult> {
+async function checkEvidenceRepository(repository: EvidenceRepository): Promise<ComponentResult> {
 	const start = performance.now();
 	try {
 		await repository.list();
@@ -232,9 +226,7 @@ async function checkEvidenceRepository(
 	}
 }
 
-async function checkOrchestrationFacade(
-	facade: OrchestrationFacade,
-): Promise<ComponentResult> {
+async function checkOrchestrationFacade(facade: OrchestrationFacade): Promise<ComponentResult> {
 	const start = performance.now();
 	try {
 		const policyVersion = (facade.router as { policy?: { version?: string } })?.policy?.version;
@@ -263,11 +255,7 @@ function buildDegradedResult(start: number, message: string): ComponentResult {
 	};
 }
 
-function buildFailureResult(
-	start: number,
-	description: string,
-	error: unknown,
-): ComponentResult {
+function buildFailureResult(start: number, description: string, error: unknown): ComponentResult {
 	return {
 		status: 'unhealthy',
 		latencyMs: roundMs(performance.now() - start),

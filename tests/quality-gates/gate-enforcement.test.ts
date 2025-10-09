@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -64,7 +64,9 @@ describe('Quality Gate Enforcement (brAInwav policy)', () => {
 		);
 
 		expect(result.passed).toBe(false);
-		expect(result.violations.some((msg) => msg.includes('critical vulnerabilities found'))).toBe(true);
+		expect(result.violations.some((msg) => msg.includes('critical vulnerabilities found'))).toBe(
+			true,
+		);
 	});
 
 	it('passes when all metrics satisfy the contract', () => {

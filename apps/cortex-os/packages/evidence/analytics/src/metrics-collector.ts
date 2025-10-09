@@ -28,9 +28,10 @@ function getMinimalTracer(): MinimalTracer {
 	return {
 		startSpan: (_name: string) => {
 			return {
-				setStatus: () => {}, end: () => {}
+				setStatus: () => {},
+				end: () => {},
 			};
-		}
+		},
 	};
 }
 
@@ -39,12 +40,20 @@ function getErrorMessage(error: unknown): string {
 }
 
 import type {
-	AgentMetrics, AgentTrace, AnalyticsConfig, OrchestrationMetrics, PerformanceMetrics, ResourceUtilization, TimeSeriesData
+	AgentMetrics,
+	AgentTrace,
+	AnalyticsConfig,
+	OrchestrationMetrics,
+	PerformanceMetrics,
+	ResourceUtilization,
+	TimeSeriesData,
 } from './types.js';
 
 // Security: Allowlisted domains for telemetry endpoints
 const ALLOWED_TELEMETRY_DOMAINS = [
-	'localhost', '127.0.0.1', '::1', // Add your trusted telemetry domains here
+	'localhost',
+	'127.0.0.1',
+	'::1', // Add your trusted telemetry domains here
 ];
 
 /**
@@ -73,7 +82,8 @@ function validateTelemetryEndpoint(url: string): boolean {
  */
 export class MetricsCollector extends EventEmitter {
 	private readonly logger = pino({
-		name: 'orchestration-analytics-collector', level: 'info'
+		name: 'orchestration-analytics-collector',
+		level: 'info',
 	});
 	private readonly config: AnalyticsConfig;
 	private readonly tracer: MinimalTracer = getMinimalTracer();
@@ -106,7 +116,12 @@ export class MetricsCollector extends EventEmitter {
 	 * Initialize the metrics collection system
 	 */
 	private initializeCollection(): void {
-		this.logger.info({ msg: 'Initializing orchestration metrics collection', enabled: this.config.collection.enabled, interval: this.config.collection.interval, batchSize: this.config.collection.batchSize });
+		this.logger.info({
+			msg: 'Initializing orchestration metrics collection',
+			enabled: this.config.collection.enabled,
+			interval: this.config.collection.interval,
+			batchSize: this.config.collection.batchSize,
+		});
 
 		if (this.config.collection.enabled) {
 			this.startCollection();
@@ -162,7 +177,7 @@ export class MetricsCollector extends EventEmitter {
 	 */
 	async collectMetrics(): Promise<void> {
 		const span = this.tracer.startSpan('collect_orchestration_metrics', {
-			kind: 'INTERNAL'
+			kind: 'INTERNAL',
 		});
 
 		try {
@@ -186,11 +201,21 @@ export class MetricsCollector extends EventEmitter {
 
 			const collectionTime = Date.now() - startTime;
 
-			this.logger.debug({ msg: 'Metrics collection completed', agentMetrics: agentMetrics.length, orchestrationMetrics: orchestrationMetrics.length, collectionTime, totalCollected: this.metricsCollected });
+			this.logger.debug({
+				msg: 'Metrics collection completed',
+				agentMetrics: agentMetrics.length,
+				orchestrationMetrics: orchestrationMetrics.length,
+				collectionTime,
+				totalCollected: this.metricsCollected,
+			});
 
 			// Emit collection event for real-time processing
 			this.emit('metricsCollected', {
-				agentMetrics, orchestrationMetrics, resourceMetrics, timestamp: new Date(), collectionTime
+				agentMetrics,
+				orchestrationMetrics,
+				resourceMetrics,
+				timestamp: new Date(),
+				collectionTime,
 			});
 
 			span.setStatus({ code: 'OK' });
@@ -257,11 +282,18 @@ export class MetricsCollector extends EventEmitter {
 						metrics.push(agentMetrics);
 					}
 				} catch (error) {
-					this.logger.warn({ msg: 'Failed to collect metrics for LangGraph agent', agentId: agentInfo.id, error: error instanceof Error ? error.message : String(error) });
+					this.logger.warn({
+						msg: 'Failed to collect metrics for LangGraph agent',
+						agentId: agentInfo.id,
+						error: error instanceof Error ? error.message : String(error),
+					});
 				}
 			}
 		} catch (error) {
-			this.logger.error({ msg: 'Error discovering LangGraph agents', error: error instanceof Error ? error.message : String(error) });
+			this.logger.error({
+				msg: 'Error discovering LangGraph agents',
+				error: error instanceof Error ? error.message : String(error),
+			});
 		}
 		return metrics;
 	}
@@ -297,7 +329,10 @@ export class MetricsCollector extends EventEmitter {
 			const potentialAgents = await this.scanForLangGraphProcesses();
 			agents.push(...potentialAgents);
 		} catch (error) {
-			this.logger.debug({ msg: 'LangGraph runtime not available for direct integration', error: error instanceof Error ? error.message : String(error) });
+			this.logger.debug({
+				msg: 'LangGraph runtime not available for direct integration',
+				error: error instanceof Error ? error.message : String(error),
+			});
 		}
 
 		return agents;
@@ -331,7 +366,9 @@ export class MetricsCollector extends EventEmitter {
 			name: string;
 			stateGraphInstance?: StateGraphLike;
 			telemetryEndpoint?: string;
-		}, timestamp: Date, ): Promise<AgentMetrics | null> {
+		},
+		timestamp: Date,
+	): Promise<AgentMetrics | null> {
 		try {
 			// Production implementation would:
 			// 1. Query StateGraph.get_state() for current execution state
@@ -356,7 +393,11 @@ export class MetricsCollector extends EventEmitter {
 			} else if (agentInfo.telemetryEndpoint) {
 				// Security: Validate telemetry endpoint to prevent SSRF
 				if (!validateTelemetryEndpoint(agentInfo.telemetryEndpoint)) {
-					this.logger.warn({ msg: 'Invalid telemetry endpoint rejected', endpoint: agentInfo.telemetryEndpoint, agentId: agentInfo.id });
+					this.logger.warn({
+						msg: 'Invalid telemetry endpoint rejected',
+						endpoint: agentInfo.telemetryEndpoint,
+						agentId: agentInfo.id,
+					});
 					return null;
 				}
 
@@ -366,7 +407,8 @@ export class MetricsCollector extends EventEmitter {
 					throw new Error('Invalid telemetry endpoint: must use HTTPS');
 				}
 				const telemetryData = await this.fetchTelemetryJson<TelemetryData>(
-					`${agentInfo.telemetryEndpoint}/metrics`, );
+					`${agentInfo.telemetryEndpoint}/metrics`,
+				);
 
 				executionTime = telemetryData.execution_time || 0;
 				taskCount = telemetryData.task_count || 0;
@@ -375,10 +417,25 @@ export class MetricsCollector extends EventEmitter {
 			}
 
 			return {
-				agentId: agentInfo.id, agentType: 'langgraph', framework: 'LangGraph', timestamp, executionTime, successRate, resourceUsage: await this.getAgentResourceUsage(agentInfo.id), taskCount, errorCount, responseTime: taskCount > 0 ? executionTime / taskCount : 0, throughput: executionTime > 0 ? taskCount / (executionTime / 1000) : 0, availability: errorCount === 0 ? 1.0 : Math.max(0.5, successRate)
+				agentId: agentInfo.id,
+				agentType: 'langgraph',
+				framework: 'LangGraph',
+				timestamp,
+				executionTime,
+				successRate,
+				resourceUsage: await this.getAgentResourceUsage(agentInfo.id),
+				taskCount,
+				errorCount,
+				responseTime: taskCount > 0 ? executionTime / taskCount : 0,
+				throughput: executionTime > 0 ? taskCount / (executionTime / 1000) : 0,
+				availability: errorCount === 0 ? 1.0 : Math.max(0.5, successRate),
 			};
 		} catch (error) {
-			this.logger.error({ msg: 'Error collecting LangGraph agent metrics', agentId: agentInfo.id, error: error instanceof Error ? error.message : String(error) });
+			this.logger.error({
+				msg: 'Error collecting LangGraph agent metrics',
+				agentId: agentInfo.id,
+				error: error instanceof Error ? error.message : String(error),
+			});
 			return null;
 		}
 	}
@@ -406,11 +463,18 @@ export class MetricsCollector extends EventEmitter {
 						metrics.push(agentMetrics);
 					}
 				} catch (error) {
-					this.logger.warn({ msg: 'Failed to collect metrics for CrewAI agent', agentId: agentInfo.id, error: error instanceof Error ? error.message : String(error) });
+					this.logger.warn({
+						msg: 'Failed to collect metrics for CrewAI agent',
+						agentId: agentInfo.id,
+						error: error instanceof Error ? error.message : String(error),
+					});
 				}
 			}
 		} catch (error) {
-			this.logger.error({ msg: 'Error discovering CrewAI agents', error: error instanceof Error ? error.message : String(error) });
+			this.logger.error({
+				msg: 'Error discovering CrewAI agents',
+				error: error instanceof Error ? error.message : String(error),
+			});
 		}
 
 		return metrics;
@@ -440,7 +504,10 @@ export class MetricsCollector extends EventEmitter {
 			const potentialAgents = await this.scanForCrewAIProcesses();
 			return potentialAgents;
 		} catch (error) {
-			this.logger.debug({ msg: 'CrewAI runtime not available for direct integration', error: error instanceof Error ? error.message : String(error) });
+			this.logger.debug({
+				msg: 'CrewAI runtime not available for direct integration',
+				error: error instanceof Error ? error.message : String(error),
+			});
 			return [];
 		}
 	}
@@ -475,7 +542,9 @@ export class MetricsCollector extends EventEmitter {
 			role?: string;
 			crewInstance?: CrewInstanceLike;
 			monitoringEndpoint?: string;
-		}, timestamp: Date, ): Promise<AgentMetrics | null> {
+		},
+		timestamp: Date,
+	): Promise<AgentMetrics | null> {
 		try {
 			// Production implementation would:
 			// 1. Use agent.get_execution_metrics()
@@ -499,7 +568,11 @@ export class MetricsCollector extends EventEmitter {
 			} else if (agentInfo.monitoringEndpoint) {
 				// Security: Validate monitoring endpoint to prevent SSRF
 				if (!validateTelemetryEndpoint(agentInfo.monitoringEndpoint)) {
-					this.logger.warn({ msg: 'Invalid monitoring endpoint rejected', endpoint: agentInfo.monitoringEndpoint, agentId: agentInfo.id });
+					this.logger.warn({
+						msg: 'Invalid monitoring endpoint rejected',
+						endpoint: agentInfo.monitoringEndpoint,
+						agentId: agentInfo.id,
+					});
 					return null;
 				}
 
@@ -509,7 +582,8 @@ export class MetricsCollector extends EventEmitter {
 					throw new Error('Invalid monitoring endpoint: must use HTTPS');
 				}
 				const telemetryData = await this.fetchTelemetryJson<TelemetryData>(
-					`${agentInfo.monitoringEndpoint}/agent/${agentInfo.id}/metrics`, );
+					`${agentInfo.monitoringEndpoint}/agent/${agentInfo.id}/metrics`,
+				);
 
 				executionTime = telemetryData.execution_time || 0;
 				taskCount = telemetryData.completed_tasks || 0;
@@ -518,10 +592,25 @@ export class MetricsCollector extends EventEmitter {
 			}
 
 			return {
-				agentId: agentInfo.id, agentType: 'crewai', framework: 'CrewAI', timestamp, executionTime, successRate, resourceUsage: await this.getAgentResourceUsage(agentInfo.id), taskCount, errorCount, responseTime: taskCount > 0 ? executionTime / taskCount : 0, throughput: executionTime > 0 ? taskCount / (executionTime / 1000) : 0, availability: errorCount === 0 ? 1.0 : Math.max(0.7, successRate)
+				agentId: agentInfo.id,
+				agentType: 'crewai',
+				framework: 'CrewAI',
+				timestamp,
+				executionTime,
+				successRate,
+				resourceUsage: await this.getAgentResourceUsage(agentInfo.id),
+				taskCount,
+				errorCount,
+				responseTime: taskCount > 0 ? executionTime / taskCount : 0,
+				throughput: executionTime > 0 ? taskCount / (executionTime / 1000) : 0,
+				availability: errorCount === 0 ? 1.0 : Math.max(0.7, successRate),
 			};
 		} catch (error) {
-			this.logger.error({ msg: 'Error collecting CrewAI agent metrics', agentId: agentInfo.id, error: error instanceof Error ? error.message : String(error) });
+			this.logger.error({
+				msg: 'Error collecting CrewAI agent metrics',
+				agentId: agentInfo.id,
+				error: error instanceof Error ? error.message : String(error),
+			});
 			return null;
 		}
 	}
@@ -549,11 +638,18 @@ export class MetricsCollector extends EventEmitter {
 						metrics.push(agentMetrics);
 					}
 				} catch (error) {
-					this.logger.warn({ msg: 'Failed to collect metrics for AutoGen agent', agentId: agentInfo.id, error: error instanceof Error ? error.message : String(error) });
+					this.logger.warn({
+						msg: 'Failed to collect metrics for AutoGen agent',
+						agentId: agentInfo.id,
+						error: error instanceof Error ? error.message : String(error),
+					});
 				}
 			}
 		} catch (error) {
-			this.logger.error({ msg: 'Error discovering AutoGen agents', error: error instanceof Error ? error.message : String(error) });
+			this.logger.error({
+				msg: 'Error discovering AutoGen agents',
+				error: error instanceof Error ? error.message : String(error),
+			});
 		}
 		return metrics;
 	}
@@ -582,7 +678,10 @@ export class MetricsCollector extends EventEmitter {
 			const potentialAgents = await this.scanForAutoGenProcesses();
 			return potentialAgents;
 		} catch (error) {
-			this.logger.debug({ msg: 'AutoGen runtime not available for direct integration', error: error instanceof Error ? error.message : String(error) });
+			this.logger.debug({
+				msg: 'AutoGen runtime not available for direct integration',
+				error: error instanceof Error ? error.message : String(error),
+			});
 			return [];
 		}
 	}
@@ -617,7 +716,9 @@ export class MetricsCollector extends EventEmitter {
 			role?: string;
 			groupChatInstance?: GroupChatLike;
 			conversationEndpoint?: string;
-		}, timestamp: Date, ): Promise<AgentMetrics | null> {
+		},
+		timestamp: Date,
+	): Promise<AgentMetrics | null> {
 		try {
 			// Production implementation would:
 			// 1. Use agent.get_conversation_metrics()
@@ -641,7 +742,11 @@ export class MetricsCollector extends EventEmitter {
 			} else if (agentInfo.conversationEndpoint) {
 				// Security: Validate conversation endpoint to prevent SSRF
 				if (!validateTelemetryEndpoint(agentInfo.conversationEndpoint)) {
-					this.logger.warn({ msg: 'Invalid conversation endpoint rejected', endpoint: agentInfo.conversationEndpoint, agentId: agentInfo.id });
+					this.logger.warn({
+						msg: 'Invalid conversation endpoint rejected',
+						endpoint: agentInfo.conversationEndpoint,
+						agentId: agentInfo.id,
+					});
 					return null;
 				}
 
@@ -651,7 +756,8 @@ export class MetricsCollector extends EventEmitter {
 					throw new Error('Invalid conversation endpoint: must use HTTPS');
 				}
 				const telemetryData = await this.fetchTelemetryJson<TelemetryData>(
-					`${agentInfo.conversationEndpoint}/agent/${agentInfo.id}/stats`, );
+					`${agentInfo.conversationEndpoint}/agent/${agentInfo.id}/stats`,
+				);
 
 				executionTime = telemetryData.conversation_time || 0;
 				taskCount = telemetryData.messages_sent || 0;
@@ -660,10 +766,25 @@ export class MetricsCollector extends EventEmitter {
 			}
 
 			return {
-				agentId: agentInfo.id, agentType: 'autogen', framework: 'AutoGen', timestamp, executionTime, successRate, resourceUsage: await this.getAgentResourceUsage(agentInfo.id), taskCount, errorCount, responseTime: taskCount > 0 ? executionTime / taskCount : 0, throughput: executionTime > 0 ? taskCount / (executionTime / 1000) : 0, availability: errorCount === 0 ? 1.0 : Math.max(0.8, successRate)
+				agentId: agentInfo.id,
+				agentType: 'autogen',
+				framework: 'AutoGen',
+				timestamp,
+				executionTime,
+				successRate,
+				resourceUsage: await this.getAgentResourceUsage(agentInfo.id),
+				taskCount,
+				errorCount,
+				responseTime: taskCount > 0 ? executionTime / taskCount : 0,
+				throughput: executionTime > 0 ? taskCount / (executionTime / 1000) : 0,
+				availability: errorCount === 0 ? 1.0 : Math.max(0.8, successRate),
 			};
 		} catch (error) {
-			this.logger.error({ msg: 'Error collecting AutoGen agent metrics', agentId: agentInfo.id, error: error instanceof Error ? error.message : String(error) });
+			this.logger.error({
+				msg: 'Error collecting AutoGen agent metrics',
+				agentId: agentInfo.id,
+				error: error instanceof Error ? error.message : String(error),
+			});
 			return null;
 		}
 	}
@@ -681,9 +802,14 @@ export class MetricsCollector extends EventEmitter {
 		const hostname = url.hostname.toLowerCase();
 		const allowLocalhost = ['localhost', '127.0.0.1', '::1'].includes(hostname);
 		return safeFetchJson<T>(url.toString(), {
-			allowedHosts: [hostname], allowedProtocols: [url.protocol], allowLocalhost, timeout: 15000, fetchOptions: {
-				redirect: 'manual', referrerPolicy: 'no-referrer'
-			}
+			allowedHosts: [hostname],
+			allowedProtocols: [url.protocol],
+			allowLocalhost,
+			timeout: 15000,
+			fetchOptions: {
+				redirect: 'manual',
+				referrerPolicy: 'no-referrer',
+			},
 		});
 	}
 
@@ -698,16 +824,36 @@ export class MetricsCollector extends EventEmitter {
 			// Mock orchestration data - replace with actual orchestration engine queries
 			const orchestrations = [
 				{
-					id: 'orchestration-1', framework: 'Multi-Framework', activeAgents: 5, totalAgents: 7, completedTasks: 45, failedTasks: 3, avgExecutionTime: 650
-				}, ];
+					id: 'orchestration-1',
+					framework: 'Multi-Framework',
+					activeAgents: 5,
+					totalAgents: 7,
+					completedTasks: 45,
+					failedTasks: 3,
+					avgExecutionTime: 650,
+				},
+			];
 
 			for (const orch of orchestrations) {
 				metrics.push({
-					orchestrationId: orch.id, framework: orch.framework, timestamp, totalAgents: orch.totalAgents, activeAgents: orch.activeAgents, completedTasks: orch.completedTasks, failedTasks: orch.failedTasks, averageExecutionTime: orch.avgExecutionTime, totalResourceUtilization: await this.getSystemResourceUtilization(), workflowEfficiency: orch.completedTasks / (orch.completedTasks + orch.failedTasks), coordinationOverhead: 0.15, // 15% overhead for coordination
+					orchestrationId: orch.id,
+					framework: orch.framework,
+					timestamp,
+					totalAgents: orch.totalAgents,
+					activeAgents: orch.activeAgents,
+					completedTasks: orch.completedTasks,
+					failedTasks: orch.failedTasks,
+					averageExecutionTime: orch.avgExecutionTime,
+					totalResourceUtilization: await this.getSystemResourceUtilization(),
+					workflowEfficiency: orch.completedTasks / (orch.completedTasks + orch.failedTasks),
+					coordinationOverhead: 0.15, // 15% overhead for coordination
 				});
 			}
 		} catch (error) {
-			this.logger.error({ msg: 'Error collecting orchestration metrics', error: error instanceof Error ? error.message : String(error) });
+			this.logger.error({
+				msg: 'Error collecting orchestration metrics',
+				error: error instanceof Error ? error.message : String(error),
+			});
 		}
 
 		return metrics;
@@ -723,7 +869,7 @@ export class MetricsCollector extends EventEmitter {
 			const process = await import('node:process');
 
 			// Get CPU usage
-			const cpuUsage = process.cpuUsage();
+			const _cpuUsage = process.cpuUsage();
 
 			// Get memory usage (not needed for calculation)
 			process.memoryUsage();
@@ -742,23 +888,38 @@ export class MetricsCollector extends EventEmitter {
 
 			return {
 				cpu: {
-					current: normalizedLoad, average: this.calculateResourceAverage('cpu', normalizedLoad), peak: this.updateResourcePeak('cpu', normalizedLoad)
-				}, memory: {
-					current: systemMemoryPercent, average: this.calculateResourceAverage('memory', systemMemoryPercent), peak: this.updateResourcePeak('memory', systemMemoryPercent)
-				}, gpu: {
+					current: normalizedLoad,
+					average: this.calculateResourceAverage('cpu', normalizedLoad),
+					peak: this.updateResourcePeak('cpu', normalizedLoad),
+				},
+				memory: {
+					current: systemMemoryPercent,
+					average: this.calculateResourceAverage('memory', systemMemoryPercent),
+					peak: this.updateResourcePeak('memory', systemMemoryPercent),
+				},
+				gpu: {
 					// GPU monitoring requires additional libraries (nvidia-ml-py, etc.)
 					// For now, return 0 as GPU monitoring is not available via Node.js built-ins
-					current: 0, average: 0, peak: 0
-				}, network: {
-					inbound: networkMetrics.inbound, outbound: networkMetrics.outbound
-				}, storage: {
+					current: 0,
+					average: 0,
+					peak: 0,
+				},
+				network: {
+					inbound: networkMetrics.inbound,
+					outbound: networkMetrics.outbound,
+				},
+				storage: {
 					// Storage I/O monitoring requires platform-specific tools
 					// For now, return 0 as detailed I/O stats not available via Node.js built-ins
-					reads: 0, writes: 0
-				}
+					reads: 0,
+					writes: 0,
+				},
 			};
 		} catch (error) {
-			this.logger.error({ msg: 'brAInwav error collecting resource utilization', error: error instanceof Error ? error.message : String(error) });
+			this.logger.error({
+				msg: 'brAInwav error collecting resource utilization',
+				error: error instanceof Error ? error.message : String(error),
+			});
 			throw error;
 		}
 	}
@@ -778,12 +939,21 @@ export class MetricsCollector extends EventEmitter {
 			const cpu = Math.min(100, (cpuUsage.user + cpuUsage.system) / 10000); // Simplified calculation
 
 			return {
-				memory: memoryMB, cpu, gpu: 0, // GPU monitoring requires additional libraries
+				memory: memoryMB,
+				cpu,
+				gpu: 0, // GPU monitoring requires additional libraries
 			};
 		} catch (error) {
-			this.logger.warn({ msg: 'brAInwav unable to get agent resource usage', usingDefaults: true, agentId: _agentId, error: error instanceof Error ? error.message : String(error) });
+			this.logger.warn({
+				msg: 'brAInwav unable to get agent resource usage',
+				usingDefaults: true,
+				agentId: _agentId,
+				error: error instanceof Error ? error.message : String(error),
+			});
 			return {
-				memory: 0, cpu: 0, gpu: 0
+				memory: 0,
+				cpu: 0,
+				gpu: 0,
 			};
 		}
 	}
@@ -799,7 +969,10 @@ export class MetricsCollector extends EventEmitter {
 	 * Store collected metrics in appropriate buffers
 	 */
 	private storeCollectedMetrics(
-		agentMetrics: AgentMetrics[], orchestrationMetrics: OrchestrationMetrics[], resourceMetrics: ResourceUtilization, ): void {
+		agentMetrics: AgentMetrics[],
+		orchestrationMetrics: OrchestrationMetrics[],
+		resourceMetrics: ResourceUtilization,
+	): void {
 		// Store agent metrics
 		for (const metric of agentMetrics) {
 			const existing = this.agentMetricsBuffer.get(metric.agentId);
@@ -835,7 +1008,9 @@ export class MetricsCollector extends EventEmitter {
 	 * Update performance history for trend analysis
 	 */
 	private updatePerformanceHistory(
-		agentMetrics: AgentMetrics[], orchestrationMetrics: OrchestrationMetrics[], ): void {
+		agentMetrics: AgentMetrics[],
+		orchestrationMetrics: OrchestrationMetrics[],
+	): void {
 		const timestamp = new Date();
 
 		// Calculate aggregate performance metrics
@@ -851,7 +1026,10 @@ export class MetricsCollector extends EventEmitter {
 		this.addToTimeSeries('throughput', timestamp, avgThroughput);
 		this.addToTimeSeries('successRate', timestamp, avgSuccessRate);
 		this.addToTimeSeries(
-			'activeAgents', timestamp, orchestrationMetrics.reduce((sum, m) => sum + m.activeAgents, 0), );
+			'activeAgents',
+			timestamp,
+			orchestrationMetrics.reduce((sum, m) => sum + m.activeAgents, 0),
+		);
 	}
 
 	/**
@@ -886,7 +1064,11 @@ export class MetricsCollector extends EventEmitter {
 	 */
 	getCurrentPerformanceMetrics(): PerformanceMetrics {
 		return {
-			executionTimes: this.performanceHistory.get('executionTime') || [], throughput: this.performanceHistory.get('throughput') || [], errorRates: this.performanceHistory.get('errorRate') || [], resourceUtilization: this.performanceHistory.get('resourceUtilization') || [], agentDistribution: this.calculateAgentDistribution()
+			executionTimes: this.performanceHistory.get('executionTime') || [],
+			throughput: this.performanceHistory.get('throughput') || [],
+			errorRates: this.performanceHistory.get('errorRate') || [],
+			resourceUtilization: this.performanceHistory.get('resourceUtilization') || [],
+			agentDistribution: this.calculateAgentDistribution(),
 		};
 	}
 
@@ -905,13 +1087,17 @@ export class MetricsCollector extends EventEmitter {
 			if (agentMetrics.length > 0) {
 				const latestMetric = agentMetrics[agentMetrics.length - 1];
 				frameworkCounts.set(
-					latestMetric.framework, (frameworkCounts.get(latestMetric.framework) || 0) + 1, );
+					latestMetric.framework,
+					(frameworkCounts.get(latestMetric.framework) || 0) + 1,
+				);
 				totalAgents++;
 			}
 		}
 
 		return Array.from(frameworkCounts.entries()).map(([framework, count]) => ({
-			framework, count, percentage: totalAgents > 0 ? (count / totalAgents) * 100 : 0
+			framework,
+			count,
+			percentage: totalAgents > 0 ? (count / totalAgents) * 100 : 0,
 		}));
 	}
 
@@ -931,7 +1117,11 @@ export class MetricsCollector extends EventEmitter {
 		}
 
 		return {
-			isCollecting: this.isCollecting, metricsCollected: this.metricsCollected, lastCollectionTime: this.lastCollectionTime, collectionErrors: this.collectionErrors, bufferedMetrics
+			isCollecting: this.isCollecting,
+			metricsCollected: this.metricsCollected,
+			lastCollectionTime: this.lastCollectionTime,
+			collectionErrors: this.collectionErrors,
+			bufferedMetrics,
 		};
 	}
 
@@ -996,7 +1186,8 @@ export class MetricsCollector extends EventEmitter {
 		// In a production system, this would interface with system network statistics
 		// For now, return 0 as real network monitoring requires platform-specific tools
 		return {
-			inbound: 0, outbound: 0
+			inbound: 0,
+			outbound: 0,
 		};
 	}
 

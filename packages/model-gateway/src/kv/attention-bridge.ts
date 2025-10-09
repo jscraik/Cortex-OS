@@ -66,7 +66,11 @@ export interface AttentionBridgeRun {
 
 export interface AttentionBridge {
 	prepareRun(runId: string, metadata?: Record<string, unknown>): Promise<AttentionBridgeRun>;
-	captureKV(step: AttentionCaptureStep, run: AttentionBridgeRun, payload: AttentionCapturePayload): Promise<void>;
+	captureKV(
+		step: AttentionCaptureStep,
+		run: AttentionBridgeRun,
+		payload: AttentionCapturePayload,
+	): Promise<void>;
 	emitReceipt(run: AttentionBridgeRun): Promise<AttentionBridgeReceipt | null>;
 	close(): Promise<void>;
 }
@@ -88,7 +92,6 @@ const resolveEngine = (engine?: string): AttentionBridgeEngine => {
 			return 'retroinfer';
 		case 'retrievalattention':
 			return 'retrievalattention';
-		case 'none':
 		default:
 			return 'none';
 	}
@@ -109,7 +112,11 @@ const writeReceiptIfNeeded = async (
 	if (!config.outputDir) return;
 	try {
 		await fs.mkdir(config.outputDir, { recursive: true });
-		await fs.writeFile(buildReceiptPath(config.outputDir, receipt.runId), JSON.stringify(receipt, null, 2), 'utf8');
+		await fs.writeFile(
+			buildReceiptPath(config.outputDir, receipt.runId),
+			JSON.stringify(receipt, null, 2),
+			'utf8',
+		);
 	} catch (error) {
 		console.warn('brAInwav AttentionBridge: failed to write receipt', error);
 	}
@@ -257,5 +264,4 @@ export const createAttentionBridge = (config?: AttentionBridgeConfig): Attention
 	};
 };
 
-export const createAttentionBridgeFromEnv = (): AttentionBridge =>
-	createAttentionBridge({});
+export const createAttentionBridgeFromEnv = (): AttentionBridge => createAttentionBridge({});

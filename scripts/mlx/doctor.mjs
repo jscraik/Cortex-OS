@@ -7,7 +7,9 @@ const envOutcome = await loadDotenv({ debug: Boolean(process.env.DEBUG || proces
 if (!envOutcome.skipped) {
 	console.log(`✅ brAInwav env loaded from ${envOutcome.path}`);
 } else if (envOutcome.reason === 'fifo') {
-	console.warn('⚠️  brAInwav env points to a FIFO. Run `op run --env-file=<file> -- <command>` first.');
+	console.warn(
+		'⚠️  brAInwav env points to a FIFO. Run `op run --env-file=<file> -- <command>` first.',
+	);
 } else if (envOutcome.reason === 'dotenv-error') {
 	console.warn('⚠️  brAInwav env failed to load via dotenv. Check file permissions and syntax.');
 } else {

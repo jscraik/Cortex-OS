@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
 
 /**
  * Phase 0 guard test: ensure essential config files exist and are valid JSON.

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import yaml from 'js-yaml';
 
@@ -22,8 +22,15 @@ const LOG_PREFIX = '[brAInwav][coverage-rotation]';
 export function loadRotationConfig(path = CONFIG_PATH) {
 	const absolute = resolve(path);
 	const config = yaml.load(readFileSync(absolute, 'utf8'));
-	if (!config || typeof config !== 'object' || !Array.isArray(config.weeks) || config.weeks.length === 0) {
-		throw new Error(`${LOG_PREFIX} rotation config at ${absolute} must define a non-empty weeks array.`);
+	if (
+		!config ||
+		typeof config !== 'object' ||
+		!Array.isArray(config.weeks) ||
+		config.weeks.length === 0
+	) {
+		throw new Error(
+			`${LOG_PREFIX} rotation config at ${absolute} must define a non-empty weeks array.`,
+		);
 	}
 	return config;
 }
@@ -39,7 +46,8 @@ export function resolveWeekIndex(config, env = process.env, now = new Date()) {
 	if (!Number.isNaN(override) && override > 0 && config.weeks.length > 0) {
 		return (override - 1) % config.weeks.length;
 	}
-	const startMs = typeof config.start === 'string' ? Date.parse(`${config.start}T00:00:00Z`) : Number.NaN;
+	const startMs =
+		typeof config.start === 'string' ? Date.parse(`${config.start}T00:00:00Z`) : Number.NaN;
 	if (Number.isNaN(startMs) || config.weeks.length === 0) return 0;
 	const elapsed = Math.max(0, Math.floor((coerceNowMs(now) - startMs) / WEEK_MS));
 	return elapsed % config.weeks.length;
@@ -116,7 +124,9 @@ export function enforceRegression(baseline, current, maxDrop) {
 		}
 	}
 	if (breaches.length > 0) {
-		throw new Error(`${LOG_PREFIX} coverage regression detected beyond ${maxDrop}: ${breaches.join(', ')}.`);
+		throw new Error(
+			`${LOG_PREFIX} coverage regression detected beyond ${maxDrop}: ${breaches.join(', ')}.`,
+		);
 	}
 }
 
@@ -157,20 +167,26 @@ export function runRotation(mode = 'auto', options = {}) {
 		if (options.skipVitest !== true) runFocusedCoverage(activeWeek.target, env);
 		const targetTotals = readCoverageTotals(options.rotationSummaryPath ?? ROTATION_SUMMARY_PATH);
 		if (!targetTotals) {
-			throw new Error(`${LOG_PREFIX} coverage summary missing for ${activeWeek.target} at ${options.rotationSummaryPath ?? ROTATION_SUMMARY_PATH}.`);
+			throw new Error(
+				`${LOG_PREFIX} coverage summary missing for ${activeWeek.target} at ${options.rotationSummaryPath ?? ROTATION_SUMMARY_PATH}.`,
+			);
 		}
 		assertThresholds(targetTotals, activeWeek.goal ?? {}, `weekly goal for ${activeWeek.target}`);
 		console.log(`${LOG_PREFIX} weekly goal satisfied for ${activeWeek.target}.`);
 	}
 	const globalTotals = readCoverageTotals(options.globalSummaryPath ?? GLOBAL_SUMMARY_PATH);
 	if (!globalTotals) {
-		throw new Error(`${LOG_PREFIX} global coverage summary not found at ${options.globalSummaryPath ?? GLOBAL_SUMMARY_PATH}.`);
+		throw new Error(
+			`${LOG_PREFIX} global coverage summary not found at ${options.globalSummaryPath ?? GLOBAL_SUMMARY_PATH}.`,
+		);
 	}
 	assertThresholds(globalTotals, policy.global_floor ?? {}, 'global floor');
 	if (typeof policy.max_regression === 'number') {
 		const baselineTotals = readCoverageTotals(options.baselinePath ?? BASELINE_PATH);
 		if (!baselineTotals) {
-			console.warn(`${LOG_PREFIX} baseline coverage missing at ${options.baselinePath ?? BASELINE_PATH}; skipping regression guard.`);
+			console.warn(
+				`${LOG_PREFIX} baseline coverage missing at ${options.baselinePath ?? BASELINE_PATH}; skipping regression guard.`,
+			);
 		} else {
 			enforceRegression(baselineTotals, globalTotals, policy.max_regression);
 		}

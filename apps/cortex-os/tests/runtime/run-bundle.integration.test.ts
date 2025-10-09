@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -43,7 +43,10 @@ describe('provideOrchestration run bundle integration', () => {
 			'run.json',
 		]);
 
-		const runRecord = JSON.parse(await readFile(join(runDir, 'run.json'), 'utf8')) as Record<string, unknown>;
+		const runRecord = JSON.parse(await readFile(join(runDir, 'run.json'), 'utf8')) as Record<
+			string,
+			unknown
+		>;
 		expect(runRecord.status).toBe('completed');
 		expect(runRecord.promptCount).toBeGreaterThanOrEqual(0);
 	});

@@ -44,7 +44,7 @@ function chunkText(text: string, maxLength = 1200): string[] {
 		if (!trimmed) {
 			continue;
 		}
-		if ((current + '\n\n' + trimmed).length > maxLength) {
+		if (`${current}\n\n${trimmed}`.length > maxLength) {
 			if (current) {
 				chunks.push(current.trim());
 			}

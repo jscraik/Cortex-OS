@@ -3,8 +3,8 @@
  * Phase 1.3: Simple validation test for memory system consolidation
  */
 
-import { existsSync } from 'fs';
-import { join } from 'path';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 describe('brAInwav Memory System Consolidation - Phase 1.3', () => {
@@ -44,7 +44,7 @@ describe('brAInwav Memory System Consolidation - Phase 1.3', () => {
 
 	it('should maintain brAInwav branding compliance', async () => {
 		// This is a simplified compliance check
-		const { readFileSync } = await import('fs');
+		const { readFileSync } = await import('node:fs');
 
 		try {
 			const providerContent = readFileSync(
@@ -76,7 +76,7 @@ describe('brAInwav Memory System Consolidation - Phase 1.3', () => {
 	});
 
 	it('should have legacy adapter removal markers', async () => {
-		const { readFileSync } = await import('fs');
+		const { readFileSync } = await import('node:fs');
 
 		try {
 			const legacyPath = join(process.cwd(), 'packages/memories/src/legacy.js');

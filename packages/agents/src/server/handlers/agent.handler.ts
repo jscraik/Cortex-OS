@@ -1,14 +1,14 @@
 import { randomUUID } from 'node:crypto';
+import { logAgentResult } from '@cortex-os/observability/logging';
+import type { AgentResult } from '@cortex-os/protocol';
 import type { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import type { AgentResult } from '@cortex-os/protocol';
-import { logAgentResult } from '@cortex-os/observability/logging';
-import {
-        createMasterAgentGraph,
-        type MasterAgentGraph,
-        type SubAgentConfig,
-} from '../../MasterAgent.js';
 import { runAgent } from '../../base/runAgent.js';
+import {
+	createMasterAgentGraph,
+	type MasterAgentGraph,
+	type SubAgentConfig,
+} from '../../MasterAgent.js';
 import { MASTER_SYSTEM_PROMPT } from '../../prompts/system-master-agent.js';
 import {
 	type ExecuteAgentRequest,
@@ -69,32 +69,32 @@ export class AgentHandler {
 				throw new Error('Master agent not initialized');
 			}
 
-                        const startTime = Date.now();
-                        const coordinateResult = await this.masterAgent.coordinate(request.input);
-                        const duration = Date.now() - startTime;
+			const startTime = Date.now();
+			const coordinateResult = await this.masterAgent.coordinate(request.input);
+			const duration = Date.now() - startTime;
 
-                        const { response, status, error } = resolveAgentResponse(coordinateResult);
-                        const brandedResponse = brandAgentResponse(response, status);
-                        const agentResult = await generateAgentResult(coordinateResult, brandedResponse);
+			const { response, status, error } = resolveAgentResponse(coordinateResult);
+			const brandedResponse = brandAgentResponse(response, status);
+			const agentResult = await generateAgentResult(coordinateResult, brandedResponse);
 
-                        const timestamp = agentResult.meta.ts ?? new Date().toISOString();
+			const timestamp = agentResult.meta.ts ?? new Date().toISOString();
 
-                        const executeResponse: ExecuteAgentResponse = {
-                                agentId: request.agentId,
-                                response: String(agentResult.data),
-                                timestamp,
-                                status,
-                                error,
-                                metadata: {
-                                        executionTime: duration,
-                                        specialization: coordinateResult.taskType || 'unknown',
-                                        selectedAgent: coordinateResult.currentAgent || 'unknown',
-                                        ...(error && { error }),
-                                },
-                                result: agentResult,
-                        };
+			const executeResponse: ExecuteAgentResponse = {
+				agentId: request.agentId,
+				response: String(agentResult.data),
+				timestamp,
+				status,
+				error,
+				metadata: {
+					executionTime: duration,
+					specialization: coordinateResult.taskType || 'unknown',
+					selectedAgent: coordinateResult.currentAgent || 'unknown',
+					...(error && { error }),
+				},
+				result: agentResult,
+			};
 
-                        return executeAgentResponseSchema.parse(executeResponse);
+			return executeAgentResponseSchema.parse(executeResponse);
 		} catch (error) {
 			if (error instanceof Error) {
 				throw new HTTPException(500, {
@@ -112,16 +112,13 @@ async function generateAgentResult(
 	coordinateResult: CoordinateResult,
 	response: string,
 ): Promise<AgentResult<string>> {
-	const agentResult = await runAgent(
-		async () => response,
-		{
-			prompt_id: MASTER_SYSTEM_PROMPT.id,
-			prompt_version: MASTER_SYSTEM_PROMPT.version,
-			prompt_hash: MASTER_SYSTEM_PROMPT.hash,
-			model: process.env.CORTEX_MODEL ?? 'mlx:llama3.1-8b',
-			run_id: randomUUID(),
-		},
-	);
+	const agentResult = await runAgent(async () => response, {
+		prompt_id: MASTER_SYSTEM_PROMPT.id,
+		prompt_version: MASTER_SYSTEM_PROMPT.version,
+		prompt_hash: MASTER_SYSTEM_PROMPT.hash,
+		model: process.env.CORTEX_MODEL ?? 'mlx:llama3.1-8b',
+		run_id: randomUUID(),
+	});
 
 	logAgentResultSafe(coordinateResult.currentAgent ?? 'master-agent', agentResult);
 	return agentResult;

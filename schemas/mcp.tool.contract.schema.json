@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cortex-os.dev/schemas/mcp.tool.contract.schema.json",
+  "title": "MCP Tool Contract Schema",
+  "description": "Schema for MCP tool contracts with optional versioning support (SEP-1575)",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Tool name (required)",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version for tool versioning (optional, SEP-1575)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the tool",
+      "minLength": 1
+    },
+    "inputSchema": {
+      "type": "object",
+      "description": "JSON Schema for tool input validation",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["object", "array", "string", "number", "boolean"],
+          "default": "object"
+        },
+        "properties": {
+          "type": "object",
+          "description": "Input parameter definitions",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Parameter type"
+              },
+              "description": {
+                "type": "string",
+                "description": "Parameter description"
+              },
+              "required": {
+                "type": "boolean",
+                "description": "Whether parameter is required"
+              },
+              "default": {
+                "description": "Default value for parameter"
+              }
+            }
+          }
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of required parameter names"
+        }
+      },
+      "required": ["type"]
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata for the tool",
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "Tool author or organization"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for categorizing the tool"
+        },
+        "deprecationMessage": {
+          "type": "string",
+          "description": "Message shown when deprecated tool is used"
+        },
+        "securityLevel": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "Security classification of the tool",
+          "default": "medium"
+        },
+        "license": {
+          "type": "string",
+          "description": "License for the tool"
+        },
+        "repository": {
+          "type": "string",
+          "format": "uri",
+          "description": "Source code repository URL"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["name", "inputSchema"],
+  "additionalProperties": false
+}

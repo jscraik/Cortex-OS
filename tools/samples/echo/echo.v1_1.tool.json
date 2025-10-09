@@ -1,0 +1,37 @@
+{
+  "name": "echo",
+  "version": "1.1.0",
+  "description": "Enhanced echo tool with formatting options and brAInwav branding",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string",
+        "description": "Text to echo back"
+      },
+      "prefix": {
+        "type": "string",
+        "description": "Optional prefix to add to the echoed text",
+        "default": "[brAInwav Echo v1.1]"
+      },
+      "format": {
+        "type": "string",
+        "enum": ["plain", "json", "uppercase", "lowercase"],
+        "description": "Format the output text",
+        "default": "plain"
+      },
+      "timestamp": {
+        "type": "boolean",
+        "description": "Add timestamp to the output",
+        "default": false
+      }
+    },
+    "required": ["text"]
+  },
+  "metadata": {
+    "author": "Cortex-OS Team",
+    "tags": ["utility", "demo", "echo", "formatted"],
+    "securityLevel": "low",
+    "license": "MIT"
+  }
+}

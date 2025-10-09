@@ -7,16 +7,16 @@ export {
 	agentsAgent,
 	createAgentsAgent,
 } from './AgentsAgent.js';
-export { runAgent, type AgentRunContext } from './base/runAgent.js';
-export { assertPromptMeta } from './contracts/assertPromptMeta.js';
 export {
 	AgentsBusIntegration,
 	createAgentsBusIntegration,
 } from './AgentsBusIntegration.js';
 // A2A Bus Integration
 export { type AgentsBusConfig, createAgentsBus, createAgentsSchemaRegistry } from './a2a.js';
+export { type AgentRunContext, runAgent } from './base/runAgent.js';
 // Export the main agent class
 export { CortexAgent } from './CortexAgentLangGraph.js';
+export { assertPromptMeta } from './contracts/assertPromptMeta.js';
 // File-based agent templates loader
 export {
 	type AgentTemplate,
@@ -67,6 +67,15 @@ export {
 	type MasterAgentGraph,
 	type SubAgentConfig,
 } from './MasterAgent.js';
+// Modern agent system
+export {
+	createModernAgentSystem,
+	type ModernAgentSystem,
+	type ModernAgentSystemConfig,
+	type Planner,
+	type PlannerExecutionResult,
+	type PlannerGoal,
+} from './modern-agent-system/index.js';
 // Export monitoring
 export * from './monitoring';
 export type { Subagent as ContractSubagent } from './nO/contracts.js';
@@ -88,19 +97,10 @@ export {
 // Export brAInwav TDD Plan Implementation Components
 // Testing Infrastructure
 export {
-        MockAgent,
-        MockTool,
-        PerformanceTestRunner,
-        TestAssertions,
-        TestEnvironment,
-        TestSuiteRunner,
+	MockAgent,
+	MockTool,
+	PerformanceTestRunner,
+	TestAssertions,
+	TestEnvironment,
+	TestSuiteRunner,
 } from './testing/test-utilities.js';
-// Modern agent system
-export {
-        createModernAgentSystem,
-        type ModernAgentSystem,
-        type ModernAgentSystemConfig,
-        type Planner,
-        type PlannerExecutionResult,
-        type PlannerGoal,
-} from './modern-agent-system/index.js';

@@ -7,10 +7,9 @@
 
 import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
+import type { McpEvent } from '../../packages/agent-toolkit/src/mcp/runtime';
 import { AgentToolkitMcpRuntime } from '../../packages/agent-toolkit/src/mcp/runtime';
 import * as processModule from '../../packages/rag/src/lib/run-process.js';
-import type { McpEvent } from '../../packages/agent-toolkit/src/mcp/runtime';
 
 type ToolkitStub = ReturnType<typeof createToolkitStub>;
 
@@ -77,7 +76,9 @@ describe('AgentToolkitMcpRuntime', () => {
 
 		expect(result.success).toBe(true);
 		expect(events.find((event) => event.type === 'agent_toolkit.execution.started')).toBeDefined();
-		expect(events.find((event) => event.type === 'agent_toolkit.execution.completed')).toBeDefined();
+		expect(
+			events.find((event) => event.type === 'agent_toolkit.execution.completed'),
+		).toBeDefined();
 	});
 
 	it('returns validation failure without throwing', async () => {
@@ -161,14 +162,16 @@ describe('FastMCP CLI schema guard', () => {
 	it('matches the recorded baseline schema JSON', async () => {
 		const baselineUrl = new URL('../../reports/baseline/fastmcp-schema.json', import.meta.url);
 		const baseline = JSON.parse(readFileSync(baselineUrl, 'utf8')) as Record<string, unknown>;
-		const spy = vi
-			.spyOn(processModule, 'runProcess')
-			.mockResolvedValue(baseline);
+		const spy = vi.spyOn(processModule, 'runProcess').mockResolvedValue(baseline);
 
-		const result = await processModule.runProcess('fastmcp', ['cli', '--schema', '--format', 'json'], {
-			parseJson: true,
-			timeoutMs: 30_000,
-		});
+		const result = await processModule.runProcess(
+			'fastmcp',
+			['cli', '--schema', '--format', 'json'],
+			{
+				parseJson: true,
+				timeoutMs: 30_000,
+			},
+		);
 
 		expect(result).toEqual(baseline);
 		spy.mockRestore();

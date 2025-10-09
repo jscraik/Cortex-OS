@@ -31,8 +31,8 @@ export class AgentTraceCollector extends EventEmitter {
 			kind: SpanKind.INTERNAL,
 			attributes: {
 				'agent.id': agentId,
-				'operation.name': operationName
-			}
+				'operation.name': operationName,
+			},
 		});
 
 		return span.spanContext().spanId;

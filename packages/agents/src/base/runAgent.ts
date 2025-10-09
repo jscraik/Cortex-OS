@@ -6,7 +6,10 @@ export interface AgentRunContext extends Omit<AgentResultMeta, 'ts'> {
 	prompt_id: string;
 }
 
-export async function runAgent<T>(impl: () => Promise<T>, ctx: AgentRunContext): Promise<AgentResult<T>> {
+export async function runAgent<T>(
+	impl: () => Promise<T>,
+	ctx: AgentRunContext,
+): Promise<AgentResult<T>> {
 	const data = await impl();
 	const meta: AgentResultMeta = {
 		...ctx,

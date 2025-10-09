@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  cortex-mcp:
+    build:
+      context: ../
+      dockerfile: packages/mcp-server/Dockerfile
+    ports:
+      - "3023:3023"
+    environment:
+      - CORTEX_MCP_PORT=3023
+
+  memory-api:
+    build:
+      context: ../
+      dockerfile: servers/memory-api/Dockerfile
+    ports:
+      - "3028:3028"
+    environment:
+      - MEMORY_API_PORT=3028
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"

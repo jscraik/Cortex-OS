@@ -10,9 +10,9 @@ import type { ArtifactRepository } from './persistence/artifact-repository.js';
 import type { EvidenceRepository } from './persistence/evidence-repository.js';
 import type { ProfileRepository } from './persistence/profile-repository.js';
 import type { TaskRepository } from './persistence/task-repository.js';
+import { startRagHttpSurface } from './rag/runtime-http.js';
 import { setA2aPublishers } from './services.js';
 import { TOKENS } from './tokens.js';
-import { startRagHttpSurface } from './rag/runtime-http.js';
 
 export interface RuntimeHandle {
 	httpUrl: string;

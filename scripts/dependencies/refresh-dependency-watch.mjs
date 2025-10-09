@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { execFile } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,7 +28,8 @@ function selectLatestVersion(payload) {
 	if (payload && typeof payload === 'object') {
 		if (Array.isArray(payload.versions)) buckets.push(...payload.versions);
 		if (Array.isArray(payload.available_versions)) buckets.push(...payload.available_versions);
-		if (payload.releases && typeof payload.releases === 'object') buckets.push(...Object.keys(payload.releases));
+		if (payload.releases && typeof payload.releases === 'object')
+			buckets.push(...Object.keys(payload.releases));
 	}
 	const flat = buckets
 		.map((entry) => {
@@ -50,7 +51,10 @@ async function runCommand(command, args) {
 }
 
 function parsePipIndexOutput(stdout) {
-	const lines = stdout.split('\n').map((line) => line.trim()).filter(Boolean);
+	const lines = stdout
+		.split('\n')
+		.map((line) => line.trim())
+		.filter(Boolean);
 	const versions = [];
 	for (const line of lines) {
 		if (line.startsWith('* ')) {
@@ -67,7 +71,10 @@ async function fetchCodecarbonVersions() {
 		const stdout = await runCommand('uvx', ['pip', 'index', 'versions', 'codecarbon', '--json']);
 		return JSON.parse(stdout);
 	} catch (error) {
-		console.warn('brAInwav dependency watch: uvx lookup failed, attempting pip fallback', error?.message ?? error);
+		console.warn(
+			'brAInwav dependency watch: uvx lookup failed, attempting pip fallback',
+			error?.message ?? error,
+		);
 		const stdout = await runCommand('python3', ['-m', 'pip', 'index', 'versions', 'codecarbon']);
 		return parsePipIndexOutput(stdout);
 	}
@@ -91,7 +98,9 @@ async function main() {
 		record.notes = record.notes ?? 'brAInwav automated dependency watch via uvx';
 		baseline.codecarbon = record;
 		writeBaseline(baseline);
-		console.log(`brAInwav dependency watch updated: codecarbon -> ${record.observed_version ?? 'unknown'}`);
+		console.log(
+			`brAInwav dependency watch updated: codecarbon -> ${record.observed_version ?? 'unknown'}`,
+		);
 	} catch (error) {
 		console.error('brAInwav dependency watch failed to refresh via uvx:', error);
 		process.exitCode = 1;

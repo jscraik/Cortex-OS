@@ -22,6 +22,7 @@ export default defineConfig({
 			'packages/**/tests/**/*.spec.ts',
 			'packages/**/test/**/*.test.ts',
 			'packages/**/test/**/*.spec.ts',
+			'packages/**/src/__tests__/**/*.test.ts',
 			'tests/tdd-coach/**/*.test.ts',
 			'tests/scripts/**/*.test.ts',
 			'tests/quality-gates/**/*.test.ts',

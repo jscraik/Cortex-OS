@@ -2,20 +2,22 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import pino from 'pino';
 import { CapabilityTokenIssuer } from '@cortex-os/security';
+import pino from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	BrainwavMcpSecurityManager,
-	DEFAULT_BRAINWAV_MCP_CONFIG,
 	type BrainwavToolInvocationContext,
+	DEFAULT_BRAINWAV_MCP_CONFIG,
 } from './brainwav-security-manager.js';
 
 const TEST_CAPABILITY_SECRET = 'brainwav-integration-secret';
 const TEST_TENANT = 'brainwav-test-tenant';
 const TEST_BUDGET_PROFILE = 'brainwav-test-budget';
 
-function createContext(overrides: Partial<BrainwavToolInvocationContext> = {}): BrainwavToolInvocationContext {
+function createContext(
+	overrides: Partial<BrainwavToolInvocationContext> = {},
+): BrainwavToolInvocationContext {
 	return {
 		toolName: overrides.toolName ?? 'memory.store',
 		endpoint: overrides.endpoint ?? 'https://security.brainwav.io/memory/store',
@@ -41,10 +43,7 @@ describe('BrainwavMcpSecurityManager', () => {
 	beforeEach(() => {
 		budgetDir = mkdtempSync(path.join(tmpdir(), 'brainwav-mcp-security-'));
 		budgetFile = path.join(budgetDir, 'budget.yml');
-		writeFileSync(
-			budgetFile,
-			`budgets:\n  ${TEST_BUDGET_PROFILE}:\n    max_total_req: 1\n`,
-		);
+		writeFileSync(budgetFile, `budgets:\n  ${TEST_BUDGET_PROFILE}:\n    max_total_req: 1\n`);
 
 		const config = {
 			...DEFAULT_BRAINWAV_MCP_CONFIG,

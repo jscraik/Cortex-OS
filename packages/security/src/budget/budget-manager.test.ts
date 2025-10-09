@@ -2,7 +2,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BudgetManager, BudgetLedger } from './budget-manager.js';
+import { BudgetLedger, BudgetManager } from './budget-manager.js';
 
 function createBudgetFile(contents: string): string {
 	const dir = mkdtempSync(join(tmpdir(), 'budget-test-'));
@@ -13,7 +13,7 @@ function createBudgetFile(contents: string): string {
 
 describe('BudgetManager', () => {
 	it('loads budget profiles and evaluates usage', () => {
-	const budgetFile = createBudgetFile(`
+		const budgetFile = createBudgetFile(`
 budgets:
   quick:
     max_total_req: 5
@@ -38,7 +38,7 @@ budgets:
 
 describe('BudgetLedger', () => {
 	it('tracks usage per tenant and enforces limits', () => {
-	const budgetFile = createBudgetFile(`
+		const budgetFile = createBudgetFile(`
 budgets:
   load:
     max_total_req: 10
@@ -47,13 +47,25 @@ budgets:
 		const manager = new BudgetManager({ budgetFilePath: budgetFile, clock: () => Date.now() });
 		const ledger = new BudgetLedger(manager, () => Date.now());
 
-		const first = ledger.record({ profileName: 'load', tenantKey: 'tenant-a', requestDurationMs: 100 });
+		const first = ledger.record({
+			profileName: 'load',
+			tenantKey: 'tenant-a',
+			requestDurationMs: 100,
+		});
 		expect(first.withinLimits).toBe(true);
 
-		const second = ledger.record({ profileName: 'load', tenantKey: 'tenant-a', requestDurationMs: 400 });
+		const second = ledger.record({
+			profileName: 'load',
+			tenantKey: 'tenant-a',
+			requestDurationMs: 400,
+		});
 		expect(second.withinLimits).toBe(true);
 
-		const third = ledger.record({ profileName: 'load', tenantKey: 'tenant-a', requestDurationMs: 100 });
+		const third = ledger.record({
+			profileName: 'load',
+			tenantKey: 'tenant-a',
+			requestDurationMs: 100,
+		});
 		expect(third.withinLimits).toBe(false);
 		expect(third.reason).toBe('max_total_duration_exceeded');
 	});

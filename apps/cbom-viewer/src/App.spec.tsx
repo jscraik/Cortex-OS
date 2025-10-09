@@ -1,8 +1,8 @@
-import type { CbomDocument } from '@cortex-os/cbom';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.js';
-import { useCbomFile } from './hooks/useCbomFile';
+import type { useCbomFile } from './hooks/useCbomFile';
+
 const hookState: ReturnType<typeof useCbomFile> = {
 	document: null,
 	error: null,
