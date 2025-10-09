@@ -265,6 +265,14 @@ services:
 
 ## 📡 Transport Modes
 
+### Transport precedence
+
+1. `MCP_TRANSPORT=stdio` → use STDIO transport exclusively.
+2. `MCP_TRANSPORT=http|sse|all` or unset → start HTTP/SSE transport (default).
+3. Any other value → log a warning and fall back to HTTP/SSE.
+
+Setting `MCP_TRANSPORT=all` keeps HTTP/SSE as the active transport and logs guidance to run a second STDIO process if needed.
+
 ### STDIO (Local Clients)
 
 For Claude Desktop, local IDEs:

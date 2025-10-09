@@ -53,3 +53,27 @@ export type {
 	SecurityRequirements,
 	ValidationResult,
 } from './validation-types.js';
+
+// Workflow types
+export type {
+	GateId,
+	PhaseId,
+	WorkflowStatus,
+	StepStatus,
+	Priority,
+	EnforcementProfile,
+	GateState,
+	PhaseState,
+	PRPState,
+	TaskState,
+	WorkflowState,
+	QualityMetrics
+} from './types.js';
+
+// Enforcement profile schema and utilities
+export {
+	enforcementProfileSchema,
+	defaults as enforcementProfileDefaults,
+	diffFromDefaults as diffEnforcementProfileFromDefaults
+} from './schemas/enforcement-profile.js';
+export type { EnforcementProfile as EnforcementProfileSchema } from './schemas/enforcement-profile.js';

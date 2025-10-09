@@ -6,6 +6,24 @@ This directory contains the Docusaurus-based documentation website for Cortex-OS
 
 ## Recent Updates
 
+### Unified Workflow Integration - Phase 4 Complete (2025-02-06)
+
+Added comprehensive documentation for the new unified workflow orchestration system:
+
+- **Workflow Orchestrator Package** (`@cortex-os/workflow-orchestrator`)
+  - Complete state machine engine for PRP gates (G0-G7) and task phases (0-5)
+  - CLI commands: init, run, status, profile, insights
+  - SQLite persistence with checkpoint and resume functionality
+  - Property-based testing for state machine correctness
+  - Full brAInwav branding compliance
+
+- **Workflow Dashboard Package** (`@cortex-os/workflow-dashboard`)
+  - Initial structure created (Phase 6 implementation pending)
+  - Prepared for real-time workflow visualization
+
+- **Implementation Status**: Phases 0-4 complete (Test Infrastructure, Schemas, Persistence, Engine, CLI)
+- **Pending Work**: Phases 5-6 (Local Memory Integration, Dashboard UI)
+
 ### Reality Filter Integration
 
 All AI agent documentation has been updated to include Phase 6: Reality Filter, ensuring:

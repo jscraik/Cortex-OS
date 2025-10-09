@@ -117,6 +117,16 @@ All error responses use the structure:
 
 - `DELETE /v1/evidence/{id}` → 204
 
+## Runs
+
+- `GET /v1/runs/{id}/bundle`
+  - Returns a `.pbrun` (ZIP) archive containing `run.json`, `messages.jsonl`, `citations.json`,
+    `policy_decisions.json`, `energy.jsonl`, and `prompts.json` for the requested run.
+  - Requires Bearer authentication; responds with `409 RUN_NOT_FINALIZED` while the run is still active.
+  - Response headers expose metadata including `X-Run-Status`, `X-Run-Started-At`, `X-Run-Finished-At`,
+    and `X-Run-Bundle-Entries`.
+  - Clients should treat the archive as immutable evidence; verify `run.json.id` matches the requested run ID.
+
 ## Notes
 
 - Optimistic locking is enforced for mutable resources using `expectedDigest`.

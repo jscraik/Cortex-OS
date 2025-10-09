@@ -24,7 +24,7 @@ sidebar_label: Runtime Map
 └───────────────┴───────────┴────────────┴─────────────┴───────────────┘
 │
 ┌────────────┐
-│ agents │ ← feature-level agents/sub-agents
+│ agents │ ← feature-level agents/neurons
 │ packages/ │ packages/agents
 │ agents │
 └────────────┘
@@ -96,7 +96,7 @@ Guardrails
 - Only A2A events, DI services, or MCP tools for inter-package comms
 - Filesystem writes restricted to `/var/cortex/tmp` and `./.cortex/tmp`
 - Event catalog centralized in `packages/a2a` with Zod schemas
-- Review-sub-agent gate blocks merges on blockers > 0
+- Review-neuron gate blocks merges on blockers > 0
 
 ---
 

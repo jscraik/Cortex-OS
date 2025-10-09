@@ -55,8 +55,6 @@ export interface SecurityRequirements {
 	maxHigh: number;
 	/** Maximum number of medium vulnerabilities allowed */
 	maxMedium: number;
-	/** Whether to fail on any vulnerabilities */
-	failOnAny: boolean;
 }
 
 /**

@@ -92,8 +92,8 @@ Each PRP phase is an agentic pipeline step with explicit machine-checkable gates
 
 ### Phase 3: Evaluation
 
-- ✅ All sub-agents pass TDD (Red → Green)
-- ✅ Reviewer sub-agent issues ≤ 0 blockers, ≤ 3 majors
+- ✅ All neurons pass TDD (Red → Green)
+- ✅ Reviewer neuron issues ≤ 0 blockers, ≤ 3 majors
 - ✅ A11y, perf, sec budgets all ≥ thresholds
 - ✅ Cerebrum consensus: ship or recycle
 

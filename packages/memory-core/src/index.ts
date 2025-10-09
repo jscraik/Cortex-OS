@@ -38,8 +38,17 @@ export type {
         MemorySearchResult,
         MemoryStats,
         QdrantConfig,
-        RelationshipType
-} from './types.js';
+        RelationshipType,
+        StoreMemoryInput,
+        StoreMemoryResult,
+        SearchMemoryInput,
+        SearchMemoryResult,
+        GetMemoryInput,
+        GetMemoryResult,
+        DeleteMemoryInput,
+        DeleteMemoryResult,
+        HealthStatus
+} from './provider/MemoryProvider.js';
 
 import { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 import { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';

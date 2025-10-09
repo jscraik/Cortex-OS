@@ -30,8 +30,8 @@ See [agents framework](./agents-framework.md) for additional context and compone
 
 - What: Curriculum + code labs + spaced recall + graded reviews.
 - Why: Faster skill acquisition with proofs.
-- Where: `packages/{memories,rag,simlab}` + review-sub-agent gate.
-- How: Plans in ASBR create labs; RAG bundles feed content; review-sub-agent scores; memories schedule recall.
+- Where: `packages/{memories,rag,simlab}` + review-neuron gate.
+- How: Plans in ASBR create labs; RAG bundles feed content; review-neuron scores; memories schedule recall.
 - Result: Evidence-backed learning with recall schedules.
 
 Contracts
@@ -95,7 +95,7 @@ cortex chat --session dev-123 --tools github,jira --bundle repo:cortex-os
 - What: Scaffold → codegen → tests → review → build → SBOM → release.
 - Why: Reproducible, policy-gated pipeline.
 - Where: `packages/{agents,orchestration,model-gateway,mcp}` + CI gates.
-- How: Frontier tools via MCP; review-sub-agent JSON gate; SBOM + signing; ASBR sequences stages.
+- How: Frontier tools via MCP; review-neuron JSON gate; SBOM + signing; ASBR sequences stages.
 - Result: Release artifacts with provenance and blocking gates.
 
 Contracts
@@ -120,7 +120,7 @@ cortex dev:test && cortex dev:review && cortex dev:build && cortex dev:release
 - MCP in/out: `packages/mcp` (clients + outbound servers)
 - A2A bus: `packages/a2a` (typed events, DLQ/outbox via a2a-services)
 - Agents: `packages/agents` call MCP, emit A2A
-- Models: `packages/model-gateway` on <http://127.0.0.1:8081> (`/embeddings`, `/rerank`, `/chat`)
+- Models: `packages/model-gateway` on http://127.0.0.1:8081 (`/embeddings`, `/rerank`, `/chat`)
 
 Note: Feature mounts under `apps/cortex-os/packages/` (evidence, ingest, planner, rag) are coordinated by ASBR; cross-feature imports are forbidden.
 
@@ -192,7 +192,7 @@ Note: Feature mounts under `apps/cortex-os/packages/` (evidence, ingest, planner
 - Events: Central catalog in `packages/a2a/src/events.ts` with Zod schemas.
 - FS writes: Sandbox to `/var/cortex/tmp` and `./.cortex/tmp`.
 - Structure: `.cortex/policy/structure.json` + `tools/structure-guard` pre-commit + CI.
-- Gates: Review-sub-agent policy blocks merge if `blockers.length > 0`.
+- Gates: Review-neuron policy blocks merge if `blockers.length > 0`.
 
 ---
 
@@ -214,7 +214,7 @@ Tutor
 
 1. Ingest sources → build RAG bundle.
 2. Plan labs → emit `tutor.lesson.assigned`.
-3. Complete labs → review-sub-agent → schedule recall.
+3. Complete labs → review-neuron → schedule recall.
 
 PM
 
@@ -244,7 +244,7 @@ Dev (PRP)
 4. Configure memories (encrypted, TTL) and define RAG bundles.
 5. Run `model-gateway` locally and point agents/RAG to it.
 6. Register tools via MCP registry and allowlist capabilities.
-7. Enable CI gates: structure-guard, review-sub-agent policy, SBOM+sign.
+7. Enable CI gates: structure-guard, review-neuron policy, SBOM+sign.
 
 ---
 

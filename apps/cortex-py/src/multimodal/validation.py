@@ -12,7 +12,7 @@ Following CODESTYLE.md:
 from pathlib import Path
 from typing import TypedDict
 
-from .types import Modality, get_max_size_for_modality, get_allowed_formats_for_modality
+from .modalities import Modality, get_max_size_for_modality, get_allowed_formats_for_modality
 
 
 class ValidationError(Exception):
