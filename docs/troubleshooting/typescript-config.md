@@ -318,14 +318,103 @@ pnpm security:scan
 - Migration script
 - Automated validation
 
-⬜ **Phase 3 (Deferred)**: Project References
-- Cross-package type checking
-- Incremental compilation
-- Full build optimization
+✅ **Phase 3A Complete**: Project References (Pragmatic Implementation)
+- Top 10 packages configured with references
+- 63 total references added across key packages
+- Build optimization enabled for gateway packages
+- Incremental compilation supported
+
+⬜ **Phase 3B (Future)**: Monorepo-Wide References
+- Full dependency graph mapping
+- All 87 packages with references
+- Complete incremental build optimization
 
 ---
 
-## Known Limitation: Cross-Package TypeScript Compilation
+## TypeScript Project References (Phase 3A)
+
+**Status**: Phase 3A Complete - Pragmatic Implementation
+
+### What Phase 3A Delivers
+
+Phase 3A adds TypeScript project references to the **top 10 packages** with the most workspace dependencies, enabling:
+- Incremental compilation with `tsc --build`
+- Better IDE performance for cross-package navigation
+- Faster builds by only recompiling changed packages
+- Foundation for full monorepo-wide references (Phase 3B)
+
+### Packages with Project References
+
+The following packages now have project references configured:
+
+1. **@apps/cortex-os** (14 references)
+2. **@cortex-os/gateway** (10 references) 
+3. **@cortex-os/orchestration** (10 references - pre-existing)
+4. **@cortex-os/a2a** (8 references)
+5. **@cortex-os/agents** (7 references)
+6. **@cortex-os/rag** (7 references)
+7. **@cortex-os/memories** (7 references)
+8. **@cortex-os/workflow-orchestrator** (6 references)
+9. **@cortex-os/tdd-coach** (6 references)
+10. **@cortex-os/local-memory** (6 references)
+
+**Total**: 63 project references added across 10 packages
+
+### Using Project References
+
+**Build with project references**:
+```bash
+# Build single package with dependencies
+pnpm tsc --build packages/gateway
+
+# Build and force rebuild
+pnpm tsc --build packages/gateway --force
+
+# Clean build outputs
+pnpm tsc --build packages/gateway --clean
+```
+
+**Check cross-package type errors**:
+```bash
+# Now works without TS6307 errors (in most cases)
+cd packages/gateway
+pnpm tsc --noEmit
+```
+
+### Tools for Managing References
+
+**Map dependencies**:
+```bash
+# See all packages and their dependencies
+pnpm tsx scripts/map-project-references.ts
+
+# See specific package references
+pnpm tsx scripts/map-project-references.ts --package gateway
+```
+
+**Add references automatically**:
+```bash
+# Add to specific package
+pnpm tsx scripts/add-project-references.ts --package my-package
+
+# Add to top 10 packages
+pnpm tsx scripts/add-project-references.ts
+```
+
+### Validation
+
+Run Phase 3 validation tests:
+```bash
+pnpm vitest run tests/scripts/typescript-project-references.test.ts
+```
+
+Tests validate:
+- References are configured correctly
+- Referenced paths exist
+- Referenced packages have `composite: true`
+- Build mode support works
+
+### Known Limitation: Cross-Package TypeScript Compilation
 
 **Phase 3 Status**: Deferred - Foundation ready, implementation when needed
 

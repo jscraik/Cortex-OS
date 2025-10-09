@@ -19,5 +19,25 @@
     "dist",
     "node_modules",
     "**/*.test.ts"
+  ],
+  "references": [
+    {
+      "path": "../a2a/a2a-contracts"
+    },
+    {
+      "path": "../a2a/a2a-core"
+    },
+    {
+      "path": "../a2a/a2a-transport"
+    },
+    {
+      "path": "../a2a"
+    },
+    {
+      "path": "../memories"
+    },
+    {
+      "path": "../orchestration"
+    }
   ]
 }

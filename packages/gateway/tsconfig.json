@@ -19,5 +19,37 @@
     "**/*.spec.ts",
     "tests/**/*",
     "scripts/**/*"
+  ],
+  "references": [
+    {
+      "path": "../a2a"
+    },
+    {
+      "path": "../a2a/a2a-contracts"
+    },
+    {
+      "path": "../a2a/a2a-core"
+    },
+    {
+      "path": "../a2a/a2a-transport"
+    },
+    {
+      "path": "../../libs/typescript/contracts"
+    },
+    {
+      "path": "../../libs/typescript/lib"
+    },
+    {
+      "path": "../mcp-core"
+    },
+    {
+      "path": "../mcp-bridge"
+    },
+    {
+      "path": "../rag"
+    },
+    {
+      "path": "../simlab"
+    }
   ]
 }

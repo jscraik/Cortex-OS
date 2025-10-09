@@ -1,0 +1,41 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "../proof-artifacts/**"
+  ],
+  "references": [
+    {
+      "path": "../a2a"
+    },
+    {
+      "path": "../kernel"
+    },
+    {
+      "path": "../memories"
+    },
+    {
+      "path": "../memory-core"
+    },
+    {
+      "path": "../prp-runner"
+    },
+    {
+      "path": "../workflow-common"
+    }
+  ]
+}

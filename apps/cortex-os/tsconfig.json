@@ -18,5 +18,49 @@
     "moduleResolution": "NodeNext",
     "ignoreDeprecations": "5.0",
     "module": "NodeNext"
-  }
+  },
+  "references": [
+    {
+      "path": "../../packages/a2a"
+    },
+    {
+      "path": "../../packages/a2a/a2a-contracts"
+    },
+    {
+      "path": "../../packages/a2a/a2a-core"
+    },
+    {
+      "path": "../../packages/a2a/a2a-events"
+    },
+    {
+      "path": "../../packages/a2a/a2a-transport"
+    },
+    {
+      "path": "../../packages/agent-toolkit"
+    },
+    {
+      "path": "../../packages/cortex-sec"
+    },
+    {
+      "path": "../../packages/mcp-core"
+    },
+    {
+      "path": "../../packages/memories"
+    },
+    {
+      "path": "../../packages/orchestration"
+    },
+    {
+      "path": "../../packages/rag"
+    },
+    {
+      "path": "../../packages/simlab"
+    },
+    {
+      "path": "../../libs/typescript/utils"
+    },
+    {
+      "path": "../../packages/tdd-coach"
+    }
+  ]
 }

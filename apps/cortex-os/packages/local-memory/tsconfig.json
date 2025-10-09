@@ -40,5 +40,25 @@
     "src/auth/**/*",
     "src/retrieval/**/*"
   ],
-  "extends": "../../../../tsconfig.base.json"
+  "extends": "../../../../tsconfig.base.json",
+  "references": [
+    {
+      "path": "../../../../packages/memories"
+    },
+    {
+      "path": "../../../../libs/typescript/telemetry"
+    },
+    {
+      "path": "../../../../libs/typescript/contracts"
+    },
+    {
+      "path": "../../../../libs/typescript/utils"
+    },
+    {
+      "path": "../../../../packages/memory-core"
+    },
+    {
+      "path": "../../../../packages/tool-spec"
+    }
+  ]
 }

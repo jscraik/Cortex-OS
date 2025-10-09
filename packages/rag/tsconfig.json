@@ -21,5 +21,28 @@
     "dist",
     "node_modules",
     "src/integrations/archon-mcp.ts"
+  ],
+  "references": [
+    {
+      "path": "../../libs/typescript/contracts"
+    },
+    {
+      "path": "../model-gateway"
+    },
+    {
+      "path": "../agents"
+    },
+    {
+      "path": "../observability"
+    },
+    {
+      "path": "../a2a/a2a-contracts"
+    },
+    {
+      "path": "../a2a/a2a-core"
+    },
+    {
+      "path": "../a2a/a2a-transport"
+    }
   ]
 }

@@ -26,5 +26,31 @@
     "node_modules",
     "dist",
     "**/*.test.ts"
+  ],
+  "references": [
+    {
+      "path": "a2a-contracts"
+    },
+    {
+      "path": "a2a-core"
+    },
+    {
+      "path": "a2a-events"
+    },
+    {
+      "path": "a2a-transport"
+    },
+    {
+      "path": "../../libs/typescript/contracts"
+    },
+    {
+      "path": "../observability"
+    },
+    {
+      "path": "../../libs/typescript/telemetry"
+    },
+    {
+      "path": "../../libs/typescript/utils"
+    }
   ]
 }
