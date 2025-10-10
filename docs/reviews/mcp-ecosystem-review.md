@@ -9,7 +9,7 @@
 ## 1. Author Preparation
 
 - [ ] **Self-review completed?** No self-review evidence accompanies the MCP packages; please attach a runbook or summary similar to other reviews under `docs/reviews/`.  
-- [x] **Small, focused change?** MCP ecosystem remains modular with separate packages (`mcp-server`, `mcp`, `mcp-registry`) and avoids cross-domain imports in violation of governance rules.【F:packages/mcp-server/src/index.ts†L3-L207】【F:packages/mcp/src/server.ts†L1-L420】
+- [x] **Small, focused change?** MCP ecosystem remains modular with separate packages (`mcp-server`, `mcp`, `mcp-registry`) and avoids cross-domain imports that would violate governance rules.【F:packages/mcp-server/src/index.ts†L3-L207】【F:packages/mcp/src/server.ts†L1-L420】
 
 ## 2. Implementation & Design
 
