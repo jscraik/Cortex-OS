@@ -50,7 +50,7 @@ async def test_metrics_exposed(settings: Settings) -> None:
     async with build_client(app) as client:
         response = await client.get("/metrics", headers={"Authorization": f"Bearer {settings.api_key}"})
         assert response.status_code == 200
-        assert "brainwav_mcp_connector_proxy_up" in response.text
+        assert "brAInwav_mcp_connector_proxy_up" in response.text
 
 
 @pytest.mark.asyncio
