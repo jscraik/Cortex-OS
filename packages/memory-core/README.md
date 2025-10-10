@@ -182,3 +182,12 @@ Each phase includes:
 6. **Agent-Toolkit Ready** - Tools path resolution working
 7. **Memory Management** - Token budget enforcement implemented
 8. **Documentation** - Comprehensive docs for architecture, deployment, and usage
+
+## Definition of Done
+- [ ] CRUD/search; retention; export/import; vector adapters (local first).
+
+## Test Plan
+- [ ] Deterministic IDs; search recall smoke; retention policy unit tests.
+
+> See `CHECKLIST.cortex-os.md` for the full CI gate reference.
+

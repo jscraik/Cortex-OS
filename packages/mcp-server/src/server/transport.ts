@@ -74,5 +74,20 @@ export async function startTransport(
 		return startStdio(server, logger);
 	}
 
+	const apiKey = process.env.MCP_API_KEY?.trim();
+	if (!apiKey) {
+		logger.error(
+			createBrandedLog('http_auth_missing', {
+				host: config.host,
+				port: config.port,
+				endpoint: config.httpEndpoint,
+			}),
+			`${BRAND.prefix} HTTP transport requires MCP_API_KEY`,
+		);
+		throw new Error(
+			'[brAInwav] MCP_API_KEY is required for HTTP transport. Set MCP_API_KEY or configure MCP_TRANSPORT=stdio to continue.',
+		);
+	}
+
 	return startHttp(server, logger, config);
 }

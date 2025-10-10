@@ -1,5 +1,5 @@
 import type { MCPNotificationHandler } from '../notifications/handlers.js';
-import type { Server } from '../server.js';
+import type { Server, ServerLogger } from '../server.js';
 
 /**
  * Manual refresh tool parameters
@@ -30,10 +30,12 @@ export interface RefreshResult {
 export class ManualRefreshTool {
 	private server: Server;
 	private notificationHandler: MCPNotificationHandler;
+	private logger: ServerLogger;
 
 	constructor(server: Server, notificationHandler: MCPNotificationHandler) {
 		this.server = server;
 		this.notificationHandler = notificationHandler;
+		this.logger = server.getLogger();
 	}
 
 	/**
@@ -213,15 +215,13 @@ export class ManualRefreshTool {
 	 * Log structured events with brAInwav branding
 	 */
 	private logStructured(event: string, data: any): void {
-		const logEntry = {
+		this.logger.info({
 			timestamp: new Date().toISOString(),
 			event,
 			brand: 'brAInwav',
 			service: 'cortex-os-mcp-refresh-tool',
 			...data,
-		};
-
-		console.log(JSON.stringify(logEntry));
+		});
 	}
 }
 

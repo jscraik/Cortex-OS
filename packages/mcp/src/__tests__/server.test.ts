@@ -6,12 +6,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Server } from '../server.js';
 
+const createLoggerStub = () => ({
+	info: vi.fn(),
+	warn: vi.fn(),
+	error: vi.fn(),
+	debug: vi.fn(),
+});
+
 describe('Server', () => {
 	let server: Server;
+	let logger: ReturnType<typeof createLoggerStub>;
 
 	beforeEach(() => {
-		server = new Server();
 		vi.clearAllMocks();
+		logger = createLoggerStub();
+		server = new Server({ logger });
 	});
 
 	describe('Basic Server Operations', () => {
@@ -315,8 +324,6 @@ describe('Server', () => {
 
 	describe('Structured Logging', () => {
 		it('should log structured events with brAInwav branding', () => {
-			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
 			const tool = {
 				name: 'test-tool',
 				description: 'Test tool',
@@ -326,9 +333,9 @@ describe('Server', () => {
 
 			server.registerTool(tool);
 
-			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"brand":"brAInwav"'));
-
-			consoleSpy.mockRestore();
+			expect(logger.info).toHaveBeenCalledWith(
+				expect.objectContaining({ brand: 'brAInwav', service: 'cortex-os-mcp-server' }),
+			);
 		});
 	});
 

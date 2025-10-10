@@ -135,6 +135,82 @@ else
   echo "✅ PASS: No references to removed adapters"
 fi
 
+# Check 7: Runtime changes must include memory log updates with LocalMemoryEntryId
+echo ""
+echo "📋 Checking memory decision log coverage..."
+
+determine_base_commit() {
+  if [ -n "${NX_BASE:-}" ]; then
+    echo "$NX_BASE"
+    return
+  fi
+
+  if git rev-parse --verify origin/main >/dev/null 2>&1; then
+    echo "origin/main"
+    return
+  fi
+
+  if git rev-parse --verify main >/dev/null 2>&1; then
+    echo "main"
+    return
+  fi
+
+  git rev-parse HEAD^ 2>/dev/null || echo ""
+}
+
+BASE_COMMIT="$(determine_base_commit)"
+
+# Additional fallbacks for CI contexts where the base ref is unavailable or matches HEAD
+if [ -z "$BASE_COMMIT" ] && [ -n "${GITHUB_EVENT_BEFORE:-}" ]; then
+  if git rev-parse --verify "${GITHUB_EVENT_BEFORE}" >/dev/null 2>&1; then
+    BASE_COMMIT="${GITHUB_EVENT_BEFORE}"
+  fi
+fi
+
+if [ -n "$BASE_COMMIT" ]; then
+  BASE_HASH="$(git rev-parse "$BASE_COMMIT" 2>/dev/null || true)"
+  HEAD_HASH="$(git rev-parse HEAD 2>/dev/null || true)"
+
+  if [ -n "$BASE_HASH" ] && [ -n "$HEAD_HASH" ] && [ "$BASE_HASH" = "$HEAD_HASH" ]; then
+    PREVIOUS_HEAD="$(git rev-parse "${HEAD_HASH}^" 2>/dev/null || true)"
+    if [ -n "$PREVIOUS_HEAD" ]; then
+      BASE_COMMIT="$PREVIOUS_HEAD"
+    else
+      BASE_COMMIT=""
+    fi
+  elif [ -z "$BASE_HASH" ]; then
+    BASE_COMMIT=""
+  fi
+fi
+
+if [ -z "$BASE_COMMIT" ]; then
+  echo "⚠️  INFO: Unable to determine base commit; skipping memory decision log check"
+else
+  CHANGED_FILES=$(git diff --name-only "$BASE_COMMIT"...HEAD || true)
+
+  RUNTIME_CHANGED=$(echo "$CHANGED_FILES" | grep -E '^(apps|packages|services|servers|libs)/.+\.(ts|tsx|js|jsx|mjs|cjs|py|rs|go|java|cs|swift|kt|kts|sql)$' || true)
+
+  if [ -n "$RUNTIME_CHANGED" ]; then
+    if ! echo "$CHANGED_FILES" | grep -qx ".github/instructions/memories.instructions.md"; then
+      echo "❌ FAIL: Runtime code changed without updating .github/instructions/memories.instructions.md"
+      ERRORS=$((ERRORS + 1))
+    else
+      LOG_DIFF=$(git diff "$BASE_COMMIT"...HEAD -- .github/instructions/memories.instructions.md || true)
+      if ! echo "$LOG_DIFF" | grep -E '^\+.*LocalMemoryEntryId:\s*\S' >/dev/null; then
+        echo "❌ FAIL: Memory log update is missing a LocalMemoryEntryId reference"
+        ERRORS=$((ERRORS + 1))
+      elif echo "$LOG_DIFF" | grep -E '^\+.*LocalMemoryEntryId:\s*(TBD|todo|pending|N/?A)' >/dev/null; then
+        echo "❌ FAIL: LocalMemoryEntryId must reference the persisted entry (not TBD/todo)"
+        ERRORS=$((ERRORS + 1))
+      else
+        echo "✅ PASS: Memory log updated with LocalMemoryEntryId"
+      fi
+    fi
+  else
+    echo "✅ PASS: No runtime code changes detected"
+  fi
+fi
+
 # Summary
 echo ""
 echo "==========================================="

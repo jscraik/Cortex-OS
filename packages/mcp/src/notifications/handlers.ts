@@ -6,7 +6,7 @@
 import { emitPromptsListChanged } from '../capabilities/prompts.js';
 import { emitResourcesListChanged, emitResourcesUpdated } from '../capabilities/resources.js';
 import { emitToolsListChanged } from '../capabilities/tools.js';
-import type { Server } from '../server.js';
+import type { Server, ServerLogger } from '../server.js';
 
 /**
  * Notification event types
@@ -27,6 +27,8 @@ export interface NotificationEvent {
 	correlationId?: string;
 }
 
+const BACKPRESSURE_WARNING_SIZE = 3;
+
 /**
  * MCP Notification Handler class
  * Manages emission of all MCP protocol notifications
@@ -35,9 +37,12 @@ export class MCPNotificationHandler {
 	private server: Server;
 	private eventQueue: NotificationEvent[] = [];
 	private processing = false;
+	private logger: ServerLogger;
+	private backpressureNotified = false;
 
 	constructor(server: Server) {
 		this.server = server;
+		this.logger = server.getLogger();
 	}
 
 	/**
@@ -102,14 +107,26 @@ export class MCPNotificationHandler {
 	 */
 	private async queueAndProcess(event: NotificationEvent): Promise<void> {
 		this.eventQueue.push(event);
-		this.logStructured('notification_queued', {
+		this.log('notification_queued', 'info', {
 			type: event.type,
 			data: event.data,
 			queueSize: this.eventQueue.length,
+			correlationId: event.correlationId,
 		});
 
+		if (this.eventQueue.length >= BACKPRESSURE_WARNING_SIZE && !this.backpressureNotified) {
+			this.backpressureNotified = true;
+			this.log('notification_backpressure', 'warn', {
+				size: this.eventQueue.length,
+				type: event.type,
+			});
+		}
+
 		if (!this.processing) {
-			await this.processQueue();
+			void this.processQueue().catch((error) => {
+				const message = error instanceof Error ? error.message : String(error);
+				this.log('notification_processing_failed', 'error', { error: message });
+			});
 		}
 	}
 
@@ -122,6 +139,7 @@ export class MCPNotificationHandler {
 		}
 
 		this.processing = true;
+		this.backpressureNotified = false;
 
 		try {
 			while (this.eventQueue.length > 0) {
@@ -139,7 +157,7 @@ export class MCPNotificationHandler {
 	 * Process individual notification event
 	 */
 	private async processNotification(event: NotificationEvent): Promise<void> {
-		this.logStructured('notification_processing', {
+		this.log('notification_processing', 'debug', {
 			type: event.type,
 			data: event.data,
 			correlationId: event.correlationId,
@@ -151,15 +169,22 @@ export class MCPNotificationHandler {
 			params: event.data || {},
 		};
 
-		// In a real implementation, this would use the server's transport
-		// For now, we'll emit through the server's notification system
-		this.server.emitNotification?.(notification.method, notification.params);
-
-		this.logStructured('notification_emitted', {
-			type: event.type,
-			method: notification.method,
-			params: notification.params,
-		});
+		try {
+			await this.server.emitNotification?.(notification.method, notification.params);
+			this.log('notification_emitted', 'info', {
+				type: event.type,
+				method: notification.method,
+				params: notification.params,
+				correlationId: event.correlationId,
+			});
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			this.log('notification_processing_failed', 'error', {
+				type: event.type,
+				correlationId: event.correlationId,
+				error: message,
+			});
+		}
 	}
 
 	/**
@@ -183,7 +208,7 @@ export class MCPNotificationHandler {
 	/**
 	 * Log structured events with brAInwav branding
 	 */
-	private logStructured(event: string, data: any): void {
+	private log(event: string, level: 'info' | 'warn' | 'error' | 'debug', data?: any): void {
 		const logEntry = {
 			timestamp: new Date().toISOString(),
 			event,
@@ -191,8 +216,7 @@ export class MCPNotificationHandler {
 			service: 'cortex-os-mcp-notification-handler',
 			...data,
 		};
-
-		console.log(JSON.stringify(logEntry));
+		this.logger[level](logEntry);
 	}
 
 	/**
@@ -215,7 +239,7 @@ export class MCPNotificationHandler {
 		const clearedCount = this.eventQueue.length;
 		this.eventQueue = [];
 
-		this.logStructured('notification_queue_cleared', {
+		this.log('notification_queue_cleared', 'info', {
 			clearedCount,
 		});
 	}

@@ -571,3 +571,12 @@ pnpm test
 [![AI Orchestration](https://img.shields.io/badge/AI-orchestration-green)](https://github.com/cortex-os/cortex-os)
 
 </div>
+
+## Definition of Done
+- [ ] LangGraph graphs for golden path + incident path; replayable runs.
+
+## Test Plan
+- [ ] Determinism guard (same inputs → same outputs); cancellation & resume.
+
+> See `CHECKLIST.cortex-os.md` for the full CI gate reference.
+

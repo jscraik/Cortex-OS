@@ -39,3 +39,14 @@ This app wires the `@cortex-os/memories` service using env-driven factories for 
   - `MEMORIES_DECAY_ENABLED`, `MEMORIES_DECAY_HALFLIFE_MS`
 
 The app’s `provideMemories()` uses these envs via the memories package factories.
+
+## Definition of Done
+- [ ] Boots ASBR; wires MCP/A2A/Memory/RAG; exposes REST control plane.
+- [ ] One-command dev up; graceful shutdown; provenance artifacts saved.
+
+## Test Plan
+- [ ] Golden path E2E.
+- [ ] Incident path E2E.
+
+> See `CHECKLIST.cortex-os.md` for the full CI gate reference.
+

@@ -746,3 +746,12 @@ pnpm build
 
 [![TypeScript](https://img.shields.io/badge/made%20with-TypeScript-blue)](https://www.typescriptlang.org/)
 [![CloudEvents](https://img.shields.io/badge/powered%20by-CloudEvents-green)](https://cloudevents.io/)
+
+## Definition of Done
+- [ ] Centralized bus; topics/intents; at-least-once delivery; dead-letter queue.
+
+## Test Plan
+- [ ] Fan-out to N agents; retry/backoff; poison message handling.
+
+> See `CHECKLIST.cortex-os.md` for the full CI gate reference.
+

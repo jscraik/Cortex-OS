@@ -1007,3 +1007,12 @@ Built with 💙 TypeScript, 🧠 Python, and ❤️ by the Cortex-OS Team
 [![RAG](https://img.shields.io/badge/architecture-RAG-green)](https://github.com/cortex-os/cortex-os)
 
 </div>
+
+## Definition of Done
+- [ ] Config-driven pipelines; snapshotable outputs; retrieval post-processing.
+
+## Test Plan
+- [ ] Ingest/index/query golden path; perf budget documented.
+
+> See `CHECKLIST.cortex-os.md` for the full CI gate reference.
+

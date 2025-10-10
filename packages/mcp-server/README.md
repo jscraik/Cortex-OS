@@ -1,4 +1,47 @@
-# brAInwav Cortex MCP Server
+# mcp-server
+Minimal FastMCP v3 server exposing HTTP/SSE; loads the MCP registry; no business logic.
+
+## Quickstart
+```bash
+pnpm -w --filter packages/mcp-server build
+NO_AUTH=false MCP_API_KEY=[YOUR_KEY] pnpm -w --filter packages/mcp-server dev
+```
+
+### Health & Metrics
+- `GET /health` → `200 OK`
+- `GET /metrics` → Prometheus text
+
+### MCP Endpoints
+- `POST /mcp` (protocol)
+- `GET  /sse`  (server-sent events)
+
+## Cloudflare Tunnel
+- Public URL → local `http://localhost:[PORT]`
+- Lock to Host allowlist and `Authorization: Bearer [YOUR_KEY]` (or `x-api-key`), per server config.
+
+## Security
+- Default **requires API key**. Set `NO_AUTH=true` only in local dev.
+- Validate headers timing-safely; never log secrets.
+
+## Definition of Done
+- `/mcp`, `/sse`, `/health`, `/metrics` green; API-key auth enforced; registry loads tools/resources/prompts; Cloudflare probe OK.
+
+## Test Plan
+```bash
+# Health
+curl -i $URL/health
+# Auth (expect 401/403 without key)
+curl -i $URL/mcp
+# Auth (expect 200)
+curl -i -H "Authorization: Bearer $MCP_API_KEY" $URL/health
+```
+
+## Observability
+- Pino-style logs; OTEL exporter; counters for request totals and per-tool invocations.
+
+---
+
+### Legacy Snapshot: brAInwav Cortex MCP Server
 
 **Status: ✅ Production Ready with Pieces LTM Integration**
 

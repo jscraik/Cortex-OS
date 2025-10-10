@@ -269,3 +269,13 @@ Other packages (e.g. registry, bridge) import this schema to avoid drift. Adding
 4. Updating README matrices.
 
 Apache 2.0
+
+## Definition of Done
+- [ ] Schemas for Tool/Resource/Prompt + error taxonomy.
+- [ ] Typed client for ASBR ↔ MCP with retries/backoff.
+
+## Test Plan
+- [ ] Schema validation, error mapping, retry logic.
+
+> See `CHECKLIST.cortex-os.md` for the full CI gate reference.
+

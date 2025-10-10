@@ -1,0 +1,33 @@
+name: Memory Enforcement
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  memory-enforce:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.18.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Enforce memory logging
+        env:
+          NX_BASE: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+        run: pnpm ci:memory:enforce

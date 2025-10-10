@@ -215,3 +215,12 @@ Runtime behavior:
 3. If `fallback_model` is set on the subagent, it overrides the tier-based selection.
 
 See `tests/ollama-specialization-tier.test.ts` for an example asserting `documentation` specialization uses the `balanced` tier when MLX is unavailable.
+
+## Definition of Done
+- [ ] Role-scoped agents; JSON-schema I/O; reviewer/guardian modes block on failures.
+
+## Test Plan
+- [ ] Evidence pointers (file+lines/URL) required; policy gates honored.
+
+> See `CHECKLIST.cortex-os.md` for the full CI gate reference.
+

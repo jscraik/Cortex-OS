@@ -12,19 +12,30 @@ import {
 } from '../notifications/handlers.js';
 import { Server } from '../server.js';
 
+const createLoggerStub = () => ({
+	info: vi.fn(),
+	warn: vi.fn(),
+	error: vi.fn(),
+	debug: vi.fn(),
+});
+
+const getLogs = (
+	logger: ReturnType<typeof createLoggerStub>,
+	level: keyof ReturnType<typeof createLoggerStub>,
+) => logger[level].mock.calls.map(([entry]) => entry);
+
 describe('MCPNotificationHandler', () => {
 	let server: Server;
 	let handler: MCPNotificationHandler;
-	let consoleSpy: any;
+	let logger: ReturnType<typeof createLoggerStub>;
 
 	beforeEach(() => {
-		server = new Server();
+		logger = createLoggerStub();
+		server = new Server({ logger });
 		handler = createMCPNotificationHandler(server);
-		consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 	});
 
 	afterEach(() => {
-		consoleSpy.mockRestore();
 		vi.clearAllMocks();
 	});
 
@@ -32,47 +43,58 @@ describe('MCPNotificationHandler', () => {
 		it('should emit prompts listChanged notification', async () => {
 			await handler.emitPromptsListChanged('test-correlation');
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"event":"notification_queued"'),
-			);
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"prompts.list_changed"'),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ event: 'notification_queued', type: 'prompts.list_changed' }),
+					expect.objectContaining({ event: 'notification_emitted', type: 'prompts.list_changed' }),
+				]),
 			);
 		});
 
 		it('should emit resources listChanged notification', async () => {
 			await handler.emitResourcesListChanged('test-correlation');
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"event":"notification_queued"'),
-			);
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"resources.list_changed"'),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ event: 'notification_queued', type: 'resources.list_changed' }),
+					expect.objectContaining({
+						event: 'notification_emitted',
+						type: 'resources.list_changed',
+					}),
+				]),
 			);
 		});
 
 		it('should emit resources updated notification', async () => {
 			await handler.emitResourcesUpdated('resource://test/example', 'test-correlation');
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"event":"notification_queued"'),
-			);
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.objectContaining({
-					type: 'resources.updated',
-					data: { uri: 'resource://test/example' },
-				}),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						event: 'notification_queued',
+						type: 'resources.updated',
+						data: { uri: 'resource://test/example' },
+					}),
+					expect.objectContaining({
+						event: 'notification_emitted',
+						type: 'resources.updated',
+					}),
+				]),
 			);
 		});
 
 		it('should emit tools listChanged notification', async () => {
 			await handler.emitToolsListChanged('test-correlation');
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"event":"notification_queued"'),
-			);
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"tools.list_changed"'),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ event: 'notification_queued', type: 'tools.list_changed' }),
+					expect.objectContaining({ event: 'notification_emitted', type: 'tools.list_changed' }),
+				]),
 			);
 		});
 	});
@@ -157,18 +179,41 @@ describe('MCPNotificationHandler', () => {
 			await Promise.all(promises);
 		});
 
+		it('should log back-pressure warning when queue exceeds threshold', async () => {
+			const mockEmitNotification = vi
+				.fn()
+				.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 100)));
+			server.emitNotification = mockEmitNotification;
+
+			await Promise.all([
+				handler.emitPromptsListChanged('bp-1'),
+				handler.emitResourcesListChanged('bp-2'),
+				handler.emitToolsListChanged('bp-3'),
+				handler.emitPromptsListChanged('bp-4'),
+				handler.emitResourcesUpdated('resource://bp/1', 'bp-5'),
+			]);
+
+			await new Promise((resolve) => setTimeout(resolve, 20));
+
+			const warnLogs = getLogs(logger, 'warn');
+			expect(warnLogs).toEqual(
+				expect.arrayContaining([expect.objectContaining({ event: 'notification_backpressure' })]),
+			);
+		});
+
 		it('should clear notification queue', () => {
 			handler.clearQueue();
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"event":"notification_queue_cleared"'),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([expect.objectContaining({ event: 'notification_queue_cleared' })]),
 			);
 		});
 	});
 
 	describe('Notification Method Mapping', () => {
 		it('should map notification types to correct MCP methods', () => {
-			const handler = handler as any;
+			const handlerUnderTest = handler as any;
 			const testCases: [NotificationEventType, string][] = [
 				['prompts.list_changed', 'notifications/prompts/list_changed'],
 				['resources.list_changed', 'notifications/resources/list_changed'],
@@ -177,16 +222,16 @@ describe('MCPNotificationHandler', () => {
 			];
 
 			testCases.forEach(([type, expectedMethod]) => {
-				const method = handler.getNotificationMethod(type);
+				const method = handlerUnderTest.getNotificationMethod(type);
 				expect(method).toBe(expectedMethod);
 			});
 		});
 
 		it('should throw error for unknown notification types', () => {
-			const handler = handler as any;
+			const handlerUnderTest = handler as any;
 
 			expect(() => {
-				handler.getNotificationMethod('unknown.type' as NotificationEventType);
+				handlerUnderTest.getNotificationMethod('unknown.type' as NotificationEventType);
 			}).toThrow('Unknown notification type: unknown.type');
 		});
 	});
@@ -201,6 +246,27 @@ describe('MCPNotificationHandler', () => {
 
 			// Wait for processing attempt
 			await new Promise((resolve) => setTimeout(resolve, 10));
+		});
+
+		it('logs processing errors with correlation identifiers', async () => {
+			const mockEmitNotification = vi
+				.fn()
+				.mockRejectedValue(new Error('notification pipeline error'));
+			server.emitNotification = mockEmitNotification;
+
+			await handler.emitResourcesUpdated('resource://error', 'corr-error');
+			await new Promise((resolve) => setTimeout(resolve, 10));
+
+			const errorLogs = getLogs(logger, 'error');
+			expect(errorLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						event: 'notification_processing_failed',
+						correlationId: 'corr-error',
+						error: 'notification pipeline error',
+					}),
+				]),
+			);
 		});
 
 		it('should handle processing errors without affecting queue', async () => {
@@ -230,14 +296,20 @@ describe('MCPNotificationHandler', () => {
 		it('should log with brAInwav branding', async () => {
 			await handler.emitPromptsListChanged('test-correlation');
 
-			expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"brand":"brAInwav"'));
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([expect.objectContaining({ brand: 'brAInwav' })]),
+			);
 		});
 
 		it('should include service name in logs', async () => {
 			await handler.emitResourcesListChanged('test-correlation');
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"service":"cortex-os-mcp-notification-handler"'),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ service: 'cortex-os-mcp-notification-handler' }),
+				]),
 			);
 		});
 
@@ -245,8 +317,9 @@ describe('MCPNotificationHandler', () => {
 			const correlationId = 'test-correlation-123';
 			await handler.emitToolsListChanged(correlationId);
 
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining(`"correlationId":"${correlationId}"`),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([expect.objectContaining({ correlationId })]),
 			);
 		});
 
@@ -257,21 +330,22 @@ describe('MCPNotificationHandler', () => {
 			await handler.emitPromptsListChanged('test-correlation');
 
 			// Should log queuing
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"event":"notification_queued"'),
+			const initialLogs = getLogs(logger, 'info');
+			expect(initialLogs).toEqual(
+				expect.arrayContaining([expect.objectContaining({ event: 'notification_queued' })]),
 			);
 
-			// Wait for processing
+			// Wait for processing to log debug + emitted events
 			await new Promise((resolve) => setTimeout(resolve, 10));
 
-			// Should log processing
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"event":"notification_processing"'),
+			const debugLogs = getLogs(logger, 'debug');
+			expect(debugLogs).toEqual(
+				expect.arrayContaining([expect.objectContaining({ event: 'notification_processing' })]),
 			);
 
-			// Should log emission
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"event":"notification_emitted"'),
+			const emittedLogs = getLogs(logger, 'info');
+			expect(emittedLogs).toEqual(
+				expect.arrayContaining([expect.objectContaining({ event: 'notification_emitted' })]),
 			);
 		});
 	});
@@ -289,16 +363,12 @@ describe('MCPNotificationHandler', () => {
 describe('Notifications Utility', () => {
 	let server: Server;
 	let notificationHandler: MCPNotificationHandler;
-	let consoleSpy: any;
+	let logger: ReturnType<typeof createLoggerStub>;
 
 	beforeEach(() => {
-		server = new Server();
+		logger = createLoggerStub();
+		server = new Server({ logger });
 		notificationHandler = createMCPNotificationHandler(server);
-		consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-	});
-
-	afterEach(() => {
-		consoleSpy.mockRestore();
 	});
 
 	describe('Notifications.emitAllListChanged', () => {
@@ -308,14 +378,13 @@ describe('Notifications Utility', () => {
 			await Notifications.emitAllListChanged(notificationHandler, correlationId);
 
 			// Verify all were queued
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"prompts.list_changed"'),
-			);
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"resources.list_changed"'),
-			);
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"tools.list_changed"'),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ type: 'prompts.list_changed' }),
+					expect.objectContaining({ type: 'resources.list_changed' }),
+					expect.objectContaining({ type: 'tools.list_changed' }),
+				]),
 			);
 		});
 
@@ -323,14 +392,13 @@ describe('Notifications Utility', () => {
 			await Notifications.emitAllListChanged(notificationHandler);
 
 			// Should still emit all notifications
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"prompts.list_changed"'),
-			);
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"resources.list_changed"'),
-			);
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"tools.list_changed"'),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ type: 'prompts.list_changed' }),
+					expect.objectContaining({ type: 'resources.list_changed' }),
+					expect.objectContaining({ type: 'tools.list_changed' }),
+				]),
 			);
 		});
 	});
@@ -346,35 +414,26 @@ describe('Notifications Utility', () => {
 
 			await Notifications.emitResourceChanges(notificationHandler, uris, correlationId);
 
-			// Should emit listChanged
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"resources.list_changed"'),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ type: 'resources.list_changed' }),
+					...uris.map((uri) =>
+						expect.objectContaining({ type: 'resources.updated', data: { uri } }),
+					),
+				]),
 			);
-
-			// Should emit individual updates for each URI
-			uris.forEach((uri) => {
-				expect(consoleSpy).toHaveBeenCalledWith(
-					expect.objectContaining({
-						type: 'resources.updated',
-						data: { uri },
-					}),
-				);
-			});
 		});
 
 		it('should handle empty URI list', async () => {
 			await Notifications.emitResourceChanges(notificationHandler, [], 'test-correlation');
 
-			// Should still emit listChanged but no individual updates
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"resources.list_changed"'),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([expect.objectContaining({ type: 'resources.list_changed' })]),
 			);
-
-			// Verify no individual updates were emitted
-			const updateCalls = consoleSpy.mock.calls.filter((call) =>
-				call[0].includes('"type":"resources.updated"'),
-			);
-			expect(updateCalls).toHaveLength(0);
+			const updateLogs = infoLogs.filter((entry) => entry.type === 'resources.updated');
+			expect(updateLogs).toHaveLength(0);
 		});
 
 		it('should handle single URI', async () => {
@@ -383,17 +442,12 @@ describe('Notifications Utility', () => {
 
 			await Notifications.emitResourceChanges(notificationHandler, [uri], correlationId);
 
-			// Should emit listChanged
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.stringContaining('"type":"resources.list_changed"'),
-			);
-
-			// Should emit single update
-			expect(consoleSpy).toHaveBeenCalledWith(
-				expect.objectContaining({
-					type: 'resources.updated',
-					data: { uri },
-				}),
+			const infoLogs = getLogs(logger, 'info');
+			expect(infoLogs).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({ type: 'resources.list_changed' }),
+					expect.objectContaining({ type: 'resources.updated', data: { uri } }),
+				]),
 			);
 		});
 	});
@@ -401,81 +455,65 @@ describe('Notifications Utility', () => {
 
 describe('Integration Scenarios', () => {
 	it('should handle high-volume notification emissions', async () => {
-		const server = new Server();
+		const logger = createLoggerStub();
+		const server = new Server({ logger });
 		const handler = createMCPNotificationHandler(server);
-		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-		// Mock server for faster processing
 		const mockEmitNotification = vi.fn();
 		server.emitNotification = mockEmitNotification;
 
-		// Emit many notifications
-		const notificationPromises = [];
+		const notificationPromises: Array<Promise<void>> = [];
 		for (let i = 0; i < 100; i++) {
 			notificationPromises.push(handler.emitPromptsListChanged(`test-${i}`));
 		}
 
-		// Wait for all to complete
 		await Promise.all(notificationPromises);
+		await new Promise((resolve) => setTimeout(resolve, 100));
 
-		// Verify all were processed
 		expect(mockEmitNotification).toHaveBeenCalledTimes(100);
-
-		consoleSpy.mockRestore();
 	});
 
 	it('should handle mixed notification types in sequence', async () => {
-		const server = new Server();
+		const logger = createLoggerStub();
+		const server = new Server({ logger });
 		const handler = createMCPNotificationHandler(server);
-		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
 		const mockEmitNotification = vi.fn();
 		server.emitNotification = mockEmitNotification;
 
-		// Emit different types of notifications
 		await handler.emitPromptsListChanged('correlation-1');
 		await handler.emitResourcesUpdated('resource://test/1', 'correlation-2');
 		await handler.emitToolsListChanged('correlation-3');
 		await handler.emitResourcesListChanged('correlation-4');
 
-		// Wait for processing
 		await new Promise((resolve) => setTimeout(resolve, 20));
 
-		// Verify all notification types were emitted
 		expect(mockEmitNotification).toHaveBeenCalledWith('notifications/prompts/list_changed', {});
 		expect(mockEmitNotification).toHaveBeenCalledWith('notifications/resources/updated', {
 			uri: 'resource://test/1',
 		});
 		expect(mockEmitNotification).toHaveBeenCalledWith('notifications/tools/list_changed', {});
 		expect(mockEmitNotification).toHaveBeenCalledWith('notifications/resources/list_changed', {});
-
-		consoleSpy.mockRestore();
 	});
 
 	it('should maintain notification order within type', async () => {
-		const server = new Server();
+		const logger = createLoggerStub();
+		const server = new Server({ logger });
 		const handler = createMCPNotificationHandler(server);
-		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
 		const mockEmitNotification = vi.fn();
 		server.emitNotification = mockEmitNotification;
 
-		// Emit multiple prompts notifications in sequence
 		await handler.emitPromptsListChanged('correlation-1');
 		await handler.emitPromptsListChanged('correlation-2');
 		await handler.emitPromptsListChanged('correlation-3');
 
-		// Wait for processing
 		await new Promise((resolve) => setTimeout(resolve, 20));
 
-		// Verify all were processed
 		expect(mockEmitNotification).toHaveBeenCalledTimes(3);
 
-		// All should be prompts listChanged notifications
 		mockEmitNotification.mock.calls.forEach((call) => {
 			expect(call[0]).toBe('notifications/prompts/list_changed');
 		});
-
-		consoleSpy.mockRestore();
 	});
 });

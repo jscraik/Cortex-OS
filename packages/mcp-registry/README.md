@@ -314,3 +314,13 @@ const result = await toolRegistry.execute('registry.list', { limit: 5 });
 ## License
 
 Apache 2.0
+
+## Definition of Done
+- [ ] Declarative registry; lazy loading; hot-reload in dev.
+- [ ] `list/register/read` APIs stable.
+
+## Test Plan
+- [ ] Discovery + invocation of one tool, one resource, one prompt.
+
+> See `CHECKLIST.cortex-os.md` for the full CI gate reference.
+

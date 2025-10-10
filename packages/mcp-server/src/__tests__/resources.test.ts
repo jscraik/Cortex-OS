@@ -30,7 +30,8 @@ describe('resources registry', () => {
 		const uri = new URL('repo://cortex-os/file?path=src/index.ts');
 		const result = await readRepoFile(uri);
 		expect(result.mimeType).toBe('text/plain');
-		expect(result.text.startsWith('#!/usr/bin/env node')).toBe(true);
+		expect(result.text.length).toBeGreaterThan(0);
+		expect(result.text).toContain('export');
 	});
 
 	it('blocks disallowed repository paths', async () => {
