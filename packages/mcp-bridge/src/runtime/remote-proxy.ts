@@ -9,14 +9,15 @@ export interface RemoteTool {
 }
 
 export interface RemoteToolProxyOptions {
-	endpoint: string;
-	enabled: boolean;
-	logger: Logger;
-	reconnectDelay?: number;
-	serviceLabel?: string;
-	unavailableErrorName?: string;
-	unavailableErrorMessage?: string;
-	onAvailabilityChange?: (up: boolean) => void;
+        endpoint: string;
+        enabled: boolean;
+        logger: Logger;
+        reconnectDelay?: number;
+        serviceLabel?: string;
+        unavailableErrorName?: string;
+        unavailableErrorMessage?: string;
+        onAvailabilityChange?: (up: boolean) => void;
+        headers?: Record<string, string>;
 }
 
 const DEFAULT_RECONNECT_DELAY = 5_000;
@@ -35,17 +36,18 @@ export class RemoteToolProxy {
 	private remoteTools: RemoteTool[] = [];
 	private lastFailureLoggedAt: number | null = null;
 
-	constructor(config: RemoteToolProxyOptions) {
-		this.config = {
-			reconnectDelay: config.reconnectDelay ?? DEFAULT_RECONNECT_DELAY,
-			serviceLabel: config.serviceLabel ?? 'Remote MCP',
-			unavailableErrorName: config.unavailableErrorName ?? 'RemoteServiceUnavailableError',
-			unavailableErrorMessage:
-				config.unavailableErrorMessage ?? 'Remote MCP proxy is temporarily unavailable',
-			onAvailabilityChange: config.onAvailabilityChange ?? (() => {}),
-			...config,
-		};
-	}
+        constructor(config: RemoteToolProxyOptions) {
+                this.config = {
+                        reconnectDelay: config.reconnectDelay ?? DEFAULT_RECONNECT_DELAY,
+                        serviceLabel: config.serviceLabel ?? 'Remote MCP',
+                        unavailableErrorName: config.unavailableErrorName ?? 'RemoteServiceUnavailableError',
+                        unavailableErrorMessage:
+                                config.unavailableErrorMessage ?? 'Remote MCP proxy is temporarily unavailable',
+                        onAvailabilityChange: config.onAvailabilityChange ?? (() => {}),
+                        headers: config.headers ?? {},
+                        ...config,
+                };
+        }
 
 	async connect(): Promise<void> {
 		if (!this.config.enabled) {
@@ -60,7 +62,9 @@ export class RemoteToolProxy {
 				`Connecting to ${this.config.serviceLabel} MCP server...`,
 			);
 
-			this.transport = new SSEClientTransport(new URL(this.config.endpoint));
+                        this.transport = new SSEClientTransport(new URL(this.config.endpoint), {
+                                requestInit: { headers: this.config.headers },
+                        });
 			this.client = new Client(
 				{
 					name: 'cortex-mcp-remote-proxy',
