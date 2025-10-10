@@ -2,7 +2,7 @@
 
 **Status:** Inherits root; local overrides may tighten but never weaken.  
 **Type:** package  
-**Runtime:** node  
+**Runtime:** python  
 **Owner(s):** @brAInwav-devs  
 **Primary Contacts:** #cortex-ops  
 **Last Updated:** 2025-10-10
@@ -15,7 +15,7 @@
 id: agents-connectors-v1
 package: Connectors
 type: package
-runtime: node
+runtime: python
 owners: ['@brAInwav-devs']
 version: 0.1.0
 coverage:
@@ -52,9 +52,10 @@ slo:
 
 - **What this unit is for:** Adapters for ChatGPT Apps/Connectors and Perplexity SSE to operate Cortex-OS safely.
 - **Responsibilities:**
-  - Implement the Connectors domain logic and exported APIs.
-  - Maintain compatibility with dependent Cortex-OS modules and contracts.
-  - Provide observability, security, and documentation updates alongside code changes.
+- Implement the Connectors domain logic and exported APIs.
+- Maintain compatibility with dependent Cortex-OS modules and contracts.
+- Provide observability, security, and documentation updates alongside code changes.
+- Use the official OpenAI Agents SDK (Python) for all MCP server integrations; do not vendor alternative clients.
 - **Non-goals:**
   - Acting as a staging ground for unrelated experiments.
   - Owning cross-domain deployment workflows.
@@ -81,22 +82,23 @@ slo:
 
 ## 4) Build, Run, Test
 
-### 4.1 Node/TypeScript
+### 4.1 Python
 ```bash
-# Dev
-pnpm --filter connectors dev
+# Environment sync (uv)
+uv sync --package packages/connectors
 
-# Build
-pnpm --filter connectors build
+# Run connectors server locally
+uv run --package packages/connectors python -m cortex_connectors.server
 
-# Quality (affected-aware if available)
-pnpm --filter connectors lint
-pnpm --filter connectors typecheck
-pnpm --filter connectors test
-pnpm --filter connectors test:coverage
+# Tests (unit + integration)
+uv run --package packages/connectors pytest -q
+
+# Lint (ruff/mypy once configured)
+uv run --package packages/connectors ruff check
+uv run --package packages/connectors mypy src
 ```
 
-> **Keep runs fast.** Prefer affected/targeted tasks via Nx/Turbo (Node) or test selection markers (Py).
+> **Keep runs fast.** Use focused pytest markers (`-m "not slow"`) where appropriate.
 
 ---
 
@@ -104,32 +106,34 @@ pnpm --filter connectors test:coverage
 
 ```env
 # Required
-MCP_API_KEY=required
-CONNECTORS_BASE_URL=https://example.local
-CONNECTORS_DB_URL=postgres://user:pass@localhost:5432/connectors
+CONNECTORS_SIGNATURE_KEY=<hmac-secret>
+CONNECTORS_MANIFEST_PATH=./config/connectors.manifest.json
+CONNECTORS_API_KEY=<api-key-used-by-callers>
+MCP_API_KEY=<api-key-shared-with-mcp-server>
 
 # Optional
+NO_AUTH=false
 LOG_LEVEL=info
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
-FEATURE_FLAGS=
+APPS_BUNDLE_DIR=dist/apps/chatgpt-dashboard
 ```
 
-- **Secrets** via env/secret manager only — never in code or `.env.example`.  
-- Provide `docs/env.md` with descriptions and defaults.
+- **Secrets** via 1Password/secret manager only — never commit to the repo.  
+- Document overrides and defaults in `README.md` and `docs/env.md`.
 
 ---
 
 ## 6) Quality Gates (local tightening)
 
-- Coverage: **≥ 92% global**, **≥ 95% changed lines** (ratchet-up only).  
-- Mutation: **≥ 90%** where enabled.  
+- Coverage: **≥ 92% global**, **≥ 95% changed lines** via `pytest --cov`.  
+- Mutation: **≥ 90%** where enabled (use `mutmut` or `pytest-mutagen` when configured).  
 - Performance budgets enforced in CI (see front-matter).  
 - A11y: WCAG 2.2 AA for any UI surfaces (see §9).  
 - **Blocking checks before merge:** lint, types, tests, coverage, security, structure-guard.
 
 Run locally:
 ```bash
-pnpm --filter connectors test:coverage
+uv run --package packages/connectors pytest --cov=cortex_connectors
 pnpm security:scan --scope=connectors
 pnpm structure:validate --scope=connectors
 ```
@@ -150,8 +154,8 @@ pnpm structure:validate --scope=connectors
 
 ## 8) Observability
 
-- **OpenTelemetry** traces/logs/metrics enabled by default.  
-- **Prometheus**: `/metrics` exposed when relevant env toggles are set.  
+- **OpenTelemetry** traces/logs/metrics enabled by default (instrumentation lives in `cortex_connectors.telemetry`).  
+- **Prometheus**: `/metrics` exposed from the Python server when `ENABLE_PROMETHEUS=true`.  
 - Log schema requires `brand:"brAInwav"`, `component:"connectors"`, and `trace_id`.
 
 ```json

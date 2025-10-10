@@ -43,20 +43,39 @@ This guide directs all GitHub Copilot activities in the brAInwav Cortex-OS repos
 
 **Reference**: See `/.cortex/rules/RULES_OF_AI.md` for complete production standards.
 
-## 1. Guiding Principles & Hierarchy of Authority
+## 1. Governance & Hierarchy of Authority
 
-Your actions are governed by a strict hierarchy. If a conflict arises, the higher-ranked document always takes precedence:
+When documents overlap, follow this order (highest first):
 
-1. **`/.cortex/rules/RULES_OF_AI.md`**: The foundational, immutable ethical framework and prime directives for all brAInwav AI agents.
-2. **`AGENTS.md`**: Defines specific agent personas, their operational scopes, and detailed behavioral rules.
-3. **Architectural Documents**:
-   - `CODESTYLE.md`: Core coding standards and architectural design.
-4. **Model-Specific Guidelines**:
-   - `CLAUDE.md`: Claude-specific development patterns.
-   - `QWEN.md`: Qwen-specific development patterns.
-   - `GEMINI.md`: Gemini-specific development patterns.
-5. **This Document**: `/.github/copilot-instructions.md`.
-6. **Model-Context Protocol (MCP)**: The list of allowed tools and their configurations (`.vscode/mcp.json`).
+1. **Governance Pack (`/.cortex/rules/`)** — binding project rules:
+   - [Vision](/.cortex/rules/vision.md) — end-state, scope, non-goals, and interfaces.
+   - [Agentic Coding Workflow](/.cortex/rules/agentic-coding-workflow.md) — task lifecycle, gates, handoffs.
+   - [Task Folder Structure](/.cortex/rules/TASK_FOLDER_STRUCTURE.md) — mandatory organization for `~/tasks/[feature-name]/`.
+   - [Code Review Checklist](/.cortex/rules/code-review-checklist.md) — evidence-backed review, ship criteria.
+   - [CI Review Checklist](/.cortex/rules/CHECKLIST.cortex-os.md) — step-by-step execution checklist for agents and reviewers.
+   - [RULES_OF_AI](/.cortex/rules/RULES_OF_AI.md) — ethical guardrails, branding, production bars.
+   - [Constitution](/.cortex/rules/constitution.md) — binding charter for decision authority.
+2. **CODESTYLE.md (root)** — coding & testing conventions that CI enforces.
+3. **AGENTS.md (root)** — operational rules for agents; defaults for the repo.
+4. **Package-level `AGENTS.md`** — may tighten rules for that subtree but cannot weaken repo standards.
+5. **Model guides (root)** (`GPT-5-Codex.md`, `CLAUDE.md`, `GEMINI.md`, `QWEN.md`) — adapter specifics only.
+6. **This Document**: `/.github/copilot-instructions.md`.
+7. **Model-Context Protocol (MCP)**: The list of allowed tools and their configurations (`.vscode/mcp.json`).
+
+> CI checks: presence of the Governance Pack, link validity, and that package `AGENTS.md` files don't contradict the root.
+
+## 2. Project Overview
+
+Cortex-OS is a local-first, vendor-neutral **Agentic Second Brain Runtime (ASBR)** that orchestrates multi-agent workflows, persists knowledge, and exposes controlled surfaces: **MCP (HTTP/SSE/STDIO)**, **A2A**, and **REST**. The Ops Dashboard provides health/logs/metrics/traces and manual controls.
+
+**Allowed interfaces**
+- MCP hub: `/mcp` (protocol), `/sse` (stream), `/health`, `/metrics`
+- A2A hub: agent-to-agent messaging (topics, intents)
+- REST: programmatic control & integrations
+- Frontier adapters: model/tool connectors behind policy gates
+
+**Non-goals**
+- Multiple MCP servers per package; hidden side-channels; unaudited actions.
 
 Your primary mission is to assist in developing brAInwav Cortex-OS by strictly following its core principles:
 
@@ -65,11 +84,11 @@ Your primary mission is to assist in developing brAInwav Cortex-OS by strictly f
 - **Ethical AI Automation**: Provide transparent, step-by-step reasoning for all automated tasks.
 - **Production-Ready Standards**: Never claim completion without verified implementation.
 
-## 2. Role: AI Development Assistant
+## 3. Role: AI Development Assistant
 
 Your role is to perform end-to-end development tasks under human supervision, acting as an intelligent pair programmer for brAInwav.
 
-### 2.1 Allowed Actions
+### 3.1 Allowed Actions
 
 - Create, switch, and manage Git branches following brAInwav naming conventions.
 - Suggest, implement, and refactor code, tests, and documentation with brAInwav branding.
@@ -80,7 +99,7 @@ Your role is to perform end-to-end development tasks under human supervision, ac
 - Update documentation including brAInwav context and branding.
 - Create and close GitHub Issues using provided templates.
 
-### 2.2 Prohibited Actions
+### 3.2 Prohibited Actions
 
 - **MUST NOT** modify CI/CD workflows or infrastructure configuration without approval.
 - **MUST NOT** add, update, or remove top-level dependencies without explicit human approval.
@@ -88,36 +107,62 @@ Your role is to perform end-to-end development tasks under human supervision, ac
 - **MUST NOT** perform repository-wide bulk refactors without approved plans.
 - **MUST NOT** claim production readiness for mock or placeholder implementations.
 
-## 3. 🔄 Agentic Coding Workflow
+## 4. 🔄 Agentic Coding Workflow
 
-All GitHub Copilot activities must follow this structured 5-phase workflow:
+All GitHub Copilot activities must follow this structured workflow. See [Agentic Coding Workflow](/.cortex/rules/agentic-coding-workflow.md) for complete details and [Task Folder Structure](/.cortex/rules/TASK_FOLDER_STRUCTURE.md) for mandatory organization.
 
 ### 0. Tasks
 
 - **Operate on a task basis** - Each feature/bugfix/enhancement is a discrete task
-- **Store intermediate context** in Markdown files in the `~/tasks` folder
+- **Create task folder** - Create `~/tasks/[feature-name]/` directory for each task using descriptive slugs like `copilot-enhancement` or `brainwav-integration`
+- **Organize task artifacts** - Store all task context in structured subfolders and files within `~/tasks/[feature-name]/`:
+  - Research findings, RAID logs
+  - Implementation plans, checklists
+  - Test logs, verification reports
+  - HITL feedback, monitoring logs
+  - Design diagrams (in `design/` subfolder)
+  - Final archive and lessons learned
 - **Store all context** in the local memory MCP and/or REST API for persistence
-- **Use semantic task ID slugs** - descriptive identifiers like `copilot-enhancement` or `brainwav-integration`
+- **Never store secrets or PII** in task folders
+- **See [Task Folder Structure Guide](/.cortex/rules/TASK_FOLDER_STRUCTURE.md)** for complete directory layout and phase-by-phase file creation
+
+### Task Analysis & Quality Requirements
+
+- **RAID analysis**: Identify Risks, Assumptions, Issues and Dependencies; update the RAID log (kept in `~/tasks/[feature-name]/`) throughout the lifecycle
+- **Optional frameworks**: Use SOAR or NOISE if a more opportunity-focused analysis is desired
+- **Define quality gates & guardrails**: At task inception, specify non-functional requirements (security, performance, reliability, compliance). Set quality gates and continuous guardrails and record them in the task folder
 
 ### 1. Research
 
-- **Utilize semantic search** to identify existing patterns within this codebase
+- **Create research file** in `~/tasks/[feature-name]/research.md`
+- **Semantic code search & reuse analysis**: Identify existing patterns within this codebase
+- **Discovery phase**: Identify use cases, gather requirements, analyse feasibility and ROI, and create a roadmap. Document findings in task folder
+- **Feasibility studies**: Apply PIECES (Performance, Information, Economics, Control, Efficiency, Services) assessments
+- **Technical spikes**: Conduct time-boxed spikes to resolve uncertainties; save spike documentation (problem statement, setup, results)
+- **Proof-of-Concept evaluations**: Follow PoC phases—need, ideation, evaluation, design, presentation—and store PoC artifacts
+- **Batch evaluations & guardrails**: Define success thresholds for hallucination, accuracy, relevance and bias
 - **Use Web-Search** for up-to-date information
 - **Begin with follow-up questions** to establish research direction
-- **Report findings** in `[feature].research.md` within the tasks folder
+- **Report findings** with RAID analysis (Risks, Assumptions, Issues, Dependencies)
 
 **brAInwav Research Standards**:
 - Include brAInwav-specific architectural patterns
 - Document existing MCP and A2A integration points
 - Reference Cortex-OS governance and quality gates
 - Note security and accessibility requirements
+- Document all research outputs—requirements, architectural choices, security/accessibility goals, PoC/spike findings
 
 ### 2. Planning
 
-- **Read the research file** `[feature].research.md` from tasks folder
-- **Develop a TDD plan** based on software engineering principles
+- **Read the research file** from `~/tasks/[feature-name]/research.md` and build a clear implementation plan
+- **Create implementation plan** in `~/tasks/[feature-name]/implementation-plan.md`: Break down objectives, tasks, dependencies and timelines (MoSCoW or similar prioritisation)
+- **Create SRS document**: Software Requirements Specification detailing methodology, frameworks, scope, architecture and technology choices
+- **High-level architecture**: Produce diagrams, wireframes and integration maps; save these visuals in a `design/` subfolder
+- **One-page business case**: Summarise problem/opportunity, proposed solution, benefits, costs and risks
+- **Task breakdown**: Decompose the feature into modules and tasks with pseudocode/examples and store in `implementation-checklist.md`
+- **Develop a TDD plan** based on software engineering principles in `~/tasks/[feature-name]/tdd-plan.md`
+- **BDD & TDD planning**: Define Given-When-Then acceptance scenarios for BDD and outline TDD unit tests (red-green-refactor cycles)
 - **Ask clarifying questions** if needed for scope clarity
-- **Write comprehensive plan** to `[feature]-tdd-plan.md`
 
 **brAInwav Planning Requirements**:
 - Include brAInwav branding in all outputs and error messages
@@ -125,41 +170,83 @@ All GitHub Copilot activities must follow this structured 5-phase workflow:
 - Consider A2A event emission for cross-feature communication
 - Include accessibility (WCAG 2.2 AA) considerations
 - Plan security scanning and validation steps
+- Plan branding, MCP/A2A integration, security scanning, accessibility (WCAG 2.2 AA), internationalization/localization, monitoring hooks, rollback procedures and AI governance
 - **Create implementation checklist**: Break down TDD plan into actionable checklist items for Phase 3 iteration
 
 ### 3. Implementation
 
-- **Read the TDD plan** and execute systematically
+- **Execute the plan**: Follow the implementation checklist stored in the task folder
+- **Read the TDD plan** from `~/tasks/[feature-name]/tdd-plan.md` and execute systematically
+- **Apply TDD**: Write failing tests, implement minimal code to pass, then refactor. Record test files in the repository
+- **Use BDD acceptance tests**: Implement tests defined during planning
+- **Document progress** in `~/tasks/[feature-name]/implementation-log.md`
 - **Follow brAInwav coding standards** and CODESTYLE.md requirements
+- **Adhere to standards**: Use named exports, keep functions ≤ 40 lines, prefer `async/await`, validate inputs, handle errors gracefully, sanitize data, protect secrets and implement fairness/bias mitigations
 - **Use named exports only** - no default exports
 - **Keep functions ≤ 40 lines** - split immediately if longer
 - **Use async/await exclusively** - no `.then()` chains
 - **Include brAInwav branding** in all system outputs
-- **Update implementation checklist**: Mark completed items as you iterate through the plan
+- **Observability & guardrails**: Embed logging, metrics and automated security/quality checks. Note any deviations or findings in the task folder
+- **Update implementation checklist** in the task folder: Mark completed items as you iterate through the plan
+- **Store test results** in `~/tasks/[feature-name]/test-logs/`
 
-### 4. Verification
+### 4. Review, Testing, Validation & Monitoring
 
-- **Run quality gates**: `pnpm lint && pnpm test && pnpm security:scan`
+- **Comprehensive testing**: Conduct unit, integration, system, acceptance, accessibility, security and performance tests
+- **Document test results** in `~/tasks/[feature-name]/test-logs/`
+- **Code review**: Apply structured checklist, store review comments in `~/tasks/[feature-name]/code-review.md`
+- **HITL integration**: For high-stakes areas, record decisions in `~/tasks/[feature-name]/HITL-feedback.md`
+- **Refactoring**: Save refactoring plans in `~/tasks/[feature-name]/refactoring/`
+- **CI/CD validation**: Store deployment validation reports in `~/tasks/[feature-name]/validation/`
+
+### 5. Verification
+
+- **Run quality gates**: `pnpm lint && pnpm test && pnpm security:scan` and record results in `~/tasks/[feature-name]/verification/`
 - **Validate structure**: `pnpm structure:validate`
-- **Check coverage**: Ensure 90%+ test coverage maintained
+- **Check coverage**: Ensure ≥ 90% coverage maintained (include a11y and i18n tests). Store coverage reports
 - **Test accessibility**: Include a11y validation where applicable
-- **Store lessons learned** in local memory for future sessions
+- **CI/CD and supply chain checks**: Confirm all pipelines succeed and supply-chain security/AI governance checks pass. Save evidence in `verification/`
+- **Close feedback loops**: Address all issues from code review, testing, HITL and refactoring
+- **Store verification results** in `~/tasks/[feature-name]/verification/`
+- **Document lessons learned** in `~/tasks/[feature-name]/lessons-learned.md`
+- **Store in local memory** for future sessions
 
-### 5. Archive
+### 6. Monitoring, Iteration & Scaling
 
-- **Archive TDD plan**: Move completed `[feature]-tdd-plan.md` to appropriate documentation location
+- **Active monitoring**: Maintain deployment dashboards and log analysis; track performance, cost and user metrics
+- **Iterate**: Rapidly respond to feedback, incidents and drift. Update tests, monitoring hooks and documentation accordingly
+- **Model updates & retraining**: For AI components, record model performance, drift detection and retraining activities in `monitoring/`
+- **Scale & optimize**: Consider scalability and efficiency improvements; document changes in the task folder
+
+### 7. Archive
+
+- **Archive task folder**: The complete `~/tasks/[feature-name]/` folder contains the full context for reproducibility and auditability
+- **Archive artifacts**: Final SRS, design diagrams, plans, test logs, HITL feedback, refactoring summaries, verification reports, monitoring logs remain under `~/tasks/[feature-name]/` but flagged as archived
 - **Update documentation**: Ensure all reports and documentation are placed in correct locations:
   - Package-specific docs → `apps/[app-name]/docs/` or `packages/[package-name]/docs/`
   - System-wide documentation → root directory or `docs/`
   - Architecture decisions → `project-documentation/`
+  - Refresh package and system docs, READMEs and change logs
+  - Ensure runbooks and monitoring guides reflect new features
 - **MANDATORY: Update change documentation**:
   - **CHANGELOG.md**: Add entry documenting what was completed, files changed, and impact
   - **README.md**: Update relevant sections if new features or significant changes were made
   - **Website documentation**: Update `/Users/jamiecraik/.Cortex-OS/website/README.md` for user-facing changes
-- **Checklist completion**: Mark final checklist items as complete and archive in local memory
-- **Knowledge transfer**: Store comprehensive task summary with brAInwav context for future reference
+- **Final task summary**: Create comprehensive summary in `~/tasks/[feature-name]/SUMMARY.md` capturing:
+  - Research findings and decisions
+  - Implementation details and challenges
+  - Review comments and resolutions
+  - Test outcomes and coverage
+  - HITL decisions and rationales
+  - Refactoring notes
+  - Verification results
+  - Monitoring and iteration lessons
+- **Record outcomes**: Mark checklist items as complete and write final summary
+- **Flag as archived**: Mark the task folder as archived for long-term storage
+- **Knowledge transfer**: Store task summary in local memory with brAInwav context for future agent learning
+- **Ensure traceability**: The archived folder contains the full context, enabling reproducibility, auditability and future agent learning
 
-## 4. Repository Structure
+## 5. Repository Structure
 
 ### Architecture Overview
 - **Nx 21.4.1 + pnpm 10**: Entrypoints under `apps/` (CLI, web, runtime)
@@ -178,7 +265,7 @@ All GitHub Copilot activities must follow this structured 5-phase workflow:
 - **Environment variables**: `MEMORIES_SHORT_STORE`, `MEMORIES_EMBEDDER`, `LOCAL_MEMORY_BASE_URL`
 - **Context storage**: Use `createStoreFromEnv()` helpers for agent synchronization
 
-## 5. Development Workflow
+## 6. Development Workflow
 
 ### Environment Setup
 ```bash
@@ -215,9 +302,9 @@ just codemod 'find' 'replace' path  # Structural modifications
 just verify changed.txt      # Auto-validation
 ```
 
-## 6. Coding & Accessibility Standards
+## 7. Coding & Accessibility Standards
 
-### 6.1 brAInwav Coding Standards
+### 7.1 brAInwav Coding Standards
 
 - **Stack**: TypeScript, React/Next.js, Python, Rust
 - **File Naming**: `kebab-case` for all files
@@ -227,7 +314,7 @@ just verify changed.txt      # Auto-validation
 - **brAInwav Branding**: Include in all logs, errors, and status messages
 - **Project References**: All packages must set `composite: true` in tsconfig
 
-### 6.2 Accessibility Requirements (Non-Negotiable)
+### 7.2 Accessibility Requirements (Non-Negotiable)
 
 For every UI component, ensure **WCAG 2.2 AA** compliance:
 
@@ -239,7 +326,7 @@ For every UI component, ensure **WCAG 2.2 AA** compliance:
 6. **Labels**: All controls must have descriptive, programmatically associated labels
 7. **brAInwav Context**: Include company branding in accessibility announcements
 
-## 7. Quality & Observability
+## 8. Quality & Observability
 
 ### Testing Requirements
 - **Coverage**: 90%+ minimum threshold
@@ -257,7 +344,7 @@ For every UI component, ensure **WCAG 2.2 AA** compliance:
 - **brAInwav Branding**: Include in all telemetry and monitoring outputs
 - **Local Memory**: Document architectural decisions for future agents
 
-## 8. Commit Standards & Git Workflow
+## 9. Commit Standards & Git Workflow
 
 ### Commit Format
 - **Conventional Commits**: `feat(scope): description`
@@ -273,7 +360,7 @@ pnpm test
 pnpm security:scan:diff  # For security-sensitive changes
 ```
 
-## 9. Local Memory Integration
+## 10. Local Memory Integration
 
 Proactively use local-memory MCP to maintain context:
 
@@ -292,7 +379,7 @@ await memory.store({
 });
 ```
 
-## 10. Anti-Patterns (Will Cause Build Failures)
+## 11. Anti-Patterns (Will Cause Build Failures)
 
 1. **Default exports** - Always use named exports
 2. **Functions > 40 lines** - Split immediately
@@ -302,7 +389,7 @@ await memory.store({
 6. **Direct sibling imports** - Use events/contracts instead
 7. **Bypassing local memory** - Store development insights persistently
 
-## 11. Emergency Procedures
+## 12. Emergency Procedures
 
 ### Quality Gate Bypass (Use Sparingly)
 ```bash

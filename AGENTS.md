@@ -21,6 +21,7 @@ When documents overlap, follow this order (highest first):
 1. **Governance Pack (`/.cortex/rules/`)** — binding project rules:
    - [Vision](/.cortex/rules/vision.md) — end-state, scope, non-goals, and interfaces.
    - [Agentic Coding Workflow](/.cortex/rules/agentic-coding-workflow.md) — task lifecycle, gates, handoffs.
+   - [Task Folder Structure](/.cortex/rules/TASK_FOLDER_STRUCTURE.md) — mandatory organization for `~/tasks/[feature-name]/`.
    - [Code Review Checklist](/.cortex/rules/code-review-checklist.md) — evidence-backed review, ship criteria.
    - [CI Review Checklist](/.cortex/rules/CHECKLIST.cortex-os.md) — step-by-step execution checklist for agents and reviewers.
    - [RULES_OF_AI](/.cortex/rules/RULES_OF_AI.md) — ethical guardrails, branding, production bars.
