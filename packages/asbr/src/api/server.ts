@@ -20,12 +20,13 @@ import { resolveIdempotency } from '../lib/resolve-idempotency.js';
 import { secureHex } from '../lib/secure-random.js';
 import { validateTaskInput } from '../lib/validate-task-input.js';
 import {
-	type ArtifactRef,
-	AuthorizationError,
-	type Event,
-	NotFoundError,
-	type Profile,
-	ProfileSchema,
+        ASBRError,
+        type ArtifactRef,
+        AuthorizationError,
+        type Event,
+        NotFoundError,
+        type Profile,
+        ProfileSchema,
 	type ServiceMap,
 	ServiceMapSchema,
 	type Task,
@@ -668,6 +669,7 @@ class ASBRServerClass {
 
         private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
                 try {
+
                         const manifest = await loadConnectorsManifest();
                         const serviceMap = buildConnectorServiceMap(manifest);
                         const secret = process.env.CONNECTORS_SIGNATURE_KEY;

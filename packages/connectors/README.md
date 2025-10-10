@@ -1,6 +1,6 @@
 # Cortex Connectors
 
-Manifest-driven Python package that registers Cortex-OS connectors with the official OpenAI Agents SDK for Python, proxies external tools via MCP, and serves the ChatGPT Apps React dashboard widget powered by the OpenAI Apps SDK. This package owns the runtime that reads `config/connectors.manifest.json`, enforces API-key authentication, and exports telemetry aligned with brAInwav governance.
+Manifest-driven Python package that registers Cortex-OS connectors with the official OpenAI Agents SDK for Python, proxies external tools via MCP, and serves the ChatGPT Apps React dashboard widget powered by the OpenAI Apps SDK. This package owns the runtime that reads `config/connectors.manifest.json`, enforces API-key authentication, streams connector state over SSE, and exports telemetry aligned with brAInwav governance.
 
 ---
 
@@ -15,12 +15,13 @@ export CONNECTORS_SIGNATURE_KEY="$(op read op://vault/CONNECTORS_SIGNATURE_KEY)"
 export CONNECTORS_API_KEY="$(op read op://vault/CONNECTORS_API_KEY)"
 export MCP_API_KEY="$(op read op://vault/MCP_API_KEY)"
 
-# 3. Launch server with bundled Apps widget
-scripts/connectors/run-connectors-server.sh
+# 3. Launch server with bundled Apps widget (exposes HTTP, SSE, and metrics)
+uv run --package packages/connectors cortex-connectors-server
 
-# 4. Hit health + service map
+# 4. Hit health + service map + SSE
 curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/health
 curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/v1/connectors/service-map
+curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/v1/connectors/stream
 ```
 
 ---
@@ -28,10 +29,11 @@ curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/v1/con
 ## Architecture Overview
 
 - **Manifest Source**: `config/connectors.manifest.json` defines connector ids, versions, auth headers, scopes, quotas, and TTL. The file is validated via Pydantic (Python) and Zod (TypeScript) to guarantee parity.
-- **Service Map Export**: The connectors server exposes `/v1/connectors/service-map` for parity checks and reuses the ASBR signature secret (`CONNECTORS_SIGNATURE_KEY`).
+- **Service Map Export**: The connectors server exposes `/v1/connectors/service-map` for parity checks and reuses the ASBR signature secret (`CONNECTORS_SIGNATURE_KEY`). The payload is canonicalised and signed with HMAC-SHA256 to maintain parity with the ASBR implementation.
 - **MCP Registry**: `cortex_connectors.registry` hydrates each manifest entry into OpenAI Agents SDK MCP tools (official `openai-agents` package), wiring HTTP clients, SSE streams, and availability callbacks.
 - **Apps Widget**: Built under `apps/chatgpt-dashboard` and served from the Python process (default path `dist/apps/chatgpt-dashboard`). Operators can load the widget inside ChatGPT Apps to inspect connector status and trigger sample requests.
-- **Telemetry**: OpenTelemetry traces/logs and Prometheus gauge `brainwav_mcp_connector_proxy_up{connector}` are emitted for every connector.
+- **Telemetry**: OpenTelemetry traces/logs and Prometheus gauge `brainwav_mcp_connector_proxy_up{connector}` are emitted for every connector. `/metrics` is gated behind the same API key auth and is enabled with `ENABLE_PROMETHEUS=true`.
+- **SSE**: `/v1/connectors/stream` emits server-sent events that mirror the signed service-map payload to power live dashboards.
 
 ---
 
@@ -69,7 +71,7 @@ running outside local development.
 | Suite | Command | Purpose |
 |-------|---------|---------|
 | Unit & Integration (Py) | `uv run --package packages/connectors pytest --cov=cortex_connectors` | Validate manifest parsing, registry, auth, SSE/HTTP surfaces. |
-| Service Map Parity | `uv run --package packages/connectors pytest tests/test_service_map_export.py` | Ensure ASBR and connectors signatures align. |
+| CLI smoke | `uv run --package packages/connectors cortex-connectors service-map --plain` | Dumps signed payload for quick verification. |
 | Apps Widget | `pnpm --filter apps/chatgpt-dashboard test` | Validate React hooks, accessibility, and performance budgets. |
 | Security | `pnpm security:scan --scope=connectors` + `semgrep` | Must be clean before PR. |
 
@@ -82,6 +84,7 @@ Coverage thresholds follow `packages/connectors/AGENTS.md` (≥92% global, ≥95
 - OpenTelemetry spans include `brand:"brAInwav"`, `component:"connectors"`, `connectorId`, and `runId` attributes.
 - Prometheus gauge `brainwav_mcp_connector_proxy_up{connector="<id>"}` reflects last-known availability; 0 = offline, 1 = healthy.
 - Structured logs (JSON) must carry `brand`, `component`, `trace_id`, and `request_id` for downstream correlation.
+- `/v1/connectors/stream` carries the same payload as `/v1/connectors/service-map` in SSE format for live Apps widgets.
 
 ---
 

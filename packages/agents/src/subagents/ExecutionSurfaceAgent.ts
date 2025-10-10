@@ -11,6 +11,8 @@ import { EventEmitter } from 'node:events';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import type { RunnableConfig } from '@langchain/core/runnables';
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
+import { ConnectorRegistry } from '../connectors/registry.js';
+import type { ConnectorDefinition, ConnectorRegistryOptions } from '../connectors/registry.js';
 import { secureDelay } from '../lib/secure-random.js';
 
 // Execution Surface State
@@ -52,31 +54,38 @@ export type ExecutionSurfaceState = typeof ExecutionSurfaceStateAnnotation.State
 
 // Configuration for Execution Surface Agent
 export interface ExecutionSurfaceConfig {
-	name: string;
-	maxConcurrentActions: number;
-	actionTimeout: number;
-	allowedSurfaces: string[];
-	securityLevel: 'low' | 'medium' | 'high';
+        name: string;
+        maxConcurrentActions: number;
+        actionTimeout: number;
+        allowedSurfaces: string[];
+        securityLevel: 'low' | 'medium' | 'high';
+        connectors?: ConnectorRegistryOptions;
 }
 
 /**
  * Execution Surface Agent - Handles external system integration and execution
  */
 export class ExecutionSurfaceAgent extends EventEmitter {
-	private graph: ReturnType<typeof createExecutionSurfaceGraph>;
-	private config: ExecutionSurfaceConfig;
-	private surfaceConnectors: Map<
-		string,
-		{ execute: (action: string, params: unknown) => Promise<unknown> }
-	>;
+        private graph: ReturnType<typeof createExecutionSurfaceGraph>;
+        private config: ExecutionSurfaceConfig;
+        private surfaceConnectors: Map<
+                string,
+                { execute: (action: string, params: unknown) => Promise<unknown> }
+        >;
+        private connectorRegistry?: ConnectorRegistry;
+        private connectorDefinitions: ConnectorDefinition[] = [];
 
-	constructor(config: ExecutionSurfaceConfig) {
-		super();
-		this.config = config;
-		this.surfaceConnectors = new Map();
-		this.initializeSurfaceConnectors();
-		this.graph = createExecutionSurfaceGraph();
-	}
+        constructor(config: ExecutionSurfaceConfig) {
+                super();
+                this.config = config;
+                this.surfaceConnectors = new Map();
+                if (config.connectors) {
+                        this.connectorRegistry = new ConnectorRegistry(config.connectors);
+                        void this.refreshConnectorDefinitions(true);
+                }
+                this.initializeSurfaceConnectors();
+                this.graph = createExecutionSurfaceGraph();
+        }
 
 	/**
 	 * Execute execution surface operations
@@ -110,11 +119,11 @@ export class ExecutionSurfaceAgent extends EventEmitter {
 	/**
 	 * Initialize surface connectors
 	 */
-	private initializeSurfaceConnectors(): void {
-		// Filesystem connector
-		this.surfaceConnectors.set('filesystem', {
-			execute: async (action: string, params: unknown) => {
-				return {
+        private initializeSurfaceConnectors(): void {
+                // Filesystem connector
+                this.surfaceConnectors.set('filesystem', {
+                        execute: async (action: string, params: unknown) => {
+                                return {
 					action,
 					filesystem: 'accessed',
 					params,
@@ -160,17 +169,30 @@ export class ExecutionSurfaceAgent extends EventEmitter {
 		});
 
 		// Database connector
-		this.surfaceConnectors.set('database', {
-			execute: async (action: string, params: unknown) => {
-				return {
-					action,
-					database: 'queried',
-					params,
-					timestamp: new Date().toISOString(),
-				};
-			},
-		});
-	}
+                this.surfaceConnectors.set('database', {
+                        execute: async (action: string, params: unknown) => {
+                                return {
+                                        action,
+                                        database: 'queried',
+                                        params,
+                                        timestamp: new Date().toISOString(),
+                                };
+                        },
+                });
+        }
+
+        private async refreshConnectorDefinitions(force = false): Promise<void> {
+                if (!this.connectorRegistry) {
+                        return;
+                }
+
+                try {
+                        await this.connectorRegistry.refresh(force);
+                        this.connectorDefinitions = this.connectorRegistry.list();
+                } catch (error) {
+                        this.emit('error', error);
+                }
+        }
 
 	/**
 	 * Get agent capabilities
@@ -182,11 +204,25 @@ export class ExecutionSurfaceAgent extends EventEmitter {
 	/**
 	 * Get available surface connectors
 	 */
-	getAvailableSurfaces(): string[] {
-		return Array.from(this.surfaceConnectors.keys()).filter((surface) =>
-			this.config.allowedSurfaces.includes(surface),
-		);
-	}
+        getAvailableSurfaces(): string[] {
+                void this.refreshConnectorDefinitions();
+                const allowed = new Set(this.config.allowedSurfaces);
+                const builtin = Array.from(this.surfaceConnectors.keys()).filter((surface) =>
+                        allowed.has(surface),
+                );
+
+                const connectorSurfaces = this.connectorDefinitions
+                        .filter((connector) => connector.enabled)
+                        .map((connector) => `connector:${connector.id}`)
+                        .filter((surface) => allowed.has('connector') || allowed.has(surface));
+
+                return Array.from(new Set([...builtin, ...connectorSurfaces]));
+        }
+
+        async getConnectorDefinitions(): Promise<ConnectorDefinition[]> {
+                await this.refreshConnectorDefinitions();
+                return this.connectorDefinitions.map((definition) => ({ ...definition }));
+        }
 
 	/**
 	 * Health check
@@ -722,16 +758,38 @@ function generateExecutionSurfaceResponse(result: {
  * Factory function to create Execution Surface Agent
  */
 export function createExecutionSurfaceAgent(
-	config?: Partial<ExecutionSurfaceConfig>,
+        config?: Partial<ExecutionSurfaceConfig>,
 ): ExecutionSurfaceAgent {
-	const defaultConfig: ExecutionSurfaceConfig = {
-		name: 'execution-surface-agent',
-		maxConcurrentActions: 3,
-		actionTimeout: 60000,
-		allowedSurfaces: ['filesystem', 'network', 'git', 'deployment', 'database'],
-		securityLevel: 'medium',
-		...config,
-	};
+        const connectorOptions = config?.connectors ?? resolveConnectorEnvConfig();
+        const defaultConfig: ExecutionSurfaceConfig = {
+                name: 'execution-surface-agent',
+                maxConcurrentActions: 3,
+                actionTimeout: 60000,
+                allowedSurfaces: ['filesystem', 'network', 'git', 'deployment', 'database', 'connector'],
+                securityLevel: 'medium',
+                ...config,
+                connectors: config?.connectors ?? connectorOptions,
+        };
 
-	return new ExecutionSurfaceAgent(defaultConfig);
+        return new ExecutionSurfaceAgent(defaultConfig);
+}
+
+function resolveConnectorEnvConfig(): ConnectorRegistryOptions | undefined {
+        const signatureKey = process.env.CONNECTORS_SIGNATURE_KEY;
+        if (!signatureKey) {
+                return undefined;
+        }
+
+        const explicitUrl = process.env.CONNECTORS_SERVICE_MAP_URL;
+        const baseHost = explicitUrl ?? process.env.ASBR_BASE_URL ?? 'http://127.0.0.1:7439';
+        const normalized = explicitUrl
+                ? explicitUrl
+                : `${baseHost.replace(/\/$/, '')}/v1/connectors/service-map`;
+
+        return {
+                serviceMapUrl: normalized,
+                apiKey: process.env.ASBR_API_KEY ?? process.env.MCP_API_KEY,
+                signatureKey,
+                connectorsApiKey: process.env.CONNECTORS_API_KEY,
+        };
 }

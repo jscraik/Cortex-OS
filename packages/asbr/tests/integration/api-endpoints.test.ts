@@ -8,6 +8,7 @@
 // @vitest-environment node
 
 import type { Application } from 'express';
+import { join } from 'node:path';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { initializeAuth } from '../../src/api/auth.js';
@@ -15,6 +16,11 @@ import { type ASBRServer, createASBRServer } from '../../src/api/server.js';
 import type { Profile, TaskInput } from '../../src/types/index.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 import { getSharedServer } from '../fixtures/shared-server.js';
+import {
+        createTestConnectorsManifest,
+        type TestManifestContext,
+        verifyConnectorServiceMapSignature,
+} from '../utils/connectors-manifest.js';
 
 describe('ASBR API Integration Tests', () => {
 	let server: ASBRServer;
@@ -24,6 +30,13 @@ describe('ASBR API Integration Tests', () => {
         beforeAll(async () => {
                 process.env.CONNECTORS_SIGNATURE_KEY =
                         process.env.CONNECTORS_SIGNATURE_KEY ?? 'integration-secret';
+        let server: ASBRServer;
+        let authToken: string;
+        let app: Application;
+        let connectorsManifest: TestManifestContext | undefined;
+        const connectorsSignatureKey = 'test-connectors-secret';
+
+        beforeAll(async () => {
                 if (process.env.ASBR_TEST_SHARED_SERVER) {
                         const { server: shared, authToken: token } = await getSharedServer();
                         server = shared;
@@ -39,11 +52,20 @@ describe('ASBR API Integration Tests', () => {
 		}
 	});
 
-	afterAll(async () => {
-		if (!process.env.ASBR_TEST_SHARED_SERVER && server) {
-			await server.stop();
-		}
-	});
+        afterAll(async () => {
+                if (!process.env.ASBR_TEST_SHARED_SERVER && server) {
+                        await server.stop();
+                }
+                if (connectorsManifest) {
+                        await connectorsManifest.cleanup();
+                }
+                if (!process.env.ASBR_TEST_SHARED_SERVER) {
+                        delete process.env.CONNECTORS_MANIFEST_PATH;
+                }
+                if (process.env.CONNECTORS_SIGNATURE_KEY === connectorsSignatureKey) {
+                        delete process.env.CONNECTORS_SIGNATURE_KEY;
+                }
+        });
 
 	describe('Authentication', () => {
 		it('should reject requests without authentication', async () => {
