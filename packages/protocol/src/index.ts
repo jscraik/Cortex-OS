@@ -1,6 +1,6 @@
 export {
-	AgentResultMetaSchema,
-	AgentResultSchema,
+        AgentResultMetaSchema,
+        AgentResultSchema,
 	BudgetMeterSchema,
 	BudgetSchema,
 	EnvelopeSchema,
@@ -13,12 +13,21 @@ export {
 	StreamEventSchema,
 	StreamPatchSummarySchema,
 	TaskSchema,
-	ToolCallSchema,
-	ToolResultSchema,
+        ToolCallSchema,
+        ToolResultSchema,
 } from './schemas.js';
+export {
+        connectorAuthSchema,
+        connectorEntrySchema,
+        connectorQuotasSchema,
+        createServiceMapSignature,
+        canonicalizeServiceMapPayload,
+        serviceMapResponseSchema,
+        verifyServiceMapSignature,
+} from './connectors/service-map.js';
 export type {
-	AgentResult,
-	AgentResultMeta,
+        AgentResult,
+        AgentResultMeta,
 	Budget,
 	BudgetMeter,
 	BudgetMeterKind,
@@ -41,8 +50,14 @@ export type {
 	TaskStatus,
 	TokenStreamEvent,
 	ToolCall,
-	ToolCallStatus,
-	ToolEndStreamEvent,
-	ToolResult,
-	ToolStartStreamEvent,
+        ToolCallStatus,
+        ToolEndStreamEvent,
+        ToolResult,
+        ToolStartStreamEvent,
 } from './types.js';
+export type {
+        ConnectorAuth,
+        ConnectorEntry,
+        ServiceMapPayload,
+        ServiceMapResponse,
+} from './connectors/service-map.js';
