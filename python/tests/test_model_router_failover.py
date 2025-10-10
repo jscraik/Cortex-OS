@@ -111,6 +111,7 @@ def test_router_falls_back_to_ollama_when_mlx_unavailable(
     monkeypatch.setattr(router_mod, "instructor", None)
     fake_openai.chat_text = "ollama-ok"
     stub = types.ModuleType("mlx_lm")
+    stub.generate = lambda *args, **kwargs: NotImplementedError("stub generate")
     monkeypatch.setitem(sys.modules, "mlx_lm", stub)
 
     with caplog.at_level(logging.INFO):
