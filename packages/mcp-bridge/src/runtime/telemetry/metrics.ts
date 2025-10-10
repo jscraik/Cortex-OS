@@ -29,6 +29,13 @@ const piecesProxyAvailability = new Gauge({
 	registers: [registry],
 });
 
+const connectorProxyAvailability = new Gauge({
+	name: 'brainwav_mcp_connector_proxy_up',
+	help: 'Connector MCP proxy availability (1 = connected, 0 = disconnected)',
+	labelNames: ['connector'] as const,
+	registers: [registry],
+});
+
 let metricsInitialized = false;
 
 export const initializeMetrics = (brandPrefix: string): Registry => {
@@ -65,4 +72,8 @@ export const getMetricsRegistry = () => registry;
 
 export const setPiecesProxyStatus = (up: boolean) => {
 	piecesProxyAvailability.set(up ? 1 : 0);
+};
+
+export const setConnectorProxyStatus = (connector: string, up: boolean) => {
+	connectorProxyAvailability.labels({ connector }).set(up ? 1 : 0);
 };

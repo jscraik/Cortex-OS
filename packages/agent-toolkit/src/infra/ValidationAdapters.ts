@@ -4,8 +4,8 @@ import type {
 	AgentToolkitValidationInput,
 	AgentToolkitValidationResult,
 } from '@cortex-os/contracts';
+import { safeExecFileWithRetry } from '@cortex-os/security';
 import type { ValidationTool } from '../domain/ToolInterfaces.js';
-import { execWithRetry } from './execUtil.js';
 import { resolveToolsDirFromOverride, type ToolsDirOverride } from './paths.js';
 
 function createScriptPathPromise(
@@ -27,11 +27,10 @@ export class ESLintAdapter implements ValidationTool {
 
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
-			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
 			const scriptPath = await this.scriptPathPromise;
-			const cmd = `"${scriptPath}" ${filesArgs}`;
-			const { stdout } = await execWithRetry(cmd, {
-				timeoutMs: 45_000,
+			// CodeQL Fix #208: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
+			const { stdout } = await safeExecFileWithRetry(scriptPath, inputs.files || [], {
+				timeout: 45_000,
 				retries: 1,
 				backoffMs: 250,
 			});
@@ -56,11 +55,10 @@ export class RuffAdapter implements ValidationTool {
 
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
-			const filesArgs = (inputs.files || []).map((f) => `"${f}"`).join(' ');
 			const scriptPath = await this.scriptPathPromise;
-			const cmd = `"${scriptPath}" ${filesArgs}`;
-			const { stdout } = await execWithRetry(cmd, {
-				timeoutMs: 45_000,
+			// CodeQL Fix #209: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
+			const { stdout } = await safeExecFileWithRetry(scriptPath, inputs.files || [], {
+				timeout: 45_000,
 				retries: 1,
 				backoffMs: 250,
 			});

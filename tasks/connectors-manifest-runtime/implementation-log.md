@@ -3,3 +3,5 @@
 _Date:_ 2025-10-10
 
 - [ ] Implementation not yet started. Planning artifacts in place (research, implementation plan, TDD plan, checklist). Log entries will begin once Phase 1 (RED tests) kicks off.
+- [2025-10-10T23:00:59Z] Updated implementation plan, TDD plan, research notes, AGENTS.md, README.md, and launch script to document OpenAI Instructor hybrid integration per governance alignment.
+- [2025-10-10T23:59:29Z] Wired ExecutionSurfaceAgent to the manifest-backed connectors registry, refreshed MCP bridge telemetry, and introduced MCP server connectors proxy/config with unit coverage for proxy registration and tool exposure.

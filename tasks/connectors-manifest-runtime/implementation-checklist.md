@@ -17,10 +17,10 @@
 - [ ] Add React/Jest suites (hooks, widget e2e, a11y, perf) using Apps SDK mocks.
 
 ## Phase 2 — Minimal Implementation (GREEN)
-- [ ] Implement manifest loader/signer and expose `/v1/connectors/service-map`.
-- [ ] Replace ExecutionSurfaceAgent stubs with manifest-driven registry + caching.
-- [ ] Enhance MCP bridge RemoteToolProxy with auth headers + metrics gauge.
-- [ ] Bootstrap MCP server connectors proxies using OpenAI Agents SDK metadata.
+- [✅] Implement manifest loader/signer and expose `/v1/connectors/service-map`.
+- [✅] Replace ExecutionSurfaceAgent stubs with manifest-driven registry + caching.
+- [✅] Enhance MCP bridge RemoteToolProxy with auth headers + metrics gauge.
+- [✅] Bootstrap MCP server connectors proxies using OpenAI Agents SDK metadata.
 - [ ] Implement Python connectors server (auth, SSE, Apps bundle serving).
 - [ ] Integrate React widget with OpenAI Apps SDK session + manifest polling.
 

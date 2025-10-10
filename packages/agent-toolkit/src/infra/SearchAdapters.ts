@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import type { AgentToolkitSearchInput, AgentToolkitSearchResult } from '@cortex-os/contracts';
+import { safeExecFileWithRetry } from '@cortex-os/security';
 import type { SearchTool } from '../domain/ToolInterfaces.js';
-import { execWithRetry } from './execUtil.js';
 import { resolveToolsDirFromOverride, type ToolsDirOverride } from './paths.js';
 
 function summarizeSearchError(
@@ -48,9 +48,9 @@ export class RipgrepAdapter extends BaseSearchAdapter {
 	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		try {
 			const scriptPath = await this.getScriptPath();
-			const cmd = `"${scriptPath}" "${inputs.pattern}" "${inputs.path}"`;
-			const { stdout } = await execWithRetry(cmd, {
-				timeoutMs: 30_000,
+			// CodeQL Fix #205: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
+			const { stdout } = await safeExecFileWithRetry(scriptPath, [inputs.pattern, inputs.path], {
+				timeout: 30_000,
 				retries: 1,
 				backoffMs: 200,
 			});
@@ -74,9 +74,9 @@ export class SemgrepAdapter extends BaseSearchAdapter {
 	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		try {
 			const scriptPath = await this.getScriptPath();
-			const cmd = `"${scriptPath}" "${inputs.pattern}" "${inputs.path}"`;
-			const { stdout } = await execWithRetry(cmd, {
-				timeoutMs: 40_000,
+			// CodeQL Fix #206: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
+			const { stdout } = await safeExecFileWithRetry(scriptPath, [inputs.pattern, inputs.path], {
+				timeout: 40_000,
 				retries: 1,
 				backoffMs: 250,
 			});
@@ -100,9 +100,9 @@ export class AstGrepAdapter extends BaseSearchAdapter {
 	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
 		try {
 			const scriptPath = await this.getScriptPath();
-			const cmd = `"${scriptPath}" "${inputs.pattern}" "${inputs.path}"`;
-			const { stdout } = await execWithRetry(cmd, {
-				timeoutMs: 40_000,
+			// CodeQL Fix #207: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
+			const { stdout } = await safeExecFileWithRetry(scriptPath, [inputs.pattern, inputs.path], {
+				timeout: 40_000,
 				retries: 1,
 				backoffMs: 250,
 			});

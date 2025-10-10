@@ -12,6 +12,26 @@ vi.mock('../config/hybrid.js', () => ({
 	loadHybridConfig: () => ({ strategy: null, enforcement: null }),
 }));
 
+vi.mock('../config/connectors.js', () => ({
+	loadConnectorsConfig: () => ({
+		enabled: false,
+		manifest: {
+			brand: 'brAInwav',
+			version: '0',
+			ttlSeconds: 0,
+			connectors: [],
+		},
+		manifestPath: 'mock',
+		apiKey: undefined,
+	}),
+}));
+
+vi.mock('@cortex-os/asbr/src/types/connectors.js', () => ({
+	connectorsManifestSchema: {
+		parse: (value: unknown) => value,
+	},
+}));
+
 vi.mock('../utils/config.js', () => ({
 	loadServerConfig: () => ({
 		logLevel: 'silent',

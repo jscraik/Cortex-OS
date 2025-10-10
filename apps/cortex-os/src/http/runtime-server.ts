@@ -9,6 +9,7 @@ import type {
 	RoutingDecision,
 	RoutingRequest,
 } from '@cortex-os/orchestration';
+import { ALLOWED_ORIGINS } from '@cortex-os/security';
 import { z } from 'zod';
 import { createRequestId, logHttpError, logHttpInfo } from '../observability/logger.js';
 import {
@@ -80,9 +81,20 @@ const RUN_ID_SCHEMA = z
 	.max(128)
 	.regex(/^[A-Za-z0-9._-]+$/);
 
+/**
+ * Apply CORS headers with whitelist validation
+ * CodeQL Fix #213, #212: Replaces origin reflection with whitelist validation
+ * @param req - Incoming HTTP request
+ * @param res - Server response
+ */
 function applyCors(req: IncomingMessage, res: ServerResponse): void {
-	const origin = req.headers.origin ?? '*';
-	res.setHeader('Access-Control-Allow-Origin', origin);
+	const requestOrigin = req.headers.origin;
+
+	// Validate origin against whitelist
+	const allowedOrigin =
+		requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin) ? requestOrigin : ALLOWED_ORIGINS[0]; // Default to first allowed origin
+
+	res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
 	res.setHeader('Access-Control-Allow-Methods', CORS_ALLOWED_METHODS);
 	res.setHeader(
 		'Access-Control-Allow-Headers',

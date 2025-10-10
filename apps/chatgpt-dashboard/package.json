@@ -1,0 +1,43 @@
+{
+  "name": "@cortex-os/chatgpt-dashboard",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "webpack serve --config webpack.dev.cjs",
+    "build": "webpack --config webpack.prod.cjs",
+    "test": "jest",
+    "test:a11y": "jest --config jest.a11y.cjs",
+    "test:perf": "jest --config jest.perf.cjs"
+  },
+  "dependencies": {
+    "@openai/apps-sdk": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-react": "^7.26.0",
+    "@babel/preset-typescript": "^7.26.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
+    "@types/react": "^18.3.8",
+    "@types/react-dom": "^18.3.2",
+    "babel-jest": "^29.7.0",
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.3",
+    "jest": "^29.7.0",
+    "jest-axe": "^10.0.0",
+    "style-loader": "^4.0.0",
+    "ts-jest": "^29.3.4",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "webpack-merge": "^5.10.0",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.2.1"
+  }
+}

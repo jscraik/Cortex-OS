@@ -16,7 +16,7 @@ async def connector_status_stream(
 
     count = 0
     while max_events is None or count < max_events:
-        payload = registry.service_map()["payload"]
+        payload = registry.service_map()
         yield {
             "event": "status",
             "data": {

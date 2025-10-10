@@ -2,8 +2,10 @@
 
 import type { Logger } from 'pino';
 import { pino } from 'pino';
+import { type ConnectorsConfig, loadConnectorsConfig } from './config/connectors.js';
 import { loadHybridConfig } from './config/hybrid.js';
 import { loadOllamaConfig, type OllamaConfig } from './config/ollama.js';
+import { ConnectorsProxyManager } from './connectors-proxy.js';
 import { PiecesMCPProxy } from './pieces-proxy.js';
 import { createPrompts } from './prompts/index.js';
 import { createResources } from './resources/index.js';
@@ -141,12 +143,14 @@ function setupShutdownHandlers(
 	logger: Logger,
 	transport: TransportController,
 	piecesProxy: PiecesMCPProxy | null,
+	connectorsProxy: ConnectorsProxyManager | null,
 	heartbeatStopper: HeartbeatStopper | null,
 ) {
 	const shutdown = async (signal: NodeJS.Signals) => {
 		logger.info(createBrandedLog('shutdown_signal', { signal }), `${BRAND.prefix} shutting down`);
 		heartbeatStopper?.();
 		await piecesProxy?.disconnect().catch(() => undefined);
+		await connectorsProxy?.disconnectAll().catch(() => undefined);
 		await transport.stop().catch(() => undefined);
 		process.exit(0);
 	};
@@ -175,13 +179,44 @@ function setupProcessErrorHandlers(logger: Logger) {
 	});
 }
 
+function createConnectorsProxy(
+	config: ConnectorsConfig,
+	logger: Logger,
+): ConnectorsProxyManager | null {
+	if (!config.enabled || config.manifest.connectors.length === 0) {
+		return null;
+	}
+
+	return new ConnectorsProxyManager({
+		manifest: config.manifest,
+		logger: logger.child({ component: 'connectors-proxy' }),
+		enabled: config.enabled,
+		apiKey: config.apiKey,
+	});
+}
+
+async function attachConnectorsTools(
+	server: any,
+	logger: Logger,
+	proxy: ConnectorsProxyManager | null,
+): Promise<void> {
+	if (!proxy) {
+		return;
+	}
+
+	await proxy.connectAll();
+	proxy.registerTools(server, logger);
+}
+
 async function main() {
 	const config = loadServerConfig();
 	const logger = createLogger(config.logLevel);
 	const hybrid = loadHybridConfig(logger);
 	const ollama = loadOllamaConfig(hybrid);
+	const connectorsConfig = loadConnectorsConfig(logger);
 	const { server } = createServer(logger, config);
 	const piecesProxy = createPiecesProxy(config, logger);
+	const connectorsProxy = createConnectorsProxy(connectorsConfig, logger);
 
 	registerTools(server, logger, { piecesProxy, config, ollama, hybrid });
 	createPrompts(server, logger);
@@ -190,9 +225,10 @@ async function main() {
 	const heartbeatStopper = await maybeWarmupOllama(config, ollama, logger);
 	await validateOllamaDeployment(ollama, logger);
 	await attachPiecesTools(server, logger, piecesProxy);
+	await attachConnectorsTools(server, logger, connectorsProxy);
 	const transport = await startTransport(server, logger, config);
 
-	setupShutdownHandlers(logger, transport, piecesProxy, heartbeatStopper);
+	setupShutdownHandlers(logger, transport, piecesProxy, connectorsProxy, heartbeatStopper);
 	setupProcessErrorHandlers(logger);
 }
 

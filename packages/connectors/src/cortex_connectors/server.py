@@ -7,10 +7,10 @@ import os
 from datetime import UTC, datetime
 from typing import Any, AsyncIterator, Callable, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST
 
 from .auth import APIKeyAuthenticator
 from .registry import ConnectorRegistry
@@ -28,6 +28,12 @@ def create_app(
     configure_tracing("cortex-connectors", os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
 
     registry = ConnectorRegistry(settings.manifest_path, settings.signature_key)
+    try:
+        registry.refresh()
+    except (FileNotFoundError, ValueError):
+        # Manifest may be missing or invalid on startup; endpoints will surface
+        # the failure with appropriate HTTP status codes.
+        pass
     authenticator = APIKeyAuthenticator(settings.api_key, settings.no_auth)
 
     app = FastAPI(title="Cortex Connectors", version="0.1.0")
@@ -49,9 +55,7 @@ def create_app(
     async def service_map() -> dict[str, Any]:
         try:
             return registry.service_map()
-        except FileNotFoundError as exc:
-            raise HTTPException(status_code=503, detail=str(exc)) from exc
-        except ValueError as exc:
+        except (FileNotFoundError, ValueError) as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.get("/v1/connectors/stream")
@@ -68,7 +72,22 @@ def create_app(
     if settings.enable_prometheus:
         @app.get("/metrics")
         async def metrics() -> Response:
-            return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+            try:
+                registry.manifest  # Validate manifest is accessible
+            except (FileNotFoundError, ValueError) as exc:
+                raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+            lines = [
+                "# HELP brainwav_mcp_connector_proxy_up Connector availability proxy state",
+                "# TYPE brainwav_mcp_connector_proxy_up gauge",
+            ]
+            for record in registry.records():
+                value = 1 if record.enabled else 0
+                lines.append(
+                    f'brainwav_mcp_connector_proxy_up{{connector="{record.entry.id}"}} {value}'
+                )
+            body = "\n".join(lines) + "\n"
+            return Response(body, media_type=CONTENT_TYPE_LATEST)
 
     bundle_dir = settings.apps_bundle_dir
     if bundle_dir and bundle_dir.exists():

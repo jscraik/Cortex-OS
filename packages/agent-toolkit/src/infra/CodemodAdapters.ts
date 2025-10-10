@@ -1,11 +1,9 @@
-import { exec } from 'node:child_process';
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 import type { AgentToolkitCodemodInput, AgentToolkitCodemodResult } from '@cortex-os/contracts';
+import { safeExecFile } from '@cortex-os/security';
 import type { CodemodTool } from '../domain/ToolInterfaces.js';
 import { resolveToolsDirFromOverride, type ToolsDirOverride } from './paths.js';
-
-const execAsync = promisify(exec);
 
 /**
  * Comby code modification tool adapter
@@ -22,9 +20,8 @@ export class CombyAdapter implements CodemodTool {
 	async rewrite(inputs: AgentToolkitCodemodInput): Promise<AgentToolkitCodemodResult> {
 		try {
 			const scriptPath = await this.scriptPathPromise;
-			const { stdout } = await execAsync(
-				`"${scriptPath}" "${inputs.find}" "${inputs.replace}" "${inputs.path}"`,
-			);
+			// CodeQL Fix #204: Use safeExecFile instead of exec to prevent shell injection
+			const { stdout } = await safeExecFile(scriptPath, [inputs.find, inputs.replace, inputs.path]);
 			const result = JSON.parse(stdout) as AgentToolkitCodemodResult;
 
 			// Validate the result matches our schema

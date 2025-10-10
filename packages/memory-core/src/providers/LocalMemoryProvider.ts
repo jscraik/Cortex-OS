@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { validateArrayParam } from '@cortex-os/security';
 import type {
 	MemoryAnalysisInput,
 	MemoryRelationshipsInput,
@@ -1050,7 +1051,14 @@ export class LocalMemoryProvider implements MemoryProvider {
 
 	async stats(input?: MemoryStatsInput): Promise<MemoryStats> {
 		try {
-			const include = input?.include || ['total_count', 'domain_distribution', 'tag_distribution'];
+			// CodeQL Fix #210, #191-195: Validate include is an array to prevent type confusion
+			const includeRaw = input?.include || [
+				'total_count',
+				'domain_distribution',
+				'tag_distribution',
+			];
+			const include = validateArrayParam(includeRaw, 'include', 'string');
+
 			const stats: MemoryStats = {
 				totalCount: 0,
 				domainDistribution: {},

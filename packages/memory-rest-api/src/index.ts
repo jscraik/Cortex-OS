@@ -4,6 +4,7 @@ import {
 	type GraphRAGService,
 	type MemoryProvider,
 } from '@cortex-os/memory-core';
+import { corsOptions } from '@cortex-os/security';
 import cors from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
@@ -64,14 +65,9 @@ class MemoryRestApi {
 		// Security
 		this.app.use(helmet());
 
-		// CORS
+		// CORS - CodeQL Fix #200, #199: Replace permissive CORS with whitelist validation
 		if (this.config.enableCors) {
-			this.app.use(
-				cors({
-					origin: process.env.CORS_ORIGIN || '*',
-					credentials: true,
-				}),
-			);
+			this.app.use(cors(corsOptions));
 		}
 
 		// Rate limiting

@@ -1,14 +1,26 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { URL } from 'node:url';
+import { ALLOWED_ORIGINS } from '@cortex-os/security';
 import type { ShutdownResult } from '../operational/shutdown-result.js';
 import type { McpGateway } from './gateway.js';
 
 const MCP_CORS_METHODS = 'GET,POST,OPTIONS';
 const MCP_CORS_HEADERS = 'Content-Type, Authorization, Accept';
 
+/**
+ * Apply CORS headers with whitelist validation
+ * CodeQL Fix #213, #212: Replaces origin reflection with whitelist validation
+ * @param req - Incoming HTTP request
+ * @param res - Server response
+ */
 function applyCors(req: IncomingMessage, res: ServerResponse) {
-	const origin = req.headers.origin ?? '*';
-	res.setHeader('Access-Control-Allow-Origin', origin);
+	const requestOrigin = req.headers.origin;
+
+	// Validate origin against whitelist
+	const allowedOrigin =
+		requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin) ? requestOrigin : ALLOWED_ORIGINS[0]; // Default to first allowed origin
+
+	res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
 	res.setHeader('Access-Control-Allow-Methods', MCP_CORS_METHODS);
 	res.setHeader(
 		'Access-Control-Allow-Headers',
