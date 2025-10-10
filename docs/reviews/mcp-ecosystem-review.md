@@ -40,7 +40,7 @@
 - [ ] **Understandable control & data flow:** Manual queue management in notifications lacks comments on ordering guarantees or error handling; add diagrams/tests.【F:packages/mcp/src/notifications/handlers.ts†L34-L163】
 - [ ] **Comments:** Inline comments note placeholder behavior instead of TODOs; replace with actionable tasks and link to issues.【F:packages/mcp/src/server.ts†L337-L346】
 - [x] **Style compliance:** Reviewed files follow TypeScript formatting and naming conventions.
-- [ ] **Commented-out code:** None observed; ✅
+- [x] **Commented-out code:** None observed.
 - [x] **Cleanup of debug/test code:** Tests under `packages/mcp-registry/tests` mock console logging responsibly and restore spies.【F:packages/mcp-registry/tests/fs-store.test.ts†L34-L43】
 
 ## 5. Error Handling, Logging & Monitoring
