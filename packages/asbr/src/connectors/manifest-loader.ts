@@ -107,9 +107,13 @@ function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServic
         const generatedAt = new Date().toISOString();
         const nowEpoch = Math.floor(Date.now() / 1000);
         const connectors = manifest.connectors.map((connector) => buildConnectorEntry(connector, nowEpoch));
+        let minConnectorTTL: number | undefined = undefined;
+        if (manifest.connectors.length > 0) {
+                minConnectorTTL = Math.min(...manifest.connectors.map((connector) => connector.ttlSeconds));
+        }
         const ttlSeconds = Math.max(
                 1,
-                manifest.ttlSeconds ?? Math.min(...manifest.connectors.map((connector) => connector.ttlSeconds)),
+                manifest.ttlSeconds ?? minConnectorTTL ?? 1,
         );
 
         return {
