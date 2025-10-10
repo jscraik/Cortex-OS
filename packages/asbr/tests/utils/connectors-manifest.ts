@@ -41,7 +41,9 @@ export async function createTestConnectorsManifest(
                 path,
                 manifest,
                 cleanup: async () => {
-                        await rm(dir, { recursive: true, force: true }).catch(() => {});
+                        await rm(dir, { recursive: true, force: true }).catch((err) => {
+                                console.error(`Failed to clean up test directory ${dir}:`, err);
+                        });
                 },
         };
 }
