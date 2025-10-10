@@ -3,7 +3,7 @@ import { collectDefaultMetrics, Gauge, Registry } from 'prom-client';
 const registry = new Registry();
 
 const availabilityGauge = new Gauge({
-        name: 'brainwav_mcp_connector_proxy_up',
+        name: 'brAInwav_mcp_connector_proxy_up',
         help: 'Availability of MCP connector proxies',
         labelNames: ['connector'] as const,
         registers: [registry],
