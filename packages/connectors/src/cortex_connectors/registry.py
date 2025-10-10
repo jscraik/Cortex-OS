@@ -12,7 +12,7 @@ from .manifest import ConnectorManifest, ConnectorManifestEntry
 from .signing import generate_service_map_signature
 
 _CONNECTOR_GAUGE = Gauge(
-    "brainwav_mcp_connector_proxy_up",
+    "brAInwav_mcp_connector_proxy_up",
     "Connector availability proxy state",
     ["connector"],
 )
