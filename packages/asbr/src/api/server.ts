@@ -12,6 +12,7 @@ import express from 'express';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { getEventManager, stopEventManager } from '../core/events.js';
+import { buildConnectorServiceMap, loadConnectorsManifest, signConnectorServiceMap, ConnectorsManifestError } from '../connectors/manifest.js';
 import { createTask as buildTask } from '../lib/create-task.js';
 import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { logError, logInfo } from '../lib/logger.js';
@@ -665,9 +666,40 @@ class ASBRServerClass {
 		res.json(serviceMap);
 	}
 
-	private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
-		res.json({});
-	}
+        private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
+                try {
+                        const manifest = await loadConnectorsManifest();
+                        const serviceMap = buildConnectorServiceMap(manifest);
+                        const secret = process.env.CONNECTORS_SIGNATURE_KEY;
+
+                        if (!secret) {
+                                throw new ValidationError('CONNECTORS_SIGNATURE_KEY environment variable is required');
+                        }
+
+                        const signature = signConnectorServiceMap(serviceMap, secret);
+                        res.json({ ...serviceMap, signature });
+                } catch (error) {
+                        if (error instanceof ValidationError) {
+                                throw error;
+                        }
+
+                        if (error instanceof ConnectorsManifestError) {
+                                throw new ValidationError('Invalid connectors manifest', {
+                                        attempts: error.attempts.map((attempt) => ({
+                                                path: attempt.path,
+                                                message:
+                                                        attempt.error instanceof Error
+                                                                ? attempt.error.message
+                                                                : String(attempt.error),
+                                        })),
+                                });
+                        }
+
+                        throw new ValidationError('Failed to load connectors manifest', {
+                                message: error instanceof Error ? error.message : String(error),
+                        });
+                }
+        }
 
 	private async emitEvent(event: Event): Promise<void> {
 		const manager = await getEventManager();

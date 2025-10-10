@@ -187,22 +187,20 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
 	});
 
 	describe('LLM07: Insecure Plugin Design', () => {
-		it('should validate connector permissions', async () => {
-			const response = await request
-				.get('/v1/connectors/service-map')
-				.set('Authorization', `Bearer ${authToken}`)
-				.expect(200);
+                it('should validate connector permissions', async () => {
+                        const response = await request
+                                .get('/v1/connectors/service-map')
+                                .set('Authorization', `Bearer ${authToken}`)
+                                .expect(200);
 
-			// Each connector should have defined scopes
-			interface ConnectorInfo {
-				scopes?: unknown;
-			}
-			Object.values(response.body as Record<string, ConnectorInfo>).forEach((connector) => {
-				expect(connector).toHaveProperty('scopes');
-				expect(Array.isArray(connector.scopes)).toBe(true);
-			});
-		});
-	});
+                        // Each connector should have defined scopes
+                        expect(Array.isArray(response.body.connectors)).toBe(true);
+                        (response.body.connectors as Array<{ scopes: unknown }>).forEach((connector) => {
+                                expect(connector).toHaveProperty('scopes');
+                                expect(Array.isArray(connector.scopes)).toBe(true);
+                        });
+                });
+        });
 
 	describe('LLM08: Excessive Agency', () => {
 		it('should require explicit scopes for operations', async () => {

@@ -21,19 +21,21 @@ describe('ASBR API Integration Tests', () => {
 	let authToken: string;
 	let app: Application;
 
-	beforeAll(async () => {
-		if (process.env.ASBR_TEST_SHARED_SERVER) {
-			const { server: shared, authToken: token } = await getSharedServer();
-			server = shared;
-			authToken = token;
-			app = server.app;
-		} else {
-			await initializeXDG();
-			const tokenInfo = await initializeAuth();
-			authToken = tokenInfo.token;
-			server = createASBRServer({ port: 0, host: '127.0.0.1' });
-			await server.start();
-			app = server.app;
+        beforeAll(async () => {
+                process.env.CONNECTORS_SIGNATURE_KEY =
+                        process.env.CONNECTORS_SIGNATURE_KEY ?? 'integration-secret';
+                if (process.env.ASBR_TEST_SHARED_SERVER) {
+                        const { server: shared, authToken: token } = await getSharedServer();
+                        server = shared;
+                        authToken = token;
+                        app = server.app;
+                } else {
+                        await initializeXDG();
+                        const tokenInfo = await initializeAuth();
+                        authToken = tokenInfo.token;
+                        server = createASBRServer({ port: 0, host: '127.0.0.1' });
+                        await server.start();
+                        app = server.app;
 		}
 	});
 
@@ -288,18 +290,47 @@ describe('ASBR API Integration Tests', () => {
 		});
 	});
 
-	describe('Connector Service Map', () => {
-		it('should return connector service map', async () => {
-			const response = await request(app)
-				.get('/v1/connectors/service-map')
-				.set('Authorization', `Bearer ${authToken}`)
-				.expect(200);
+        describe('Connector Service Map', () => {
+                it('should return connector service map', async () => {
+                        const response = await request(app)
+                                .get('/v1/connectors/service-map')
+                                .set('Authorization', `Bearer ${authToken}`)
+                                .expect(200);
 
-			expect(response.body).toBeDefined();
-			expect(typeof response.body).toBe('object');
-			expect(Object.keys(response.body).length).toBe(0);
-		});
-	});
+                        expect(response.body).toMatchObject({
+                                schema_version: '1.0.0',
+                        });
+                        expect(typeof response.body.signature).toBe('string');
+                        expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
+                        expect(response.body.generated_at).toBe('2025-01-01T00:00:00Z');
+                        expect(response.body.connectors).toEqual([
+                                {
+                                        id: 'github-actions',
+                                        version: '0.4.1',
+                                        status: 'disabled',
+                                        scopes: ['repos:read', 'actions:trigger'],
+                                        quotas: {
+                                                per_minute: 5,
+                                                per_hour: 50,
+                                                per_day: 400,
+                                        },
+                                        ttl_seconds: 900,
+                                },
+                                {
+                                        id: 'perplexity-search',
+                                        version: '1.2.0',
+                                        status: 'enabled',
+                                        scopes: ['search:query', 'search:insights'],
+                                        quotas: {
+                                                per_minute: 30,
+                                                per_hour: 300,
+                                                per_day: 3000,
+                                        },
+                                        ttl_seconds: 3600,
+                                },
+                        ]);
+                });
+        });
 
 	describe('Error Handling', () => {
 		it('should return 404 for non-existent resources', async () => {
