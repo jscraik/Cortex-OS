@@ -12,7 +12,7 @@ import express from 'express';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { getEventManager, stopEventManager } from '../core/events.js';
-import { loadConnectorServiceMap } from '../connectors/manifest-loader.js';
+import { buildConnectorServiceMap, loadConnectorsManifest, signConnectorServiceMap, ConnectorsManifestError } from '../connectors/manifest.js';
 import { createTask as buildTask } from '../lib/create-task.js';
 import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { logError, logInfo } from '../lib/logger.js';
@@ -669,35 +669,37 @@ class ASBRServerClass {
 
         private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
                 try {
-                        const payload = await loadConnectorServiceMap();
-                        logInfo('connectors service map served', {
-                                brand: 'brAInwav',
-                                component: 'connectors',
-                                connectors: payload.connectors.length,
-                                ttlSeconds: payload.ttlSeconds,
-                        });
-                        res.json(payload);
-                } catch (error) {
-                        logError('failed to load connectors service map', {
-                                brand: 'brAInwav',
-                                component: 'connectors',
-                                error: error instanceof Error ? error.message : String(error),
-                        });
 
-                        if (error instanceof ASBRError || error instanceof ValidationError) {
+                        const manifest = await loadConnectorsManifest();
+                        const serviceMap = buildConnectorServiceMap(manifest);
+                        const secret = process.env.CONNECTORS_SIGNATURE_KEY;
+
+                        if (!secret) {
+                                throw new ValidationError('CONNECTORS_SIGNATURE_KEY environment variable is required');
+                        }
+
+                        const signature = signConnectorServiceMap(serviceMap, secret);
+                        res.json({ ...serviceMap, signature });
+                } catch (error) {
+                        if (error instanceof ValidationError) {
                                 throw error;
                         }
 
-                        throw new ASBRError(
-                                'Unexpected connector service map failure',
-                                'CONNECTORS_SERVICE_MAP_ERROR',
-                                503,
-                                {
-                                        brand: 'brAInwav',
-                                        component: 'connectors',
-                                        error: error instanceof Error ? error.message : String(error),
-                                },
-                        );
+                        if (error instanceof ConnectorsManifestError) {
+                                throw new ValidationError('Invalid connectors manifest', {
+                                        attempts: error.attempts.map((attempt) => ({
+                                                path: attempt.path,
+                                                message:
+                                                        attempt.error instanceof Error
+                                                                ? attempt.error.message
+                                                                : String(attempt.error),
+                                        })),
+                                });
+                        }
+
+                        throw new ValidationError('Failed to load connectors manifest', {
+                                message: error instanceof Error ? error.message : String(error),
+                        });
                 }
         }
 

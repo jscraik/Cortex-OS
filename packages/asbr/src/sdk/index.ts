@@ -23,6 +23,14 @@ import type {
 	UnsubscribeFunction,
 } from '@cortex-os/asbr-schemas';
 import { isPrivateHostname, NodeEventSource, safeFetch } from '@cortex-os/utils';
+import { z } from 'zod';
+import { ConnectorServiceMapSchema } from '../connectors/manifest-schema.js';
+
+const ConnectorServiceMapResponseSchema = ConnectorServiceMapSchema.extend({
+        signature: z.string().min(1),
+});
+
+export type ConnectorServiceMapResponse = z.infer<typeof ConnectorServiceMapResponseSchema>;
 // NOTE: structured logger import removed to avoid cross-package coupling in quick lint-fix.
 // We'll keep console usage but explicitly allow it on these lines.
 
@@ -184,9 +192,12 @@ export class ASBRClient {
 	/**
 	 * Get service map of enabled connectors
 	 */
-        async getConnectorServiceMap(): Promise<ConnectorServiceMap> {
+
+        async getConnectorServiceMap(): Promise<ConnectorServiceMapResponse> {
                 const response = await this.fetch('/v1/connectors/service-map');
-                return (await response.json()) as ConnectorServiceMap;
+                const payload = await response.json();
+                return ConnectorServiceMapResponseSchema.parse(payload);
+
         }
 
 	/**

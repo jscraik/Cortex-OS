@@ -49,7 +49,9 @@ curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/v1/con
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | ⚙️ | Target for OpenTelemetry exports. |
 | `ENABLE_PROMETHEUS` | ⚙️ | Set to `true` to expose `/metrics` endpoint. |
 
-Secrets must be loaded through 1Password or the approved secret manager. Never commit `.env` files.
+Secrets must be loaded through 1Password or the approved secret manager. Never commit `.env` files. The repository ships a
+non-secret sample manifest at `config/connectors.manifest.json`; point `CONNECTORS_MANIFEST_PATH` to your vaulted manifest when
+running outside local development.
 
 ---
 

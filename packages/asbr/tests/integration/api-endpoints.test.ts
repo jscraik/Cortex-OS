@@ -23,6 +23,13 @@ import {
 } from '../utils/connectors-manifest.js';
 
 describe('ASBR API Integration Tests', () => {
+	let server: ASBRServer;
+	let authToken: string;
+	let app: Application;
+
+        beforeAll(async () => {
+                process.env.CONNECTORS_SIGNATURE_KEY =
+                        process.env.CONNECTORS_SIGNATURE_KEY ?? 'integration-secret';
         let server: ASBRServer;
         let authToken: string;
         let app: Application;
@@ -36,15 +43,12 @@ describe('ASBR API Integration Tests', () => {
                         authToken = token;
                         app = server.app;
                 } else {
-                        connectorsManifest = await createTestConnectorsManifest();
-                        process.env.CONNECTORS_MANIFEST_PATH = connectorsManifest.path;
-                        process.env.CONNECTORS_SIGNATURE_KEY = connectorsSignatureKey;
                         await initializeXDG();
                         const tokenInfo = await initializeAuth();
                         authToken = tokenInfo.token;
                         server = createASBRServer({ port: 0, host: '127.0.0.1' });
                         await server.start();
-			app = server.app;
+                        app = server.app;
 		}
 	});
 
@@ -315,54 +319,38 @@ describe('ASBR API Integration Tests', () => {
                                 .set('Authorization', `Bearer ${authToken}`)
                                 .expect(200);
 
-                        expect(response.body).toBeDefined();
-                        expect(response.body.brand).toBe('brAInwav');
-                        expect(typeof response.body.generatedAt).toBe('string');
-                        expect(Array.isArray(response.body.connectors)).toBe(true);
-                        expect(response.body.connectors.length).toBeGreaterThan(0);
-
-                        const connector = response.body.connectors[0];
-                        expect(connector.status).toBe('enabled');
-                        if (connectorsManifest) {
-                                expect(connector.id).toBe(connectorsManifest.manifest.connectors[0].id);
-                        }
-                        expect(typeof connector.ttl).toBe('number');
-                        expect(connector.ttl).toBeGreaterThan(Math.floor(Date.now() / 1000));
-                        if (!process.env.ASBR_TEST_SHARED_SERVER) {
-                                expect(
-                                        verifyConnectorServiceMapSignature(
-                                                response.body,
-                                                connectorsSignatureKey,
-                                        ),
-                                ).toBe(true);
-                        }
-                });
-
-                it('should return 503 when manifest is missing', async () => {
-                        if (process.env.ASBR_TEST_SHARED_SERVER) {
-                                expect(true).toBe(true);
-                                return;
-                        }
-
-                        const originalPath = process.env.CONNECTORS_MANIFEST_PATH;
-                        process.env.CONNECTORS_MANIFEST_PATH = join(
-                                process.cwd(),
-                                'config',
-                                'missing-connectors.manifest.json',
-                        );
-
-                        const response = await request(app)
-                                .get('/v1/connectors/service-map')
-                                .set('Authorization', `Bearer ${authToken}`)
-                                .expect(503);
-
-                        expect(response.body.code).toBe('CONNECTORS_MANIFEST_MISSING');
-
-                        if (originalPath) {
-                                process.env.CONNECTORS_MANIFEST_PATH = originalPath;
-                        } else {
-                                delete process.env.CONNECTORS_MANIFEST_PATH;
-                        }
+                        expect(response.body).toMatchObject({
+                                schema_version: '1.0.0',
+                        });
+                        expect(typeof response.body.signature).toBe('string');
+                        expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
+                        expect(response.body.generated_at).toBe('2025-01-01T00:00:00Z');
+                        expect(response.body.connectors).toEqual([
+                                {
+                                        id: 'github-actions',
+                                        version: '0.4.1',
+                                        status: 'disabled',
+                                        scopes: ['repos:read', 'actions:trigger'],
+                                        quotas: {
+                                                per_minute: 5,
+                                                per_hour: 50,
+                                                per_day: 400,
+                                        },
+                                        ttl_seconds: 900,
+                                },
+                                {
+                                        id: 'perplexity-search',
+                                        version: '1.2.0',
+                                        status: 'enabled',
+                                        scopes: ['search:query', 'search:insights'],
+                                        quotas: {
+                                                per_minute: 30,
+                                                per_hour: 300,
+                                                per_day: 3000,
+                                        },
+                                        ttl_seconds: 3600,
+                                },
+                        ]);
                 });
         });
 

@@ -1,122 +1,112 @@
-"""Manifest models for Cortex Connectors."""
+"""Utilities for loading and signing the connectors manifest."""
 
 from __future__ import annotations
 
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
 import json
+import hmac
+from dataclasses import dataclass
+from hashlib import sha256
+from pathlib import Path
+from typing import Iterable, List, Optional
 
-from pydantic import BaseModel, Field, HttpUrl, ValidationError
+from pydantic import ValidationError
 
+from .models import (
+    ConnectorServiceMap,
+    ConnectorServiceMapEntry,
+    ConnectorsManifest,
+)
 
-class ConnectorAuth(BaseModel):
-    """Authentication configuration for a connector."""
-
-    header_name: str = Field(alias="headerName")
-    scheme: str = Field(default="Bearer")
-    locations: List[str] = Field(default_factory=lambda: ["header"])
-
-    model_config = dict(populate_by_name=True)
-
-
-class ConnectorEndpoints(BaseModel):
-    """Endpoints exposed by a connector."""
-
-    http: HttpUrl
-    sse: Optional[HttpUrl] = None
+MODULE_PATH = Path(__file__).resolve()
+FALLBACK_MANIFEST_PATH = MODULE_PATH.parents[4] / "config" / "connectors.manifest.json"
+CWD_MANIFEST_PATH = Path.cwd() / "config" / "connectors.manifest.json"
 
 
-class ConnectorManifestEntry(BaseModel):
-    """Single connector definition loaded from the manifest."""
+@dataclass(slots=True)
+class ManifestLoadAttempt:
+    """Record of an attempted manifest load."""
 
-    id: str
-    name: str
-    description: str
-    enabled: bool = True
-    scopes: List[str]
-    quota_per_minute: Optional[int] = Field(default=None, alias="quotaPerMinute")
-    ttl_seconds: Optional[int] = Field(default=None, alias="ttlSeconds")
-    auth: ConnectorAuth
-    endpoints: ConnectorEndpoints
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-
-    model_config = dict(populate_by_name=True)
-
-    def to_service_map_entry(self) -> Dict[str, Any]:
-        """Return the public representation used in service-map payloads."""
-
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "scopes": list(self.scopes),
-            "ttlSeconds": self.ttl_seconds,
-            "quotaPerMinute": self.quota_per_minute,
-            "auth": {
-                "headerName": self.auth.header_name,
-                "scheme": self.auth.scheme,
-                "locations": list(self.auth.locations),
-            },
-            "endpoints": {
-                "http": str(self.endpoints.http),
-                "sse": str(self.endpoints.sse) if self.endpoints.sse else None,
-            },
-            "metadata": self.metadata,
-        }
+    path: Path
+    error: Exception
 
 
-class ManifestMetadata(BaseModel):
-    version: str
-    generated_at: datetime = Field(alias="generatedAt")
+class ConnectorsManifestError(Exception):
+    """Raised when the manifest cannot be loaded from any configured location."""
 
-    model_config = dict(populate_by_name=True)
+    def __init__(self, message: str, attempts: List[ManifestLoadAttempt]):
+        super().__init__(message)
+        self.attempts = attempts
 
 
-class ConnectorManifest(BaseModel):
-    """Top-level manifest representation."""
+def _build_candidate_paths(path: Optional[str | Path]) -> Iterable[Path]:
+    """Build the ordered list of manifest paths to try."""
 
-    metadata: ManifestMetadata
-    connectors: List[ConnectorManifestEntry]
+    candidates: List[Path] = []
+    if path:
+        candidates.append(Path(path))
+    candidates.extend([CWD_MANIFEST_PATH, FALLBACK_MANIFEST_PATH])
 
-    model_config = dict(populate_by_name=True)
+    seen: set[Path] = set()
+    for candidate in candidates:
+        expanded = candidate.expanduser()
+        if expanded in seen:
+            continue
+        seen.add(expanded)
+        yield expanded
 
-    @classmethod
-    def load(cls, path: Path) -> "ConnectorManifest":
+
+def load_connectors_manifest(manifest_path: Optional[str | Path] = None) -> ConnectorsManifest:
+    """Load and validate the connectors manifest."""
+
+    attempts: List[ManifestLoadAttempt] = []
+
+    for candidate in _build_candidate_paths(manifest_path):
         try:
-            raw = path.read_text(encoding="utf-8")
-        except FileNotFoundError as exc:  # pragma: no cover - easier to assert message
-            raise FileNotFoundError(f"Manifest not found at {path}") from exc
-
-        try:
+            raw = candidate.read_text(encoding="utf-8")
             data = json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise ValueError(f"Manifest at {path} is not valid JSON: {exc}") from exc
+            return ConnectorsManifest.model_validate(data)
+        except (FileNotFoundError, PermissionError, json.JSONDecodeError, ValidationError) as exc:  # pragma: no cover - aggregated below
+            attempts.append(ManifestLoadAttempt(path=candidate, error=exc))
+        except Exception as exc:  # pragma: no cover - unexpected exceptions are still reported
+            attempts.append(ManifestLoadAttempt(path=candidate, error=exc))
 
-        try:
-            return cls.model_validate(data)
-        except ValidationError as exc:
-            raise ValueError(f"Manifest validation failed: {exc}") from exc
-
-    def enabled_connectors(self) -> Iterable[ConnectorManifestEntry]:
-        return (connector for connector in self.connectors if connector.enabled)
-
-    def service_map_payload(self) -> Dict[str, Any]:
-        connectors = [c.to_service_map_entry() for c in self.enabled_connectors()]
-        return {
-            "metadata": {
-                "version": self.metadata.version,
-                "generatedAt": self.metadata.generated_at.isoformat(),
-                "count": len(connectors),
-            },
-            "connectors": connectors,
-        }
+    raise ConnectorsManifestError(
+        "Unable to load connectors manifest from configured locations",
+        attempts,
+    )
 
 
-__all__ = [
-    "ConnectorAuth",
-    "ConnectorEndpoints",
-    "ConnectorManifest",
-    "ConnectorManifestEntry",
-    "ManifestMetadata",
-]
+def build_connector_service_map(manifest: ConnectorsManifest) -> ConnectorServiceMap:
+    """Create the ASBR-facing service map from the manifest."""
+
+    connectors = [
+        ConnectorServiceMapEntry(
+            id=entry.id,
+            version=entry.version,
+            status=entry.status,
+            scopes=list(entry.scopes),
+            quotas=entry.quotas,
+            ttl_seconds=entry.ttl_seconds,
+        )
+        for entry in sorted(manifest.connectors, key=lambda item: item.id)
+    ]
+
+    return ConnectorServiceMap(
+        schema_version=manifest.schema_version,
+        generated_at=manifest.generated_at,
+        connectors=connectors,
+    )
+
+
+def sign_connector_service_map(service_map: ConnectorServiceMap, secret: str) -> str:
+    """Generate an HMAC signature for the service map."""
+
+    if not secret:
+        msg = "CONNECTORS_SIGNATURE_KEY is required to sign the connectors service map"
+        raise ValueError(msg)
+
+    payload = json.dumps(
+        service_map.model_dump(mode="json", exclude_none=True),
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hmac.new(secret.encode("utf-8"), payload, sha256).hexdigest()

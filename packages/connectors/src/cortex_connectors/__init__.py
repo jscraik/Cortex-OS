@@ -1,12 +1,29 @@
-"""Cortex Connectors package."""
+"""Cortex Connectors manifest utilities."""
 
-from .manifest import ConnectorManifest, ConnectorManifestEntry
-from .registry import ConnectorRegistry
-from .settings import Settings
+from .manifest import (
+    ConnectorsManifestError,
+    build_connector_service_map,
+    load_connectors_manifest,
+    sign_connector_service_map,
+)
+from .models import (
+    ConnectorAuthentication,
+    ConnectorEntry,
+    ConnectorQuota,
+    ConnectorServiceMap,
+    ConnectorServiceMapEntry,
+    ConnectorsManifest,
+)
 
 __all__ = [
-    "ConnectorManifest",
-    "ConnectorManifestEntry",
-    "ConnectorRegistry",
-    "Settings",
+    "ConnectorAuthentication",
+    "ConnectorEntry",
+    "ConnectorQuota",
+    "ConnectorServiceMap",
+    "ConnectorServiceMapEntry",
+    "ConnectorsManifest",
+    "ConnectorsManifestError",
+    "build_connector_service_map",
+    "load_connectors_manifest",
+    "sign_connector_service_map",
 ]
