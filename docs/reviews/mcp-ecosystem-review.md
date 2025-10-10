@@ -62,7 +62,7 @@
 - [x] **Platform/environment compatibility:** File-system registry honors `CORTEX_HOME`, `XDG_CONFIG_HOME`, and `HOME` fallbacks.【F:packages/mcp-registry/src/fs-store.ts†L1-L52】【F:packages/mcp-registry/tests/fs-store.test.ts†L20-L126】
 - [ ] **Build verification:** Ensure `pnpm test --filter mcp*` or equivalent documented; not in README.
 - [ ] **Data migration scripts:** Not applicable; registry uses JSON file without migrations—document limitations.【F:packages/mcp-registry/src/fs-store.ts†L1-L52】
-- [ ] **Data retention compliance:** Registry retains server manifest indefinitely; add retention guidance in docs.【F:packages/mcp-registry/src/fs-store.ts†L1-L52】
+- [ ] **Data retention compliance:** Registry retains the server manifest indefinitely; add retention guidance in docs.【F:packages/mcp-registry/src/fs-store.ts†L1-L52】
 - [ ] **Deployment readiness:** No Helm/Terraform updates for HTTP transport; confirm infra manifests reference `/mcp` endpoint.【F:packages/mcp-server/src/utils/config.ts†L77-L100】
 - [ ] **Release notes:** Update CHANGELOG or docs to cover FastMCP 3.18 adoption.【F:packages/mcp-server/src/server/mcp-server.ts†L13-L49】
 - [ ] **Runbooks/Incident response:** Add incident handling steps for auth failures and Pieces outages referencing telemetry metrics.【F:packages/mcp-server/src/index.ts†L41-L87】【F:packages/mcp-bridge/src/runtime/telemetry/metrics.ts†L1-L68】
