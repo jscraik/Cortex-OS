@@ -5,14 +5,15 @@
 
 import { createHash } from 'node:crypto';
 import type {
-	ArtifactRef,
-	Event as AsbrEvent,
-	EventType as AsbrEventType,
-	CreateProfileRequest,
-	CreateProfileResponse,
-	CreateTaskRequest,
-	CreateTaskResponse,
-	GetTaskResponse,
+        ArtifactRef,
+        Event as AsbrEvent,
+        EventType as AsbrEventType,
+        ConnectorServiceMap,
+        CreateProfileRequest,
+        CreateProfileResponse,
+        CreateTaskRequest,
+        CreateTaskResponse,
+        GetTaskResponse,
 	ListArtifactsQuery,
 	ListArtifactsResponse,
 	Profile,
@@ -183,19 +184,10 @@ export class ASBRClient {
 	/**
 	 * Get service map of enabled connectors
 	 */
-	async getConnectorServiceMap(): Promise<
-		Record<
-			string,
-			{
-				enabled: boolean;
-				scopes: string[];
-				ttl?: number;
-			}
-		>
-	> {
-		const response = await this.fetch('/v1/connectors/service-map');
-		return await response.json();
-	}
+        async getConnectorServiceMap(): Promise<ConnectorServiceMap> {
+                const response = await this.fetch('/v1/connectors/service-map');
+                return (await response.json()) as ConnectorServiceMap;
+        }
 
 	/**
 	 * Cancel a task

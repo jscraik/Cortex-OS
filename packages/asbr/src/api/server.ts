@@ -12,6 +12,7 @@ import express from 'express';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { getEventManager, stopEventManager } from '../core/events.js';
+import { loadConnectorServiceMap } from '../connectors/manifest-loader.js';
 import { createTask as buildTask } from '../lib/create-task.js';
 import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { logError, logInfo } from '../lib/logger.js';
@@ -19,12 +20,13 @@ import { resolveIdempotency } from '../lib/resolve-idempotency.js';
 import { secureHex } from '../lib/secure-random.js';
 import { validateTaskInput } from '../lib/validate-task-input.js';
 import {
-	type ArtifactRef,
-	AuthorizationError,
-	type Event,
-	NotFoundError,
-	type Profile,
-	ProfileSchema,
+        ASBRError,
+        type ArtifactRef,
+        AuthorizationError,
+        type Event,
+        NotFoundError,
+        type Profile,
+        ProfileSchema,
 	type ServiceMap,
 	ServiceMapSchema,
 	type Task,
@@ -665,9 +667,39 @@ class ASBRServerClass {
 		res.json(serviceMap);
 	}
 
-	private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
-		res.json({});
-	}
+        private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
+                try {
+                        const payload = await loadConnectorServiceMap();
+                        logInfo('connectors service map served', {
+                                brand: 'brAInwav',
+                                component: 'connectors',
+                                connectors: payload.connectors.length,
+                                ttlSeconds: payload.ttlSeconds,
+                        });
+                        res.json(payload);
+                } catch (error) {
+                        logError('failed to load connectors service map', {
+                                brand: 'brAInwav',
+                                component: 'connectors',
+                                error: error instanceof Error ? error.message : String(error),
+                        });
+
+                        if (error instanceof ASBRError || error instanceof ValidationError) {
+                                throw error;
+                        }
+
+                        throw new ASBRError(
+                                'Unexpected connector service map failure',
+                                'CONNECTORS_SERVICE_MAP_ERROR',
+                                503,
+                                {
+                                        brand: 'brAInwav',
+                                        component: 'connectors',
+                                        error: error instanceof Error ? error.message : String(error),
+                                },
+                        );
+                }
+        }
 
 	private async emitEvent(event: Event): Promise<void> {
 		const manager = await getEventManager();
