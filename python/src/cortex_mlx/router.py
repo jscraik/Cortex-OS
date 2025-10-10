@@ -49,21 +49,47 @@ class MLXAdapter:
     name = "mlx"
 
     def __init__(self) -> None:
+        self._ok = False
+        self._generate = None
+        self._failure_reason: Optional[str] = None
+        self._reported = False
         try:
-            pass  # type: ignore
-        except Exception:  # pragma: no cover - gated by availability
-            self._ok = False
+            from mlx_lm import generate  # type: ignore[import-not-found]
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            self._failure_reason = f"import error: {exc}"
+            logger.info(
+                "[brAInwav] MLX adapter unavailable: %s",
+                self._failure_reason,
+                extra={"brand": "brAInwav", "adapter": self.name},
+            )
+        except Exception as exc:  # pragma: no cover - defensive guard
+            self._failure_reason = f"unexpected error: {exc}"
+            logger.exception(
+                "[brAInwav] Failed to initialize MLX adapter",
+                extra={"brand": "brAInwav", "adapter": self.name},
+            )
         else:
+            self._generate = generate
             self._ok = True
 
     def available(self) -> bool:
+        if not self._ok and not self._reported:
+            logger.info(
+                "[brAInwav] MLX adapter unavailable",
+                extra={
+                    "brand": "brAInwav",
+                    "adapter": self.name,
+                    "reason": self._failure_reason,
+                },
+            )
+            self._reported = True
         return self._ok
 
     def chat(self, prompt: str, timeout: float) -> str:
-        from mlx_lm import generate  # type: ignore
-
+        if not self._ok or self._generate is None:
+            raise RuntimeError("MLX adapter is not available")
         start = time.time()
-        out = generate(prompt, max_tokens=256, temp=0.2)
+        out = self._generate(prompt, max_tokens=256, temp=0.2)
         if time.time() - start > timeout:
             raise TimeoutError("MLX chat timeout")
         return out

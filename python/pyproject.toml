@@ -63,3 +63,6 @@ typeCheckingMode = "basic"
 [tool.pytest.ini_options]
 addopts = "-q"
 pythonpath = ["src"]
+markers = [
+    "router: tests covering ModelRouter adapter behavior",
+]
