@@ -18,6 +18,9 @@
 
 const STRICT = process.env.MCP_STATUS_STRICT === '1';
 const IS_CI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS === 'true';
+const TRANSPORT = (process.env.MCP_STATUS_TRANSPORT || '').toLowerCase();
+const JSON_RPC = TRANSPORT === 'jsonrpc' || TRANSPORT === 'rpc';
+let requestCounter = 0;
 
 function log(msg) {
 	console.log(`[mcp-status] ${msg}`);
@@ -63,9 +66,13 @@ function collectEndpointCandidates() {
 }
 
 async function postJson(url, body, headers = {}) {
+	const defaultHeaders = JSON_RPC
+		? { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' }
+		: { 'Content-Type': 'application/json' };
+
 	const res = await fetch(url, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json', ...headers },
+		headers: { ...defaultHeaders, ...headers },
 		body: JSON.stringify(body),
 	});
 	if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -79,7 +86,19 @@ async function postJson(url, body, headers = {}) {
 
 async function tryPing(endpoint) {
 	try {
-		const result = await postJson(endpoint, { name: 'ping' });
+		const payload = JSON_RPC
+			? {
+				jsonrpc: '2.0',
+				id: `mcp-status-ping-${Date.now()}-${++requestCounter}`,
+				method: 'ping',
+				params: { transport: 'mcp-status' },
+			}
+			: { name: 'ping' };
+		const response = await postJson(endpoint, payload);
+		if (JSON_RPC && response?.error) {
+			throw new Error(`RPC error: ${response.error?.message || 'unknown'}`);
+		}
+		const result = JSON_RPC ? response?.result ?? response : response;
 		return { ok: true, result };
 	} catch (error) {
 		return { ok: false, error };
@@ -88,7 +107,29 @@ async function tryPing(endpoint) {
 
 async function tryCallTool(endpoint, toolName, args) {
 	try {
-		const result = await postJson(endpoint, { name: toolName, arguments: args });
+		let payload;
+		if (JSON_RPC) {
+			const id = `mcp-status-${toolName}-${Date.now()}-${++requestCounter}`;
+			if (toolName === 'tools.list') {
+				payload = { jsonrpc: '2.0', id, method: 'tools.list' };
+			} else if (toolName.startsWith('tools.')) {
+				payload = { jsonrpc: '2.0', id, method: toolName, params: args ?? {} };
+			} else {
+				payload = {
+					jsonrpc: '2.0',
+					id,
+					method: 'tools.call',
+					params: { name: toolName, arguments: args ?? {} },
+				};
+			}
+		} else {
+			payload = { name: toolName, arguments: args };
+		}
+		const response = await postJson(endpoint, payload);
+		if (JSON_RPC && response?.error) {
+			throw new Error(`RPC error: ${response.error?.message || 'unknown'}`);
+		}
+		const result = JSON_RPC ? response?.result ?? response : response;
 		return { ok: true, result };
 	} catch (error) {
 		return { ok: false, error };
@@ -101,7 +142,8 @@ function includesTool(list, name) {
 			return list.some((t) => (typeof t === 'string' ? t === name : t?.name === name));
 		}
 		if (list && typeof list === 'object') {
-			const arr = list.tools || list.data || list.result || [];
+			const resultValue = list.result ?? list.data ?? list.tools ?? [];
+			const arr = Array.isArray(resultValue) ? resultValue : resultValue?.tools ?? [];
 			return includesTool(arr, name);
 		}
 	} catch {

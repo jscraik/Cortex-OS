@@ -1103,8 +1103,8 @@ Cortex-OS uses several ports for different services. See `ports.env` for the com
 ### MCP Ports
 
 - **Pieces OS**: `39300` - Pieces MCP server (required for Pieces CLI integration)
-- **Cortex MCP**: `3023` - Main Cortex-OS MCP server
-- **Memory MCP**: `3024` - Local memory MCP server with Cloudflare tunnel access
+- **Cortex MCP**: `3024` - Main Cortex-OS MCP server
+- **Memory MCP**: `3026` - Local memory MCP server with Cloudflare tunnel access
   - Cloudflare tunnel: <https://cortex-mcp.brainwav.io>
   - External integrations connect via the tunnel URL
 - **Memory API**: `3028` - Local memory REST API

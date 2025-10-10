@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-// Simple MCP server test for port 3025
+// Simple MCP server test for port 3024
 import { createServer } from 'node:http';
 
 const server = createServer((req, res) => {

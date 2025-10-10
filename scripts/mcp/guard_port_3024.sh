@@ -33,22 +33,27 @@ if ! command -v lsof >/dev/null 2>&1; then
 	exit 0
 fi
 
-mapfile -t listeners < <(lsof -nP -i TCP:"${PORT}" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2":"$1":"$9}')
+listeners_list=()
+while IFS= read -r line; do
+	[[ -n "$line" ]] && listeners_list+=("$line")
+done < <(lsof -nP -i TCP:"${PORT}" -sTCP:LISTEN 2>/dev/null | awk 'NR>1 {print $2":"$1":"$9}')
 
-if [[ ${#listeners[@]} -eq 0 ]]; then
+if [[ ${#listeners_list[@]} -eq 0 ]]; then
 	echo "[guard-port] Port ${PORT} is free"
 	exit 0
 fi
 
 if [[ $FORCE -eq 0 ]]; then
 	echo "[guard-port] Port ${PORT} is in use:" >&2
-	printf '  %s\n' "${listeners[@]}" >&2
+	for entry in "${listeners_list[@]}"; do
+		printf '  %s\n' "$entry" >&2
+	done
 	echo "[guard-port] Re-run with --force to terminate the owning processes." >&2
 	exit 1
 fi
 
 echo "[guard-port] Attempting to free port ${PORT}..."
-for entry in "${listeners[@]}"; do
+for entry in "${listeners_list[@]}"; do
 	pid=${entry%%:*}
 	if kill "$pid" >/dev/null 2>&1; then
 		echo "[guard-port] Terminated PID ${pid}"

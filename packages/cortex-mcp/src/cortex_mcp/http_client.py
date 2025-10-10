@@ -13,7 +13,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from httpx import HTTPError, RequestError, TimeoutException
@@ -26,7 +26,7 @@ BRANDING = {
 }
 
 USER_AGENT = f"brAInwav-python-mcp-client/{BRANDING['version']}"
-DEFAULT_NODE_MCP_URL = os.getenv("NODE_MCP_URL", "http://localhost:3025/mcp")
+DEFAULT_NODE_MCP_URL = os.getenv("NODE_MCP_URL", "http://localhost:3024/mcp")
 DEFAULT_TIMEOUT = int(os.getenv("MCP_CLIENT_TIMEOUT", "30"))
 DEFAULT_MAX_RETRIES = int(os.getenv("MCP_CLIENT_MAX_RETRIES", "3"))
 DEFAULT_RETRY_DELAY = float(os.getenv("MCP_CLIENT_RETRY_DELAY", "1.0"))
@@ -51,7 +51,7 @@ class CircuitBreakerState:
 
 class MCPHttpClient:
     """HTTP client for routing Python MCP requests to Node MCP server."""
-    
+
     def __init__(
         self,
         base_url: str = DEFAULT_NODE_MCP_URL,
@@ -64,7 +64,7 @@ class MCPHttpClient:
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.circuit_breaker = CircuitBreakerState()
-        
+
         # HTTP client with brAInwav branding
         self.client = httpx.AsyncClient(
             timeout=timeout,
@@ -74,9 +74,9 @@ class MCPHttpClient:
                 "Content-Type": "application/json",
             }
         )
-        
+
         logger.info(f"brAInwav MCP HTTP client initialized for {base_url}")
-    
+
     async def _check_circuit_breaker(self) -> None:
         """Check circuit breaker state before making requests."""
         if self.circuit_breaker.state == "OPEN":
@@ -86,29 +86,29 @@ class MCPHttpClient:
             else:
                 self.circuit_breaker.state = "HALF_OPEN"
                 logger.info("brAInwav circuit breaker transitioning to HALF_OPEN")
-    
+
     async def _record_success(self) -> None:
         """Record successful request."""
         if self.circuit_breaker.state == "HALF_OPEN":
             self.circuit_breaker.state = "CLOSED"
             self.circuit_breaker.failures = 0
             logger.info("brAInwav circuit breaker closed after successful request")
-    
+
     async def _record_failure(self) -> None:
         """Record failed request and update circuit breaker."""
         self.circuit_breaker.failures += 1
         self.circuit_breaker.last_failure_time = time.time()
-        
+
         if self.circuit_breaker.failures >= self.circuit_breaker.failure_threshold:
             self.circuit_breaker.state = "OPEN"
             logger.warning(
                 f"brAInwav circuit breaker opened after {self.circuit_breaker.failures} failures"
             )
-    
+
     async def call(self, request: dict[str, Any]) -> dict[str, Any]:
         """Make MCP request to Node server with retry and circuit breaker."""
         await self._check_circuit_breaker()
-        
+
         for attempt in range(self.max_retries + 1):
             try:
                 response = await self.client.post(
@@ -116,33 +116,33 @@ class MCPHttpClient:
                     json=request
                 )
                 response.raise_for_status()
-                
+
                 await self._record_success()
                 result = response.json()
-                
-                # Ensure brAInwav branding in response
-                if isinstance(result, dict) and "result" in result:
-                    if isinstance(result["result"], dict):
-                        # Add brAInwav branding to result
-                        result["result"]["branding"] = BRANDING
-                
+
+                # Ensure brAInwav branding appears in structured responses
+                if isinstance(result, dict) and isinstance(result.get("result"), dict):
+                    result["result"]["branding"] = BRANDING
+
                 return result
-                
+
             except (HTTPError, RequestError, TimeoutException) as e:
                 await self._record_failure()
                 logger.warning(
                     f"brAInwav MCP HTTP client attempt {attempt + 1}/{self.max_retries + 1} failed: {e}"
                 )
-                
+
                 if attempt < self.max_retries:
                     await asyncio.sleep(self.retry_delay * (2 ** attempt))  # Exponential backoff
                 else:
                     # Final attempt failed - raise with brAInwav branding
-                    raise Exception(f"brAInwav MCP HTTP client: Connection failed after {self.max_retries + 1} attempts")
-        
+                    raise Exception(
+                        f"brAInwav MCP HTTP client: Connection failed after {self.max_retries + 1} attempts"
+                    ) from e
+
         # This should never be reached due to the raise above, but added for type safety
         raise Exception("brAInwav MCP HTTP client: Unexpected code path")
-    
+
     async def search(self, query: str, max_results: int = 10) -> dict[str, Any]:
         """Search via Node MCP server."""
         request = {
@@ -157,7 +157,7 @@ class MCPHttpClient:
             }
         }
         return await self.call(request)
-    
+
     async def memory_search(self, query: str, limit: int = 10) -> dict[str, Any]:
         """Memory search via Node MCP server."""
         request = {
@@ -172,8 +172,8 @@ class MCPHttpClient:
             }
         }
         return await self.call(request)
-    
-    async def memory_store(self, content: str, metadata: Optional[dict] = None) -> dict[str, Any]:
+
+    async def memory_store(self, content: str, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
         """Memory store via Node MCP server."""
         request = {
             "id": f"memory-store-{int(time.time() * 1000)}",
@@ -187,7 +187,7 @@ class MCPHttpClient:
             }
         }
         return await self.call(request)
-    
+
     async def fetch_document(self, url: str) -> dict[str, Any]:
         """Fetch document via Node MCP server."""
         request = {
@@ -201,7 +201,7 @@ class MCPHttpClient:
             }
         }
         return await self.call(request)
-    
+
     async def health_check(self) -> dict[str, Any]:
         """Health check via Node MCP server."""
         request = {
@@ -209,7 +209,7 @@ class MCPHttpClient:
             "method": "ping"
         }
         return await self.call(request)
-    
+
     async def close(self) -> None:
         """Close HTTP client."""
         await self.client.aclose()
@@ -219,7 +219,7 @@ class MCPHttpClient:
 async def main() -> None:
     """Main entry point for brAInwav MCP HTTP client CLI."""
     import sys
-    
+
     if len(sys.argv) < 2:
         print(f"brAInwav Cortex MCP HTTP Client v{BRANDING['version']}")
         print("Usage: cortex-mcp <command> [args...]")
@@ -230,44 +230,44 @@ async def main() -> None:
         print("  memory-store <content>    - Store content in memory")
         print("  fetch <url>              - Fetch document")
         return
-    
+
     command = sys.argv[1]
     client = MCPHttpClient()
-    
+
     try:
         if command == "health":
             result = await client.health_check()
             print(json.dumps(result, indent=2))
-        
+
         elif command == "search" and len(sys.argv) > 2:
             query = " ".join(sys.argv[2:])
             result = await client.search(query)
             print(json.dumps(result, indent=2))
-        
+
         elif command == "memory-search" and len(sys.argv) > 2:
             query = " ".join(sys.argv[2:])
             result = await client.memory_search(query)
             print(json.dumps(result, indent=2))
-        
+
         elif command == "memory-store" and len(sys.argv) > 2:
             content = " ".join(sys.argv[2:])
             result = await client.memory_store(content)
             print(json.dumps(result, indent=2))
-        
+
         elif command == "fetch" and len(sys.argv) > 2:
             url = sys.argv[2]
             result = await client.fetch_document(url)
             print(json.dumps(result, indent=2))
-        
+
         else:
             print(f"Unknown command or missing arguments: {command}")
             sys.exit(1)
-    
+
     except Exception as e:
         logger.error(f"brAInwav MCP client error: {e}")
         print(f"Error: {e}")
         sys.exit(1)
-    
+
     finally:
         await client.close()
 

@@ -5,7 +5,7 @@ This document explains how the Cortex-OS MCP (Model Context Protocol) server is 
 
 ## Architecture
 ```
-ChatGPT/OpenAI → HTTPS → cortex-mcp.brainwav.io → Cloudflare Tunnel → Local MCP Server (localhost:3025)
+ChatGPT/OpenAI → HTTPS → cortex-mcp.brainwav.io → Cloudflare Tunnel → Local MCP Server (localhost:3024)
 ```
 
 ## Configuration Files
@@ -20,8 +20,8 @@ ChatGPT/OpenAI → HTTPS → cortex-mcp.brainwav.io → Cloudflare Tunnel → Lo
 - **Runtime Integration**: `apps/cortex-os/src/runtime.ts`
 
 ## Port Configuration
-- **MCP Server Port**: 3025 (updated from 3024 due to port conflict)
-- **Cloudflare Tunnel**: Routes `cortex-mcp.brainwav.io` → `localhost:3025`
+- **MCP Server Port**: 3024 (canonical)
+- **Cloudflare Tunnel**: Routes `cortex-mcp.brainwav.io` → `localhost:3024`
 
 ## Endpoints
 
@@ -124,8 +124,8 @@ curl -X POST https://cortex-mcp.brainwav.io/tools/call \
 ### Common Issues
 
 1. **Port Conflicts**
-   - Port 3024 was occupied by Cortex Memory Server
-   - Solution: Updated to port 3025
+   - Ensure no other process is using port 3024
+   - Resolution: Identify conflicts with `lsof -i :3024` and stop them
 
 2. **Tunnel Not Responding**
    - Check if tunnel process is running: `ps aux | grep cloudflared`
@@ -144,10 +144,10 @@ curl -X POST https://cortex-mcp.brainwav.io/tools/call \
 ### Debug Commands
 ```bash
 # Check what's listening on port
-lsof -i :3025
+lsof -i :3024
 
 # Test local connection
-curl http://localhost:3025/health
+curl http://localhost:3024/health
 
 # Test through tunnel
 curl https://cortex-mcp.brainwav.io/health

@@ -86,7 +86,7 @@ else
 fi
 
 # Check enhanced MCP server
-if curl -f http://localhost:3025/health > /dev/null 2>&1; then
+if curl -f http://localhost:3024/health > /dev/null 2>&1; then
     brainwav_success "Enhanced MCP server is healthy"
 else
     brainwav_warning "Enhanced MCP server health check failed (may still be starting)"
@@ -99,7 +99,7 @@ echo "================================================"
 echo "🔒 Egress Proxy:      http://localhost:8888"
 echo "📊 Proxy Health:      http://localhost:8889/health"
 echo "📊 Proxy Stats:       http://localhost:8889/stats"
-echo "🔧 Enhanced MCP:      http://localhost:3025"
+echo "🔧 Enhanced MCP:      http://localhost:3024"
 echo "📊 Dashboard:         http://localhost:8890 (if enabled)"
 echo ""
 

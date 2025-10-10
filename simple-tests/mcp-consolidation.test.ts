@@ -223,7 +223,7 @@ describe('MCP Server Consolidation - Phase 1.2', () => {
 				status: 200,
 			});
 
-			const response = await fetch('http://localhost:3025/mcp', {
+			const response = await fetch('http://localhost:3024/mcp', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ id: 'tools-list', method: 'tools/list' }),

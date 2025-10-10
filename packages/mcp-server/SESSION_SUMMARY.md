@@ -26,10 +26,10 @@ Starting from a 403 Forbidden error with ChatGPT, we ended with:
 - Result: 403 Forbidden
 
 **Solution Implemented:**
-- Created ChatGPT compatibility proxy on port 3025
-- Proxy adds missing `text/event-stream` header
-- Updated Cloudflare tunnel config to route through proxy
-- LaunchAgent configured for auto-start
+- Standardised MCP HTTP access on port 3024 with server-side Accept negotiation
+- Updated Cloudflare tunnel config to forward directly to the MCP server
+- Retained an optional compatibility proxy for legacy clients (defaults to port 3025)
+- LaunchAgent available for the optional proxy when required
 
 **Status:** Proxy operational, tunnel routing needs final configuration
 
@@ -79,7 +79,7 @@ Starting from a 403 Forbidden error with ChatGPT, we ended with:
 │                    MCP Clients                              │
 ├─────────────────┬─────────────────┬────────────────────────┤
 │   Perplexity    │ Claude Desktop  │   ChatGPT (future)     │
-│   (STDIO)       │    (STDIO)      │   (HTTP via proxy)     │
+│   (STDIO)       │    (STDIO)      │   (HTTP direct)        │
 └────────┬────────┴────────┬────────┴────────────┬───────────┘
          │                 │                     │
          ▼                 ▼                     ▼
@@ -97,9 +97,19 @@ Starting from a 403 Forbidden error with ChatGPT, we ended with:
          ▼                                      │
 ┌────────────────────┐              ┌──────────────────────┐
 │  ChatGPT Proxy     │              │  Cloudflare Tunnel   │
-│    Port 3025       │              │  (cortex-mcp...)     │
-│  (Header fixer)    │              │                      │
-└────────────────────┘              └──────────────────────┘
+└────────────────────────────────────────────────────────────┘
+                                      ▲
+                                      │
+                          ┌──────────────────────┐
+                          │  Cloudflare Tunnel   │
+                          │  (cortex-mcp...)     │
+                          └──────────────────────┘
+                                      ▲
+                                      │ (optional legacy)
+                          ┌──────────────────────┐
+                          │  ChatGPT Proxy       │
+                          │  (configurable port) │
+                          └──────────────────────┘
 ```
 
 ---
@@ -149,7 +159,7 @@ Starting from a 403 Forbidden error with ChatGPT, we ended with:
 3. **Cloudflare Tunnel Configs:**
    - `packages/cortex-mcp/infrastructure/cloudflare/tunnel.config.yml`
    - `/opt/homebrew/etc/cloudflared/config.yml`
-   - Both updated to route through proxy (port 3025)
+   - Both now route directly to the MCP server on port 3024 (proxy optional)
 
 4. **`perplexity-mcp-config.json`**
    - Complete Perplexity configuration
@@ -222,14 +232,14 @@ PIECES_MCP_ENABLED=true
 AGENT_TOOLKIT_ENABLED=true
 
 # Proxy
-CHATGPT_PROXY_PORT=3025
+CHATGPT_PROXY_PORT=3025  # Optional legacy proxy
 PROXY_LOG_LEVEL=info
 ```
 
 ### Service Ports
 
 - **3024**: MCP Server (HTTP mode)
-- **3025**: ChatGPT Compatibility Proxy
+- **3025**: ChatGPT Compatibility Proxy (legacy/optional)
 - **9400**: Local Memory Service
 - **39300**: Pieces MCP Endpoint
 
@@ -284,7 +294,7 @@ PROXY_LOG_LEVEL=info
 ### Immediate
 1. ✅ Test Perplexity code search: "Search codebase for FastMCP"
 2. ✅ Test agent-toolkit codemap: "Show architecture of mcp-server"
-3. ⏳ Configure Cloudflare tunnel routing to port 3025 for ChatGPT
+3. ⏳ Configure Cloudflare tunnel routing to port 3024 for ChatGPT (proxy optional)
 
 ### Near Term
 1. Build knowledge base using memory.store
@@ -353,7 +363,7 @@ All documentation created:
 
 **Services:**
 - MCP Server: ✅ Running (port 3024)
-- ChatGPT Proxy: ✅ Running (port 3025)
+- ChatGPT Proxy: ✅ Available (default port 3025) — use only if legacy client is missing headers
 - Cloudflare Tunnel: ⏳ Needs routing update
 
 ---
