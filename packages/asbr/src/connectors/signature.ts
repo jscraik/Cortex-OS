@@ -13,6 +13,10 @@ export function signConnectorPayload(payload: ConnectorServiceMapPayload, key: s
 }
 
 function canonicalStringify(value: unknown): string {
+        if (value === null) {
+                return 'null';
+        }
+
         if (Array.isArray(value)) {
                 const serialized = value.map((item) => canonicalStringify(item)).join(',');
                 return `[${serialized}]`;
