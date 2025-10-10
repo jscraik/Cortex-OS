@@ -97,7 +97,7 @@ describe('ConnectorProxyManager', () => {
 
                 const metrics = await getConnectorMetricsRegistry().getMetricsAsJSON();
                 const availability = metrics.find(
-                        (metric) => metric.name === 'brainwav_mcp_connector_proxy_up',
+                        (metric) => metric.name === 'brAInwav_mcp_connector_proxy_up',
                 );
                 expect(availability?.values[0]?.value).toBe(1);
         });
