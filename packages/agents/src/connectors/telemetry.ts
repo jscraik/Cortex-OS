@@ -3,14 +3,14 @@ import { collectDefaultMetrics, Gauge, Registry } from 'prom-client';
 const registry = new Registry();
 
 const availabilityGauge = new Gauge({
-        name: 'brainwav_agents_connector_up',
+        name: 'brAInwav_agents_connector_up',
         help: 'Connector availability status (1 = enabled, 0 = disabled)',
         labelNames: ['connector'] as const,
         registers: [registry],
 });
 
 const ttlGauge = new Gauge({
-        name: 'brainwav_agents_connector_ttl_seconds',
+        name: 'brAInwav_agents_connector_ttl_seconds',
         help: 'Seconds until manifest entry expiration',
         labelNames: ['connector'] as const,
         registers: [registry],
