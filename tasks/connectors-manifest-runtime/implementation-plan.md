@@ -1,4 +1,4 @@
-# Feature Specification: Manifest-Driven Connectors Orchestration
+# Implementation Plan: Manifest-Driven Connectors Orchestration
 
 **Task ID**: `connectors-manifest-runtime`
 **Feature Branch**: `feature/connectors-manifest-runtime`

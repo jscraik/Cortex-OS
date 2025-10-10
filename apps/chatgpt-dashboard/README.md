@@ -77,7 +77,7 @@ Enforce ≥94% coverage and capture reports as PR evidence.
 
 - Follow `apps/chatgpt-dashboard/AGENTS.md` for local coverage, performance, and accessibility gates.
 - Cite `/.cortex/rules/agentic-coding-workflow.md` and `/CODESTYLE.md` in PR notes.
-- Record test evidence in the TDD plan (`tasks/connectors-manifest-runtime-tdd-plan.md`).
+- Record test evidence in the TDD plan (`tasks/connectors-manifest-runtime/tdd-plan.md`).
 
 ---
 
