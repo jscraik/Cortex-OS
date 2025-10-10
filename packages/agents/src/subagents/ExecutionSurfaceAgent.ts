@@ -767,7 +767,6 @@ export function createExecutionSurfaceAgent(
                 actionTimeout: 60000,
                 allowedSurfaces: ['filesystem', 'network', 'git', 'deployment', 'database', 'connector'],
                 securityLevel: 'medium',
-                connectors: connectorOptions,
                 ...config,
                 connectors: config?.connectors ?? connectorOptions,
         };
