@@ -8,6 +8,7 @@
 // @vitest-environment node
 
 import type { Application } from 'express';
+import { join } from 'node:path';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { initializeAuth } from '../../src/api/auth.js';
@@ -15,33 +16,52 @@ import { type ASBRServer, createASBRServer } from '../../src/api/server.js';
 import type { Profile, TaskInput } from '../../src/types/index.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 import { getSharedServer } from '../fixtures/shared-server.js';
+import {
+        createTestConnectorsManifest,
+        type TestManifestContext,
+        verifyConnectorServiceMapSignature,
+} from '../utils/connectors-manifest.js';
 
 describe('ASBR API Integration Tests', () => {
-	let server: ASBRServer;
-	let authToken: string;
-	let app: Application;
+        let server: ASBRServer;
+        let authToken: string;
+        let app: Application;
+        let connectorsManifest: TestManifestContext | undefined;
+        const connectorsSignatureKey = 'test-connectors-secret';
 
-	beforeAll(async () => {
-		if (process.env.ASBR_TEST_SHARED_SERVER) {
-			const { server: shared, authToken: token } = await getSharedServer();
-			server = shared;
-			authToken = token;
-			app = server.app;
-		} else {
-			await initializeXDG();
-			const tokenInfo = await initializeAuth();
-			authToken = tokenInfo.token;
-			server = createASBRServer({ port: 0, host: '127.0.0.1' });
-			await server.start();
+        beforeAll(async () => {
+                if (process.env.ASBR_TEST_SHARED_SERVER) {
+                        const { server: shared, authToken: token } = await getSharedServer();
+                        server = shared;
+                        authToken = token;
+                        app = server.app;
+                } else {
+                        connectorsManifest = await createTestConnectorsManifest();
+                        process.env.CONNECTORS_MANIFEST_PATH = connectorsManifest.path;
+                        process.env.CONNECTORS_SIGNATURE_KEY = connectorsSignatureKey;
+                        await initializeXDG();
+                        const tokenInfo = await initializeAuth();
+                        authToken = tokenInfo.token;
+                        server = createASBRServer({ port: 0, host: '127.0.0.1' });
+                        await server.start();
 			app = server.app;
 		}
 	});
 
-	afterAll(async () => {
-		if (!process.env.ASBR_TEST_SHARED_SERVER && server) {
-			await server.stop();
-		}
-	});
+        afterAll(async () => {
+                if (!process.env.ASBR_TEST_SHARED_SERVER && server) {
+                        await server.stop();
+                }
+                if (connectorsManifest) {
+                        await connectorsManifest.cleanup();
+                }
+                if (!process.env.ASBR_TEST_SHARED_SERVER) {
+                        delete process.env.CONNECTORS_MANIFEST_PATH;
+                }
+                if (process.env.CONNECTORS_SIGNATURE_KEY === connectorsSignatureKey) {
+                        delete process.env.CONNECTORS_SIGNATURE_KEY;
+                }
+        });
 
 	describe('Authentication', () => {
 		it('should reject requests without authentication', async () => {
@@ -288,18 +308,63 @@ describe('ASBR API Integration Tests', () => {
 		});
 	});
 
-	describe('Connector Service Map', () => {
-		it('should return connector service map', async () => {
-			const response = await request(app)
-				.get('/v1/connectors/service-map')
-				.set('Authorization', `Bearer ${authToken}`)
-				.expect(200);
+        describe('Connector Service Map', () => {
+                it('should return connector service map', async () => {
+                        const response = await request(app)
+                                .get('/v1/connectors/service-map')
+                                .set('Authorization', `Bearer ${authToken}`)
+                                .expect(200);
 
-			expect(response.body).toBeDefined();
-			expect(typeof response.body).toBe('object');
-			expect(Object.keys(response.body).length).toBe(0);
-		});
-	});
+                        expect(response.body).toBeDefined();
+                        expect(response.body.brand).toBe('brAInwav');
+                        expect(typeof response.body.generatedAt).toBe('string');
+                        expect(Array.isArray(response.body.connectors)).toBe(true);
+                        expect(response.body.connectors.length).toBeGreaterThan(0);
+
+                        const connector = response.body.connectors[0];
+                        expect(connector.status).toBe('enabled');
+                        if (connectorsManifest) {
+                                expect(connector.id).toBe(connectorsManifest.manifest.connectors[0].id);
+                        }
+                        expect(typeof connector.ttl).toBe('number');
+                        expect(connector.ttl).toBeGreaterThan(Math.floor(Date.now() / 1000));
+                        if (!process.env.ASBR_TEST_SHARED_SERVER) {
+                                expect(
+                                        verifyConnectorServiceMapSignature(
+                                                response.body,
+                                                connectorsSignatureKey,
+                                        ),
+                                ).toBe(true);
+                        }
+                });
+
+                it('should return 503 when manifest is missing', async () => {
+                        if (process.env.ASBR_TEST_SHARED_SERVER) {
+                                expect(true).toBe(true);
+                                return;
+                        }
+
+                        const originalPath = process.env.CONNECTORS_MANIFEST_PATH;
+                        process.env.CONNECTORS_MANIFEST_PATH = join(
+                                process.cwd(),
+                                'config',
+                                'missing-connectors.manifest.json',
+                        );
+
+                        const response = await request(app)
+                                .get('/v1/connectors/service-map')
+                                .set('Authorization', `Bearer ${authToken}`)
+                                .expect(503);
+
+                        expect(response.body.code).toBe('CONNECTORS_MANIFEST_MISSING');
+
+                        if (originalPath) {
+                                process.env.CONNECTORS_MANIFEST_PATH = originalPath;
+                        } else {
+                                delete process.env.CONNECTORS_MANIFEST_PATH;
+                        }
+                });
+        });
 
 	describe('Error Handling', () => {
 		it('should return 404 for non-existent resources', async () => {

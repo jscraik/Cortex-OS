@@ -4,34 +4,51 @@ import { initializeAuth } from '../../src/api/auth.js';
 import { type ASBRServer, createASBRServer } from '../../src/api/server.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 import { getSharedServer } from '../fixtures/shared-server.js';
+import {
+        createTestConnectorsManifest,
+        type TestManifestContext,
+        verifyConnectorServiceMapSignature,
+} from '../utils/connectors-manifest.js';
 
 describe('OWASP LLM Top 10 Compliance Tests', () => {
-	let server: ASBRServer;
-	let request: supertest.SuperTest<supertest.Test>;
-	let authToken: string;
+        let server: ASBRServer;
+        let request: supertest.SuperTest<supertest.Test>;
+        let authToken: string;
+        let connectorsManifest: TestManifestContext | undefined;
+        const connectorsSignatureKey = 'test-connectors-secret';
 
-	beforeAll(async () => {
-		if (process.env.ASBR_TEST_SHARED_SERVER) {
-			const { server: shared, authToken: token } = await getSharedServer();
-			server = shared;
+        beforeAll(async () => {
+                if (process.env.ASBR_TEST_SHARED_SERVER) {
+                        const { server: shared, authToken: token } = await getSharedServer();
+                        server = shared;
 			authToken = token;
 			// Shared server port assumed 7450
 			request = supertest(`http://127.0.0.1:7450`);
-		} else {
-			await initializeXDG();
-			const tokenInfo = await initializeAuth();
-			authToken = tokenInfo.token;
-			server = createASBRServer({ port: 7441 });
-			await server.start();
+                } else {
+                        connectorsManifest = await createTestConnectorsManifest();
+                        process.env.CONNECTORS_MANIFEST_PATH = connectorsManifest.path;
+                        process.env.CONNECTORS_SIGNATURE_KEY = connectorsSignatureKey;
+                        await initializeXDG();
+                        const tokenInfo = await initializeAuth();
+                        authToken = tokenInfo.token;
+                        server = createASBRServer({ port: 7441 });
+                        await server.start();
 			request = supertest(`http://127.0.0.1:7441`);
 		}
 	});
 
-	afterAll(async () => {
-		if (!process.env.ASBR_TEST_SHARED_SERVER) {
-			await server.stop();
-		}
-	});
+        afterAll(async () => {
+                if (!process.env.ASBR_TEST_SHARED_SERVER) {
+                        await server.stop();
+                        if (connectorsManifest) {
+                                await connectorsManifest.cleanup();
+                                delete process.env.CONNECTORS_MANIFEST_PATH;
+                                if (process.env.CONNECTORS_SIGNATURE_KEY === connectorsSignatureKey) {
+                                        delete process.env.CONNECTORS_SIGNATURE_KEY;
+                                }
+                        }
+                }
+        });
 
 	describe('LLM01: Prompt Injection', () => {
 		it('should reject malicious prompt injections in task inputs', async () => {
@@ -162,16 +179,25 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
 	});
 
 	describe('LLM06: Sensitive Information Disclosure', () => {
-		it('should not expose sensitive information in responses', async () => {
-			const response = await request
-				.get('/v1/connectors/service-map')
-				.set('Authorization', `Bearer ${authToken}`)
-				.expect(200);
+                it('should not expose sensitive information in responses', async () => {
+                        const response = await request
+                                .get('/v1/connectors/service-map')
+                                .set('Authorization', `Bearer ${authToken}`)
+                                .expect(200);
 
-			// Should not contain sensitive keys or tokens
-			const responseStr = JSON.stringify(response.body);
-			expect(responseStr).not.toMatch(/password|secret|key|token/i);
-		});
+                        expect(response.body.brand).toBe('brAInwav');
+                        if (!process.env.ASBR_TEST_SHARED_SERVER) {
+                                expect(
+                                        verifyConnectorServiceMapSignature(
+                                                response.body,
+                                                connectorsSignatureKey,
+                                        ),
+                                ).toBe(true);
+                        }
+                        // Should not contain sensitive keys or tokens
+                        const responseStr = JSON.stringify(response.body);
+                        expect(responseStr).not.toMatch(/password|secret|key|token/i);
+                });
 
 		it('should sanitize error messages', async () => {
 			const response = await request
@@ -187,21 +213,20 @@ describe('OWASP LLM Top 10 Compliance Tests', () => {
 	});
 
 	describe('LLM07: Insecure Plugin Design', () => {
-		it('should validate connector permissions', async () => {
-			const response = await request
-				.get('/v1/connectors/service-map')
-				.set('Authorization', `Bearer ${authToken}`)
-				.expect(200);
+                it('should validate connector permissions', async () => {
+                        const response = await request
+                                .get('/v1/connectors/service-map')
+                                .set('Authorization', `Bearer ${authToken}`)
+                                .expect(200);
 
-			// Each connector should have defined scopes
-			interface ConnectorInfo {
-				scopes?: unknown;
-			}
-			Object.values(response.body as Record<string, ConnectorInfo>).forEach((connector) => {
-				expect(connector).toHaveProperty('scopes');
-				expect(Array.isArray(connector.scopes)).toBe(true);
-			});
-		});
+                        // Each connector should have defined scopes
+                        const connectors = response.body.connectors as Array<{ scopes?: unknown }>;
+                        expect(Array.isArray(connectors)).toBe(true);
+                        connectors.forEach((connector) => {
+                                expect(Array.isArray(connector.scopes)).toBe(true);
+                                expect((connector.scopes as unknown[]).length).toBeGreaterThan(0);
+                        });
+                });
 	});
 
 	describe('LLM08: Excessive Agency', () => {
