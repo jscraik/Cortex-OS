@@ -61,7 +61,7 @@ describe('ExecutionSurfaceAgent connectors integration', () => {
                 const registry = getConnectorTelemetryRegistry();
                 const metrics = await registry.getMetricsAsJSON();
                 const availability = metrics.find(
-                        (metric) => metric.name === 'brainwav_agents_connector_up',
+                        (metric) => metric.name === 'brAInwav_agents_connector_up',
                 );
                 expect(availability?.values[0]?.value).toBe(1);
         });
