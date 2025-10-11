@@ -88,7 +88,7 @@ class ConnectorServiceMapEntry(BaseModel):
     quotas: Optional[Dict[str, int]] = None
     timeouts: Optional[Dict[str, int]] = None
     description: Optional[str] = None
-    tags: Optional[List[str]] = None
+    tags: List[str] = Field(default_factory=list)
 
     @field_validator("scopes")
     @classmethod
