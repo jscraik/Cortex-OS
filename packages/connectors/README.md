@@ -85,7 +85,7 @@ End-to-end verification for the Wikidata connector spans three packages. Run the
 
 | Layer | Local command | CI target |
 |-------|---------------|-----------|
-| Connectors service map | `uv run --package packages/connectors pytest packages/connectors/tests/test_server.py::test_service_map_authentication` | `pnpm --filter connectors test -- --runInBand packages/connectors/tests/test_server.py` |
+| Connectors service map | `uv run --package packages/connectors pytest packages/connectors/tests/test_server.py::test_service_map_authentication` | `uv run --package packages/connectors pytest packages/connectors/tests/test_server.py::test_service_map_authentication` |
 | MCP proxy manager | `pnpm --filter mcp test -- packages/mcp/src/connectors/manager.test.ts` | `pnpm --filter mcp test -- --runInBand packages/mcp/src/connectors/manager.test.ts` |
 | Agents integration | `pnpm --filter agents test -- ExecutionSurfaceAgent.connectors.test.ts` | `pnpm --filter agents test -- --runInBand ExecutionSurfaceAgent.connectors.test.ts` |
 
