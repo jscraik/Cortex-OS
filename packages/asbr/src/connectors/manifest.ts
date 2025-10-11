@@ -12,8 +12,8 @@ import {
 	type ConnectorsManifest,
 	ConnectorsManifestSchema,
 } from '@cortex-os/asbr-schemas';
-import { signConnectorPayload } from './signature.js';
 import { assertManifestDocument } from './schema.js';
+import { signConnectorPayload } from './signature.js';
 
 const BRAND = 'brAInwav' as const;
 const MODULE_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -125,6 +125,16 @@ function buildConnectorEntry(connector: ConnectorManifestEntry): ConnectorServic
 		...(connector.metadata ?? {}),
 	};
 
+	// Deep clone remoteTools if present and non-empty
+	const remoteTools =
+		connector.remoteTools && connector.remoteTools.length > 0
+			? connector.remoteTools.map((tool) => ({
+					...tool,
+					...(tool.tags ? { tags: [...tool.tags] } : {}),
+					...(tool.scopes ? { scopes: [...tool.scopes] } : {}),
+				}))
+			: undefined;
+
 	const baseEntry: ConnectorServiceEntry = {
 		id: connector.id,
 		version: connector.version,
@@ -140,6 +150,7 @@ function buildConnectorEntry(connector: ConnectorManifestEntry): ConnectorServic
 		...(connector.description ? { description: connector.description } : {}),
 		...(connector.tags && connector.tags.length > 0 ? { tags: [...connector.tags] } : {}),
 		...(timeouts ? { timeouts } : {}),
+		...(remoteTools ? { remoteTools } : {}),
 	};
 
 	return ConnectorServiceEntrySchema.parse(baseEntry);
@@ -235,8 +246,9 @@ function buildCandidatePaths(manifestPath?: string): string[] {
 		return [resolve(manifestPath)];
 	}
 
-	const candidates = [WORKING_DIR_MANIFEST_PATH, FALLBACK_MANIFEST_PATH]
-		.map((path) => resolve(path));
+	const candidates = [WORKING_DIR_MANIFEST_PATH, FALLBACK_MANIFEST_PATH].map((path) =>
+		resolve(path),
+	);
 
 	return Array.from(new Set(candidates));
 }
