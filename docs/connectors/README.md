@@ -52,6 +52,16 @@ The manifest must satisfy the shared `ConnectorsManifestSchema` exported from `@
 
 Each connector entry must declare at least one scope, a semantic version, an endpoint, authentication details, and a positive TTL (`ttlSeconds`). Optional fields such as `quotas`, `timeouts`, `metadata`, `description`, and `tags` are passed through to consumers when present.
 
+### Current production connectors
+
+| ID | Name | Scopes | Auth | TTL (seconds) | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `perplexity-search` | Perplexity Search | `search:query`, `search:insights` | `bearer` (`Authorization` header, sourced from `CONNECTORS_API_KEY`) | 3600 | Aggregated search proxy owned by Integrations. |
+| `github-actions` | GitHub Actions Dispatcher | `repos:read`, `actions:trigger` | `apiKey` (`X-GitHub-Token`) | 900 | Disabled until SOC2 control sign-off completes. |
+| `wikidata` | Wikidata Vector Search | `facts:query`, `facts:claims` | `none` | 300 | Hosted by Wikimedia; no secrets required. Metadata includes `provider: "Wikidata"` and snapshot date `2024-09-18`. |
+
+> **Secrets reminder:** `wikidata` does **not** require `CONNECTORS_API_KEY`. Leave the key unset or omit the connector when assembling environment-specific manifests that should remain locked down.
+
 ## Runtime Behaviour
 
 The loader in `packages/asbr/src/connectors/manifest-loader.ts` performs the following steps when a client requests the service map:

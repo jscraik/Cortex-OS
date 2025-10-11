@@ -9,16 +9,20 @@ from .manifest import (
 from .models import (
     ConnectorAuth,
     ConnectorEntry,
+    ConnectorManifestEntry,
     ConnectorServiceMap,
     ConnectorServiceMapEntry,
+    ConnectorServiceMapPayload,
     ConnectorsManifest,
 )
 
 __all__ = [
     "ConnectorAuth",
     "ConnectorEntry",
+    "ConnectorManifestEntry",
     "ConnectorServiceMap",
     "ConnectorServiceMapEntry",
+    "ConnectorServiceMapPayload",
     "ConnectorsManifest",
     "ConnectorsManifestError",
     "build_connector_service_map",

@@ -5,6 +5,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["id", "manifestVersion", "connectors"],
+  "required": ["id", "connectors"],
   "properties": {
     "$schema": {
       "type": "string",
@@ -25,6 +26,12 @@
       "type": "string",
       "format": "date-time",
       "description": "ISO-8601 timestamp describing when the manifest snapshot was produced"
+      "description": "Stable identifier for the manifest"
+    },
+    "brand": {
+      "type": "string",
+      "enum": ["brAInwav"],
+      "description": "Brand marker propagated to signed payloads"
     },
     "ttlSeconds": {
       "type": "integer",
@@ -37,6 +44,12 @@
       "additionalProperties": {
         "type": ["string", "number", "boolean", "array", "object", "null"]
       }
+      "description": "Number of seconds a signed service map remains valid"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional non-sensitive metadata about the manifest",
+      "additionalProperties": true
     },
     "connectors": {
       "type": "array",
@@ -47,6 +60,23 @@
     }
   },
   "definitions": {
+    "ConnectorAuth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["apiKey", "bearer", "none"],
+          "description": "Authentication strategy required by the connector"
+        },
+        "headerName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional HTTP header name used for API key/bearer auth"
+        }
+      }
+    },
     "ConnectorEntry": {
       "type": "object",
       "additionalProperties": false,
@@ -61,6 +91,7 @@
         "endpoint",
         "auth"
       ],
+      "required": ["id", "name", "version", "scopes", "ttlSeconds"],
       "properties": {
         "id": {
           "type": "string",
@@ -95,6 +126,14 @@
           "enum": ["enabled", "disabled", "preview"],
           "description": "Legacy status field supported for backwards compatibility"
         },
+          "description": "Human-readable connector name",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version of the connector definition",
+          "minLength": 1
+        },
         "scopes": {
           "type": "array",
           "description": "Scopes required to access this connector",
@@ -104,6 +143,33 @@
           },
           "uniqueItems": true,
           "minItems": 1
+        },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "quotas": {
+          "type": "object",
+          "description": "Optional quota limits for the connector",
+          "default": {},
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "timeouts": {
+          "type": "object",
+          "description": "Optional timeout configuration for the connector",
+          "default": {},
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "status": {
+          "type": "string",
+          "description": "Operational status of the connector",
+          "enum": ["enabled", "disabled"],
+          "default": "enabled"
         },
         "ttlSeconds": {
           "type": "integer",
@@ -164,6 +230,15 @@
           "type": "string",
           "minLength": 1,
           "description": "HTTP header name used when type is apiKey or bearer"
+          "additionalProperties": true
+        },
+        "endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional base endpoint for the connector"
+        },
+        "auth": {
+          "$ref": "#/definitions/ConnectorAuth"
         }
       }
     }

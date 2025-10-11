@@ -12,11 +12,7 @@ from typing import Iterable, List, Optional
 
 from pydantic import ValidationError
 
-from .models import (
-    ConnectorServiceMap,
-    ConnectorServiceMapEntry,
-    ConnectorsManifest,
-)
+from .models import ConnectorServiceMapPayload, ConnectorsManifest
 
 MODULE_PATH = Path(__file__).resolve()
 FALLBACK_MANIFEST_PATH = MODULE_PATH.parents[4] / "config" / "connectors.manifest.json"
@@ -77,7 +73,7 @@ def load_connectors_manifest(manifest_path: Optional[str | Path] = None) -> Conn
     )
 
 
-def build_connector_service_map(manifest: ConnectorsManifest) -> ConnectorServiceMap:
+def build_connector_service_map(manifest: ConnectorsManifest) -> ConnectorServiceMapPayload:
     """Create the ASBR-facing service map from the manifest."""
 
     generated_at = (
@@ -123,9 +119,10 @@ def build_connector_service_map(manifest: ConnectorsManifest) -> ConnectorServic
         ttl_seconds=ttl_seconds,
         connectors=connectors,
     )
+    return manifest.service_map_payload()
 
 
-def sign_connector_service_map(service_map: ConnectorServiceMap, secret: str) -> str:
+def sign_connector_service_map(service_map: ConnectorServiceMapPayload, secret: str) -> str:
     """Generate an HMAC signature for the service map."""
 
     if not secret:

@@ -12,7 +12,13 @@ import express from 'express';
 import { Server as IOServer } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { getEventManager, stopEventManager } from '../core/events.js';
-import { buildConnectorServiceMap, loadConnectorsManifest, signConnectorServiceMap, ConnectorsManifestError } from '../connectors/manifest.js';
+import {
+        attachSignature,
+        buildConnectorServiceMap,
+        loadConnectorsManifest,
+        signConnectorServiceMap,
+        ConnectorsManifestError,
+} from '../connectors/manifest.js';
 import { createTask as buildTask } from '../lib/create-task.js';
 import { emitPlanStarted } from '../lib/emit-plan-started.js';
 import { logError, logInfo } from '../lib/logger.js';
@@ -679,7 +685,7 @@ class ASBRServerClass {
                         }
 
                         const signature = signConnectorServiceMap(serviceMap, secret);
-                        res.json({ ...serviceMap, signature });
+                        res.json(attachSignature(serviceMap, signature));
                 } catch (error) {
                         if (error instanceof ValidationError) {
                                 throw error;

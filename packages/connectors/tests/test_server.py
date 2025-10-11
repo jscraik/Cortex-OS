@@ -41,7 +41,17 @@ async def test_service_map_authentication(settings: Settings) -> None:
         assert response.status_code == 200
         body = response.json()
         assert "signature" in body
-        assert body["payload"]["metadata"]["count"] == 1
+
+        payload = body["payload"]
+        assert payload["metadata"]["count"] == len(payload["connectors"])
+
+        wikidata = next(
+            connector for connector in payload["connectors"] if connector["id"] == "wikidata"
+        )
+        assert wikidata["metadata"]["tools"] == [
+            {"name": "vector_search", "description": "Semantic entity and identifier lookup"},
+            {"name": "sparql", "description": "Execute Wikidata SPARQL queries"},
+        ]
 
 
 @pytest.mark.asyncio

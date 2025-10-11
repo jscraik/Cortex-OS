@@ -6,6 +6,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field, field_validator
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 
 class ConnectorAuth(BaseModel):
@@ -17,7 +21,7 @@ class ConnectorAuth(BaseModel):
     header_name: Optional[str] = Field(default=None, alias="headerName", min_length=1)
 
 
-class ConnectorEntry(BaseModel):
+class ConnectorManifestEntry(BaseModel):
     """Manifest entry describing a Cortex-OS connector."""
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
@@ -37,6 +41,15 @@ class ConnectorEntry(BaseModel):
     timeouts: Dict[str, int] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     tags: List[str] = Field(default_factory=list)
+    version: str = Field(..., min_length=1)
+    scopes: List[str] = Field(..., min_length=1)
+    quotas: Dict[str, int] = Field(default_factory=dict)
+    timeouts: Dict[str, int] = Field(default_factory=dict)
+    status: Literal["enabled", "disabled"] = "enabled"
+    ttl_seconds: int = Field(..., ge=1, alias="ttlSeconds")
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    endpoint: Optional[HttpUrl] = None
+    auth: Optional[ConnectorAuth] = None
 
     @field_validator("scopes")
     @classmethod
@@ -59,16 +72,37 @@ class ConnectorsManifest(BaseModel):
     ttl_seconds: Optional[int] = Field(default=None, alias="ttlSeconds", ge=1)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     connectors: List[ConnectorEntry] = Field(..., min_length=1)
+    id: str = Field(..., min_length=1)
+    brand: Optional[Literal["brAInwav"]] = None
+    ttl_seconds: int = Field(..., ge=1, alias="ttlSeconds")
+    connectors: List[ConnectorManifestEntry] = Field(..., min_length=1)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
-    @field_validator("generated_at")
-    @classmethod
-    def validate_generated_at(cls, value: Optional[str]) -> Optional[str]:
-        if value is None:
-            return value
-        # Support trailing Z by normalising to RFC 3339 compatible string
-        normalised = value.replace("Z", "+00:00")
-        datetime.fromisoformat(normalised)
-        return value
+    def service_map_payload(self) -> "ConnectorServiceMapPayload":
+        """Create the service map payload derived from this manifest."""
+
+        now = datetime.now(timezone.utc)
+        now_epoch = int(now.timestamp())
+        connectors = [
+            ConnectorServiceMapEntry.from_manifest(entry, now_epoch)
+            for entry in sorted(self.connectors, key=lambda connector: connector.id)
+        ]
+
+        min_connector_ttl = None
+        if connectors:
+            min_connector_ttl = min(connector.ttl - now_epoch for connector in connectors)
+
+        ttl_seconds = max(self.ttl_seconds, (min_connector_ttl or 1))
+
+        payload = ConnectorServiceMapPayload(
+            id=self.id,
+            brand=self.brand or "brAInwav",
+            generated_at=now.isoformat().replace("+00:00", "Z"),
+            ttl_seconds=ttl_seconds,
+            connectors=connectors,
+        )
+
+        return payload
 
 
 class ConnectorServiceMapEntry(BaseModel):
@@ -77,6 +111,7 @@ class ConnectorServiceMapEntry(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     id: str
+    name: str
     version: str
     display_name: str = Field(..., alias="displayName")
     endpoint: AnyUrl
@@ -98,9 +133,42 @@ class ConnectorServiceMapEntry(BaseModel):
             raise ValueError(msg)
         return value
 
+    scopes: List[str]
+    status: Literal["enabled", "disabled"]
+    ttl: int = Field(..., ge=1)
+    quotas: Optional[Dict[str, int]] = None
+    timeouts: Optional[Dict[str, int]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    endpoint: Optional[HttpUrl] = None
+    auth: Optional[ConnectorAuth] = None
 
-class ConnectorServiceMap(BaseModel):
-    """Service map exported to ASBR and downstream clients."""
+    @classmethod
+    def from_manifest(cls, entry: ConnectorManifestEntry, now_epoch: int) -> "ConnectorServiceMapEntry":
+        data: Dict[str, Any] = {
+            "id": entry.id,
+            "name": entry.name,
+            "version": entry.version,
+            "scopes": list(entry.scopes),
+            "status": entry.status,
+            "ttl": now_epoch + entry.ttl_seconds,
+        }
+
+        if entry.quotas:
+            data["quotas"] = dict(entry.quotas)
+        if entry.timeouts:
+            data["timeouts"] = dict(entry.timeouts)
+        if entry.metadata:
+            data["metadata"] = dict(entry.metadata)
+        if entry.endpoint is not None:
+            data["endpoint"] = entry.endpoint
+        if entry.auth is not None:
+            data["auth"] = entry.auth
+
+        return cls.model_validate(data)
+
+
+class ConnectorServiceMapPayload(BaseModel):
+    """Service map payload shared between the registry and ASBR."""
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
@@ -113,6 +181,13 @@ class ConnectorServiceMap(BaseModel):
     @field_validator("generated_at")
     @classmethod
     def validate_generated_at(cls, value: str) -> str:
+        # Support trailing Z by normalising to RFC 3339 compatible string
         normalised = value.replace("Z", "+00:00")
         datetime.fromisoformat(normalised)
         return value
+
+
+class ConnectorServiceMap(ConnectorServiceMapPayload):
+    """Signed service map exported to ASBR and downstream clients."""
+
+    signature: str = Field(..., min_length=1)

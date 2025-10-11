@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ConnectorStatusSchema = z.enum(['enabled', 'disabled', 'preview']);
+export const ConnectorStatusSchema = z.enum(['enabled', 'disabled']);
 
 export const ConnectorAuthSchema = z
         .object({
@@ -50,10 +50,15 @@ export const ConnectorsManifestSchema = z
                 ttlSeconds: z.number().int().positive().optional(),
                 connectors: z.array(ConnectorEntrySchema).min(1),
                 metadata: z.record(z.string(), z.unknown()).optional(),
+                id: z.string().min(1),
+                brand: z.literal('brAInwav').optional(),
+                ttlSeconds: z.number().int().positive(),
+                connectors: z.array(ConnectorManifestEntrySchema).min(1),
+                metadata: z.record(z.unknown()).optional(),
         })
         .strict();
 
-export const ConnectorServiceMapEntrySchema = z
+export const ConnectorServiceEntrySchema = z
         .object({
                 id: z.string(),
                 version: z.string(),
@@ -68,6 +73,17 @@ export const ConnectorServiceMapEntrySchema = z
                 timeouts: z.record(z.number().int().nonnegative()).optional(),
                 description: z.string().min(1).optional(),
                 tags: z.array(z.string().min(1)).optional(),
+                id: z.string().min(1),
+                name: z.string().min(1),
+                version: z.string().min(1),
+                scopes: z.array(z.string().min(1)).min(1),
+                status: ConnectorStatusSchema,
+                ttl: z.number().int().positive(),
+                quotas: z.record(z.number().int().nonnegative()).optional(),
+                timeouts: z.record(z.number().int().nonnegative()).optional(),
+                metadata: z.record(z.unknown()).optional(),
+                endpoint: z.string().url().optional(),
+                auth: ConnectorAuthSchema.optional(),
         })
         .strict();
 
@@ -78,6 +94,7 @@ export const ConnectorServiceMapSchema = z
                 generatedAt: z.string().datetime(),
                 ttlSeconds: z.number().int().positive(),
                 connectors: z.array(ConnectorServiceMapEntrySchema),
+                connectors: z.array(ConnectorServiceEntrySchema),
                 signature: z.string().min(1),
         })
         .strict();
@@ -86,7 +103,10 @@ export const ConnectorServiceMapPayloadSchema = ConnectorServiceMapSchema.omit({
 
 export type ConnectorAuth = z.infer<typeof ConnectorAuthSchema>;
 export type ConnectorEntry = z.infer<typeof ConnectorEntrySchema>;
+export type ConnectorStatus = z.infer<typeof ConnectorStatusSchema>;
+export type ConnectorAuth = z.infer<typeof ConnectorAuthSchema>;
+export type ConnectorManifestEntry = z.infer<typeof ConnectorManifestEntrySchema>;
 export type ConnectorsManifest = z.infer<typeof ConnectorsManifestSchema>;
-export type ConnectorServiceMapEntry = z.infer<typeof ConnectorServiceMapEntrySchema>;
+export type ConnectorServiceEntry = z.infer<typeof ConnectorServiceEntrySchema>;
 export type ConnectorServiceMap = z.infer<typeof ConnectorServiceMapSchema>;
 export type ConnectorServiceMapPayload = z.infer<typeof ConnectorServiceMapPayloadSchema>;

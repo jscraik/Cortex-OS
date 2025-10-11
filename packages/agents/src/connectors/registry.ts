@@ -17,7 +17,7 @@ export interface ConnectorDefinition extends ConnectorEntry {
 }
 
 const resolveAuthHeader = (entry: ConnectorEntry, apiKey?: string): Record<string, string> => {
-        if (entry.auth.type === 'none') {
+        if (!entry.auth || entry.auth.type === 'none') {
                 return {};
         }
 
@@ -54,15 +54,12 @@ export class ConnectorRegistry {
                         return;
                 }
 
-                const result = await fetchConnectorServiceMap(this.options);
-                this.expiresAtMs = result.expiresAtMs;
-                this.connectors.clear();
+        const result = await fetchConnectorServiceMap(this.options);
+        this.expiresAtMs = result.expiresAtMs;
+        this.connectors.clear();
 
-                for (const entry of result.map.connectors) {
-                        const headers = {
-                                ...entry.headers,
-                                ...resolveAuthHeader(entry, this.options.connectorsApiKey),
-                        };
+        for (const entry of result.map.connectors) {
+                        const headers = resolveAuthHeader(entry, this.options.connectorsApiKey);
 
                         const definition: ConnectorDefinition = {
                                 ...entry,
@@ -71,7 +68,7 @@ export class ConnectorRegistry {
                         };
 
                         this.connectors.set(entry.id, definition);
-                        setConnectorAvailability(entry.id, entry.enabled);
+                        setConnectorAvailability(entry.id, entry.status === 'enabled');
                         recordConnectorTtl(entry.id, this.expiresAtMs);
                 }
         }

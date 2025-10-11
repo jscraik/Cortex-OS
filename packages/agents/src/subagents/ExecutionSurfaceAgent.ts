@@ -212,7 +212,7 @@ export class ExecutionSurfaceAgent extends EventEmitter {
                 );
 
                 const connectorSurfaces = this.connectorDefinitions
-                        .filter((connector) => connector.enabled)
+                                .filter((connector) => connector.status === 'enabled')
                         .map((connector) => `connector:${connector.id}`)
                         .filter((surface) => allowed.has('connector') || allowed.has(surface));
 

@@ -79,6 +79,20 @@ Coverage thresholds follow `packages/connectors/AGENTS.md` (≥92% global, ≥95
 
 ---
 
+## Wikidata Smoke Checks
+
+End-to-end verification for the Wikidata connector spans three packages. Run the following commands locally before opening a PR and mirror them in CI job definitions (use the same flags on the runners):
+
+| Layer | Local command | CI target |
+|-------|---------------|-----------|
+| Connectors service map | `uv run --package packages/connectors pytest packages/connectors/tests/test_server.py::test_service_map_authentication` | `uv run --package packages/connectors pytest packages/connectors/tests/test_server.py::test_service_map_authentication` |
+| MCP proxy manager | `pnpm --filter mcp test -- packages/mcp/src/connectors/manager.test.ts` | `pnpm --filter mcp test -- --runInBand packages/mcp/src/connectors/manager.test.ts` |
+| Agents integration | `pnpm --filter agents test -- ExecutionSurfaceAgent.connectors.test.ts` | `pnpm --filter agents test -- --runInBand ExecutionSurfaceAgent.connectors.test.ts` |
+
+These commands confirm the manifest exposes Wikidata metadata, the MCP proxy registers `wikidata.vector_search`/`wikidata.sparql`, and the Execution Surface Agent can consume those tools for fact queries.
+
+---
+
 ## Observability & Telemetry
 
 - OpenTelemetry spans include `brand:"brAInwav"`, `component:"connectors"`, `connectorId`, and `runId` attributes.
