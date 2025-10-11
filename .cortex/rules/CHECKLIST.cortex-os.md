@@ -26,6 +26,7 @@ alwaysApply: true
   - [ ] Dashboard keyboard-navigable; no color-only signaling; labels/roles present.
 - **G7 Docs & Ops**
   - [ ] READMEs current; 403 playbook linked; runbooks for start/stop/retry/drain present.
+  - [ ] `ENFORCE_AGENTS_LOCAL_MEMORY_MODE=check pnpm enforce:agents:local-memory` run (attach `brAInwav-vibe-check` log or response when changes required).
 
 ## 1) Package Checklists
 

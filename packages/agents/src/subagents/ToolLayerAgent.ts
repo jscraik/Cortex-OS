@@ -16,6 +16,7 @@ import { createAGUIBusIntegration } from '../integrations/AGUIBusIntegration.js'
 import { createPrefixedId, secureDelay, secureInt, secureRatio } from '../lib/secure-random.js';
 import { type AGUIMCPTools, createAGUIMCPTools } from '../mcp/AGUIMCPTools.js';
 import { AgentToolkitMCPTools } from '../mcp/AgentToolkitMCPTools.js';
+import { ArxivMCPTools } from '../mcp/ArxivMCPTools.js';
 
 // Tool Layer State with AGUI integration
 export const ToolLayerStateAnnotation = Annotation.Root({
@@ -95,6 +96,11 @@ export interface ToolLayerConfig {
 	enableAgentToolkit: boolean;
 	codeSearchPaths: string[];
 	validationEnabled: boolean;
+	// arXiv research configuration
+	enableArxivResearch: boolean;
+	arxivServerSlug?: string;
+	arxivSearchTool?: string;
+	arxivMaxResults?: number;
 }
 
 /**
@@ -107,13 +113,14 @@ export class ToolLayerAgent extends EventEmitter {
 	private aguiBusIntegration?: AGUIBusIntegration;
 	private aguiMCPTools?: AGUIMCPTools;
 	private agentToolkitMCPTools?: AgentToolkitMCPTools;
+	private arxivMCPTools?: ArxivMCPTools;
 
 	constructor(config: ToolLayerConfig) {
 		super();
 		this.config = config;
 		this.availableTools = new Map();
 		this.initializeTools();
-		this.graph = createToolLayerGraph();
+		this.graph = createToolLayerGraph(this);
 
 		// Initialize AGUI bus integration if enabled
 		if (this.config.enableAGUI) {
@@ -128,6 +135,89 @@ export class ToolLayerAgent extends EventEmitter {
 			this.agentToolkitMCPTools = new AgentToolkitMCPTools();
 			this.registerAgentToolkitMCPTools();
 		}
+
+		// Initialize arXiv MCP tools if enabled
+		if (this.config.enableArxivResearch) {
+			this.arxivMCPTools = new ArxivMCPTools({
+				serverSlug: this.config.arxivServerSlug,
+				defaultMaxResults: this.config.arxivMaxResults,
+			});
+			// Register tools asynchronously in the background
+			this.registerArxivMCPTools().catch((error) => {
+				console.error('brAInwav arXiv MCP tools registration failed during init', {
+					component: 'agents',
+					brand: 'brAInwav',
+					error: error instanceof Error ? error.message : String(error),
+				});
+			});
+		}
+	}
+
+	/**
+	 * Execute tools in parallel
+	 */
+	async executeToolsInParallel(
+		tools: Array<{
+			name: string;
+			description: string;
+			parameters: Record<string, unknown>;
+		}>,
+	): Promise<
+		Array<{
+			tool: string;
+			result: unknown;
+			status: 'success' | 'error';
+			duration: number;
+		}>
+	> {
+		const results = await Promise.allSettled(
+			tools.map(async (tool) => {
+				const startTime = Date.now();
+				try {
+					// Execute tool via registered handler
+					const toolHandler = this.availableTools.get(tool.name);
+					if (!toolHandler) {
+						throw new Error(`[brAInwav] Tool not found: ${tool.name}`);
+					}
+
+					const result = await toolHandler.execute(tool.parameters);
+					return {
+						tool: tool.name,
+						result,
+						status: 'success' as const,
+						duration: Date.now() - startTime,
+					};
+				} catch (error) {
+					console.error('brAInwav Tool execution failed', {
+						component: 'agents',
+						brand: 'brAInwav',
+						tool: tool.name,
+						error: error instanceof Error ? error.message : String(error),
+						parameters: tool.parameters,
+					});
+
+					return {
+						tool: tool.name,
+						result: error instanceof Error ? error.message : String(error),
+						status: 'error' as const,
+						duration: Date.now() - startTime,
+					};
+				}
+			}),
+		);
+
+		return results.map((result) => {
+			if (result.status === 'fulfilled') {
+				return result.value;
+			} else {
+				return {
+					tool: 'unknown',
+					result: result.reason,
+					status: 'error' as const,
+					duration: 0,
+				};
+			}
+		});
 	}
 
 	/**
@@ -352,12 +442,69 @@ export class ToolLayerAgent extends EventEmitter {
 			});
 		}
 	}
+
+	/**
+	 * Register arXiv MCP tools as available tools
+	 */
+	private async registerArxivMCPTools(): Promise<void> {
+		if (!this.arxivMCPTools) return;
+
+		try {
+			// Initialize the arXiv MCP tools
+			await this.arxivMCPTools.initialize();
+
+			// Get all tool descriptors
+			const tools = this.arxivMCPTools.getTools();
+
+			for (const tool of tools) {
+				this.availableTools.set(tool.name, {
+					execute: async (params: unknown) => {
+						try {
+							const result = await tool.handler(params);
+							console.log('brAInwav arXiv tool executed successfully', {
+								component: 'agents',
+								brand: 'brAInwav',
+								tool: tool.name,
+								params,
+							});
+							return result;
+						} catch (error) {
+							console.error('brAInwav arXiv tool execution failed', {
+								component: 'agents',
+								brand: 'brAInwav',
+								tool: tool.name,
+								params,
+								error: error instanceof Error ? error.message : String(error),
+							});
+							return {
+								success: false,
+								error: error instanceof Error ? error.message : String(error),
+								tool: tool.name,
+							};
+						}
+					},
+				});
+			}
+
+			console.log('brAInwav arXiv MCP tools registered successfully', {
+				component: 'agents',
+				brand: 'brAInwav',
+				tools: tools.map((t) => t.name),
+			});
+		} catch (error) {
+			console.error('brAInwav failed to register arXiv MCP tools', {
+				component: 'agents',
+				brand: 'brAInwav',
+				error: error instanceof Error ? error.message : String(error),
+			});
+		}
+	}
 }
 
 /**
  * Create LangGraphJS workflow for Tool Layer Agent
  */
-function createToolLayerGraph() {
+function createToolLayerGraph(agent: ToolLayerAgent) {
 	/**
 	 * Tool Selection Node - Select appropriate tools for the task
 	 */
@@ -391,8 +538,8 @@ function createToolLayerGraph() {
 			};
 		}
 
-		// Execute tools in parallel
-		const results = await executeToolsInParallel(selectedTools);
+		// Execute tools in parallel via the agent
+		const results = await agent.executeToolsInParallel(selectedTools);
 
 		return {
 			currentStep: 'dashboard_update',
@@ -613,6 +760,55 @@ function selectToolsForTask(content: string): Array<{
 		});
 	}
 
+	// arXiv research tool selection
+	if (
+		keywords.includes('research') ||
+		keywords.includes('paper') ||
+		keywords.includes('arxiv') ||
+		keywords.includes('academic') ||
+		keywords.includes('scholar') ||
+		keywords.includes('literature') ||
+		keywords.includes('citation')
+	) {
+		if (keywords.includes('search') || keywords.includes('find')) {
+			tools.push({
+				name: 'arxiv_search',
+				description: 'Search for academic papers on arXiv',
+				parameters: {
+					query: extractSearchQuery(content) || content.trim(),
+					max_results: extractMaxResults(content) || 5,
+				},
+			});
+		}
+
+		if (
+			keywords.includes('download') ||
+			keywords.includes('pdf') ||
+			keywords.includes('full text')
+		) {
+			tools.push({
+				name: 'arxiv_download',
+				description: 'Download arXiv paper PDF or source',
+				parameters: {
+					paper_id: extractPaperId(content) || '2301.00001',
+					format: extractDownloadFormat(content) || 'pdf',
+				},
+			});
+		}
+
+		// If research is mentioned but no specific action, add search by default
+		if (!tools.some((t) => t.name.startsWith('arxiv_'))) {
+			tools.push({
+				name: 'arxiv_search',
+				description: 'Search for academic papers on arXiv',
+				parameters: {
+					query: extractSearchQuery(content) || content.trim(),
+					max_results: 5,
+				},
+			});
+		}
+	}
+
 	// Default to validator if no specific tools identified
 	if (tools.length === 0) {
 		tools.push({
@@ -623,99 +819,6 @@ function selectToolsForTask(content: string): Array<{
 	}
 
 	return tools;
-}
-
-async function executeToolsInParallel(
-	tools: Array<{
-		name: string;
-		description: string;
-		parameters: Record<string, unknown>;
-	}>,
-): Promise<
-	Array<{
-		tool: string;
-		result: unknown;
-		status: 'success' | 'error';
-		duration: number;
-	}>
-> {
-	const results = await Promise.allSettled(
-		tools.map(async (tool) => {
-			const startTime = Date.now();
-			try {
-				// Simulate tool execution
-				const result = await simulateToolExecution(tool.name, tool.parameters);
-				return {
-					tool: tool.name,
-					result,
-					status: 'success' as const,
-					duration: Date.now() - startTime,
-				};
-			} catch (error) {
-				return {
-					tool: tool.name,
-					result: error instanceof Error ? error.message : String(error),
-					status: 'error' as const,
-					duration: Date.now() - startTime,
-				};
-			}
-		}),
-	);
-
-	return results.map((result) => {
-		if (result.status === 'fulfilled') {
-			return result.value;
-		} else {
-			return {
-				tool: 'unknown',
-				result: result.reason,
-				status: 'error' as const,
-				duration: 0,
-			};
-		}
-	});
-}
-
-async function simulateToolExecution(
-	toolName: string,
-	parameters: Record<string, unknown>,
-): Promise<unknown> {
-	// Simulate tool execution delay
-	await new Promise((resolve) => setTimeout(resolve, secureDelay(100, 301)));
-
-	// Return tool-specific results
-	switch (toolName) {
-		case 'validator':
-			return {
-				valid: true,
-				details: `Validated: ${JSON.stringify(parameters)}`,
-				timestamp: new Date().toISOString(),
-			};
-		case 'monitor':
-			return {
-				status: 'healthy',
-				metrics: { cpu: secureRatio() * 100, memory: secureRatio() * 100 },
-				monitored: JSON.stringify(parameters),
-			};
-		case 'dashboard':
-			return {
-				dashboard: 'updated',
-				widgets: secureInt(1, 11),
-				data: JSON.stringify(parameters),
-			};
-		case 'tool-executor':
-			return {
-				executed: true,
-				output: `Executed with: ${JSON.stringify(parameters)}`,
-				timestamp: new Date().toISOString(),
-			};
-		default:
-			return {
-				success: true,
-				tool: toolName,
-				parameters,
-			};
-	}
 }
 
 function updateDashboard(
@@ -799,6 +902,9 @@ export function createToolLayerAgent(config?: Partial<ToolLayerConfig>): ToolLay
 			'agent_toolkit_multi_search',
 			'agent_toolkit_codemod',
 			'agent_toolkit_validate',
+			// arXiv research tools
+			'arxiv_search',
+			'arxiv_download',
 		],
 		// AGUI defaults
 		enableAGUI: true,
@@ -808,6 +914,11 @@ export function createToolLayerAgent(config?: Partial<ToolLayerConfig>): ToolLay
 		enableAgentToolkit: true,
 		codeSearchPaths: ['./src', './packages'],
 		validationEnabled: true,
+		// arXiv research defaults
+		enableArxivResearch: true,
+		arxivServerSlug: 'arxiv-1',
+		arxivSearchTool: 'search_papers',
+		arxivMaxResults: 5,
 		...config,
 	};
 
@@ -959,4 +1070,100 @@ function extractFilesToValidate(content: string): string[] | null {
 	if (content.includes('python') || content.includes('.py')) return ['./**/*.py'];
 
 	return null;
+}
+
+// arXiv Helper Functions
+
+/**
+ * Extract search query from content string
+ */
+function extractSearchQuery(content: string): string | null {
+	// Look for quoted strings that might be search queries
+	const quotedMatch = content.match(/["']([^"']+)["']/);
+	if (quotedMatch) return quotedMatch[1];
+
+	// Look for 'search for X' patterns
+	const searchMatch = content.match(/(?:search\s+(?:for|on)\s+)([\w\s]+)/i);
+	if (searchMatch) return searchMatch[1].trim();
+
+	// Look for 'about X' patterns in research context
+	const aboutMatch = content.match(/(?:research|paper|literature)\s+(?:about|on)\s+([\w\s]+)/i);
+	if (aboutMatch) return aboutMatch[1].trim();
+
+	// Extract key research terms
+	const words = content
+		.toLowerCase()
+		.split(/\s+/)
+		.filter(
+			(word) =>
+				word.length > 3 &&
+				![
+					'search',
+					'find',
+					'look',
+					'for',
+					'about',
+					'on',
+					'the',
+					'and',
+					'or',
+					'but',
+					'in',
+					'with',
+					'arxiv',
+					'paper',
+					'research',
+				].includes(word),
+		);
+
+	return words.slice(0, 5).join(' ') || null;
+}
+
+/**
+ * Extract maximum results from content string
+ */
+function extractMaxResults(content: string): number | null {
+	// Look for number patterns
+	const numberMatch = content.match(/(\d+)\s*(?:results?|papers?|articles?)/i);
+	if (numberMatch) {
+		const num = parseInt(numberMatch[1], 10);
+		return Math.min(Math.max(num, 1), 20); // Clamp between 1-20
+	}
+
+	// Look for "up to X" patterns
+	const upToMatch = content.match(/up\s+to\s+(\d+)/i);
+	if (upToMatch) {
+		const num = parseInt(upToMatch[1], 10);
+		return Math.min(Math.max(num, 1), 20);
+	}
+
+	return null;
+}
+
+/**
+ * Extract arXiv paper ID from content string
+ */
+function extractPaperId(content: string): string | null {
+	// Look for standard arXiv ID patterns (e.g., 2301.00001, math/0309135)
+	const arxivIdMatch = content.match(/\b(\d{4}\.\d{4,5}|[a-z-]+\/\d{7})\b/);
+	if (arxivIdMatch) return arxivIdMatch[1];
+
+	// Look for "arXiv:" followed by ID
+	const arxivPrefixMatch = content.match(/arxiv[:\s]+(\d{4}\.\d{4,5}|[a-z-]+\/\d{7})/i);
+	if (arxivPrefixMatch) return arxivPrefixMatch[1];
+
+	return null;
+}
+
+/**
+ * Extract download format from content string
+ */
+function extractDownloadFormat(content: string): string | null {
+	const keywords = content.toLowerCase();
+
+	if (keywords.includes('pdf')) return 'pdf';
+	if (keywords.includes('tex') || keywords.includes('latex')) return 'tex';
+	if (keywords.includes('source') || keywords.includes('code')) return 'source';
+
+	return 'pdf'; // default
 }

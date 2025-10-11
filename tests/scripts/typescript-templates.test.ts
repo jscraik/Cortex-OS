@@ -94,10 +94,10 @@ describe('Phase 2: Package Conformance Validation', () => {
 		it.each(packages)('%s should have composite: true (if buildable)', (pkg) => {
 			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			let tsconfig;
+			let tsconfig: any;
 			try {
 				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
-			} catch (_error) {
+			} catch {
 				// Skip packages with invalid JSON (may have comments)
 				console.log(`⚠️  ${pkg}: Invalid JSON in tsconfig (may have comments) - skipping`);
 				expect(true).toBe(true);
@@ -120,7 +120,7 @@ describe('Phase 2: Package Conformance Validation', () => {
 		it.each(packages)('%s should have consistent outDir', (pkg) => {
 			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			let tsconfig;
+			let tsconfig: any;
 			try {
 				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
 			} catch {
@@ -139,7 +139,7 @@ describe('Phase 2: Package Conformance Validation', () => {
 		it.each(packages)('%s should exclude standard directories', (pkg) => {
 			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			let tsconfig;
+			let tsconfig: any;
 			try {
 				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
 			} catch {
@@ -181,7 +181,7 @@ describe('Phase 2: Package Conformance Validation', () => {
 		it.each(packages)('%s should use NodeNext module resolution', (pkg) => {
 			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			let tsconfig;
+			let tsconfig: any;
 			try {
 				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
 			} catch {
@@ -212,7 +212,7 @@ describe('Phase 2: Package Conformance Validation', () => {
 		it.each(packages)('%s should have clean include patterns', (pkg) => {
 			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			let tsconfig;
+			let tsconfig: any;
 			try {
 				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
 			} catch {
@@ -251,7 +251,7 @@ describe('Phase 2: brAInwav Standards Summary', () => {
 		packages.forEach((pkgDir) => {
 			const tsconfigPath = path.join(process.cwd(), pkgDir, 'tsconfig.json');
 
-			let tsconfig;
+			let tsconfig: any;
 			try {
 				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
 			} catch {

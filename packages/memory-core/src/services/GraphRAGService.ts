@@ -12,6 +12,7 @@
 import { SecureNeo4j } from '@cortex-os/utils';
 import { GraphEdgeType, GraphNodeType } from '@prisma/client';
 import { z } from 'zod';
+import { createPrefixedId } from '../../agents/src/lib/secure-random.js';
 import { prisma, shutdownPrisma } from '../db/prismaClient.js';
 import { assembleContext } from '../retrieval/contextAssembler.js';
 import { expandNeighbors } from '../retrieval/expandGraph.js';
@@ -20,6 +21,12 @@ import {
 	QdrantConfigSchema,
 	QdrantHybridSearch,
 } from '../retrieval/QdrantHybrid.js';
+import {
+	type ExternalCitationProvider,
+	type ExternalProviderConfig,
+	MCPKnowledgeProvider,
+	validateProviderConfig,
+} from './external/ExternalKnowledge.js';
 
 const DEFAULT_QDRANT_CONFIG = {
 	url: process.env.QDRANT_URL ?? 'http://localhost:6333',
@@ -61,14 +68,23 @@ export const GraphRAGServiceConfigSchema = z.object({
 	externalKg: z
 		.object({
 			enabled: z.boolean().default(false),
+			provider: z.enum(['none', 'neo4j', 'mcp']).default('none'),
+			// Neo4j specific settings
 			uri: z.string().min(1).optional(),
 			user: z.string().min(1).optional(),
 			password: z.string().min(1).optional(),
+			// MCP specific settings
+			slug: z.string().optional(),
+			tool: z.string().optional(),
+			maxResults: z.number().int().min(1).max(50).default(5),
+			requestTimeoutMs: z.number().int().min(1000).max(30000).default(10000),
+			// Common settings
 			maxDepth: z.number().int().min(1).max(3).default(1),
 			citationPrefix: z.string().default('neo4j'),
 		})
 		.default({
 			enabled: false,
+			provider: 'none',
 			maxDepth: 1,
 			citationPrefix: 'neo4j',
 		}),
@@ -153,23 +169,42 @@ export class GraphRAGService {
 		maxDepth: number;
 		prefix: string;
 	};
+	private readonly externalProvider?: ExternalCitationProvider;
 
 	constructor(config: GraphRAGServiceConfig) {
 		this.config = GraphRAGServiceConfigSchema.parse(config);
 		this.qdrant = new QdrantHybridSearch(this.config.qdrant);
 
 		if (this.config.externalKg.enabled) {
-			const { uri, user, password, maxDepth, citationPrefix } = this.config.externalKg;
-			if (uri && user && password) {
-				this.externalKg = {
-					driver: new SecureNeo4j(uri, user, password),
-					maxDepth,
-					prefix: citationPrefix,
-				};
+			const { provider } = this.config.externalKg;
+
+			if (provider === 'neo4j') {
+				const { uri, user, password, maxDepth, citationPrefix } = this.config.externalKg;
+				if (uri && user && password) {
+					this.externalKg = {
+						driver: new SecureNeo4j(uri, user, password),
+						maxDepth,
+						prefix: citationPrefix,
+					};
+				} else {
+					console.warn('brAInwav GraphRAG external KG credentials incomplete', {
+						component: 'memory-core',
+						brand: 'brAInwav',
+						provider: 'neo4j',
+						severity: 'warning',
+						action: 'skipping_external_enrichment',
+					});
+				}
+			} else if (provider === 'mcp') {
+				this.externalProvider = new MCPKnowledgeProvider();
 			} else {
-				console.warn(
-					'brAInwav GraphRAG external KG is enabled but Neo4j credentials are incomplete; skipping external enrichment.',
-				);
+				console.warn('brAInwav GraphRAG external KG provider not supported', {
+					component: 'memory-core',
+					brand: 'brAInwav',
+					provider,
+					severity: 'warning',
+					action: 'skipping_external_enrichment',
+				});
 			}
 		}
 	}
@@ -179,8 +214,48 @@ export class GraphRAGService {
 		embedSparseFunc: (text: string) => Promise<{ indices: number[]; values: number[] }>,
 	): Promise<void> {
 		await this.qdrant.initialize(embedDenseFunc, embedSparseFunc);
+
+		// Initialize external provider if configured
+		if (this.externalProvider && this.config.externalKg.provider === 'mcp') {
+			try {
+				const providerConfig: ExternalProviderConfig = {
+					provider: 'mcp',
+					settings: {
+						slug: this.config.externalKg.slug || 'arxiv-1',
+						tool: this.config.externalKg.tool || 'search_papers',
+						maxResults: this.config.externalKg.maxResults,
+						requestTimeoutMs: this.config.externalKg.requestTimeoutMs,
+					},
+				};
+
+				await this.externalProvider.initialize(providerConfig);
+
+				if (this.config.branding.enabled) {
+					console.info('brAInwav GraphRAG MCP external provider initialized', {
+						component: 'memory-core',
+						brand: 'brAInwav',
+						provider: this.config.externalKg.provider,
+						status: 'success',
+					});
+				}
+			} catch (error) {
+				console.warn('brAInwav GraphRAG failed to initialize MCP external provider', {
+					component: 'memory-core',
+					brand: 'brAInwav',
+					provider: this.config.externalKg.provider,
+					error: error instanceof Error ? error.message : String(error),
+				});
+			}
+		}
+
 		if (this.config.branding.enabled) {
-			console.log('brAInwav GraphRAG service initialized successfully');
+			console.info('brAInwav GraphRAG service initialized', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				status: 'ready',
+				externalKg: this.config.externalKg.enabled,
+				provider: this.config.externalKg.provider,
+			});
 		}
 	}
 
@@ -210,6 +285,7 @@ export class GraphRAGService {
 				result.citations = this.formatCitations(context.chunks);
 			}
 
+			// Fetch external citations from Neo4j if configured
 			if (this.externalKg && focusNodeIds.length > 0) {
 				const kgCitations = await this.fetchExternalCitations(focusNodeIds);
 				if (kgCitations.length > 0) {
@@ -224,6 +300,41 @@ export class GraphRAGService {
 					}
 					result.citations = combined;
 					result.metadata.externalKgEnriched = true;
+				}
+			}
+
+			// Fetch external citations from MCP provider if configured
+			if (this.externalProvider && this.config.externalKg.provider === 'mcp') {
+				try {
+					const mcpCitations = await this.fetchMcpCitations(validated.question, seeds);
+					if (mcpCitations.length > 0) {
+						const existing = result.citations ?? [];
+						const combined = [...existing];
+
+						// Merge citations without duplicating paths
+						const seenPaths = new Set(combined.map((c) => c.path));
+						for (const citation of mcpCitations) {
+							if (!seenPaths.has(citation.path)) {
+								combined.push({
+									path: citation.path,
+									nodeType: GraphNodeType.DOC,
+									relevanceScore: 0,
+									brainwavIndexed: false,
+								});
+								seenPaths.add(citation.path);
+							}
+						}
+
+						result.citations = combined;
+						result.metadata.externalKgEnriched = true;
+					}
+				} catch (error) {
+					console.warn('brAInwav GraphRAG failed to fetch MCP citations', {
+						component: 'memory-core',
+						brand: 'brAInwav',
+						question: validated.question,
+						error: error instanceof Error ? error.message : String(error),
+					});
 				}
 			}
 
@@ -319,9 +430,14 @@ export class GraphRAGService {
 	async close(): Promise<void> {
 		await this.qdrant.close();
 		await this.externalKg?.driver.close();
+		await this.externalProvider?.dispose?.();
 		await shutdownPrisma();
 		if (this.config.branding.enabled) {
-			console.log('brAInwav GraphRAG service closed');
+			console.info('brAInwav GraphRAG service closed', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				status: 'shutdown',
+			});
 		}
 	}
 
@@ -330,7 +446,7 @@ export class GraphRAGService {
 			throw new Error('brAInwav GraphRAG: Maximum concurrent queries exceeded');
 		}
 
-		const queryId = `graphrag_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+		const queryId = createPrefixedId(`graphrag_${Date.now()}_`);
 		this.activeQueries.add(queryId);
 
 		return {
@@ -434,7 +550,13 @@ export class GraphRAGService {
 					});
 				}
 			} catch (error) {
-				console.warn('brAInwav GraphRAG external KG enrichment failed', error);
+				console.warn('brAInwav GraphRAG external KG enrichment failed', {
+					component: 'memory-core',
+					brand: 'brAInwav',
+					nodeId,
+					error: error instanceof Error ? error.message : String(error),
+					severity: 'warning',
+				});
 			}
 
 			if (citations.length >= MAX_EXTERNAL_CITATIONS) {
@@ -443,6 +565,35 @@ export class GraphRAGService {
 		}
 
 		return citations;
+	}
+
+	private async fetchMcpCitations(
+		question: string,
+		seeds: GraphRAGSearchResult[],
+	): Promise<{ path: string }[]> {
+		if (!this.externalProvider) {
+			return [];
+		}
+
+		try {
+			const citations = await this.externalProvider.fetchCitations(question, {
+				maxResults: this.config.externalKg.maxResults,
+				timeoutMs: this.config.externalKg.requestTimeoutMs,
+			});
+
+			return citations.map((citation) => ({
+				path: citation.path,
+			}));
+		} catch (error) {
+			console.warn('brAInwav GraphRAG MCP citation fetch failed', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				provider: this.config.externalKg.provider,
+				question,
+				error: error instanceof Error ? error.message : String(error),
+			});
+			return [];
+		}
 	}
 
 	private async emitQueryEvent(
@@ -460,9 +611,20 @@ export class GraphRAGService {
 				timestamp: new Date().toISOString(),
 			};
 
-			console.log('brAInwav A2A Event:', JSON.stringify(event));
+			console.info('brAInwav A2A Event emitted', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				eventType: event.type,
+				source: event.source,
+				timestamp: event.timestamp,
+			});
 		} catch (error) {
-			console.error('brAInwav GraphRAG event emission failed:', error);
+			console.error('brAInwav GraphRAG event emission failed', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				error: error instanceof Error ? error.message : String(error),
+				severity: 'error',
+			});
 		}
 	}
 }
@@ -503,9 +665,17 @@ export function createGraphRAGService(config?: Partial<GraphRAGServiceConfig>): 
 
 	const externalKgBase = {
 		enabled: process.env.EXTERNAL_KG_ENABLED === 'true',
+		provider: (process.env.EXTERNAL_KG_PROVIDER as 'none' | 'neo4j' | 'mcp') || 'none',
+		// Neo4j settings
 		uri: process.env.NEO4J_URI,
 		user: process.env.NEO4J_USER,
 		password: process.env.NEO4J_PASSWORD,
+		// MCP settings
+		slug: process.env.ARXIV_MCP_SLUG || 'arxiv-1',
+		tool: process.env.ARXIV_MCP_SEARCH_TOOL || 'search_papers',
+		maxResults: parseInt(process.env.ARXIV_MCP_MAX_RESULTS || '5', 10),
+		requestTimeoutMs: parseInt(process.env.ARXIV_MCP_REQUEST_TIMEOUT || '10000', 10),
+		// Common settings
 		maxDepth: 1,
 		citationPrefix: 'neo4j',
 	};

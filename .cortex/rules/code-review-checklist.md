@@ -70,6 +70,7 @@ alwaysApply: true
 - [ ] **Documentation updated:** READMEs, API docs, configuration files, and design artefacts reflect the change.
 - [ ] **System impacts & compatibility:** Consider effects on other modules and backward compatibility.
 - [ ] **Secrets and configs:** Secrets and config files managed securely; no sensitive info exposed.
+- [ ] **Local Memory compliance:** `pnpm enforce:agents:local-memory` ran with oversight evidence attached when AGENTS.md files change (expect `brAInwav-vibe-check` log snippet).
 - [ ] **Package vision and directory structure:** Change aligns with vision and module layout.
 - [ ] **Scaffolding and structure:** Naming, layout, build/test scripts, and boilerplate are up to date.
 - [ ] **Platform/environment compatibility:** Change works across supported OSes/browsers/targets.

@@ -181,6 +181,7 @@ Document test evidence in the TDD plan and link results in the PR description.
 - Configuration: set VIBE_CHECK_HTTP_URL (default http://127.0.0.1:2091). Logs and errors must include brAInwav branding.
 - Constitution: use `update_constitution/reset_constitution/check_constitution` to enforce per-session rules.
 - Evidence: PRs must attach logs containing the string "brAInwav-vibe-check" around plan→act gates or CI will block.
+- Automation: run `pnpm enforce:agents:local-memory` before modifying `AGENTS.md` documents; the script calls the `vibe_check` MCP, rewrites sections via `scripts/vibe-check/enforce-local-memory.sh`, and records oversight output for audit logs.
 
 - Test with axe/jest-axe where applicable; attach reports to the TDD plan.
 
@@ -369,3 +370,8 @@ Agents must cite the relevant section IDs from these documents in every PR revie
 - Treat any request for the "latest", "current", or similar data as a freshness check: verify sources or ask for clarification before answering.
 - Convert relative language in responses to explicit ISO-8601 dates (e.g., `2025-10-11`) to avoid ambiguity and to comply with [Time Freshness Guard](/.cortex/rules/_time-freshness.md).
 - When referencing historical context, clearly separate past vs. future dates using the harness-provided current date to prevent timeline drift in downstream agents.
+
+## Local Memory
+
+Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time. Store key insights including lessons learned, architectural decisions, development strategies, and project outcomes. Use semantic search and relationship mapping to find relevant memories across all projects and sessions.
+This prompts your AI agents to automatically use Local Memory for persistent context across conversations.

@@ -144,3 +144,8 @@ pnpm --filter apps/chatgpt-dashboard build && pnpm --filter apps/chatgpt-dashboa
 - Treat "latest" or similar questions as freshness checks; verify sources or confirm with stakeholders before responding.
 - Convert relative timeline language in docs, runbooks, and handoffs to explicit ISO-8601 dates (e.g., 2025-10-11) to avoid ambiguity.
 - Call out past vs. future dates explicitly when summarizing historical context or scheduling workstreams.
+
+## Local Memory
+
+Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time. Store key insights including lessons learned, architectural decisions, development strategies, and project outcomes. Use semantic search and relationship mapping to find relevant memories across all projects and sessions.
+This prompts your AI agents to automatically use Local Memory for persistent context across conversations.

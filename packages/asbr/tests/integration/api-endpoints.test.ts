@@ -7,8 +7,8 @@
 // These tests interact directly with the server and require Node APIs that are not available in other environments (e.g., jsdom).
 // @vitest-environment node
 
-import type { Application } from 'express';
 import { join } from 'node:path';
+import type { Application } from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { initializeAuth } from '../../src/api/auth.js';
@@ -17,55 +17,50 @@ import type { Profile, TaskInput } from '../../src/types/index.js';
 import { initializeXDG } from '../../src/xdg/index.js';
 import { getSharedServer } from '../fixtures/shared-server.js';
 import {
-        createTestConnectorsManifest,
-        type TestManifestContext,
-        verifyConnectorServiceMapSignature,
+	createTestConnectorsManifest,
+	type TestManifestContext,
+	verifyConnectorServiceMapSignature,
 } from '../utils/connectors-manifest.js';
 
 describe('ASBR API Integration Tests', () => {
 	let server: ASBRServer;
 	let authToken: string;
 	let app: Application;
+	let connectorsManifest: TestManifestContext | undefined;
+	const connectorsSignatureKey = 'test-connectors-secret';
 
-        beforeAll(async () => {
-                process.env.CONNECTORS_SIGNATURE_KEY =
-                        process.env.CONNECTORS_SIGNATURE_KEY ?? 'integration-secret';
-        let server: ASBRServer;
-        let authToken: string;
-        let app: Application;
-        let connectorsManifest: TestManifestContext | undefined;
-        const connectorsSignatureKey = 'test-connectors-secret';
-
-        beforeAll(async () => {
-                if (process.env.ASBR_TEST_SHARED_SERVER) {
-                        const { server: shared, authToken: token } = await getSharedServer();
-                        server = shared;
-                        authToken = token;
-                        app = server.app;
-                } else {
-                        await initializeXDG();
-                        const tokenInfo = await initializeAuth();
-                        authToken = tokenInfo.token;
-                        server = createASBRServer({ port: 0, host: '127.0.0.1' });
-                        await server.start();
-                        app = server.app;
+	beforeAll(async () => {
+		process.env.CONNECTORS_SIGNATURE_KEY =
+			process.env.CONNECTORS_SIGNATURE_KEY ?? 'integration-secret';
+		if (process.env.ASBR_TEST_SHARED_SERVER) {
+			const { server: shared, authToken: token } = await getSharedServer();
+			server = shared;
+			authToken = token;
+			app = server.app;
+		} else {
+			await initializeXDG();
+			const tokenInfo = await initializeAuth();
+			authToken = tokenInfo.token;
+			server = createASBRServer({ port: 0, host: '127.0.0.1' });
+			await server.start();
+			app = server.app;
 		}
 	});
 
-        afterAll(async () => {
-                if (!process.env.ASBR_TEST_SHARED_SERVER && server) {
-                        await server.stop();
-                }
-                if (connectorsManifest) {
-                        await connectorsManifest.cleanup();
-                }
-                if (!process.env.ASBR_TEST_SHARED_SERVER) {
-                        delete process.env.CONNECTORS_MANIFEST_PATH;
-                }
-                if (process.env.CONNECTORS_SIGNATURE_KEY === connectorsSignatureKey) {
-                        delete process.env.CONNECTORS_SIGNATURE_KEY;
-                }
-        });
+	afterAll(async () => {
+		if (!process.env.ASBR_TEST_SHARED_SERVER && server) {
+			await server.stop();
+		}
+		if (connectorsManifest) {
+			await connectorsManifest.cleanup();
+		}
+		if (!process.env.ASBR_TEST_SHARED_SERVER) {
+			delete process.env.CONNECTORS_MANIFEST_PATH;
+		}
+		if (process.env.CONNECTORS_SIGNATURE_KEY === connectorsSignatureKey) {
+			delete process.env.CONNECTORS_SIGNATURE_KEY;
+		}
+	});
 
 	describe('Authentication', () => {
 		it('should reject requests without authentication', async () => {
@@ -312,149 +307,129 @@ describe('ASBR API Integration Tests', () => {
 		});
 	});
 
-        describe('Connector Service Map', () => {
-                it('should return connector service map', async () => {
-                        const response = await request(app)
-                                .get('/v1/connectors/service-map')
-                                .set('Authorization', `Bearer ${authToken}`)
-                                .expect(200);
+	describe('Connector Service Map', () => {
+		it('should return connector service map', async () => {
+			const response = await request(app)
+				.get('/v1/connectors/service-map')
+				.set('Authorization', `Bearer ${authToken}`)
+				.expect(200);
 
-                        expect(response.body).toMatchObject({
-                                id: 'brAInwav-connectors',
-                                brand: 'brAInwav',
-                        });
-                        expect(typeof response.body.signature).toBe('string');
-                        expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
-                        expect(typeof response.body.generatedAt).toBe('string');
-                        expect(response.body.ttlSeconds).toBe(3600);
-                        expect(response.body.connectors).toEqual([
-                                {
-                                        id: 'wikidata',
-                                        version: '2024.09.18',
-                                        displayName: 'Wikidata Semantic Search',
-                                        endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
-                                        auth: { type: 'none' },
-                                        scopes: [
-                                                'wikidata:vector-search',
-                                                'wikidata:claims',
-                                                'wikidata:sparql',
-                                        ],
-                                id: '01J0XKQ4R6V7Z9P3S5T7W9YBCD',
-                                brand: 'brAInwav',
-                                generatedAt: '2025-01-01T00:00:00Z',
-                                ttlSeconds: 900,
-                        });
-                        expect(typeof response.body.signature).toBe('string');
-                        expect(response.body.signature).toMatch(/^[A-Za-z0-9_-]{43}$/);
-                        expect(response.body.connectors).toEqual([
-                                {
-                                        id: 'github-actions',
-                                        version: '0.4.1',
-                                        displayName: 'GitHub Actions Dispatcher',
-                                        endpoint: 'https://connectors.brainwav.ai/github/actions',
-                                        auth: { type: 'apiKey', headerName: 'X-GitHub-Token' },
-                                        scopes: ['repos:read', 'actions:trigger'],
-                                        ttlSeconds: 900,
-                                        enabled: false,
-                                        metadata: {
-                                                brand: 'brAInwav',
-                                                notes: 'Disabled until SOC2 control review completes',
-                                                category: 'automation',
-                                        },
-                                        quotas: { perMinute: 5, perHour: 50 },
-                                        headers: { 'X-GitHub-Token': '${GITHUB_TOKEN:provided-at-runtime}' },
-                                        description:
-                                                'Prototype connector that dispatches GitHub workflow runs once security review completes.',
-                                        tags: ['automation', 'ci'],
-                                },
-                                {
-                                        id: 'perplexity-search',
-                                        version: '1.2.0',
-                                        displayName: 'Perplexity Search',
-                                        endpoint: 'https://connectors.brainwav.ai/perplexity/search',
-                                        auth: { type: 'bearer', headerName: 'Authorization' },
-                                        scopes: ['search:query', 'search:insights'],
-                                        ttlSeconds: 3600,
-                                        enabled: true,
-                                        metadata: {
-                                                brand: 'brAInwav',
-                                                dumpDate: '2024-09-18',
-                                                embeddingDimensions: 1024,
-                                                languages: ['en', 'fr', 'ar'],
-                                                supportsMatryoshka: true,
-                                                vectorModel: 'jina-embeddings-v3',
-                                                datasetMd5: 'dd7375a69774324dead6d3ea5abc01b7',
-                                        },
-                                                owner: 'integrations',
-                                                category: 'search',
-                                        },
-                                        quotas: { perMinute: 30, perHour: 300, concurrent: 8 },
-                                        headers: {
-                                                Authorization: 'Bearer ${PERPLEXITY_API_KEY}',
-                                                'X-Cortex-Connector': 'perplexity-search',
-                                        },
-                                        description:
-                                                'Search aggregation connector that proxies Perplexity Answers without exposing API secrets.',
-                                        tags: ['search', 'knowledge'],
-                                },
-                        ]);
-                        vi.useFakeTimers();
-                        vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
+			expect(response.body).toMatchObject({
+				id: 'brAInwav-connectors',
+				brand: 'brAInwav',
+			});
+			expect(typeof response.body.signature).toBe('string');
+			expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
+			expect(typeof response.body.generatedAt).toBe('string');
+			expect(response.body.ttlSeconds).toBe(3600);
+			expect(response.body.connectors).toEqual([
+				{
+					id: 'github-actions',
+					version: '0.4.1',
+					displayName: 'GitHub Actions Dispatcher',
+					endpoint: 'https://connectors.brainwav.ai/github/actions',
+					auth: { type: 'apiKey', headerName: 'X-GitHub-Token' },
+					scopes: ['repos:read', 'actions:trigger'],
+					ttlSeconds: 900,
+					enabled: false,
+					metadata: {
+						brand: 'brAInwav',
+						notes: 'Disabled until SOC2 control review completes',
+						category: 'automation',
+					},
+					quotas: { perMinute: 5, perHour: 50 },
+					headers: { 'X-GitHub-Token': '${GITHUB_TOKEN:provided-at-runtime}' },
+					description:
+						'Prototype connector that dispatches GitHub workflow runs once security review completes.',
+					tags: ['automation', 'ci'],
+				},
+				{
+					id: 'perplexity-search',
+					version: '1.2.0',
+					displayName: 'Perplexity Search',
+					endpoint: 'https://connectors.brainwav.ai/perplexity/search',
+					auth: { type: 'bearer', headerName: 'Authorization' },
+					scopes: ['search:query', 'search:insights'],
+					ttlSeconds: 3600,
+					enabled: true,
+					metadata: {
+						brand: 'brAInwav',
+						dumpDate: '2024-09-18',
+						embeddingDimensions: 1024,
+						languages: ['en', 'fr', 'ar'],
+						supportsMatryoshka: true,
+						vectorModel: 'jina-embeddings-v3',
+						datasetMd5: 'dd7375a69774324dead6d3ea5abc01b7',
+					},
+					owner: 'integrations',
+					category: 'search',
+					quotas: { perMinute: 30, perHour: 300, concurrent: 8 },
+					headers: {
+						Authorization: 'Bearer ${PERPLEXITY_API_KEY}',
+						'X-Cortex-Connector': 'perplexity-search',
+					},
+					description:
+						'Search aggregation connector that proxies Perplexity Answers without exposing API secrets.',
+					tags: ['search', 'knowledge'],
+				},
+			]);
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
 
-                        try {
-                                const response = await request(app)
-                                        .get('/v1/connectors/service-map')
-                                        .set('Authorization', `Bearer ${authToken}`)
-                                        .expect(200);
+			try {
+				const response = await request(app)
+					.get('/v1/connectors/service-map')
+					.set('Authorization', `Bearer ${authToken}`)
+					.expect(200);
 
-                                expect(response.body).toMatchObject({ brand: 'brAInwav' });
-                                expect(typeof response.body.signature).toBe('string');
-                                expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
-                                expect(response.body.generatedAt).toBe('2025-01-01T00:00:00.000Z');
-                                expect(response.body.connectors).toEqual([
-                                        {
-                                                id: 'github-actions',
-                                                name: 'GitHub Actions Dispatcher',
-                                                version: '0.4.1',
-                                                scopes: ['repos:read', 'actions:trigger'],
-                                                status: 'disabled',
-                                                ttl: 1735690500,
-                                                metadata: { notes: 'Disabled until SOC2 control review completes' },
-                                                auth: { type: 'apiKey', headerName: 'X-GitHub-Token' },
-                                                quotas: { perMinute: 5, perHour: 50, perDay: 400 },
-                                        },
-                                        {
-                                                id: 'perplexity-search',
-                                                name: 'Perplexity Search',
-                                                version: '1.2.0',
-                                                scopes: ['search:query', 'search:insights'],
-                                                status: 'enabled',
-                                                ttl: 1735693200,
-                                                metadata: { owner: 'integrations', category: 'search' },
-                                                auth: { type: 'bearer', headerName: 'Authorization' },
-                                                quotas: { perMinute: 30, perHour: 300, perDay: 3000 },
-                                        },
-                                        {
-                                                id: 'wikidata',
-                                                name: 'Wikidata Vector Search',
-                                                version: '2024.09.18',
-                                                scopes: ['facts:query', 'facts:claims'],
-                                                status: 'enabled',
-                                                ttl: 1735689900,
-                                                metadata: {
-                                                        brand: 'brAInwav',
-                                                        provider: 'Wikidata',
-                                                        snapshot: '2024-09-18',
-                                                },
-                                                endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
-                                                auth: { type: 'none' },
-                                        },
-                                ]);
-                        } finally {
-                                vi.useRealTimers();
-                        }
-                });
-        });
+				expect(response.body).toMatchObject({ brand: 'brAInwav' });
+				expect(typeof response.body.signature).toBe('string');
+				expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
+				expect(response.body.generatedAt).toBe('2025-01-01T00:00:00.000Z');
+				expect(response.body.connectors).toEqual([
+					{
+						id: 'github-actions',
+						name: 'GitHub Actions Dispatcher',
+						version: '0.4.1',
+						scopes: ['repos:read', 'actions:trigger'],
+						status: 'disabled',
+						ttl: 1735690500,
+						metadata: { notes: 'Disabled until SOC2 control review completes' },
+						auth: { type: 'apiKey', headerName: 'X-GitHub-Token' },
+						quotas: { perMinute: 5, perHour: 50, perDay: 400 },
+					},
+					{
+						id: 'perplexity-search',
+						name: 'Perplexity Search',
+						version: '1.2.0',
+						scopes: ['search:query', 'search:insights'],
+						status: 'enabled',
+						ttl: 1735693200,
+						metadata: { owner: 'integrations', category: 'search' },
+						auth: { type: 'bearer', headerName: 'Authorization' },
+						quotas: { perMinute: 30, perHour: 300, perDay: 3000 },
+					},
+					{
+						id: 'wikidata',
+						name: 'Wikidata Vector Search',
+						version: '2024.09.18',
+						scopes: ['facts:query', 'facts:claims'],
+						status: 'enabled',
+						ttl: 1735689900,
+						metadata: {
+							brand: 'brAInwav',
+							provider: 'Wikidata',
+							snapshot: '2024-09-18',
+						},
+						endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+						auth: { type: 'none' },
+					},
+				]);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+	});
 
 	describe('Error Handling', () => {
 		it('should return 404 for non-existent resources', async () => {

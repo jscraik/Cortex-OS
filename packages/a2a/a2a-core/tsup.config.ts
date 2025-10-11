@@ -14,7 +14,7 @@ export default defineConfig({
 		saga: 'src/saga.ts',
 		metrics: 'src/metrics.ts',
 	},
-	dts: true,
+	dts: false,
 	format: ['esm'],
 	target: 'es2022',
 	sourcemap: true,

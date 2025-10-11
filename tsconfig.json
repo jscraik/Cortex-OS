@@ -58,6 +58,8 @@
 		".turbo",
 		".tsbuildinfo"
 	],
+	"allowJs": true,
+	"include": ["src/**/*", "tests/**/*", "**/*.js", "**/*.ts"],
 	"ts-node": {
 		"esm": true,
 		"experimentalSpecifierResolution": "node"

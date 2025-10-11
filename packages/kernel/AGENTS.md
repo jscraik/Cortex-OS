@@ -272,3 +272,8 @@ packages/kernel/
 - `/CODESTYLE.md`
 - Related ADRs: document in `docs/` (add links).  
 - Dashboards/Runbooks: populate `docs/runbooks/` with service-specific entries.
+
+## Local Memory
+
+Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time. Store key insights including lessons learned, architectural decisions, development strategies, and project outcomes. Use semantic search and relationship mapping to find relevant memories across all projects and sessions.
+This prompts your AI agents to automatically use Local Memory for persistent context across conversations.

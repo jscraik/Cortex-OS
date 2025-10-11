@@ -3,7 +3,7 @@
 **Task:** Wikidata Semantic Layer Integration  
 **Branch:** feat/wikidata-semantic-layer  
 **Started:** 2025-01-11T19:48:00Z  
-**Status:** IN PROGRESS - Phase A.1 COMPLETE ✅  
+**Status:** IN PROGRESS - Phase A.2 COMPLETE ✅  
 
 ---
 
@@ -53,26 +53,82 @@
 - ✅ Type safety: Full TypeScript inference
 - ✅ Governance: .strict() mode rejects unknown properties
 
+**Commit:** `fb5c24f33` - feat(mcp-core): add remote tool schema validation
+
 ---
 
-## Phase A.1 REFACTOR (Next)
+## Phase A.2: Connector Manifest Schema Extension (COMPLETE ✅)
 
-**Objective:** Optimize and clean up schema implementation
+**Objective:** Add ConnectorRemoteToolSchema to asbr-schemas for service-map discovery
 
-**Planned Actions:**
-- [ ] Review code for DRY principles
-- [ ] Add JSDoc comments where missing
-- [ ] Check function length (max 40 lines per CODESTYLE.md)
-- [ ] Export schema from main index.ts
-- [ ] Run linter: `pnpm lint packages/mcp-core`
+**Completed:** 2025-01-11T20:08:00Z
+
+### TDD Cycle Results:
+
+#### RED Phase ✅
+- Created 14 failing tests in `libs/typescript/asbr-schemas/tests/connector-remote-tools.test.ts`
+- Test Suites:
+  - Suite 1: ConnectorRemoteToolSchema definition (10 tests)
+  - Suite 2: ConnectorManifestEntry with remoteTools (2 tests)
+  - Suite 3: ConnectorServiceEntry with remoteTools (2 tests)
+- Error: "ConnectorRemoteToolSchema is not exported" (expected)
+
+#### GREEN Phase ✅
+- Implemented `ConnectorRemoteToolSchema` in `libs/typescript/asbr-schemas/src/index.ts`
+- Added `remoteTools` field to ConnectorManifestEntrySchema
+- Added `remoteTools` field to ConnectorServiceEntrySchema
+- Exported `ConnectorRemoteTool` type
+- All 14 tests passing (4ms execution time)
+
+#### REFACTOR Phase ✅
+- Added comprehensive JSDoc documentation
+- Applied Biome formatting
+- Verified TypeScript builds cleanly
+- All tests still passing after refactoring
+
+#### Test Coverage:
+1. ✅ Remote tool schema definition (10 tests)
+   - Minimal tool validation
+   - All optional fields
+   - Dot-notation naming convention
+   - Empty name rejection
+   - Invalid characters rejection
+   - Empty arrays handling
+   - Unknown properties rejection (strict mode)
+   - TypeScript type inference
+   - Description length validation
+
+2. ✅ Manifest entry integration (2 tests)
+   - With remoteTools array
+   - Without remoteTools (backward compatible)
+
+3. ✅ Service entry integration (2 tests)
+   - With remoteTools array
+   - Without remoteTools (backward compatible)
+
+**Total: 14 tests passing**
+
+### Files Created/Modified:
+- `libs/typescript/asbr-schemas/src/index.ts` (added ConnectorRemoteToolSchema, ~40 new lines)
+- `libs/typescript/asbr-schemas/tests/connector-remote-tools.test.ts` (252 lines, new file)
+
+### Quality Metrics:
+- ✅ Test execution: 4ms
+- ✅ All tests green
+- ✅ brAInwav branding: Present in schema error messages
+- ✅ Type safety: Full TypeScript inference
+- ✅ Backward compatibility: Optional fields, legacy connectors supported
+- ✅ Documentation: JSDoc with examples
 
 ---
 
 ## Next Steps:
-- [ ] Phase A.1 REFACTOR: Optimize implementation
-- [ ] Phase A.2 RED: Write SPARQL integration tests (9 tests)
-- [ ] Phase A.2 GREEN: Implement SPARQL client
-- [ ] Phase A.2 REFACTOR: Clean up
+
+**Phase A.3: ASBR Propagation** (4 tests planned)
+- [ ] Create `packages/asbr/tests/unit/connectors/remote-tools-propagation.test.ts`
+- [ ] Write RED phase tests for buildConnectorEntry()
+- [ ] Implement remoteTools propagation in buildConnectorEntry()
+- [ ] Deep clone verification
 
 **Maintained by:** brAInwav Development Team  
-**Last Updated:** 2025-01-11T19:51:00Z
+**Last Updated:** 2025-01-11T20:08:00Z
