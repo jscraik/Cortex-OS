@@ -54,6 +54,13 @@ import type {
 	SQLiteRelationshipRow,
 } from '../types.js';
 import { MemoryProviderError } from '../types.js';
+import {
+	ShortTermMemoryStore,
+	type FlushExpiredResult,
+	type ShortTermMemorySession,
+	type ShortTermSnapshot,
+	type StoreShortTermResult,
+} from '../layers/short-term/ShortTermMemoryStore.js';
 
 type NormalizedStoreInput = MemoryStoreInput & { metadata?: MemoryMetadata };
 
@@ -281,6 +288,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 
 	private readonly checkpointManager: CheckpointManager;
 
+	private readonly shortTermStore: ShortTermMemoryStore;
+	private readonly memoryLayerVersion = '2025-10-11';
+
 	constructor(config: MemoryCoreConfig) {
 		this.config = config;
 		this.db = new Database(config.sqlitePath);
@@ -315,6 +325,8 @@ export class LocalMemoryProvider implements MemoryProvider {
 			policy: config.checkpoint,
 		});
 
+		this.shortTermStore = this.createShortTermStore();
+
 		/* Temporarily disabled
   // this.workflows = new MemoryWorkflowEngine({
   //   store: {
@@ -344,6 +356,26 @@ export class LocalMemoryProvider implements MemoryProvider {
 			tags,
 			metadata,
 		};
+	}
+
+	private createShortTermStore(): ShortTermMemoryStore {
+		return new ShortTermMemoryStore({
+			workflow: {
+				runStore: async (input) => ({
+					id: randomUUID(),
+					vectorIndexed: false,
+				}),
+			},
+			checkpointManager: this.checkpointManager,
+			ttlMs: 5 * 60 * 1000,
+			clock: () => Date.now(),
+			logger,
+		});
+	}
+
+	private resolveVectorLayer(importance?: number): 'semantic' | 'long_term' {
+		const score = typeof importance === 'number' ? importance : 5;
+		return score >= 8 ? 'long_term' : 'semantic';
 	}
 
 	private initializeDatabase(): void {
@@ -469,6 +501,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 					throw new MemoryProviderError('INTERNAL', 'Qdrant not configured');
 				}
 				const provenance = buildProvenancePayload(input.metadata, sanitizedContent);
+				const memoryLayer = this.resolveVectorLayer(input.importance);
 				await this.qdrant.upsert(this.qdrantConfig.collection, {
 					points: [
 						{
@@ -485,6 +518,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 								createdAt: timestamp,
 								updatedAt: timestamp,
 								importance: input.importance || 5,
+								memory_layer: memoryLayer,
+								memory_layer_version: this.memoryLayerVersion,
+								memory_layer_updated_at: new Date(timestamp).toISOString(),
 							},
 						},
 					],
@@ -642,6 +678,23 @@ export class LocalMemoryProvider implements MemoryProvider {
 				error: (error as Error).message,
 			});
 		}
+	}
+
+	async storeShortTerm(sessionId: string, input: MemoryStoreInput): Promise<StoreShortTermResult> {
+		const normalized = this.normalizeStoreInput(input);
+		return this.shortTermStore.store({ sessionId, memory: normalized });
+	}
+
+	getShortTermSession(sessionId: string): ShortTermMemorySession | undefined {
+		return this.shortTermStore.getSession(sessionId);
+	}
+
+	flushShortTermExpired(): FlushExpiredResult {
+		return this.shortTermStore.flushExpired();
+	}
+
+	async snapshotShortTerm(checkpointId: string): Promise<ShortTermSnapshot | null> {
+		return this.shortTermStore.snapshot(checkpointId);
 	}
 
 	async search(input: MemorySearchInput): Promise<MemorySearchResult[]> {
