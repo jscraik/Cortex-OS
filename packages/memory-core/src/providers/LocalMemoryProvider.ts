@@ -1,5 +1,28 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { validateArrayParam } from '@cortex-os/security';
+
+// Inline array validator to avoid dependency issues
+function validateArrayParam<T = unknown>(
+	param: unknown,
+	name: string,
+	elementType?: 'string' | 'number' | 'boolean',
+): T[] {
+	if (!Array.isArray(param)) {
+		throw new Error(`[brAInwav] Parameter "${name}" must be an array, got ${typeof param}`);
+	}
+
+	if (elementType) {
+		param.forEach((element, index) => {
+			if (typeof element !== elementType) {
+				throw new Error(
+					`Parameter "${name}[${index}]" must be ${elementType}, got ${typeof element}`,
+				);
+			}
+		});
+	}
+
+	return param as T[];
+}
+
 import type {
 	MemoryAnalysisInput,
 	MemoryRelationshipsInput,
@@ -548,7 +571,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 			return ollamaEmbedding;
 		}
 
-		if (process.env.NODE_ENV === 'production') {
+		if (process.env.NODE_ENV === 'production' || process.env.BRAINWAV_STRICT === '1') {
 			throw new MemoryProviderError(
 				'INTERNAL',
 				'brAInwav: Embedding backend not configured - mock embeddings forbidden in production',
@@ -1205,7 +1228,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 		}
 		details.qdrant = qdrantState;
 
-		// Provide a runtime-inspectable circuit breaker state without TODOs or placeholders
+		// Provide a runtime-inspectable circuit breaker state without placeholder references
 		if (this.circuitBreaker) {
 			const cb = this.circuitBreaker;
 			if (typeof cb.isClosed === 'function') {

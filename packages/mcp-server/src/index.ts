@@ -6,6 +6,9 @@ import { type ConnectorsConfig, loadConnectorsConfig } from './config/connectors
 import { loadHybridConfig } from './config/hybrid.js';
 import { loadOllamaConfig, type OllamaConfig } from './config/ollama.js';
 import { ConnectorsProxyManager } from './connectors-proxy.js';
+import { createPiecesContextBridge } from './context-bridge.js';
+import { PiecesCopilotMCPProxy } from './pieces-copilot-proxy.js';
+import { PiecesDriveMCPProxy } from './pieces-drive-proxy.js';
 import { PiecesMCPProxy } from './pieces-proxy.js';
 import { createPrompts } from './prompts/index.js';
 import { createResources } from './resources/index.js';
@@ -19,6 +22,10 @@ import { loadServerConfig, type ServerConfig } from './utils/config.js';
 type HeartbeatStopper = () => void;
 
 const PIECES_DEFAULT_ENDPOINT = 'http://localhost:39300/model_context_protocol/2024-11-05/sse';
+const PIECES_DRIVE_DEFAULT_ENDPOINT =
+	'http://localhost:39301/model_context_protocol/2024-11-05/sse';
+const PIECES_COPILOT_DEFAULT_ENDPOINT =
+	'http://localhost:39302/model_context_protocol/2024-11-05/sse';
 
 function createLogger(level: string): Logger {
 	return pino({ level });
@@ -40,26 +47,108 @@ function createPiecesProxy(config: ServerConfig, logger: Logger): PiecesMCPProxy
 	});
 }
 
+function createPiecesDriveProxy(config: ServerConfig, logger: Logger): PiecesDriveMCPProxy | null {
+	if (!config.piecesEnabled) {
+		logger.debug(
+			createBrandedLog('pieces_drive_disabled'),
+			'Pieces Drive MCP proxy disabled by config',
+		);
+		return null;
+	}
+
+	const endpoint = process.env.PIECES_DRIVE_MCP_ENDPOINT ?? PIECES_DRIVE_DEFAULT_ENDPOINT;
+	logger.debug(
+		createBrandedLog('pieces_drive_endpoint', { endpoint }),
+		'Configuring Pieces Drive MCP proxy',
+	);
+
+	return new PiecesDriveMCPProxy({
+		enabled: true,
+		endpoint,
+		logger,
+	});
+}
+
+function createPiecesCopilotProxy(
+	config: ServerConfig,
+	logger: Logger,
+): PiecesCopilotMCPProxy | null {
+	if (!config.piecesEnabled) {
+		logger.debug(
+			createBrandedLog('pieces_copilot_disabled'),
+			'Pieces Copilot MCP proxy disabled by config',
+		);
+		return null;
+	}
+
+	const endpoint = process.env.PIECES_COPILOT_MCP_ENDPOINT ?? PIECES_COPILOT_DEFAULT_ENDPOINT;
+	logger.debug(
+		createBrandedLog('pieces_copilot_endpoint', { endpoint }),
+		'Configuring Pieces Copilot MCP proxy',
+	);
+
+	return new PiecesCopilotMCPProxy({
+		enabled: true,
+		endpoint,
+		logger,
+	});
+}
+
 async function attachPiecesTools(
 	server: any,
 	logger: Logger,
-	proxy: PiecesMCPProxy | null,
+	piecesProxy: PiecesMCPProxy | null,
+	driveProxy: PiecesDriveMCPProxy | null,
+	copilotProxy: PiecesCopilotMCPProxy | null,
+	contextBridge: any,
 ): Promise<void> {
-	if (!proxy) {
-		return;
+	// Connect Pieces LTM proxy
+	if (piecesProxy) {
+		try {
+			await piecesProxy.connect();
+			logger.info(createBrandedLog('pieces_connected'), 'Pieces MCP proxy connected');
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			logger.warn(
+				createBrandedLog('pieces_connect_failed', { error: message }),
+				'Pieces MCP proxy connection failed',
+			);
+		}
 	}
 
-	try {
-		await proxy.connect();
-		logger.info(createBrandedLog('pieces_connected'), 'Pieces MCP proxy connected');
-		registerPiecesTools(server, logger, proxy);
-	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		logger.warn(
-			createBrandedLog('pieces_connect_failed', { error: message }),
-			'Pieces MCP proxy connection failed',
-		);
+	// Connect Pieces Drive proxy
+	if (driveProxy) {
+		try {
+			await driveProxy.connect();
+			logger.info(createBrandedLog('pieces_drive_connected'), 'Pieces Drive MCP proxy connected');
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			logger.warn(
+				createBrandedLog('pieces_drive_connect_failed', { error: message }),
+				'Pieces Drive MCP proxy connection failed',
+			);
+		}
 	}
+
+	// Connect Pieces Copilot proxy
+	if (copilotProxy) {
+		try {
+			await copilotProxy.connect();
+			logger.info(
+				createBrandedLog('pieces_copilot_connected'),
+				'Pieces Copilot MCP proxy connected',
+			);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			logger.warn(
+				createBrandedLog('pieces_copilot_connect_failed', { error: message }),
+				'Pieces Copilot MCP proxy connection failed',
+			);
+		}
+	}
+
+	// Register all Pieces tools (including hybrid search)
+	registerPiecesTools(server, logger, { piecesProxy, driveProxy, copilotProxy, contextBridge });
 }
 
 async function maybeWarmupOllama(
@@ -143,6 +232,8 @@ function setupShutdownHandlers(
 	logger: Logger,
 	transport: TransportController,
 	piecesProxy: PiecesMCPProxy | null,
+	driveProxy: PiecesDriveMCPProxy | null,
+	copilotProxy: PiecesCopilotMCPProxy | null,
 	connectorsProxy: ConnectorsProxyManager | null,
 	heartbeatStopper: HeartbeatStopper | null,
 ) {
@@ -150,6 +241,8 @@ function setupShutdownHandlers(
 		logger.info(createBrandedLog('shutdown_signal', { signal }), `${BRAND.prefix} shutting down`);
 		heartbeatStopper?.();
 		await piecesProxy?.disconnect().catch(() => undefined);
+		await driveProxy?.disconnect().catch(() => undefined);
+		await copilotProxy?.disconnect().catch(() => undefined);
 		await connectorsProxy?.disconnectAll().catch(() => undefined);
 		await transport.stop().catch(() => undefined);
 		process.exit(0);
@@ -215,7 +308,13 @@ async function main() {
 	const ollama = loadOllamaConfig(hybrid);
 	const connectorsConfig = loadConnectorsConfig(logger);
 	const { server, auth, oauthOptions } = createServer(logger, config);
+
+	// Create all Pieces proxies
 	const piecesProxy = createPiecesProxy(config, logger);
+	const driveProxy = createPiecesDriveProxy(config, logger);
+	const copilotProxy = createPiecesCopilotProxy(config, logger);
+	const contextBridge = createPiecesContextBridge(logger);
+
 	const connectorsProxy = createConnectorsProxy(connectorsConfig, logger);
 
 	registerTools(server, logger, { piecesProxy, config, ollama, hybrid, auth, oauthOptions });
@@ -224,11 +323,19 @@ async function main() {
 
 	const heartbeatStopper = await maybeWarmupOllama(config, ollama, logger);
 	await validateOllamaDeployment(ollama, logger);
-	await attachPiecesTools(server, logger, piecesProxy);
+	await attachPiecesTools(server, logger, piecesProxy, driveProxy, copilotProxy, contextBridge);
 	await attachConnectorsTools(server, logger, connectorsProxy);
 	const transport = await startTransport(server, logger, config, auth);
 
-	setupShutdownHandlers(logger, transport, piecesProxy, connectorsProxy, heartbeatStopper);
+	setupShutdownHandlers(
+		logger,
+		transport,
+		piecesProxy,
+		driveProxy,
+		copilotProxy,
+		connectorsProxy,
+		heartbeatStopper,
+	);
 	setupProcessErrorHandlers(logger);
 }
 

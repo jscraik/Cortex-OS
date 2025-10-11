@@ -6,19 +6,21 @@
  */
 
 import { createAgentToolkitMcpTools } from '@cortex-os/agent-toolkit';
-import { noAuthScheme, combineSecuritySchemes, type ToolSecurityScheme } from '@cortex-os/mcp-auth';
+import { combineSecuritySchemes, noAuthScheme, type ToolSecurityScheme } from '@cortex-os/mcp-auth';
 import type { FastMCP } from 'fastmcp';
 import type { HybridConfig } from '../config/hybrid.js';
 import type { OllamaConfig } from '../config/ollama.js';
+import type { PiecesCopilotMCPProxy } from '../pieces-copilot-proxy.js';
+import type { PiecesDriveMCPProxy } from '../pieces-drive-proxy.js';
 import type { PiecesMCPProxy } from '../pieces-proxy.js';
+import type { AuthenticatorBundle } from '../server/auth.js';
 import { BRAND, createBrandedLog } from '../utils/brand.js';
 import type { ServerConfig } from '../utils/config.js';
 import { registerCodebaseTools } from './codebase-tools.js';
+import { registerCreateDocTool } from './create-doc.js';
 import { registerHybridTools } from './hybrid-tools.js';
 import { registerMemoryTools } from './memory-tools.js';
 import { registerOllamaChat } from './ollama-chat.js';
-import { registerCreateDocTool } from './create-doc.js';
-import type { AuthenticatorBundle } from '../server/auth.js';
 
 type ToolContext = {
 	piecesProxy: PiecesMCPProxy | null;
@@ -34,6 +36,13 @@ type ToolContext = {
 			scopes: Record<string, string[]>;
 		};
 	};
+};
+
+type HybridToolContext = {
+	piecesProxy: PiecesMCPProxy | null;
+	driveProxy: PiecesDriveMCPProxy | null;
+	copilotProxy: PiecesCopilotMCPProxy | null;
+	contextBridge: any;
 };
 
 /**
@@ -101,22 +110,22 @@ export function registerTools(server: FastMCP, logger: any, context: ToolContext
 			securitySchemes: normalized,
 			execute: shouldEnforce
 				? async (args: unknown, execContext: any) => {
-					const token = execContext?.session?.token;
-					if (!token) {
-						throw new Error(
-							`Tool '${definition.name}' requires OAuth scopes: ${Array.from(enforcedScopes).join(', ')}`,
-						);
-					}
-					const provided = new Set([...(token.scopes ?? []), ...(token.permissions ?? [])]);
-					for (const scope of enforcedScopes) {
-						if (!provided.has(scope)) {
+						const token = execContext?.session?.token;
+						if (!token) {
 							throw new Error(
-								`Tool '${definition.name}' requires scope '${scope}' (granted: ${Array.from(provided).join(', ') || 'none'})`,
+								`Tool '${definition.name}' requires OAuth scopes: ${Array.from(enforcedScopes).join(', ')}`,
 							);
 						}
+						const provided = new Set([...(token.scopes ?? []), ...(token.permissions ?? [])]);
+						for (const scope of enforcedScopes) {
+							if (!provided.has(scope)) {
+								throw new Error(
+									`Tool '${definition.name}' requires scope '${scope}' (granted: ${Array.from(provided).join(', ') || 'none'})`,
+								);
+							}
+						}
+						return originalExecute(args, execContext);
 					}
-					return originalExecute(args, execContext);
-				}
 				: originalExecute,
 		});
 	};
@@ -131,7 +140,11 @@ export function registerTools(server: FastMCP, logger: any, context: ToolContext
 	registerCreateDocTool(server, logger);
 
 	// Register hybrid tools (Pieces integration)
-	registerHybridTools(server, logger, piecesProxy);
+	registerHybridTools(server, logger, {
+		pieces: context.piecesProxy,
+		drive: null as any, // Will be set in registerPiecesTools
+		copilot: null as any, // Will be set in registerPiecesTools
+	});
 
 	// Register Ollama chat tool when enabled
 	if (config.ollamaEnabled) {
@@ -165,45 +178,125 @@ export function registerTools(server: FastMCP, logger: any, context: ToolContext
 }
 
 /**
- * Register Pieces proxy tools
+ * Register Pieces proxy tools (including hybrid search)
  */
-export function registerPiecesTools(
-	server: FastMCP,
-	logger: any,
-	piecesProxy: PiecesMCPProxy | null,
-) {
-	if (!piecesProxy) {
-		logger.info(createBrandedLog('pieces_proxy_disabled'), 'Pieces proxy disabled');
-		return;
-	}
+export function registerPiecesTools(server: FastMCP, logger: any, context: HybridToolContext) {
+	const { piecesProxy, driveProxy, copilotProxy, contextBridge } = context;
 
-	if (piecesProxy.isConnected()) {
-		const remoteTools = piecesProxy.getTools();
-		logger.info(
-			createBrandedLog('pieces_tools_registering', { toolCount: remoteTools.length }),
-			'Registering Pieces tools',
-		);
+	// Register Pieces LTM tools
+	if (piecesProxy) {
+		if (piecesProxy.isConnected()) {
+			const remoteTools = piecesProxy.getTools();
+			logger.info(
+				createBrandedLog('pieces_tools_registering', { toolCount: remoteTools.length }),
+				'Registering Pieces LTM tools',
+			);
 
-		for (const tool of remoteTools) {
-			server.addTool({
-				name: `pieces.${tool.name}`,
-				description: `[Pieces] ${tool.description}`,
-				parameters: tool.inputSchema as any,
-				annotations: { readOnlyHint: true, title: `Pieces: ${tool.name}` },
-				async execute(args) {
-					logger.info(
-						createBrandedLog('pieces_tool_executing', { tool: tool.name }),
-						'Proxying Pieces tool',
-					);
-					const result = await piecesProxy.callTool(tool.name, args);
-					return JSON.stringify(result, null, 2);
-				},
-			});
+			for (const tool of remoteTools) {
+				server.addTool({
+					name: `pieces.${tool.name}`,
+					description: `[Pieces LTM] ${tool.description}`,
+					parameters: tool.inputSchema as any,
+					annotations: { readOnlyHint: true, title: `Pieces LTM: ${tool.name}` },
+					async execute(args) {
+						logger.info(
+							createBrandedLog('pieces_tool_executing', { tool: tool.name }),
+							'Proxying Pieces LTM tool',
+						);
+						const result = await piecesProxy.callTool(tool.name, args);
+						return JSON.stringify(result, null, 2);
+					},
+				});
+			}
+		} else {
+			logger.info(
+				createBrandedLog('pieces_proxy_unavailable'),
+				'Pieces LTM proxy unavailable; skipping remote tools',
+			);
 		}
 	} else {
-		logger.info(
-			createBrandedLog('pieces_proxy_unavailable'),
-			'Pieces proxy unavailable; skipping remote tools',
+		logger.info(createBrandedLog('pieces_proxy_disabled'), 'Pieces LTM proxy disabled');
+	}
+
+	// Register Pieces Drive tools
+	if (driveProxy) {
+		if (driveProxy.isConnected()) {
+			const remoteTools = driveProxy.getTools();
+			logger.info(
+				createBrandedLog('pieces_drive_tools_registering', { toolCount: remoteTools.length }),
+				'Registering Pieces Drive tools',
+			);
+
+			for (const tool of remoteTools) {
+				server.addTool({
+					name: `pieces_drive.${tool.name}`,
+					description: `[Pieces Drive] ${tool.description}`,
+					parameters: tool.inputSchema as any,
+					annotations: { readOnlyHint: true, title: `Pieces Drive: ${tool.name}` },
+					async execute(args) {
+						logger.info(
+							createBrandedLog('pieces_drive_tool_executing', { tool: tool.name }),
+							'Proxying Pieces Drive tool',
+						);
+						const result = await driveProxy.callTool(tool.name, args);
+						return JSON.stringify(result, null, 2);
+					},
+				});
+			}
+		} else {
+			logger.info(
+				createBrandedLog('pieces_drive_proxy_unavailable'),
+				'Pieces Drive proxy unavailable; skipping remote tools',
+			);
+		}
+	} else {
+		logger.debug(createBrandedLog('pieces_drive_proxy_disabled'), 'Pieces Drive proxy disabled');
+	}
+
+	// Register Pieces Copilot tools
+	if (copilotProxy) {
+		if (copilotProxy.isConnected()) {
+			const remoteTools = copilotProxy.getTools();
+			logger.info(
+				createBrandedLog('pieces_copilot_tools_registering', { toolCount: remoteTools.length }),
+				'Registering Pieces Copilot tools',
+			);
+
+			for (const tool of remoteTools) {
+				server.addTool({
+					name: `pieces_copilot.${tool.name}`,
+					description: `[Pieces Copilot] ${tool.description}`,
+					parameters: tool.inputSchema as any,
+					annotations: { readOnlyHint: true, title: `Pieces Copilot: ${tool.name}` },
+					async execute(args) {
+						logger.info(
+							createBrandedLog('pieces_copilot_tool_executing', { tool: tool.name }),
+							'Proxying Pieces Copilot tool',
+						);
+						const result = await copilotProxy.callTool(tool.name, args);
+						return JSON.stringify(result, null, 2);
+					},
+				});
+			}
+		} else {
+			logger.info(
+				createBrandedLog('pieces_copilot_proxy_unavailable'),
+				'Pieces Copilot proxy unavailable; skipping remote tools',
+			);
+		}
+	} else {
+		logger.debug(
+			createBrandedLog('pieces_copilot_proxy_disabled'),
+			'Pieces Copilot proxy disabled',
 		);
+	}
+
+	// Update hybrid tools with full proxy context
+	if (contextBridge) {
+		registerHybridTools(server, logger, {
+			pieces: piecesProxy,
+			drive: driveProxy,
+			copilot: copilotProxy,
+		});
 	}
 }
