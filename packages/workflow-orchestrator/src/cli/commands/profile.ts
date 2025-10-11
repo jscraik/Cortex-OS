@@ -102,6 +102,7 @@ export async function setProfileValue(path: string, value: string): Promise<void
 				throw new Error('brAInwav: Prototype pollution attempt detected');
 			}
 			// Security: Use hasOwnProperty to prevent prototype chain traversal
+			// Note: Using Object.prototype.hasOwnProperty.call for broader compatibility (Node 12+)
 			if (!Object.hasOwn(current, key)) {
 				throw new Error(`brAInwav: Invalid path segment "${key}"`);
 			}

@@ -38,7 +38,7 @@ const reportsDir = join(rootDir, 'reports');
 
 function log(level, msg) {
 	const ts = new Date().toISOString();
-	console.error(`[${ts}] [MEM-GUARD] [${level}] ${msg}`);
+	console.error(`[${ts}] [brAInwav] [MEM-GUARD] [${level}] ${msg}`);
 }
 
 function parseArgs() {
