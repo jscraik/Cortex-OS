@@ -1,8 +1,7 @@
 import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import Ajv, { type ValidateFunction } from 'ajv';
-import addFormats from 'ajv-formats';
+import type { ValidateFunction } from 'ajv';
 import cors from 'cors';
 import express, { type Application } from 'express';
 import helmet from 'helmet';
@@ -59,7 +58,7 @@ export class SchemaRegistry {
 	private readonly app: Application;
 	private readonly port: number;
 	private readonly contractsPath: string;
-	private readonly ajv: Ajv;
+	private readonly ajv: any; // Use any to avoid type issues with Ajv ESM/CJS interop
 	private readonly schemaCache = new Map<string, SchemaDocument>();
 	private readonly validatorCache = new Map<string, ValidateFunction>();
 	private readonly metricsRegistry = new MetricsRegistry();
@@ -68,6 +67,11 @@ export class SchemaRegistry {
 		this.port = options.port ?? 3001;
 		this.contractsPath = options.contractsPath ?? path.join(process.cwd(), 'contracts');
 		this.app = express();
+		// Dynamic import to handle ESM/CJS interop for Ajv
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		const Ajv = require('ajv');
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		const addFormats = require('ajv-formats');
 		this.ajv = new Ajv({ strict: true });
 		addFormats(this.ajv);
 		collectDefaultMetrics({ register: this.metricsRegistry });

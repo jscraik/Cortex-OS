@@ -8,6 +8,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "declaration": true,
+    "declarationMap": true,
+    "composite": true,
     "moduleResolution": "NodeNext",
     "ignoreDeprecations": "5.0",
     "module": "NodeNext"

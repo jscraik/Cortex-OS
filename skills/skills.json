@@ -1,0 +1,43 @@
+{
+  "$schema": "./schemas/skill-schema.json",
+  "version": "1.0.0",
+  "lastUpdated": "2025-10-11T04:53:00.000Z",
+  "skills": [],
+  "categories": [
+    {
+      "id": "testing",
+      "name": "Testing & Quality Assurance",
+      "description": "Skills related to test-driven development, mutation testing, and quality gates"
+    },
+    {
+      "id": "security",
+      "name": "Security & Compliance",
+      "description": "Skills for security analysis, vulnerability assessment, and compliance frameworks"
+    },
+    {
+      "id": "architecture",
+      "name": "Software Architecture",
+      "description": "Skills for system design, patterns, and architectural decision making"
+    },
+    {
+      "id": "performance",
+      "name": "Performance Optimization",
+      "description": "Skills for performance analysis, optimization, and monitoring"
+    },
+    {
+      "id": "communication",
+      "name": "Agent Communication",
+      "description": "Skills for A2A communication, coordination, and collaboration patterns"
+    },
+    {
+      "id": "learning",
+      "name": "Learning & Adaptation",
+      "description": "Skills for continuous learning, pattern recognition, and knowledge acquisition"
+    }
+  ],
+  "metadata": {
+    "totalSkills": 0,
+    "lastScan": "2025-10-11T04:53:00.000Z",
+    "schemaVersion": "1.0.0"
+  }
+}

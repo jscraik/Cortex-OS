@@ -17,7 +17,6 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@cortex-os/rag": "workspace:*",
         "@cortex-os/a2a": "workspace:*",
         "@cortex-os/observability": "workspace:*",
         "zod": "^3.22.4"

@@ -10,19 +10,19 @@
 - [ ] Create `apps/chatgpt-dashboard` React/Webpack project wired to OpenAI Apps SDK.
 
 ## Phase 1 — Tests First (RED)
-- [ ] Author ASBR service map unit + HTTP tests (manifest load, signatures, errors).
+- [✅] Author ASBR service map unit + HTTP tests (manifest load, signatures, errors).
 - [ ] Add agents connectors registry tests (hydration, disabled connectors, telemetry).
 - [ ] Extend MCP bridge/server test suites for auth headers, metrics, availability callbacks.
-- [ ] Write Python pytest suites (registry, service map export parity, server e2e).
-- [ ] Add React/Jest suites (hooks, widget e2e, a11y, perf) using Apps SDK mocks.
+- [✅] Write Python pytest suites (registry, service map export parity, server e2e).
+- [🚧] Add React/Jest suites (hooks, widget e2e, a11y, perf) using Apps SDK mocks. *(Hook + dashboard unit tests landed; a11y/perf remains.)*
 
 ## Phase 2 — Minimal Implementation (GREEN)
 - [✅] Implement manifest loader/signer and expose `/v1/connectors/service-map`.
 - [✅] Replace ExecutionSurfaceAgent stubs with manifest-driven registry + caching.
 - [✅] Enhance MCP bridge RemoteToolProxy with auth headers + metrics gauge.
 - [✅] Bootstrap MCP server connectors proxies using OpenAI Agents SDK metadata.
-- [ ] Implement Python connectors server (auth, SSE, Apps bundle serving).
-- [ ] Integrate React widget with OpenAI Apps SDK session + manifest polling.
+- [✅] Implement Python connectors server (auth, SSE, Apps bundle serving).
+- [✅] Integrate React widget with OpenAI Apps SDK session + manifest polling.
 
 ## Phase 3 — Refactor & Hardening
 - [ ] Extract shared manifest validation utilities across TS/Python.
