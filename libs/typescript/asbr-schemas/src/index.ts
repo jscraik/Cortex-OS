@@ -285,25 +285,31 @@ const ConnectorAuthSchema = z
 
 export const ConnectorManifestEntrySchema = z
         .object({
-                id: z.string().min(1),
+                id: z.string().regex(/^[a-z0-9][a-z0-9-]{1,62}$/),
                 name: z.string().min(1),
+                displayName: z.string().min(1),
                 version: z.string().min(1),
+                description: z.string().min(1).optional(),
                 scopes: z.array(z.string().min(1)).min(1),
                 quotas: z.record(z.number().int().nonnegative()).default({}),
                 timeouts: z.record(z.number().int().nonnegative()).default({}),
-                status: z.enum(['enabled', 'disabled']).default('enabled'),
-                ttlSeconds: z.number().int().positive().default(300),
+                status: z.enum(['enabled', 'disabled', 'preview']).optional(),
+                enabled: z.boolean().default(true),
+                ttlSeconds: z.number().int().positive(),
                 metadata: z.record(z.unknown()).optional(),
-                endpoint: z.string().url().optional(),
-                auth: ConnectorAuthSchema.optional(),
+                endpoint: z.string().url(),
+                auth: ConnectorAuthSchema,
+                tags: z.array(z.string().min(1)).optional(),
         })
         .strict();
 
 export const ConnectorsManifestSchema = z
         .object({
+                $schema: z.string().min(1).optional(),
                 id: z.string().min(1),
-                brand: z.literal('brAInwav').optional(),
-                ttlSeconds: z.number().int().positive().default(300),
+                manifestVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+                generatedAt: z.string().datetime({ offset: true }).optional(),
+                ttlSeconds: z.number().int().positive().optional(),
                 connectors: z.array(ConnectorManifestEntrySchema).min(1),
                 metadata: z.record(z.unknown()).optional(),
         })
@@ -315,16 +321,18 @@ export type ConnectorsManifest = z.infer<typeof ConnectorsManifestSchema>;
 export const ConnectorServiceEntrySchema = z
         .object({
                 id: z.string().min(1),
-                name: z.string().min(1),
                 version: z.string().min(1),
+                displayName: z.string().min(1),
+                endpoint: z.string().url(),
+                auth: ConnectorAuthSchema,
                 scopes: z.array(z.string().min(1)).min(1),
-                status: z.enum(['enabled', 'disabled']),
-                ttl: z.number().int().positive(),
+                ttlSeconds: z.number().int().positive(),
+                enabled: z.boolean().default(true),
+                metadata: z.record(z.unknown()).optional(),
                 quotas: z.record(z.number().int().nonnegative()).optional(),
                 timeouts: z.record(z.number().int().nonnegative()).optional(),
-                metadata: z.record(z.unknown()).optional(),
-                endpoint: z.string().url().optional(),
-                auth: ConnectorAuthSchema.optional(),
+                description: z.string().min(1).optional(),
+                tags: z.array(z.string().min(1)).optional(),
         })
         .strict();
 

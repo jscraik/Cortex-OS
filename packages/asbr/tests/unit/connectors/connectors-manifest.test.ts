@@ -37,37 +37,38 @@ describe('connectors manifest', () => {
                 const serviceMap = buildConnectorServiceMap(manifest);
 
                 expect(serviceMap).toEqual({
-                        schema_version: '1.0.0',
-                        generated_at: '2025-01-01T00:00:00Z',
+                        id: 'brAInwav-connectors',
+                        brand: 'brAInwav',
+                        generatedAt: '2024-09-18T00:00:00Z',
+                        ttlSeconds: 3600,
                         connectors: [
                                 {
-                                        id: 'github-actions',
-                                        version: '0.4.1',
-                                        status: 'disabled',
-                                        scopes: ['repos:read', 'actions:trigger'],
-                                        quotas: {
-                                                per_minute: 5,
-                                                per_hour: 50,
-                                                per_day: 400,
+                                        id: 'wikidata',
+                                        version: '2024.09.18',
+                                        displayName: 'Wikidata Semantic Search',
+                                        endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+                                        auth: { type: 'none' },
+                                        scopes: [
+                                                'wikidata:vector-search',
+                                                'wikidata:claims',
+                                                'wikidata:sparql',
+                                        ],
+                                        ttlSeconds: 3600,
+                                        enabled: true,
+                                        metadata: {
+                                                brand: 'brAInwav',
+                                                dumpDate: '2024-09-18',
+                                                embeddingDimensions: 1024,
+                                                languages: ['en', 'fr', 'ar'],
+                                                supportsMatryoshka: true,
+                                                vectorModel: 'jina-embeddings-v3',
+                                                datasetMd5: 'dd7375a69774324dead6d3ea5abc01b7',
                                         },
-                                        ttl_seconds: 900,
-                                },
-                                {
-                                        id: 'perplexity-search',
-                                        version: '1.2.0',
-                                        status: 'enabled',
-                                        scopes: ['search:query', 'search:insights'],
-                                        quotas: {
-                                                per_minute: 30,
-                                                per_hour: 300,
-                                                per_day: 3000,
-                                        },
-                                        ttl_seconds: 3600,
                                 },
                         ],
                 });
 
-                const signature = signConnectorServiceMap(serviceMap, 'test-secret');
-                expect(signature).toBe('b95ae3f836e286c5926b8ca555130bc3dcd3c050372276d8bc59de6c3ef68959');
+                const signature = signConnectorServiceMap({ ...serviceMap, signature: '' }, 'test-secret');
+                expect(signature).toBe('3e080d883ac7d57c88fa843c7ca2a59806dfdf2c5e549376b9b809a1d36c252c');
         });
 });

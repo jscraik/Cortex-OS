@@ -7,18 +7,16 @@ from .manifest import (
     sign_connector_service_map,
 )
 from .models import (
-    ConnectorAuthentication,
+    ConnectorAuth,
     ConnectorEntry,
-    ConnectorQuota,
     ConnectorServiceMap,
     ConnectorServiceMapEntry,
     ConnectorsManifest,
 )
 
 __all__ = [
-    "ConnectorAuthentication",
+    "ConnectorAuth",
     "ConnectorEntry",
-    "ConnectorQuota",
     "ConnectorServiceMap",
     "ConnectorServiceMapEntry",
     "ConnectorsManifest",

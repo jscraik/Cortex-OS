@@ -105,16 +105,12 @@ async function readConnectorsManifest(path: string): Promise<ConnectorsManifest>
 
 function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServiceMapPayload {
         const generatedAt = new Date().toISOString();
-        const nowEpoch = Math.floor(Date.now() / 1000);
-        const connectors = manifest.connectors.map((connector) => buildConnectorEntry(connector, nowEpoch));
-        let minConnectorTTL: number | undefined = undefined;
-        if (manifest.connectors.length > 0) {
-                minConnectorTTL = Math.min(...manifest.connectors.map((connector) => connector.ttlSeconds));
-        }
-        const ttlSeconds = Math.max(
-                1,
-                manifest.ttlSeconds ?? minConnectorTTL ?? 1,
-        );
+        const connectors = manifest.connectors
+                .map((connector) => buildConnectorEntry(connector))
+                .sort((left, right) => left.id.localeCompare(right.id));
+
+        const minConnectorTTL = connectors.length > 0 ? Math.min(...connectors.map((connector) => connector.ttlSeconds)) : 1;
+        const ttlSeconds = Math.max(1, manifest.ttlSeconds ?? minConnectorTTL);
 
         return {
                 id: manifest.id,
@@ -125,37 +121,37 @@ function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServic
         };
 }
 
-function buildConnectorEntry(
-        connector: ConnectorsManifest['connectors'][number],
-        nowEpoch: number,
-): ConnectorServiceEntry {
+function buildConnectorEntry(connector: ConnectorsManifest['connectors'][number]): ConnectorServiceEntry {
+        const enabled = connector.enabled ?? (connector.status ? connector.status !== 'disabled' : true);
         const entry: ConnectorServiceEntry = {
                 id: connector.id,
-                name: connector.name,
                 version: connector.version,
-                scopes: connector.scopes,
-                status: connector.status,
-                ttl: nowEpoch + connector.ttlSeconds,
+                displayName: connector.displayName ?? connector.name,
+                endpoint: connector.endpoint,
+                auth: connector.auth,
+                scopes: [...connector.scopes],
+                ttlSeconds: connector.ttlSeconds,
+                enabled,
         };
 
-        if (Object.keys(connector.quotas).length > 0) {
-                entry.quotas = connector.quotas;
-        }
-
-        if (Object.keys(connector.timeouts).length > 0) {
-                entry.timeouts = connector.timeouts;
-        }
-
         if (connector.metadata) {
-                entry.metadata = connector.metadata;
+                entry.metadata = { ...connector.metadata };
         }
 
-        if (connector.endpoint) {
-                entry.endpoint = connector.endpoint;
+        if (connector.quotas && Object.keys(connector.quotas).length > 0) {
+                entry.quotas = { ...connector.quotas };
         }
 
-        if (connector.auth) {
-                entry.auth = connector.auth;
+        if (connector.timeouts && Object.keys(connector.timeouts).length > 0) {
+                entry.timeouts = { ...connector.timeouts };
+        }
+
+        if (connector.description) {
+                entry.description = connector.description;
+        }
+
+        if (connector.tags && connector.tags.length > 0) {
+                entry.tags = [...connector.tags];
         }
 
         return entry;

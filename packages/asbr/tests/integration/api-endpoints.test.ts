@@ -320,35 +320,36 @@ describe('ASBR API Integration Tests', () => {
                                 .expect(200);
 
                         expect(response.body).toMatchObject({
-                                schema_version: '1.0.0',
+                                id: 'brAInwav-connectors',
+                                brand: 'brAInwav',
                         });
                         expect(typeof response.body.signature).toBe('string');
                         expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
-                        expect(response.body.generated_at).toBe('2025-01-01T00:00:00Z');
+                        expect(typeof response.body.generatedAt).toBe('string');
+                        expect(response.body.ttlSeconds).toBe(3600);
                         expect(response.body.connectors).toEqual([
                                 {
-                                        id: 'github-actions',
-                                        version: '0.4.1',
-                                        status: 'disabled',
-                                        scopes: ['repos:read', 'actions:trigger'],
-                                        quotas: {
-                                                per_minute: 5,
-                                                per_hour: 50,
-                                                per_day: 400,
+                                        id: 'wikidata',
+                                        version: '2024.09.18',
+                                        displayName: 'Wikidata Semantic Search',
+                                        endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+                                        auth: { type: 'none' },
+                                        scopes: [
+                                                'wikidata:vector-search',
+                                                'wikidata:claims',
+                                                'wikidata:sparql',
+                                        ],
+                                        ttlSeconds: 3600,
+                                        enabled: true,
+                                        metadata: {
+                                                brand: 'brAInwav',
+                                                dumpDate: '2024-09-18',
+                                                embeddingDimensions: 1024,
+                                                languages: ['en', 'fr', 'ar'],
+                                                supportsMatryoshka: true,
+                                                vectorModel: 'jina-embeddings-v3',
+                                                datasetMd5: 'dd7375a69774324dead6d3ea5abc01b7',
                                         },
-                                        ttl_seconds: 900,
-                                },
-                                {
-                                        id: 'perplexity-search',
-                                        version: '1.2.0',
-                                        status: 'enabled',
-                                        scopes: ['search:query', 'search:insights'],
-                                        quotas: {
-                                                per_minute: 30,
-                                                per_hour: 300,
-                                                per_day: 3000,
-                                        },
-                                        ttl_seconds: 3600,
                                 },
                         ]);
                 });

@@ -12,17 +12,23 @@ export interface TestManifestContext {
 
 const DEFAULT_MANIFEST: ConnectorsManifest = {
         id: 'test-manifest',
+        manifestVersion: '1.0.0',
+        generatedAt: '2024-01-01T00:00:00Z',
         ttlSeconds: 300,
         connectors: [
                 {
                         id: 'docs',
                         name: 'Docs Connector',
+                        displayName: 'Docs Connector',
                         version: '1.0.0',
                         scopes: ['docs:read'],
                         quotas: { requestsPerMinute: 60 },
                         timeouts: { request: 3000 },
                         status: 'enabled',
+                        enabled: true,
                         ttlSeconds: 180,
+                        endpoint: 'https://example.invalid/v1/mcp/docs',
+                        auth: { type: 'none' },
                         metadata: { brand: 'brAInwav' },
                 },
         ],
