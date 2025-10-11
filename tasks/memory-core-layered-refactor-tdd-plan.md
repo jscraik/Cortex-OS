@@ -205,7 +205,7 @@ export MEMORY_DB_PATH="./data/unified-memories.db"
 ## Test Data & Fixtures
 
 - SQLite fixture database seeded via helper `createEphemeralSqlite()` inside tests
-- Temporary Qdrant container spun up via `docker-compose -f docker/qdrant-compose.yml up -d` (guard tests with env flag)
+- Temporary Qdrant container spun up via `./docker/scripts/dev-qdrant-up.sh` (guard tests with env flag)
 - Markdown fixture files placed under `packages/memory-core/testdata/procedural/`
 - Checklist fixtures stored under `packages/memory-core/testdata/working/`
 
