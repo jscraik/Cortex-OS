@@ -22,9 +22,9 @@ export interface ConnectorProxyManagerOptions extends ConnectorServiceMapOptions
 }
 
 const buildAuthHeaders = (entry: ConnectorEntry, apiKey: string): Record<string, string> => {
-        const headers: Record<string, string> = { ...(entry.headers ?? {}) };
+        const headers: Record<string, string> = {};
 
-        if (entry.auth.type === 'none') {
+        if (!entry.auth || entry.auth.type === 'none') {
                 return headers;
         }
 
@@ -76,8 +76,9 @@ export class ConnectorProxyManager {
                 );
 
                 for (const entry of result.payload.connectors) {
-                        setConnectorAvailabilityGauge(entry.id, entry.enabled);
-                        if (!entry.enabled) {
+                        const enabled = entry.status === 'enabled';
+                        setConnectorAvailabilityGauge(entry.id, enabled);
+                        if (!enabled) {
                                 continue;
                         }
 
@@ -100,12 +101,12 @@ export class ConnectorProxyManager {
                         this.options.createProxy ?? ((config: RemoteToolProxyOptions) => new RemoteToolProxy(config));
                 const proxy = proxyFactory({
                         endpoint: entry.endpoint,
-                        enabled: entry.enabled,
+                        enabled: entry.status === 'enabled',
                         logger: this.options.logger,
                         headers: buildAuthHeaders(entry, this.options.connectorsApiKey),
-                        serviceLabel: entry.displayName,
+                        serviceLabel: entry.name,
                         unavailableErrorName: `${entry.id}ConnectorUnavailableError`,
-                        unavailableErrorMessage: `${entry.displayName} connector is temporarily unavailable`,
+                        unavailableErrorMessage: `${entry.name} connector is temporarily unavailable`,
                         onAvailabilityChange: (up) => setConnectorAvailabilityGauge(entry.id, up),
                 });
 
@@ -133,7 +134,7 @@ export class ConnectorProxyManager {
                                 handler: async (args: Record<string, unknown>) => proxy.callTool(tool.name, args),
                                 metadata: {
                                         connectorId: entry.id,
-                                        connectorName: entry.displayName,
+                                        connectorName: entry.name,
                                         scopes: entry.scopes,
                                         brand: 'brAInwav',
                                 },

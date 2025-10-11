@@ -4,22 +4,32 @@
   "title": "ConnectorsManifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "connectors"],
+  "required": ["id", "connectors"],
   "properties": {
     "$schema": {
       "type": "string",
       "description": "Optional schema reference pointer for tooling",
       "format": "uri-reference"
     },
-    "schema_version": {
+    "id": {
       "type": "string",
-      "description": "Semantic version of the connectors manifest schema",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+      "minLength": 1,
+      "description": "Stable identifier for the manifest"
     },
-    "generated_at": {
+    "brand": {
       "type": "string",
-      "format": "date-time",
-      "description": "ISO-8601 timestamp of when the manifest was generated"
+      "enum": ["brAInwav"],
+      "description": "Brand marker propagated to signed payloads"
+    },
+    "ttlSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of seconds a signed service map remains valid"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional non-sensitive metadata about the manifest",
+      "additionalProperties": true
     },
     "connectors": {
       "type": "array",
@@ -30,41 +40,42 @@
     }
   },
   "definitions": {
+    "ConnectorAuth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["apiKey", "bearer", "none"],
+          "description": "Authentication strategy required by the connector"
+        },
+        "headerName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional HTTP header name used for API key/bearer auth"
+        }
+      }
+    },
     "ConnectorEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "id",
-        "version",
-        "status",
-        "authentication",
-        "scopes",
-        "quotas",
-        "ttl_seconds"
-      ],
+      "required": ["id", "name", "version", "scopes", "ttlSeconds"],
       "properties": {
         "id": {
           "type": "string",
           "description": "Stable identifier used by Cortex-OS for the connector",
           "pattern": "^[a-z0-9][a-z0-9-]{1,62}$"
         },
+        "name": {
+          "type": "string",
+          "description": "Human-readable connector name",
+          "minLength": 1
+        },
         "version": {
           "type": "string",
           "description": "Semantic version of the connector definition",
           "minLength": 1
-        },
-        "status": {
-          "type": "string",
-          "description": "Operational status of the connector",
-          "enum": ["enabled", "disabled", "preview"]
-        },
-        "description": {
-          "type": "string",
-          "description": "Human readable description of the connector",
-          "minLength": 1
-        },
-        "authentication": {
-          "$ref": "#/definitions/Authentication"
         },
         "scopes": {
           "type": "array",
@@ -73,12 +84,34 @@
             "type": "string",
             "minLength": 1
           },
+          "minItems": 1,
           "uniqueItems": true
         },
         "quotas": {
-          "$ref": "#/definitions/QuotaBudget"
+          "type": "object",
+          "description": "Optional quota limits for the connector",
+          "default": {},
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
         },
-        "ttl_seconds": {
+        "timeouts": {
+          "type": "object",
+          "description": "Optional timeout configuration for the connector",
+          "default": {},
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "status": {
+          "type": "string",
+          "description": "Operational status of the connector",
+          "enum": ["enabled", "disabled"],
+          "default": "enabled"
+        },
+        "ttlSeconds": {
           "type": "integer",
           "minimum": 1,
           "description": "Number of seconds the connector remains active before requiring renewal"
@@ -86,62 +119,15 @@
         "metadata": {
           "type": "object",
           "description": "Additional non-sensitive metadata about the connector",
-          "additionalProperties": {
-            "type": ["string", "number", "boolean", "array", "object", "null"]
-          }
-        }
-      }
-    },
-    "Authentication": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["headers"],
-      "properties": {
-        "headers": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/AuthHeader"
-          }
-        }
-      }
-    },
-    "AuthHeader": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name", "value"],
-      "properties": {
-        "name": {
+          "additionalProperties": true
+        },
+        "endpoint": {
           "type": "string",
-          "minLength": 1,
-          "description": "HTTP header name used for authentication"
+          "format": "uri",
+          "description": "Optional base endpoint for the connector"
         },
-        "value": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Value placeholder or environment reference for the header"
-        }
-      }
-    },
-    "QuotaBudget": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["per_minute", "per_hour", "per_day"],
-      "properties": {
-        "per_minute": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Maximum number of invocations allowed per minute"
-        },
-        "per_hour": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Maximum number of invocations allowed per hour"
-        },
-        "per_day": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Maximum number of invocations allowed per day"
+        "auth": {
+          "$ref": "#/definitions/ConnectorAuth"
         }
       }
     }

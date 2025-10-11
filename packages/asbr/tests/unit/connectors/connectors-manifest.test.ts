@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,41 +33,85 @@ describe('connectors manifest', () => {
         });
 
         it('builds a deterministic service map and signature', async () => {
-                const manifest = await loadConnectorsManifest(manifestPath);
-                const serviceMap = buildConnectorServiceMap(manifest);
+                const fixedNow = new Date('2025-01-01T00:00:00Z');
+                vi.useFakeTimers();
+                vi.setSystemTime(fixedNow);
 
-                expect(serviceMap).toEqual({
-                        schema_version: '1.0.0',
-                        generated_at: '2025-01-01T00:00:00Z',
-                        connectors: [
-                                {
-                                        id: 'github-actions',
-                                        version: '0.4.1',
-                                        status: 'disabled',
-                                        scopes: ['repos:read', 'actions:trigger'],
-                                        quotas: {
-                                                per_minute: 5,
-                                                per_hour: 50,
-                                                per_day: 400,
-                                        },
-                                        ttl_seconds: 900,
-                                },
-                                {
-                                        id: 'perplexity-search',
-                                        version: '1.2.0',
-                                        status: 'enabled',
-                                        scopes: ['search:query', 'search:insights'],
-                                        quotas: {
-                                                per_minute: 30,
-                                                per_hour: 300,
-                                                per_day: 3000,
-                                        },
-                                        ttl_seconds: 3600,
-                                },
-                        ],
-                });
+                try {
+                        const manifest = await loadConnectorsManifest(manifestPath);
+                        const serviceMap = buildConnectorServiceMap(manifest);
 
-                const signature = signConnectorServiceMap(serviceMap, 'test-secret');
-                expect(signature).toBe('b95ae3f836e286c5926b8ca555130bc3dcd3c050372276d8bc59de6c3ef68959');
+                        expect(serviceMap).toEqual({
+                                id: 'core-connectors',
+                                brand: 'brAInwav',
+                                generatedAt: '2025-01-01T00:00:00.000Z',
+                                ttlSeconds: 300,
+                                connectors: [
+                                        {
+                                                id: 'github-actions',
+                                                name: 'GitHub Actions Dispatcher',
+                                                version: '0.4.1',
+                                                scopes: ['repos:read', 'actions:trigger'],
+                                                status: 'disabled',
+                                                ttl: 1735690500,
+                                                quotas: {
+                                                        perMinute: 5,
+                                                        perHour: 50,
+                                                        perDay: 400,
+                                                },
+                                                metadata: {
+                                                        notes: 'Disabled until SOC2 control review completes',
+                                                },
+                                                auth: {
+                                                        type: 'apiKey',
+                                                        headerName: 'X-GitHub-Token',
+                                                },
+                                        },
+                                        {
+                                                id: 'perplexity-search',
+                                                name: 'Perplexity Search',
+                                                version: '1.2.0',
+                                                scopes: ['search:query', 'search:insights'],
+                                                status: 'enabled',
+                                                ttl: 1735693200,
+                                                quotas: {
+                                                        perMinute: 30,
+                                                        perHour: 300,
+                                                        perDay: 3000,
+                                                },
+                                                metadata: {
+                                                        owner: 'integrations',
+                                                        category: 'search',
+                                                },
+                                                auth: {
+                                                        type: 'bearer',
+                                                        headerName: 'Authorization',
+                                                },
+                                        },
+                                        {
+                                                id: 'wikidata',
+                                                name: 'Wikidata Vector Search',
+                                                version: '2024.09.18',
+                                                scopes: ['facts:query', 'facts:claims'],
+                                                status: 'enabled',
+                                                ttl: 1735689900,
+                                                metadata: {
+                                                        brand: 'brAInwav',
+                                                        provider: 'Wikidata',
+                                                        snapshot: '2024-09-18',
+                                                },
+                                                endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+                                                auth: {
+                                                        type: 'none',
+                                                },
+                                        },
+                                ],
+                        });
+
+                        const signature = signConnectorServiceMap(serviceMap, 'test-secret');
+                        expect(signature).toBe('8c3480d3bb6fd96d5fa0e1f408dc191a8c5b9fb59c43583a0cc7f841f0cdb7ff');
+                } finally {
+                        vi.useRealTimers();
+                }
         });
 });

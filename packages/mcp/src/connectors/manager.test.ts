@@ -53,7 +53,19 @@ const createManifest = (
                 brand: 'brAInwav' as const,
                 generatedAt: new Date('2025-10-12T12:00:00.000Z').toISOString(),
                 ttlSeconds: 120,
-                connectors,
+                connectors: [
+                        {
+                                id: 'demo',
+                                version: '1.0.0',
+                                name: 'Demo Connector',
+                                endpoint: 'https://connectors.invalid/v1/mcp',
+                                auth: { type: 'apiKey', headerName: 'X-Api-Key' },
+                                scopes: ['demo:read'],
+                                status: 'enabled' as const,
+                                ttl: 1760270520,
+                                metadata: { brand: 'brAInwav' },
+                        },
+                ],
         };
 
         const signature = createServiceMapSignature(payload, signatureKey);

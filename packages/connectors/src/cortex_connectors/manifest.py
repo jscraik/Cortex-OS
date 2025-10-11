@@ -11,11 +11,7 @@ from typing import Iterable, List, Optional
 
 from pydantic import ValidationError
 
-from .models import (
-    ConnectorServiceMap,
-    ConnectorServiceMapEntry,
-    ConnectorsManifest,
-)
+from .models import ConnectorServiceMapPayload, ConnectorsManifest
 
 MODULE_PATH = Path(__file__).resolve()
 FALLBACK_MANIFEST_PATH = MODULE_PATH.parents[4] / "config" / "connectors.manifest.json"
@@ -76,29 +72,13 @@ def load_connectors_manifest(manifest_path: Optional[str | Path] = None) -> Conn
     )
 
 
-def build_connector_service_map(manifest: ConnectorsManifest) -> ConnectorServiceMap:
+def build_connector_service_map(manifest: ConnectorsManifest) -> ConnectorServiceMapPayload:
     """Create the ASBR-facing service map from the manifest."""
 
-    connectors = [
-        ConnectorServiceMapEntry(
-            id=entry.id,
-            version=entry.version,
-            status=entry.status,
-            scopes=list(entry.scopes),
-            quotas=entry.quotas,
-            ttl_seconds=entry.ttl_seconds,
-        )
-        for entry in sorted(manifest.connectors, key=lambda item: item.id)
-    ]
-
-    return ConnectorServiceMap(
-        schema_version=manifest.schema_version,
-        generated_at=manifest.generated_at,
-        connectors=connectors,
-    )
+    return manifest.service_map_payload()
 
 
-def sign_connector_service_map(service_map: ConnectorServiceMap, secret: str) -> str:
+def sign_connector_service_map(service_map: ConnectorServiceMapPayload, secret: str) -> str:
     """Generate an HMAC signature for the service map."""
 
     if not secret:
@@ -106,7 +86,7 @@ def sign_connector_service_map(service_map: ConnectorServiceMap, secret: str) ->
         raise ValueError(msg)
 
     payload = json.dumps(
-        service_map.model_dump(mode="json", exclude_none=True),
+        service_map.model_dump(mode="json", by_alias=True, exclude_none=True),
         separators=(",", ":"),
     ).encode("utf-8")
     return hmac.new(secret.encode("utf-8"), payload, sha256).hexdigest()
