@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto';
 import type { ServerInfo } from '@cortex-os/mcp-core';
 import { ZodError, type ZodIssue, type ZodType, z } from 'zod';
 import { readAll, remove, upsert } from '../fs-store.js';
+import { fetchMarketplaceServer, MarketplaceProviderError } from '../providers/mcpmarket.js';
 
 interface RegistryToolResponse {
 	content: Array<{ type: 'text'; text: string }>;
@@ -62,8 +63,8 @@ type ToolContractResult =
 	| { type: 'result'; result: Record<string, unknown> };
 
 type ToolContractInvoker = (
-	input: unknown,
-	context?: Record<string, unknown>,
+        input: unknown,
+        context?: Record<string, unknown>,
 ) => Promise<ToolContractResult>;
 
 export const MAX_SERVER_NAME_LENGTH = 128;
@@ -285,7 +286,27 @@ export const registryGetToolSchema = z.object({
 });
 
 export const registryStatsToolSchema = z.object({
-	includeDetails: z.boolean().default(false).describe('Include detailed registry statistics'),
+        includeDetails: z.boolean().default(false).describe('Include detailed registry statistics'),
+});
+
+export const registryMarketplaceImportToolSchema = z.object({
+        slug: z
+                .string()
+                .min(1)
+                .max(MAX_SERVER_NAME_LENGTH)
+                .regex(SERVER_NAME_PATTERN, 'Marketplace slug must be alphanumeric with . _ - characters')
+                .describe('Slug of the marketplace server to import'),
+        overwrite: z
+                .boolean()
+                .default(false)
+                .describe('Overwrite existing registry entry if present'),
+        timeoutMs: z
+                .number()
+                .int()
+                .min(1000)
+                .max(60000)
+                .optional()
+                .describe('Abort marketplace request if it exceeds this timeout in milliseconds'),
 });
 
 // Tool implementations
@@ -467,10 +488,10 @@ export const registryGetTool: RegistryTool = {
 };
 
 export const registryStatsTool: RegistryTool = {
-	name: 'registry.stats',
-	aliases: ['mcp_registry_stats', 'registry_statistics'],
-	description: 'Get MCP registry statistics and health information',
-	inputSchema: registryStatsToolSchema,
+        name: 'registry.stats',
+        aliases: ['mcp_registry_stats', 'registry_statistics'],
+        description: 'Get MCP registry statistics and health information',
+        inputSchema: registryStatsToolSchema,
 	invoke: createContractInvoker('registry.stats', registryStatsToolSchema),
 	handler: async (params: unknown) =>
 		executeTool(
@@ -508,14 +529,116 @@ export const registryStatsTool: RegistryTool = {
 					}),
 				};
 			},
-		),
+                ),
+};
+
+export const registryMarketplaceImportTool: RegistryTool = {
+        name: 'registry.marketplaceImport',
+        aliases: ['marketplace_import', 'registry.marketplace_import'],
+        description: 'Import an MCP server configuration directly from the MCP marketplace',
+        inputSchema: registryMarketplaceImportToolSchema,
+        invoke: createContractInvoker('registry.marketplaceImport', registryMarketplaceImportToolSchema),
+        handler: async (params: unknown) =>
+                executeTool(
+                        'registry.marketplaceImport',
+                        registryMarketplaceImportToolSchema,
+                        params,
+                        async ({ slug, overwrite = false, timeoutMs }) => {
+                                validateServerName(slug);
+                                return importMarketplaceServer({ slug, overwrite, timeoutMs });
+                        },
+                ),
 };
 
 // Export all Registry MCP tools
 export const registryMcpTools: RegistryTool[] = [
-	registryListTool,
-	registryRegisterTool,
-	registryUnregisterTool,
-	registryGetTool,
-	registryStatsTool,
+        registryListTool,
+        registryRegisterTool,
+        registryUnregisterTool,
+        registryGetTool,
+        registryStatsTool,
+        registryMarketplaceImportTool,
 ];
+
+async function importMarketplaceServer({
+        slug,
+        overwrite,
+        timeoutMs,
+}: {
+        slug: string;
+        overwrite: boolean;
+        timeoutMs?: number;
+}): Promise<Record<string, unknown>> {
+        const { signal, cancel } = createMarketplaceAbortController(timeoutMs);
+
+        try {
+                const marketplaceServer = await fetchMarketplaceServer(slug, { signal });
+                const status = await upsertMarketplaceServer(marketplaceServer, overwrite);
+
+                return {
+                        name: marketplaceServer.name,
+                        status,
+                        source: 'mcpmarket',
+                        importedAt: new Date().toISOString(),
+                };
+        } catch (error) {
+                if (error instanceof MarketplaceProviderError) {
+                        handleMarketplaceProviderError(error);
+                }
+
+                if (error instanceof DOMException && error.name === 'AbortError') {
+                        throw new RegistryToolError('internal_error', 'Marketplace request timed out', [
+                                'Increase timeoutMs or retry later',
+                        ]);
+                }
+
+                throw error;
+        } finally {
+                cancel();
+        }
+}
+
+function createMarketplaceAbortController(timeoutMs?: number): {
+        signal?: AbortSignal;
+        cancel: () => void;
+} {
+        if (!timeoutMs) {
+                return { cancel: () => {} };
+        }
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        return {
+                signal: controller.signal,
+                cancel: () => {
+                        clearTimeout(timer);
+                },
+        };
+}
+
+async function upsertMarketplaceServer(server: ServerInfo, overwrite: boolean): Promise<'created' | 'updated'> {
+        const existingServers = await readAll();
+        const existingServer = existingServers.find((candidate) => candidate.name === server.name);
+
+        if (existingServer && !overwrite) {
+                throw new RegistryToolError('duplicate_server', `Server with name "${server.name}" already exists`, [
+                        'Use overwrite=true to replace existing server',
+                ]);
+        }
+
+        await upsert(server);
+
+        return existingServer ? 'updated' : 'created';
+}
+
+function handleMarketplaceProviderError(error: MarketplaceProviderError): never {
+        const code: RegistryToolError['code'] =
+                error.code === 'validation_error'
+                        ? 'validation_error'
+                        : error.code === 'not_found'
+                        ? 'not_found'
+                        : 'internal_error';
+
+        throw new RegistryToolError(code, error.message, [...error.details, `marketplace_code:${error.code}`]);
+}

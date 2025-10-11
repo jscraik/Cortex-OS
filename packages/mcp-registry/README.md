@@ -16,7 +16,7 @@ File-system backed registry for managing MCP server configurations with full Mod
 
 ## MCP Tools
 
-This package exposes 5 MCP tools for external AI agents:
+This package exposes 6 MCP tools for external AI agents:
 
 ### 1. Registry List (`registry.list`)
 
@@ -141,6 +141,34 @@ const response = await registryStatsTool.handler({
   includeDetails: true
 });
 ```
+
+### 6. Marketplace Import (`registry.marketplaceImport`)
+
+Import an MCP server configuration directly from [mcpmarket.com](https://mcpmarket.com).
+
+**Aliases:** `marketplace_import`, `registry.marketplace_import`
+
+**Parameters:**
+
+- `slug: string` - Marketplace slug to import (alphanumeric with optional `.`, `_`, or `-`).
+- `overwrite?: boolean` - Overwrite existing entry if it already exists (default: `false`).
+- `timeoutMs?: number` - Abort the marketplace request if it exceeds this timeout in milliseconds (1,000–60,000).
+
+**Example:**
+
+```typescript
+import { registryMarketplaceImportTool } from '@cortex-os/mcp-registry';
+
+const response = await registryMarketplaceImportTool.handler({
+  slug: 'arxiv-1',
+  overwrite: true,
+  timeoutMs: 5000
+});
+```
+
+The import tool fetches marketplace metadata using the branded `User-Agent: brAInwav-CortexOS/1.0` header
+and normalizes the response into a registry entry. Known slugs like `arxiv-1` include fallback defaults so
+you can continue working even if the marketplace is temporarily unavailable.
 
 ## Memory Management
 
