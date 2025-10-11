@@ -19,24 +19,24 @@ export const connectorQuotasSchema = z
         })
         .default({});
 
-export const connectorEntrySchema = z.object({
-        id: z.string().min(1),
-        version: z.string().min(1),
-        displayName: z.string().min(1),
-        endpoint: z.string().url(),
-        auth: connectorAuthSchema,
-        scopes: z.array(z.string().min(1)).min(1),
-        ttlSeconds: z.number().int().positive(),
-        enabled: z.boolean().default(true),
-        metadata: z
-                .object({ brand: z.literal('brAInwav') })
-                .passthrough()
-                .default({ brand: 'brAInwav' }),
-        quotas: connectorQuotasSchema.optional(),
-        headers: z.record(z.string().min(1), z.string()).optional(),
-        description: z.string().optional(),
-        tags: z.array(z.string().min(1)).optional(),
-});
+export const connectorEntrySchema = z
+        .object({
+                id: z.string().min(1),
+                version: z.string().min(1),
+                name: z.string().min(1),
+                scopes: z.array(z.string().min(1)).min(1),
+                status: z.enum(['enabled', 'disabled']),
+                ttl: z.number().int().positive(),
+                metadata: z
+                        .object({ brand: z.literal('brAInwav') })
+                        .passthrough()
+                        .optional(),
+                endpoint: z.string().url().optional(),
+                auth: connectorAuthSchema.optional(),
+                quotas: connectorQuotasSchema.optional(),
+                timeouts: z.record(z.number().int().positive()).optional(),
+        })
+        .strict();
 
 export const serviceMapResponseSchema = z.object({
         id: z.string().regex(ulidRegex, 'Invalid ULID'),

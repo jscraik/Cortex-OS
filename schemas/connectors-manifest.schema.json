@@ -5,6 +5,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["id", "schema_version", "connectors"],
+  "required": ["id", "connectors"],
   "properties": {
     "$schema": {
       "type": "string",
@@ -18,13 +19,23 @@
     },
     "schema_version": {
       "type": "string",
-      "description": "Semantic version of the connectors manifest schema",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+      "minLength": 1,
+      "description": "Stable identifier for the manifest"
     },
-    "generated_at": {
+    "brand": {
       "type": "string",
-      "format": "date-time",
-      "description": "ISO-8601 timestamp of when the manifest was generated"
+      "enum": ["brAInwav"],
+      "description": "Brand marker propagated to signed payloads"
+    },
+    "ttlSeconds": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of seconds a signed service map remains valid"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional non-sensitive metadata about the manifest",
+      "additionalProperties": true
     },
     "connectors": {
       "type": "array",
@@ -35,6 +46,23 @@
     }
   },
   "definitions": {
+    "ConnectorAuth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["apiKey", "bearer", "none"],
+          "description": "Authentication strategy required by the connector"
+        },
+        "headerName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional HTTP header name used for API key/bearer auth"
+        }
+      }
+    },
     "ConnectorEntry": {
       "type": "object",
       "additionalProperties": false,
@@ -49,6 +77,7 @@
         "quotas",
         "ttl_seconds"
       ],
+      "required": ["id", "name", "version", "scopes", "ttlSeconds"],
       "properties": {
         "id": {
           "type": "string",
@@ -62,17 +91,12 @@
         },
         "version": {
           "type": "string",
-          "description": "Semantic version of the connector definition",
+          "description": "Human-readable connector name",
           "minLength": 1
         },
-        "status": {
+        "version": {
           "type": "string",
-          "description": "Operational status of the connector",
-          "enum": ["enabled", "disabled", "preview"]
-        },
-        "description": {
-          "type": "string",
-          "description": "Human readable description of the connector",
+          "description": "Semantic version of the connector definition",
           "minLength": 1
         },
         "endpoint": {
@@ -97,12 +121,34 @@
             "type": "string",
             "minLength": 1
           },
+          "minItems": 1,
           "uniqueItems": true
         },
         "quotas": {
-          "$ref": "#/definitions/QuotaBudget"
+          "type": "object",
+          "description": "Optional quota limits for the connector",
+          "default": {},
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
         },
-        "ttl_seconds": {
+        "timeouts": {
+          "type": "object",
+          "description": "Optional timeout configuration for the connector",
+          "default": {},
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "status": {
+          "type": "string",
+          "description": "Operational status of the connector",
+          "enum": ["enabled", "disabled"],
+          "default": "enabled"
+        },
+        "ttlSeconds": {
           "type": "integer",
           "minimum": 1,
           "description": "Number of seconds the connector remains active before requiring renewal"
@@ -147,8 +193,9 @@
           "type": "string",
           "minLength": 1,
           "description": "HTTP header name used for authentication"
+          "additionalProperties": true
         },
-        "value": {
+        "endpoint": {
           "type": "string",
           "minLength": 1,
           "description": "Value placeholder or environment reference for the header"
@@ -178,6 +225,11 @@
           "type": "integer",
           "minimum": 0,
           "description": "Maximum number of concurrent executions permitted"
+          "format": "uri",
+          "description": "Optional base endpoint for the connector"
+        },
+        "auth": {
+          "$ref": "#/definitions/ConnectorAuth"
         }
       }
     }

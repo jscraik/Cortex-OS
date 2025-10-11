@@ -10,6 +10,9 @@ from prometheus_client import Gauge
 
 from .manifest import build_connector_service_map, load_connectors_manifest, sign_connector_service_map
 from .models import ConnectorEntry, ConnectorsManifest
+from .manifest import load_connectors_manifest
+from .models import ConnectorManifestEntry, ConnectorsManifest
+from .signing import generate_service_map_signature
 
 _CONNECTOR_GAUGE = Gauge(
     "brAInwav_mcp_connector_proxy_up",
@@ -47,11 +50,11 @@ class ConnectorRegistry:
 
     def _update_metrics(self) -> None:
         for connector in self.manifest.connectors:
-            _CONNECTOR_GAUGE.labels(connector.id).set(1 if connector.enabled else 0)
+            _CONNECTOR_GAUGE.labels(connector.id).set(1 if connector.status == "enabled" else 0)
 
     def records(self) -> Iterable[ConnectorRecord]:
         return (
-            ConnectorRecord(entry=connector, enabled=connector.enabled)
+            ConnectorRecord(entry=connector, enabled=connector.status == "enabled")
             for connector in self.manifest.connectors
         )
 
@@ -62,6 +65,15 @@ class ConnectorRegistry:
         payload = build_connector_service_map(self.manifest)
         signature = sign_connector_service_map(payload, self._signature_key)
         return {"payload": payload.model_dump(by_alias=True, mode="json", exclude_none=True), "signature": signature}
+        payload = self.manifest.service_map_payload()
+        signature = generate_service_map_signature(
+            payload.model_dump(mode="json", by_alias=True, exclude_none=True),
+            self._signature_key,
+        )
+        return {
+            "payload": payload.model_dump(mode="json", by_alias=True, exclude_none=True),
+            "signature": signature,
+        }
 
 
 __all__ = ["ConnectorRegistry", "ConnectorRecord"]

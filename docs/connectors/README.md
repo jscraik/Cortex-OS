@@ -52,12 +52,26 @@ The manifest must satisfy the shared `ConnectorsManifestSchema` exported from `@
         "category": "documentation"
       },
       "tags": ["docs", "search"]
+      "ttlSeconds": 180,
+      "metadata": {"brand": "brAInwav"},
+      "endpoint": "https://example.invalid/v1/mcp",
+      "auth": {"type": "apiKey", "headerName": "X-Api-Key"}
     }
   ]
 }
 ```
 
 Connector entries must provide a stable identifier, human-readable `name`, HTTPS `endpoint`, explicit authentication headers, at least one scope, and a positive `ttl_seconds`. Optional `headers`, `metadata`, `tags`, and quota limits are surfaced to clients when present. `metadata.brand` is injected automatically when the service map is generated.
+
+### Current production connectors
+
+| ID | Name | Scopes | Auth | TTL (seconds) | Notes |
+| --- | --- | --- | --- | --- | --- |
+| `perplexity-search` | Perplexity Search | `search:query`, `search:insights` | `bearer` (`Authorization` header, sourced from `CONNECTORS_API_KEY`) | 3600 | Aggregated search proxy owned by Integrations. |
+| `github-actions` | GitHub Actions Dispatcher | `repos:read`, `actions:trigger` | `apiKey` (`X-GitHub-Token`) | 900 | Disabled until SOC2 control sign-off completes. |
+| `wikidata` | Wikidata Vector Search | `facts:query`, `facts:claims` | `none` | 300 | Hosted by Wikimedia; no secrets required. Metadata includes `provider: "Wikidata"` and snapshot date `2024-09-18`. |
+
+> **Secrets reminder:** `wikidata` does **not** require `CONNECTORS_API_KEY`. Leave the key unset or omit the connector when assembling environment-specific manifests that should remain locked down.
 
 ## Runtime Behaviour
 

@@ -22,6 +22,39 @@ describe('connectors service map schema', () => {
         it('should validate connector entries with required brand metadata', () => {
                 const payload = loadFixturePayload();
                 const result = connectorEntrySchema.safeParse(payload.connectors[0]);
+const createSamplePayload = () => ({
+        id: '01HZ7ZWJ5XJ8W4T7N6MZ2V1PQB',
+        brand: 'brAInwav' as const,
+        generatedAt: new Date('2025-10-12T12:00:00.000Z').toISOString(),
+        ttlSeconds: 120,
+        connectors: [
+                {
+                        id: 'connector-example',
+                        version: '1.0.0',
+                        name: 'Example Connector',
+                        endpoint: 'https://example.invalid/v1/mcp',
+                        auth: { type: 'apiKey', headerName: 'Authorization' },
+                        scopes: ['sample:read'],
+                        status: 'enabled' as const,
+                        ttl: 1760270520,
+                        metadata: { brand: 'brAInwav', surface: 'remote' },
+                        quotas: { perMinute: 60 },
+                },
+        ],
+});
+
+describe('connectors service map schema', () => {
+        it('should validate connector entries with required brand metadata', () => {
+                const result = connectorEntrySchema.safeParse({
+                        id: 'example',
+                        version: '1.0.0',
+                        name: 'Example',
+                        scopes: ['demo'],
+                        status: 'enabled',
+                        ttl: 60,
+                        metadata: { brand: 'brAInwav', category: 'demo' },
+                        auth: { type: 'none' },
+                });
 
                 expect(result.success).toBe(true);
                 expect(result.success && result.data.metadata.brand).toBe('brAInwav');
@@ -33,6 +66,7 @@ describe('connectors service map schema', () => {
 
                 expect(canonical).toMatchInlineSnapshot(
                         '"{\"brand\":\"brAInwav\",\"connectors\":[{\"auth\":{\"headerName\":\"Authorization\",\"type\":\"bearer\"},\"description\":\"Remote connector exposing Wikidata SPARQL queries.\",\"displayName\":\"Wikidata SPARQL\",\"enabled\":true,\"endpoint\":\"https://wikidata.example/api\",\"headers\":{\"Authorization\":\"Bearer ${WIKIDATA_TOKEN}\",\"X-Connector-Region\":\"us-central1\"},\"id\":\"wikidata-sparql\",\"metadata\":{\"brand\":\"brAInwav\",\"category\":\"research\",\"owner\":\"knowledge\"},\"quotas\":{\"concurrent\":4,\"perHour\":600,\"perMinute\":60},\"scopes\":[\"knowledge:read\",\"knowledge:query\"],\"tags\":[\"knowledge\",\"sparql\"],\"ttlSeconds\":1800,\"version\":\"1.0.0\"}],\"generatedAt\":\"2025-02-15T12:34:56Z\",\"id\":\"01J0XKQ4R6V7Z9P3S5T7W9YBCD\",\"ttlSeconds\":1800}"',
+                        '"{\"brand\":\"brAInwav\",\"connectors\":[{\"auth\":{\"type\":\"apiKey\"},\"id\":\"connector-example\",\"metadata\":{\"brand\":\"brAInwav\",\"surface\":\"remote\"},\"name\":\"Example Connector\",\"quotas\":{\"perMinute\":60},\"scopes\":[\"sample:read\"],\"status\":\"enabled\",\"ttl\":1760270520,\"version\":\"1.0.0\"}],\"generatedAt\":\"2025-10-12T12:00:00.000Z\",\"id\":\"01HZ7ZWJ5XJ8W4T7N6MZ2V1PQB\",\"ttlSeconds\":120}"',
                 );
         });
 
