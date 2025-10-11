@@ -2,11 +2,16 @@ import { hashPromptTemplate, registerPrompt } from '@cortex-os/prompts';
 
 const OWNER = 'agents@brainwav.dev';
 
-const sanitize = (value: string) =>
-	value
+const sanitize = (value: string) => {
+	// Security: Validate input length to prevent ReDoS
+	if (value.length > 500) {
+		throw new Error('brAInwav prompt name exceeds maximum length (500 chars)');
+	}
+	return value
 		.toLowerCase()
 		.replace(/[^a-z0-9]+/g, '-')
 		.replace(/^-+|-+$/g, '');
+};
 
 export function ensureAgentPromptRegistered(
 	name: string,

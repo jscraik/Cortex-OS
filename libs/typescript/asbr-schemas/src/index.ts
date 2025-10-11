@@ -270,143 +270,148 @@ export const RouteInfoSchema = z.object({
 });
 
 export const ServiceMapSchema = z.object({
-        routes: z.array(RouteInfoSchema),
+	routes: z.array(RouteInfoSchema),
 });
 
 export type RouteInfo = z.infer<typeof RouteInfoSchema>;
 export type ServiceMap = z.infer<typeof ServiceMapSchema>;
 
-const ConnectorAuthSchema = z
-        .object({
-                type: z.enum(['apiKey', 'bearer', 'none']),
-                headerName: z.string().min(1).optional(),
-        })
-        .strict();
+const CONNECTOR_ULID_REGEX = /^[0-9A-HJKMNP-TV-Z]{26}$/u;
 
-const ConnectorQuotaBudgetSchema = z
-        .object({
-                perMinute: z.number().int().min(0).optional(),
-                perHour: z.number().int().min(0).optional(),
-                concurrent: z.number().int().min(0).optional(),
-        })
-        .strict();
+const connectorScopesSchema = z
+	.array(z.string().min(1))
+	.min(1)
+	.superRefine((value, ctx) => {
+		if (new Set(value).size !== value.length) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'Connector scopes must be unique',
+			});
+		}
+	});
+
+const ConnectorAuthSchema = z
+	.object({
+		type: z.enum(['apiKey', 'bearer', 'none']),
+		headerName: z.string().min(1).optional(),
+	})
+	.strict();
+
+const ConnectorAuthHeaderSchema = z
+	.object({
+		name: z.string().min(1),
+		value: z.string().min(1),
+	})
+	.strict();
+
+const ConnectorAuthenticationSchema = z
+	.object({
+		headers: z.array(ConnectorAuthHeaderSchema).min(1),
+	})
+	.strict();
+
+const ConnectorQuotaSchema = z
+	.object({
+		perMinute: z.number().int().nonnegative().optional(),
+		perHour: z.number().int().nonnegative().optional(),
+		perDay: z.number().int().nonnegative().optional(),
+		concurrent: z.number().int().nonnegative().optional(),
+	})
+	.strict();
+
+const ConnectorTimeoutSchema = z.record(z.string().min(1), z.number().int().nonnegative());
 
 export const ConnectorManifestEntrySchema = z
-        .object({
-                id: z.string().regex(/^[a-z0-9][a-z0-9-]{1,62}$/),
-                name: z.string().min(1),
-                displayName: z.string().min(1),
-                version: z.string().min(1),
-                description: z.string().min(1).optional(),
-                scopes: z.array(z.string().min(1)).min(1),
-                quotas: z.record(z.number().int().nonnegative()).default({}),
-                timeouts: z.record(z.number().int().nonnegative()).default({}),
-                status: z.enum(['enabled', 'disabled', 'preview']).optional(),
-                enabled: z.boolean().default(true),
-                ttlSeconds: z.number().int().positive(),
-                metadata: z.record(z.unknown()).optional(),
-                endpoint: z.string().url(),
-                auth: ConnectorAuthSchema,
-                status: z.enum(['enabled', 'disabled', 'preview']).default('enabled'),
-                description: z.string().min(1).optional(),
-                endpoint: z.string().url(),
-                authentication: z
-                        .object({
-                                headers: z
-                                        .array(
-                                                z
-                                                        .object({
-                                                                name: z.string().min(1),
-                                                                value: z.string().min(1),
-                                                        })
-                                                        .strict(),
-                                        )
-                                        .min(1),
-                        })
-                        .strict(),
-                scopes: z
-                        .array(z.string().min(1))
-                        .min(1)
-                        .superRefine((value, ctx) => {
-                                if (new Set(value).size !== value.length) {
-                                        ctx.addIssue({
-                                                code: z.ZodIssueCode.custom,
-                                                message: 'Scopes must be unique',
-                                        });
-                                }
-                        }),
-                quotas: z
-                        .object({
-                                per_minute: z.number().int().min(0).optional(),
-                                per_hour: z.number().int().min(0).optional(),
-                                per_day: z.number().int().min(0).optional(),
-                                concurrent: z.number().int().min(0).optional(),
-                        })
-                        .strict(),
-                ttl_seconds: z.number().int().min(1),
-                metadata: z.record(z.string(), z.unknown()).optional(),
-                headers: z.record(z.string().min(1), z.string()).optional(),
-                tags: z.array(z.string().min(1)).optional(),
-        })
-        .strict();
+	.object({
+		id: z.string().regex(/^[a-z0-9][a-z0-9-]{1,62}$/),
+		name: z.string().min(1),
+		displayName: z.string().min(1).optional(),
+		version: z.string().min(1),
+		description: z.string().min(1).optional(),
+		endpoint: z.string().url(),
+		auth: ConnectorAuthSchema,
+		authentication: ConnectorAuthenticationSchema.optional(),
+		headers: z.record(z.string().min(1), z.string()).optional(),
+		scopes: connectorScopesSchema,
+		quotas: ConnectorQuotaSchema.optional(),
+		timeouts: ConnectorTimeoutSchema.optional(),
+		status: z.enum(['enabled', 'disabled', 'preview']).optional(),
+		enabled: z.boolean().optional(),
+		ttlSeconds: z.number().int().positive(),
+		metadata: z.record(z.string(), z.unknown()).optional(),
+		tags: z.array(z.string().min(1)).optional(),
+	})
+	.strict();
 
 export const ConnectorsManifestSchema = z
-        .object({
-                $schema: z.string().min(1).optional(),
-                id: z.string().min(1),
-                manifestVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
-                generatedAt: z.string().datetime({ offset: true }).optional(),
-                ttlSeconds: z.number().int().positive().optional(),
-                id: z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/),
-                $schema: z.string().min(1).optional(),
-                schema_version: z.string().regex(/^\d+\.\d+\.\d+$/),
-                generated_at: z.string().datetime({ offset: true }).optional(),
-                connectors: z.array(ConnectorManifestEntrySchema).min(1),
-        })
-        .strict();
+	.object({
+		$schema: z.string().min(1).optional(),
+		id: z.string().regex(CONNECTOR_ULID_REGEX),
+		brand: z.literal('brAInwav').optional(),
+		manifestVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+		schemaVersion: z
+			.string()
+			.regex(/^\d+\.\d+\.\d+$/)
+			.optional(),
+		generatedAt: z.string().datetime({ offset: true }).optional(),
+		ttlSeconds: z.number().int().positive().optional(),
+		metadata: z.record(z.string(), z.unknown()).optional(),
+		connectors: z.array(ConnectorManifestEntrySchema).min(1),
+	})
+	.strict();
 
-export type ConnectorManifestEntry = z.infer<typeof ConnectorManifestEntrySchema>;
-export type ConnectorsManifest = z.infer<typeof ConnectorsManifestSchema>;
+const ConnectorQuotaBudgetSchema = z
+	.object({
+		perMinute: z.number().int().nonnegative().optional(),
+		perHour: z.number().int().nonnegative().optional(),
+		perDay: z.number().int().nonnegative().optional(),
+		concurrent: z.number().int().nonnegative().optional(),
+	})
+	.strict();
 
 export const ConnectorServiceEntrySchema = z
-        .object({
-                id: z.string().min(1),
-                version: z.string().min(1),
-                displayName: z.string().min(1),
-                endpoint: z.string().url(),
-                auth: ConnectorAuthSchema,
-                scopes: z.array(z.string().min(1)).min(1),
-                ttlSeconds: z.number().int().positive(),
-                enabled: z.boolean().default(true),
-                metadata: z.record(z.unknown()).optional(),
-                quotas: z.record(z.number().int().nonnegative()).optional(),
-                timeouts: z.record(z.number().int().nonnegative()).optional(),
-                description: z.string().min(1).optional(),
-                enabled: z.boolean(),
-                metadata: z
-                        .object({ brand: z.literal('brAInwav') })
-                        .passthrough()
-                        .default({ brand: 'brAInwav' }),
-                quotas: ConnectorQuotaBudgetSchema.optional(),
-                headers: z.record(z.string().min(1), z.string()).optional(),
-                description: z.string().optional(),
-                tags: z.array(z.string().min(1)).optional(),
-        })
-        .strict();
+	.object({
+		id: z.string().min(1),
+		version: z.string().min(1),
+		displayName: z.string().min(1),
+		endpoint: z.string().url(),
+		auth: ConnectorAuthSchema,
+		scopes: connectorScopesSchema,
+		ttlSeconds: z.number().int().positive(),
+		enabled: z.boolean(),
+		metadata: z
+			.object({ brand: z.literal('brAInwav') })
+			.catchall(z.unknown())
+			.default({ brand: 'brAInwav' }),
+		quotas: ConnectorQuotaBudgetSchema.optional(),
+		headers: z.record(z.string().min(1), z.string()).optional(),
+		description: z.string().min(1).optional(),
+		tags: z.array(z.string().min(1)).optional(),
+		timeouts: ConnectorTimeoutSchema.optional(),
+	})
+	.strict();
 
 export const ConnectorServiceMapSchema = z
-        .object({
-                id: z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/),
-                brand: z.literal('brAInwav'),
-                generatedAt: z.string().datetime(),
-                ttlSeconds: z.number().int().positive(),
-                connectors: z.array(ConnectorServiceEntrySchema).min(1),
-                signature: z.string().min(1),
-        })
-        .strict();
+	.object({
+		id: z.string().regex(CONNECTOR_ULID_REGEX),
+		brand: z.literal('brAInwav'),
+		generatedAt: z.string().datetime(),
+		ttlSeconds: z.number().int().positive(),
+		connectors: z.array(ConnectorServiceEntrySchema).min(1),
+		signature: z.string().min(1),
+		metadata: z.record(z.string(), z.unknown()).optional(),
+	})
+	.strict();
 
+export const ConnectorServiceMapPayloadSchema = ConnectorServiceMapSchema.omit({ signature: true });
+
+export type ConnectorAuth = z.infer<typeof ConnectorAuthSchema>;
+export type ConnectorAuthHeader = z.infer<typeof ConnectorAuthHeaderSchema>;
+export type ConnectorManifestEntry = z.infer<typeof ConnectorManifestEntrySchema>;
+export type ConnectorsManifest = z.infer<typeof ConnectorsManifestSchema>;
 export type ConnectorServiceEntry = z.infer<typeof ConnectorServiceEntrySchema>;
 export type ConnectorServiceMap = z.infer<typeof ConnectorServiceMapSchema>;
+export type ConnectorServiceMapPayload = z.infer<typeof ConnectorServiceMapPayloadSchema>;
 
 export class ASBRError extends Error {
 	constructor(

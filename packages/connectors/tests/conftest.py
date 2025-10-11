@@ -7,34 +7,31 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
-import pytest
-
-from cortex_connectors.settings import Settings
-
 ROOT = Path(__file__).resolve().parents[3]
 SRC = ROOT / "packages" / "connectors" / "src"
 
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+import pytest
+
+from cortex_connectors.settings import Settings
+
 
 @pytest.fixture
 def manifest_payload() -> Dict[str, Any]:
     """Connector manifest used across tests with a Wikidata entry."""
 
-    def quotas(per_minute: int, per_hour: int, per_day: int) -> Dict[str, int]:
-        return {
-            "per_minute": per_minute,
-            "per_hour": per_hour,
-            "per_day": per_day,
-        }
-
     connectors: List[Dict[str, Any]] = [
         {
             "id": "alpha",
+            "name": "Alpha Connector",
+            "displayName": "Alpha Connector",
             "version": "1.0.0",
             "status": "enabled",
             "description": "Baseline connector used for smoke validation.",
+            "endpoint": "https://example.invalid/alpha",
+            "auth": {"type": "bearer", "headerName": "Authorization"},
             "authentication": {
                 "headers": [
                     {
@@ -44,15 +41,23 @@ def manifest_payload() -> Dict[str, Any]:
                 ]
             },
             "scopes": ["alpha:read"],
-            "quotas": quotas(60, 600, 6000),
-            "ttl_seconds": 600,
-            "metadata": {"owner": "qa", "brand": "brAInwav"},
+            "quotas": {
+                "perMinute": 60,
+                "perHour": 600,
+                "perDay": 6000,
+            },
+            "ttlSeconds": 600,
+            "metadata": {"owner": "qa"},
         },
         {
             "id": "wikidata",
+            "name": "Wikidata Connector",
+            "displayName": "Wikidata Connector",
             "version": "0.2.0",
             "status": "enabled",
             "description": "Wikidata knowledge graph connector exposing fact lookup tools.",
+            "endpoint": "https://example.invalid/wikidata",
+            "auth": {"type": "bearer", "headerName": "Authorization"},
             "authentication": {
                 "headers": [
                     {
@@ -62,10 +67,13 @@ def manifest_payload() -> Dict[str, Any]:
                 ]
             },
             "scopes": ["wikidata:read", "wikidata:query"],
-            "quotas": quotas(30, 300, 2400),
-            "ttl_seconds": 900,
+            "quotas": {
+                "perMinute": 30,
+                "perHour": 300,
+                "perDay": 2400,
+            },
+            "ttlSeconds": 900,
             "metadata": {
-                "brand": "brAInwav",
                 "category": "knowledge-graph",
                 "tools": [
                     {
@@ -81,9 +89,13 @@ def manifest_payload() -> Dict[str, Any]:
         },
         {
             "id": "beta",
+            "name": "Beta Connector",
+            "displayName": "Beta Connector",
             "version": "1.0.0",
             "status": "disabled",
             "description": "Disabled connector kept for regression coverage.",
+            "endpoint": "https://example.invalid/beta",
+            "auth": {"type": "apiKey", "headerName": "X-Api-Key"},
             "authentication": {
                 "headers": [
                     {
@@ -93,16 +105,24 @@ def manifest_payload() -> Dict[str, Any]:
                 ]
             },
             "scopes": ["beta:write"],
-            "quotas": quotas(10, 100, 800),
-            "ttl_seconds": 300,
-            "metadata": {"brand": "brAInwav", "notes": "Disabled for preview"},
+            "quotas": {
+                "perMinute": 10,
+                "perHour": 100,
+                "perDay": 800,
+            },
+            "ttlSeconds": 300,
+            "metadata": {"notes": "Disabled for preview"},
         },
     ]
 
     return {
-        "schema_version": "1.0.0",
-        "generated_at": "2025-01-01T00:00:00Z",
+        "id": "01J7X5MB4K1ZW0000000000000",
+        "schemaVersion": "1.0.0",
+        "manifestVersion": "1.0.0",
+        "generatedAt": "2025-01-01T00:00:00Z",
         "connectors": connectors,
+        "ttlSeconds": 900,
+        "brand": "brAInwav",
     }
 
 

@@ -1,139 +1,36 @@
-"""Pydantic models for the connectors manifest schema."""
+"""Pydantic models for the connectors manifest and service map."""
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field, field_validator
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Literal
 
-from pydantic import AnyUrl, BaseModel, ConfigDict, Field, field_validator
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
-
-
-class ConnectorAuth(BaseModel):
-    """Authentication configuration for a connector."""
-
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
-
-    per_minute: Optional[int] = Field(default=None, ge=0)
-    per_hour: Optional[int] = Field(default=None, ge=0)
-    per_day: Optional[int] = Field(default=None, ge=0)
-    concurrent: Optional[int] = Field(default=None, ge=0)
-    type: Literal["apiKey", "bearer", "none"]
-    header_name: Optional[str] = Field(default=None, alias="headerName", min_length=1)
+BRAND = "brAInwav"
+ULID_PATTERN = r"^[0-9A-HJKMNP-TV-Z]{26}$"
+CONNECTOR_ID_PATTERN = r"^[a-z0-9][a-z0-9-]{1,62}$"
 
 
-class ConnectorManifestEntry(BaseModel):
-    """Manifest entry describing a Cortex-OS connector."""
+class ConnectorAuthHeader(BaseModel):
+    """Authentication header definition used in manifests."""
 
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    model_config = ConfigDict(extra="forbid")
 
-    id: str = Field(..., pattern=r"^[a-z0-9][a-z0-9-]{1,62}$")
     name: str = Field(..., min_length=1)
-    display_name: str = Field(..., alias="displayName", min_length=1)
-    version: str = Field(..., min_length=1)
-    description: Optional[str] = Field(default=None, min_length=1)
-    enabled: bool = True
-    status: Optional[Literal["enabled", "disabled", "preview"]] = None
-    scopes: List[str] = Field(..., min_length=1)
-    ttl_seconds: int = Field(..., alias="ttlSeconds", ge=1)
-    endpoint: AnyUrl
-    auth: ConnectorAuth
-    quotas: Dict[str, int] = Field(default_factory=dict)
-    timeouts: Dict[str, int] = Field(default_factory=dict)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    tags: List[str] = Field(default_factory=list)
-    version: str = Field(..., min_length=1)
-    status: Literal["enabled", "disabled", "preview"]
-    description: Optional[str] = Field(default=None, min_length=1)
-    endpoint: AnyUrl
-    authentication: ConnectorAuthentication
-    scopes: List[str] = Field(default_factory=list)
-    quotas: ConnectorQuota
-    ttl_seconds: int = Field(..., ge=1)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    headers: Optional[Dict[str, str]] = None
-    tags: Optional[List[str]] = None
-    scopes: List[str] = Field(..., min_length=1)
-    quotas: Dict[str, int] = Field(default_factory=dict)
-    timeouts: Dict[str, int] = Field(default_factory=dict)
-    status: Literal["enabled", "disabled"] = "enabled"
-    ttl_seconds: int = Field(..., ge=1, alias="ttlSeconds")
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    endpoint: Optional[HttpUrl] = None
-    auth: Optional[ConnectorAuth] = None
-
-    @field_validator("scopes")
-    @classmethod
-    def ensure_unique_scopes(cls, value: List[str]) -> List[str]:
-        if len(value) != len(set(value)):
-            msg = "scopes must contain unique entries"
-            raise ValueError(msg)
-        return value
-
-    @property
-    def enabled(self) -> bool:
-        return self.status == "enabled"
-
-    @property
-    def display_name(self) -> str:
-        return self.name
+    value: str = Field(..., min_length=1)
 
 
-class ConnectorsManifest(BaseModel):
-    """Root manifest describing all connectors."""
+class ConnectorAuthentication(BaseModel):
+    """Authentication metadata describing required headers."""
 
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    model_config = ConfigDict(extra="forbid")
 
-    schema_uri: Optional[str] = Field(default=None, alias="$schema", min_length=1)
-    id: str = Field(..., min_length=1)
-    manifest_version: str = Field(..., alias="manifestVersion", pattern=r"^\d+\.\d+\.\d+$")
-    generated_at: Optional[str] = Field(default=None, alias="generatedAt")
-    ttl_seconds: Optional[int] = Field(default=None, alias="ttlSeconds", ge=1)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    id: str = Field(..., pattern=r"^[0-9A-HJKMNP-TV-Z]{26}$")
-    schema_uri: Optional[str] = Field(default=None, alias="$schema", min_length=1)
-    schema_version: str = Field(..., pattern=r"^\d+\.\d+\.\d+$")
-    generated_at: Optional[str] = None
-    connectors: List[ConnectorEntry] = Field(..., min_length=1)
-    id: str = Field(..., min_length=1)
-    brand: Optional[Literal["brAInwav"]] = None
-    ttl_seconds: int = Field(..., ge=1, alias="ttlSeconds")
-    connectors: List[ConnectorManifestEntry] = Field(..., min_length=1)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-
-    def service_map_payload(self) -> "ConnectorServiceMapPayload":
-        """Create the service map payload derived from this manifest."""
-
-        now = datetime.now(timezone.utc)
-        now_epoch = int(now.timestamp())
-        connectors = [
-            ConnectorServiceMapEntry.from_manifest(entry, now_epoch)
-            for entry in sorted(self.connectors, key=lambda connector: connector.id)
-        ]
-
-        min_connector_ttl = None
-        if connectors:
-            min_connector_ttl = min(connector.ttl - now_epoch for connector in connectors)
-
-        ttl_seconds = max(self.ttl_seconds, (min_connector_ttl or 1))
-
-        payload = ConnectorServiceMapPayload(
-            id=self.id,
-            brand=self.brand or "brAInwav",
-            generated_at=now.isoformat().replace("+00:00", "Z"),
-            ttl_seconds=ttl_seconds,
-            connectors=connectors,
-        )
-
-        return payload
+    headers: List[ConnectorAuthHeader] = Field(..., min_length=1)
 
 
 class ConnectorAuth(BaseModel):
-    """Authentication metadata surfaced to clients."""
+    """Authentication configuration surfaced to consumers."""
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
@@ -141,111 +38,245 @@ class ConnectorAuth(BaseModel):
     header_name: Optional[str] = Field(default=None, alias="headerName", min_length=1)
 
 
-class ConnectorQuotaBudget(BaseModel):
-    """Quota information exposed via the service map."""
+class ConnectorQuota(BaseModel):
+    """Quota definition as stored in manifests."""
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     per_minute: Optional[int] = Field(default=None, alias="perMinute", ge=0)
     per_hour: Optional[int] = Field(default=None, alias="perHour", ge=0)
-    concurrent: Optional[int] = Field(default=None, alias="concurrent", ge=0)
+    per_day: Optional[int] = Field(default=None, alias="perDay", ge=0)
+    concurrent: Optional[int] = Field(default=None, ge=0)
+
+    def to_budget(self) -> Optional[Dict[str, int]]:
+        """Return camelCase quota keys for service-map payloads."""
+
+        budget: Dict[str, int] = {}
+        if self.per_minute is not None:
+            budget["perMinute"] = self.per_minute
+        if self.per_hour is not None:
+            budget["perHour"] = self.per_hour
+        if self.per_day is not None:
+            budget["perDay"] = self.per_day
+        if self.concurrent is not None:
+            budget["concurrent"] = self.concurrent
+        return budget or None
 
 
-class ConnectorServiceMapEntry(BaseModel):
-    """Subset of connector information exported to ASBR clients."""
+class ConnectorManifestEntry(BaseModel):
+    """Connector definition supplied in the manifest file."""
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    id: str
-    name: str
-    version: str
-    display_name: str = Field(..., alias="displayName")
-    display_name: str = Field(..., alias="displayName", min_length=1)
+    id: str = Field(..., pattern=CONNECTOR_ID_PATTERN)
+    name: str = Field(..., min_length=1)
+    display_name: Optional[str] = Field(default=None, alias="displayName", min_length=1)
+    version: str = Field(..., min_length=1)
+    description: Optional[str] = Field(default=None, min_length=1)
     endpoint: AnyUrl
     auth: ConnectorAuth
-    scopes: List[str]
-    ttl_seconds: int = Field(..., alias="ttlSeconds", ge=1)
-    enabled: bool = True
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    quotas: Optional[Dict[str, int]] = None
+    authentication: Optional[ConnectorAuthentication] = None
+    headers: Optional[Dict[str, str]] = None
+    scopes: List[str] = Field(..., min_length=1)
+    quotas: Optional[ConnectorQuota] = None
     timeouts: Optional[Dict[str, int]] = None
-    description: Optional[str] = None
+    status: Optional[Literal["enabled", "disabled", "preview"]] = None
+    enabled: Optional[bool] = None
+    ttl_seconds: int = Field(..., alias="ttlSeconds", ge=1)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
     tags: List[str] = Field(default_factory=list)
 
     @field_validator("scopes")
     @classmethod
-    def ensure_unique_scopes(cls, value: List[str]) -> List[str]:
+    def validate_scopes(cls, value: List[str]) -> List[str]:
         if len(value) != len(set(value)):
-            msg = "scopes must contain unique entries"
+            msg = "connector scopes must be unique"
             raise ValueError(msg)
         return value
-    enabled: bool
-    metadata: Dict[str, Any] = Field(default_factory=lambda: {"brand": "brAInwav"})
-    quotas: Optional[ConnectorQuotaBudget] = None
-    headers: Optional[Dict[str, str]] = None
-    description: Optional[str] = None
-    tags: Optional[List[str]] = None
-
-    scopes: List[str]
-    status: Literal["enabled", "disabled"]
-    ttl: int = Field(..., ge=1)
-    quotas: Optional[Dict[str, int]] = None
-    timeouts: Optional[Dict[str, int]] = None
-    metadata: Optional[Dict[str, Any]] = None
-    endpoint: Optional[HttpUrl] = None
-    auth: Optional[ConnectorAuth] = None
-
-    @classmethod
-    def from_manifest(cls, entry: ConnectorManifestEntry, now_epoch: int) -> "ConnectorServiceMapEntry":
-        data: Dict[str, Any] = {
-            "id": entry.id,
-            "name": entry.name,
-            "version": entry.version,
-            "scopes": list(entry.scopes),
-            "status": entry.status,
-            "ttl": now_epoch + entry.ttl_seconds,
-        }
-
-        if entry.quotas:
-            data["quotas"] = dict(entry.quotas)
-        if entry.timeouts:
-            data["timeouts"] = dict(entry.timeouts)
-        if entry.metadata:
-            data["metadata"] = dict(entry.metadata)
-        if entry.endpoint is not None:
-            data["endpoint"] = entry.endpoint
-        if entry.auth is not None:
-            data["auth"] = entry.auth
-
-        return cls.model_validate(data)
 
 
-class ConnectorServiceMapPayload(BaseModel):
-    """Service map payload shared between the registry and ASBR."""
+class ConnectorsManifest(BaseModel):
+    """Root manifest containing connector entries."""
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    id: str = Field(..., pattern=r"^[0-9A-HJKMNP-TV-Z]{26}$")
-    brand: Literal["brAInwav"] = "brAInwav"
+    schema_uri: Optional[str] = Field(default=None, alias="$schema", min_length=1)
+    id: str = Field(..., pattern=ULID_PATTERN)
+    brand: Optional[Literal["brAInwav"]] = None
+    manifest_version: str = Field(..., alias="manifestVersion", min_length=1)
+    schema_version: Optional[str] = Field(default=None, alias="schemaVersion", min_length=1)
     generated_at: Optional[str] = Field(default=None, alias="generatedAt")
+    ttl_seconds: Optional[int] = Field(default=None, alias="ttlSeconds", ge=1)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    connectors: List[ConnectorManifestEntry] = Field(..., min_length=1)
+
+
+class ConnectorQuotaBudget(BaseModel):
+    """Quota definition emitted in the service map payload."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    per_minute: Optional[int] = Field(default=None, alias="perMinute", ge=0)
+    per_hour: Optional[int] = Field(default=None, alias="perHour", ge=0)
+    per_day: Optional[int] = Field(default=None, alias="perDay", ge=0)
+    concurrent: Optional[int] = Field(default=None, ge=0)
+
+
+class ConnectorServiceMapEntry(BaseModel):
+    """Connector representation returned to downstream clients."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    id: str
+    version: str
+    display_name: str = Field(..., alias="displayName")
+    endpoint: AnyUrl
+    auth: ConnectorAuth
+    scopes: List[str]
     ttl_seconds: int = Field(..., alias="ttlSeconds", ge=1)
-    connectors: List[ConnectorServiceMapEntry] = Field(..., min_length=1)
-    id: str = Field(..., min_length=1)
-    brand: Literal["brAInwav"] = "brAInwav"
+    enabled: bool
+    metadata: Dict[str, Any] = Field(default_factory=lambda: {"brand": BRAND})
+    quotas: Optional[ConnectorQuotaBudget] = None
+    headers: Optional[Dict[str, str]] = None
+    description: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+    timeouts: Optional[Dict[str, int]] = None
+
+
+class ConnectorServiceMapPayload(BaseModel):
+    """Unsigned service-map payload."""
+
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    id: str = Field(..., pattern=ULID_PATTERN)
+    brand: Literal["brAInwav"] = Field(default=BRAND)
     generated_at: str = Field(..., alias="generatedAt")
     ttl_seconds: int = Field(..., alias="ttlSeconds", ge=1)
-    connectors: List[ConnectorServiceMapEntry] = Field(default_factory=list)
+    connectors: List[ConnectorServiceMapEntry] = Field(..., min_length=1)
+    metadata: Optional[Dict[str, Any]] = None
 
     @field_validator("generated_at")
     @classmethod
     def validate_generated_at(cls, value: str) -> str:
-        # Support trailing Z by normalising to RFC 3339 compatible string
+        # Normalise and validate ISO-8601 timestamps (support trailing Z)
         normalised = value.replace("Z", "+00:00")
         datetime.fromisoformat(normalised)
         return value
 
 
 class ConnectorServiceMap(ConnectorServiceMapPayload):
-    """Signed service map exported to ASBR and downstream clients."""
+    """Signed service-map payload."""
 
     signature: str = Field(..., min_length=1)
+
+
+def ensure_brand(metadata: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Ensure metadata contains the brAInwav brand marker."""
+
+    base: Dict[str, Any] = {"brand": BRAND}
+    if metadata:
+        base.update(metadata)
+    return base
+
+
+def manifest_entry_to_service_entry(
+    entry: ConnectorManifestEntry,
+    *,
+    enabled: bool,
+) -> ConnectorServiceMapEntry:
+    """Transform a manifest connector entry into the service-map representation."""
+
+    metadata = ensure_brand(entry.metadata)
+    quotas = entry.quotas.to_budget() if entry.quotas else None
+    merged_headers: Dict[str, str] = {}
+
+    for header in entry.authentication.headers if entry.authentication else []:
+        merged_headers[header.name] = header.value
+
+    if entry.headers:
+        merged_headers.update(entry.headers)
+
+    headers = merged_headers or None
+
+    return ConnectorServiceMapEntry(
+        id=entry.id,
+        version=entry.version,
+        displayName=entry.display_name or entry.name,
+        endpoint=entry.endpoint,
+        auth=entry.auth,
+        scopes=list(entry.scopes),
+        ttlSeconds=entry.ttl_seconds,
+        enabled=enabled,
+        metadata=metadata,
+        quotas=ConnectorQuotaBudget.model_validate(quotas) if quotas else None,
+        headers=headers,
+        description=entry.description,
+        tags=list(entry.tags) if entry.tags else [],
+        timeouts=entry.timeouts,
+    )
+
+
+def determine_enabled(entry: ConnectorManifestEntry) -> bool:
+    """Resolve whether a connector is enabled."""
+
+    if entry.enabled is not None:
+        return entry.enabled
+    if entry.status:
+        return entry.status != "disabled"
+    return True
+
+
+def build_service_map_payload(
+    manifest: ConnectorsManifest,
+    *,
+    now: Optional[datetime] = None,
+) -> ConnectorServiceMapPayload:
+    """Construct a service-map payload from a validated manifest."""
+
+    current_time = now or datetime.now(timezone.utc)
+    generated_at = manifest.generated_at or current_time.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+    connectors = [
+        manifest_entry_to_service_entry(entry, enabled=determine_enabled(entry))
+        for entry in sorted(manifest.connectors, key=lambda connector: connector.id)
+    ]
+
+    if not connectors:
+        raise ValueError("connectors manifest must include at least one connector")
+
+    ttl_candidates = [connector.ttl_seconds for connector in connectors]
+    min_connector_ttl = min(ttl_candidates)
+    manifest_ttl = manifest.ttl_seconds if manifest.ttl_seconds is not None else min_connector_ttl
+    ttl_seconds = max(1, min(manifest_ttl, min_connector_ttl))
+
+    metadata = manifest.metadata or None
+    if metadata is not None and "brand" not in metadata:
+        metadata = {"brand": BRAND, **metadata}
+
+    return ConnectorServiceMapPayload(
+        id=manifest.id,
+        brand=manifest.brand or BRAND,
+        generatedAt=generated_at,
+        ttlSeconds=ttl_seconds,
+        connectors=connectors,
+        metadata=metadata,
+    )
+
+
+__all__ = [
+    "BRAND",
+    "ConnectorAuthHeader",
+    "ConnectorAuthentication",
+    "ConnectorAuth",
+    "ConnectorQuota",
+    "ConnectorQuotaBudget",
+    "ConnectorManifestEntry",
+    "ConnectorsManifest",
+    "ConnectorServiceMapEntry",
+    "ConnectorServiceMapPayload",
+    "ConnectorServiceMap",
+    "ensure_brand",
+    "manifest_entry_to_service_entry",
+    "determine_enabled",
+    "build_service_map_payload",
+]

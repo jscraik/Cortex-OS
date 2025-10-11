@@ -1,243 +1,60 @@
-import { constants } from 'node:fs';
-import { access, readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import {
-        ConnectorsManifestSchema,
-        ConnectorServiceMapSchema,
-        type ConnectorsManifest,
-        type ConnectorServiceEntry,
-        type ConnectorServiceMap,
-} from '@cortex-os/asbr-schemas';
+import type { ConnectorServiceMap } from '@cortex-os/asbr-schemas';
 import { ASBRError, ValidationError } from '../types/index.js';
-import { signConnectorPayload, type ConnectorServiceMapPayload } from './signature.js';
+import {
+	attachSignature,
+	buildConnectorServiceMap,
+	ConnectorsManifestError,
+	loadConnectorsManifest,
+	signConnectorServiceMap,
+} from './manifest.js';
 
 const BRAND = 'brAInwav' as const;
-const DEFAULT_MANIFEST_PATH = resolve(process.cwd(), 'config', 'connectors.manifest.json');
 
 export async function loadConnectorServiceMap(): Promise<ConnectorServiceMap> {
-        const manifestPath = resolveManifestPath();
-        await ensureManifestReadable(manifestPath);
-        const manifest = await readConnectorsManifest(manifestPath);
-        const payload = buildConnectorServiceMap(manifest);
-        const signatureKey = process.env.CONNECTORS_SIGNATURE_KEY;
+	const signatureKey = process.env.CONNECTORS_SIGNATURE_KEY;
 
-        if (!signatureKey) {
-                throw new ASBRError('CONNECTORS_SIGNATURE_KEY is not configured', 'CONNECTORS_SIGNATURE_KEY_MISSING', 503, {
-                        brand: BRAND,
-                        component: 'connectors',
-                });
-        }
+	if (!signatureKey) {
+		throw new ASBRError(
+			'CONNECTORS_SIGNATURE_KEY is not configured',
+			'CONNECTORS_SIGNATURE_KEY_MISSING',
+			503,
+			{
+				brand: BRAND,
+				component: 'connectors',
+			},
+		);
+	}
 
-        const signature = signConnectorPayload(payload, signatureKey);
-        const signedPayload = { ...payload, signature };
-        const validation = ConnectorServiceMapSchema.safeParse(signedPayload);
+	try {
+		const manifest = await loadConnectorsManifest();
+		const payload = buildConnectorServiceMap(manifest);
+		const signature = signConnectorServiceMap(payload, signatureKey);
+		return attachSignature(payload, signature);
+	} catch (error) {
+		if (error instanceof ConnectorsManifestError) {
+			throw new ValidationError('Connectors manifest validation failed', {
+				brand: BRAND,
+				component: 'connectors',
+				attempts: error.attempts.map((attempt) => ({
+					path: attempt.path,
+					error: attempt.error instanceof Error ? attempt.error.message : String(attempt.error),
+				})),
+			});
+		}
 
-        if (!validation.success) {
-                throw new ValidationError('Connector service map validation failed', {
-                        errors: validation.error.errors,
-                        brand: BRAND,
-                        component: 'connectors',
-                });
-        }
+		if (error instanceof ValidationError || error instanceof ASBRError) {
+			throw error;
+		}
 
-        return validation.data;
-}
-
-function resolveManifestPath(): string {
-        const configured = process.env.CONNECTORS_MANIFEST_PATH?.trim();
-        if (configured) {
-                return resolve(process.cwd(), configured);
-        }
-
-        return DEFAULT_MANIFEST_PATH;
-}
-
-async function ensureManifestReadable(path: string): Promise<void> {
-        try {
-                await access(path, constants.R_OK);
-        } catch (error) {
-                throw new ASBRError('Connectors manifest not found', 'CONNECTORS_MANIFEST_MISSING', 503, {
-                        path,
-                        brand: BRAND,
-                        component: 'connectors',
-                        error: error instanceof Error ? error.message : String(error),
-                });
-        }
-}
-
-async function readConnectorsManifest(path: string): Promise<ConnectorsManifest> {
-        let raw: string;
-        try {
-                raw = await readFile(path, 'utf-8');
-        } catch (error) {
-                throw new ASBRError('Failed to read connectors manifest', 'CONNECTORS_MANIFEST_UNREADABLE', 503, {
-                        path,
-                        brand: BRAND,
-                        component: 'connectors',
-                        error: error instanceof Error ? error.message : String(error),
-                });
-        }
-
-        let parsed: unknown;
-        try {
-                parsed = JSON.parse(raw);
-        } catch (error) {
-                throw new ValidationError('Connectors manifest JSON is invalid', {
-                        path,
-                        brand: BRAND,
-                        component: 'connectors',
-                        error: error instanceof Error ? error.message : String(error),
-                });
-        }
-
-        const result = ConnectorsManifestSchema.safeParse(parsed);
-        if (!result.success) {
-                throw new ValidationError('Connectors manifest validation failed', {
-                        errors: result.error.errors,
-                        path,
-                        brand: BRAND,
-                        component: 'connectors',
-                });
-        }
-
-        return result.data;
-}
-
-function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServiceMapPayload {
-        const generatedAt = new Date().toISOString();
-        const connectors = manifest.connectors
-                .map((connector) => buildConnectorEntry(connector))
-                .sort((left, right) => left.id.localeCompare(right.id));
-
-        const minConnectorTTL = connectors.length > 0 ? Math.min(...connectors.map((connector) => connector.ttlSeconds)) : 1;
-        const ttlSeconds = Math.max(1, manifest.ttlSeconds ?? minConnectorTTL);
-        if (connectors.length === 0) {
-                throw new ValidationError('Connectors manifest must contain at least one connector entry', {
-                        brand: BRAND,
-                        component: 'connectors',
-                });
-        }
-
-        const ttlSeconds = Math.max(1, Math.min(...connectors.map((connector) => connector.ttlSeconds)));
-        const generatedAt = manifest.generated_at ?? new Date().toISOString();
-
-        return {
-                id: manifest.id,
-                brand: BRAND,
-                generatedAt,
-                ttlSeconds,
-                connectors,
-        };
-}
-
-function isConnectorEnabled(connector: { enabled?: boolean; status?: string }): boolean {
-        return connector.enabled ?? (connector.status ? connector.status !== 'disabled' : true);
-}
-
-function buildConnectorEntry(connector: ConnectorsManifest['connectors'][number]): ConnectorServiceEntry {
-        const enabled = isConnectorEnabled(connector);
-        const entry: ConnectorServiceEntry = {
-                id: connector.id,
-                version: connector.version,
-                displayName: connector.displayName ?? connector.name,
-                endpoint: connector.endpoint,
-                auth: connector.auth,
-                scopes: [...connector.scopes],
-                ttlSeconds: connector.ttlSeconds,
-                enabled,
-function buildConnectorEntry(connector: ConnectorsManifest['connectors'][number]): ConnectorServiceEntry {
-        const authHeaders = connector.authentication.headers;
-        const primaryHeader = authHeaders[0];
-
-        let authType: ConnectorServiceEntry['auth']['type'] = 'none';
-        let headerName: string | undefined;
-        if (primaryHeader) {
-                headerName = primaryHeader.name;
-                const normalizedName = primaryHeader.name.toLowerCase();
-                if (normalizedName === 'authorization' || primaryHeader.value.startsWith('Bearer ')) {
-                        authType = 'bearer';
-                } else {
-                        authType = 'apiKey';
-                }
-        }
-
-        const metadata = {
-                brand: BRAND,
-                ...(connector.metadata ?? {}),
-        };
-
-        const quotas = normalizeQuotas(connector.quotas);
-        const headers = buildHeadersRecord(connector.headers, authHeaders);
-
-        return {
-                id: connector.id,
-                version: connector.version,
-                displayName: connector.name,
-                endpoint: connector.endpoint,
-                auth: { type: authType, ...(headerName ? { headerName } : {}) },
-                scopes: [...connector.scopes],
-                ttlSeconds: connector.ttl_seconds,
-                enabled: connector.status === 'enabled',
-                metadata,
-                ...(quotas ? { quotas } : {}),
-                ...(headers ? { headers } : {}),
-                ...(connector.description ? { description: connector.description } : {}),
-                ...(connector.tags ? { tags: connector.tags } : {}),
-        };
-}
-
-        if (connector.metadata) {
-                entry.metadata = { ...connector.metadata };
-        }
-
-        if (connector.quotas && Object.keys(connector.quotas).length > 0) {
-                entry.quotas = { ...connector.quotas };
-        }
-
-        if (connector.timeouts && Object.keys(connector.timeouts).length > 0) {
-                entry.timeouts = { ...connector.timeouts };
-function normalizeQuotas(quotas: ConnectorsManifest['connectors'][number]['quotas']):
-        | ConnectorServiceEntry['quotas']
-        | undefined {
-        if (!quotas) {
-                return undefined;
-        }
-
-        const mapped: NonNullable<ConnectorServiceEntry['quotas']> = {};
-        if (typeof quotas.per_minute === 'number') {
-                mapped.perMinute = quotas.per_minute;
-        }
-        if (typeof quotas.per_hour === 'number') {
-                mapped.perHour = quotas.per_hour;
-        }
-        if (typeof quotas.concurrent === 'number') {
-                mapped.concurrent = quotas.concurrent;
-        }
-
-        return Object.keys(mapped).length > 0 ? mapped : undefined;
-}
-
-function buildHeadersRecord(
-        headers: ConnectorsManifest['connectors'][number]['headers'],
-        authHeaders: ConnectorsManifest['connectors'][number]['authentication']['headers'],
-): ConnectorServiceEntry['headers'] | undefined {
-        const merged = new Map<string, string>();
-
-        if (connector.description) {
-                entry.description = connector.description;
-        }
-
-        if (connector.tags && connector.tags.length > 0) {
-                entry.tags = [...connector.tags];
-        for (const header of authHeaders) {
-                merged.set(header.name, header.value);
-        }
-
-        if (headers) {
-                for (const [key, value] of Object.entries(headers)) {
-                        merged.set(key, value);
-                }
-        }
-
-        return merged.size > 0 ? Object.fromEntries(merged.entries()) : undefined;
+		throw new ASBRError(
+			'Failed to load connectors service map',
+			'CONNECTORS_SERVICE_MAP_FAILURE',
+			503,
+			{
+				brand: BRAND,
+				component: 'connectors',
+				error: error instanceof Error ? error.message : String(error),
+			},
+		);
+	}
 }

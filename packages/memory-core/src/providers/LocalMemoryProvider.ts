@@ -225,8 +225,18 @@ async function requestOllamaEmbedding(text: string): Promise<number[] | null> {
 }
 
 function createMockEmbedding(text: string, dim: number): number[] {
+	// Security: Validate array dimension to prevent excessive memory allocation
+	const maxDim = 10000;
+	if (dim > maxDim || dim < 1) {
+		throw new Error(`brAInwav embedding dimension must be between 1 and ${maxDim}`);
+	}
+
 	const embedding = new Array(dim).fill(0);
-	for (let i = 0; i < text.length; i++) {
+	// Security: Limit text length to prevent unbounded loop iteration
+	const maxTextLength = 10000;
+	const safeTextLength = Math.min(text.length, maxTextLength);
+
+	for (let i = 0; i < safeTextLength; i++) {
 		const charCode = text.charCodeAt(i);
 		embedding[i % dim] = (embedding[i % dim] + charCode) / 255;
 	}

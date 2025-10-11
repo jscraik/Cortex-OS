@@ -262,7 +262,8 @@ function _evaluateFailure({
 // Build Prometheus metrics text exposition for summary
 function _buildPromMetrics(summary) {
 	const lines = [];
-	const escape = (v) => String(v).replace(/\\/g, '\\\\').replace(/"/g, '"'); // escaping retained for consistency
+	// Security: Proper escaping for Prometheus label values
+	const escape = (v) => String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
 	const labels = (extra = {}) => {
 		const all = {
 			reason: summary.reasonCode || 'NONE',

@@ -2,14 +2,18 @@
 
 from .manifest import (
     ConnectorsManifestError,
+    attach_signature,
     build_connector_service_map,
     load_connectors_manifest,
     sign_connector_service_map,
 )
 from .models import (
     ConnectorAuth,
-    ConnectorEntry,
+    ConnectorAuthHeader,
+    ConnectorAuthentication,
     ConnectorManifestEntry,
+    ConnectorQuota,
+    ConnectorQuotaBudget,
     ConnectorServiceMap,
     ConnectorServiceMapEntry,
     ConnectorServiceMapPayload,
@@ -18,13 +22,17 @@ from .models import (
 
 __all__ = [
     "ConnectorAuth",
-    "ConnectorEntry",
+    "ConnectorAuthHeader",
+    "ConnectorAuthentication",
     "ConnectorManifestEntry",
+    "ConnectorQuota",
+    "ConnectorQuotaBudget",
     "ConnectorServiceMap",
     "ConnectorServiceMapEntry",
     "ConnectorServiceMapPayload",
     "ConnectorsManifest",
     "ConnectorsManifestError",
+    "attach_signature",
     "build_connector_service_map",
     "load_connectors_manifest",
     "sign_connector_service_map",

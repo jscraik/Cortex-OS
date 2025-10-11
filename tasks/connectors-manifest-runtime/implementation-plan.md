@@ -187,61 +187,63 @@ The Apps bundle can be served locally and renders connector status using mocked 
 
 ## Architecture & Design
 
-### System Components
+### System Overview
+- **LangGraph.js** hosts the reasoning graph (DAG/state machine) while Cortex‑MCP binds MCP nodes, policies, and schemas at runtime.
+- **Each MCP server** (plan, retrieve, execute, review, etc.) exposes a deterministic toolchain over FastMCP (HTTP/SSE or STDIO) and produces evidence pointers instead of free-form chat.
+- **LocalMemory** persists versioned artefacts (ULIDs, hashes, embeddings) and provides deterministic retrieval; **A2A** supplies policy-checked, quota-governed inter-node messaging.
+- **Cortex‑MCP** remains “the central node”: it fingerprints manifests, enforces contracts, and publishes observability while LangGraph orchestrates execution flows.
+
+### Data & Control Flow
 ```
-┌────────────────────┐      ┌─────────────────────┐      ┌────────────────────────┐
-│ config/connectors. │      │ ASBR Service Map    │      │ ExecutionSurfaceAgent   │
-│ manifest.json      │ ───→ │ Loader & Signer     │ ───→ │ Connectors Registry     │
-└────────────────────┘      └─────────┬───────────┘      └──────────────┬─────────┘
-                                      │                                  │
-                                      │                                  │
-                           ┌──────────▼─────────┐          ┌─────────────▼──────────┐
-                           │ MCP Server Proxies │ ◄─────── │ MCP Bridge RemoteProxy │
-                           │ (connectors server)│          └─────────────┬──────────┘
-                           └──────────┬─────────┘                        │
-                                      │                                  │
-                           ┌──────────▼─────────┐          ┌─────────────▼──────────┐
-                           │ ChatGPT Apps Widget│          │ Telemetry / Metrics     │
-                           └────────────────────┘          └────────────────────────┘
+                         ┌───────────────────────────────────────────────────┐
+                         │                   LangGraph.js                    │
+                         │      (runtime DAG / state machine / router)      │
+                         └───────────────────┬───────────────────────────────┘
+                                             │ bind nodes at runtime
+                                  state + guardrails (schemas/policies)
+                                             │
+     ┌────────────────────────────┬──────────┴───────────┬────────────────────────────┐
+     │                            │                      │                            │
+┌────▼─────┐                ┌─────▼─────┐          ┌─────▼─────┐                ┌─────▼─────┐
+│ mcp-node │                │ mcp-node  │          │ mcp-node  │                │ mcp-node  │
+│  (Plan)  │                │ (Retrieve)│          │ (Execute) │                │ (Review)  │
+│ Tools/   │                │ Tools/    │          │ Tools/    │                │ Tools/    │
+│ Resources│                │ Resources │          │ Resources │                │ Resources │
+└────┬─────┘                └─────┬─────┘          └─────┬─────┘                └─────┬─────┘
+     │  FastMCP (deterministic IO) │                      │                               │
+     │                             │                      │                               │
+     │                  ┌──────────▼──────────┐           │                        ┌──────▼─────────┐
+     │                  │     LocalMemory     │<──────────┘                        │     A2A Bus    │
+     │                  │ ver.id, chunks,     │   evidence & pointers              │ (policy+ABAC)  │
+     │            read/ │ embeddings, RAG I/O │───────────────────────────────────▶│ typed messages │
+     │            write └──────────┬──────────┘             backpressure/quotas    └──────┬─────────┘
+     │                             │                                                   route│
+     │                   deterministic data boundary                                     ───┘
+     │
+┌────▼──────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   Cortex‑MCP (the hub)                                        │
+│ - Node registry (capabilities, versions, fingerprints)                                         │
+│ - Policy engine (structure-guard, memory-guard, budgets)                                      │
+│ - Schema contracts (zod/json-schema + Pydantic mirrors)                                       │
+│ - Orchestration adapter for LangGraph (bind/route, retries, timeouts)                         │
+│ - Observability (OTEL traces, metrics, evidence pointers)                                     │
+└───────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-The ChatGPT Apps widget integrates with the official OpenAI Apps SDK (`@openai/apps-sdk`) to call connector tools and render status updates inside ChatGPT while consuming the signed manifest.
+### Minimal Contracts
+- **Node manifest (per MCP server)**: `node_id`, `version`, `fingerprint`, tool/resource/prompt lists, budgets, deterministic flag.
+- **A2A envelope**: `intent`, `from`, `to`, typed `payload`, `ttl`, `quota_key`, `evidence[]` (URI + hash + byte/line span).
+- **Memory record**: `id (ulid)`, `parent_id?`, `hash`, `artifact_uri`, `embedding_ref?`, `labels[]`, `created_at`, `provenance`.
+- **Service-map response**: ULID `id`, `brand`, `generatedAt`, `ttlSeconds`, `connectors[]` (schema-aligned payload), `signature` (HMAC-SHA256).
 
-### Data Model
-```typescript
-export const connectorEntrySchema = z.object({
-  id: z.string().min(1),
-  version: z.string(),
-  displayName: z.string(),
-  endpoint: z.string().url(),
-  auth: z.object({
-    type: z.enum(['apiKey', 'bearer', 'none']),
-    headerName: z.string().optional(),
-  }),
-  scopes: z.array(z.string().min(1)).min(1),
-  ttlSeconds: z.number().int().positive(),
-  quotas: z.object({
-    perMinute: z.number().int().positive(),
-    perHour: z.number().int().positive(),
-  }),
-  enabled: z.boolean().default(true),
-  metadata: z.object({ brand: z.literal('brAInwav') }).passthrough(),
-});
-```
-
-### API Contracts
-```typescript
-export const serviceMapResponseSchema = z.object({
-  id: ulidSchema,
-  brand: z.literal('brAInwav'),
-  generatedAt: z.string().datetime(),
-  ttlSeconds: z.number().int().positive(),
-  connectors: z.array(connectorEntrySchema),
-  signature: z.string().min(1),
-});
-
-export type ServiceMapResponse = z.infer<typeof serviceMapResponseSchema>;
-```
+### Implementation Checklist Alignment
+1. **Contract-first manifests** – Maintain a shared JSON schema (generated from Zod) and Pydantic mirror; CI compares fixtures across TypeScript & Python.
+2. **FastMCP proxy adapters** – Cortex‑MCP hosts the central FastMCP server; each connector node exposes deterministic HTTP endpoints that the proxy calls.
+3. **LocalMemory integration** – All nodes read/write via versioned IDs with hashes; retrieval requires explicit selectors and deterministic parameters.
+4. **A2A policy enforcement** – Envelopes validated with ABAC + quotas; non-compliant messages rejected before reaching nodes.
+5. **LangGraph binding** – `cortexMcpBind` helper binds nodes, injects contracts, and handles retries/timeouts spanning FastMCP + LocalMemory.
+6. **Observability** – OTEL spans per tool call, gauge updates (`brainwav_mcp_connector_proxy_up`), evidence pointer attributes, policy audit logs.
+7. **CI contract tests** – Red test to ensure manifests, service-map responses, and MCP proxy outputs match schemas and include evidence pointers.
 
 ---
 
@@ -255,11 +257,19 @@ export type ServiceMapResponse = z.infer<typeof serviceMapResponseSchema>;
 
 ### External Dependencies (npm/pypi)
 - `openai-agents>=0.3.3` – Official OpenAI Agents SDK (Python) for MCP transport & registration.
+- `instructor>=1.2` – OpenAI Instructor library providing deterministic JSON validation for hybrid model/tool calls inside the Python connectors runtime.
 - `pydantic-settings>=2.5` – Manifest/env validation in Python runtime.
 - `httpx>=0.27` – HTTP client for connector calls.
 - `starlette>=0.37` & `uvicorn>=0.30` – Async server for connectors HTTP/SSE endpoints.
 - `react@18`, `react-dom@18`, `webpack@5`, `webpack-dev-server@5`, `babel-loader@9` – ChatGPT Apps widget front-end toolchain.
 - `@openai/apps-sdk` (latest) – Official OpenAI Apps SDK used by the React widget to interact with ChatGPT Apps runtime.
+
+#### OpenAI Platform & Hybrid Model Integration Requirements
+- Provision a ChatGPT Apps environment linked to the Cortex-OS deployment; the Apps SDK requires an app registration with MCP connectors allowed by policy.
+- Store and inject `OPENAI_API_KEY`/connector secrets via the approved secret manager so both the Python connectors runtime and FastMCP proxy can authenticate through the OpenAI Agents SDK.
+- Validate connectivity with `openai-agents-sdk` smoke tests (`python -m instructor.check --server <mcp-url>`) and Apps SDK harness (`pnpm --filter apps/chatgpt-dashboard test:apps`) during CI/CD.
+- Exercise the Instructor + LangGraph hybrid model path by running end-to-end workflows that dispatch Instructor-validated tool calls through MCP nodes, ensuring the deterministic plan→retrieve→execute→review loop remains intact.
+- Document rollout steps: enable MCP connectors inside ChatGPT (Settings → Connectors), supply the signed service-map URL, and verify tool discovery via the Apps widget.
 
 ### Service Dependencies
 - ASBR HTTP surface at `https://<host>/v1/connectors/service-map`.

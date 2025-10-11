@@ -51,8 +51,17 @@ export async function loadMLXModels(): Promise<ModelInventory> {
  */
 export async function isModelAvailable(model: ModelConfig): Promise<boolean> {
 	try {
-		// Expand environment variables in path
+		// Security: Validate input length to prevent ReDoS
+		if (model.path.length > 1000) {
+			throw new Error('brAInwav model path exceeds maximum length (1000 chars)');
+		}
+
+		// Expand environment variables in path - ReDoS safe with length limit
 		const expandedPath = model.path.replace(/\$\{([^}]+)\}/g, (_, envVar) => {
+			// Limit env var name length to prevent ReDoS
+			if (envVar.length > 100) {
+				throw new Error('brAInwav environment variable name too long');
+			}
 			return process.env[envVar] || '';
 		});
 

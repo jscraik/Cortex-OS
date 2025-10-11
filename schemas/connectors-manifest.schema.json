@@ -5,67 +5,85 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["id", "manifestVersion", "connectors"],
-  "required": ["id", "schema_version", "connectors"],
-  "required": ["id", "connectors"],
   "properties": {
     "$schema": {
       "type": "string",
-      "description": "Optional schema reference pointer for tooling",
-      "format": "uri-reference"
+      "format": "uri-reference",
+      "description": "Optional schema reference pointer for tooling."
     },
     "id": {
       "type": "string",
-      "description": "ULID used as the stable identifier for the generated service map",
-      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
-    },
-    "schema_version": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Stable identifier for this manifest instance"
-    },
-    "manifestVersion": {
-      "type": "string",
-      "description": "Semantic version of the manifest payload",
-      "pattern": "^\\d+\\.\\d+\\.\\d+$"
-    },
-    "generatedAt": {
-      "type": "string",
-      "format": "date-time",
-      "description": "ISO-8601 timestamp describing when the manifest snapshot was produced"
-      "description": "Stable identifier for the manifest"
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "ULID identifying this manifest instance."
     },
     "brand": {
       "type": "string",
       "enum": ["brAInwav"],
-      "description": "Brand marker propagated to signed payloads"
+      "description": "Brand marker propagated to downstream payloads."
+    },
+    "manifestVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the manifest definition."
+    },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Version of the connectors manifest schema."
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp describing when the manifest snapshot was produced."
     },
     "ttlSeconds": {
       "type": "integer",
       "minimum": 1,
-      "description": "Default time-to-live applied to connectors when an explicit ttlSeconds is not provided"
+      "description": "Default TTL applied to derived service-map responses."
     },
     "metadata": {
       "type": "object",
-      "description": "Additional metadata about the manifest",
-      "additionalProperties": {
-        "type": ["string", "number", "boolean", "array", "object", "null"]
-      }
-      "description": "Number of seconds a signed service map remains valid"
-    },
-    "metadata": {
-      "type": "object",
-      "description": "Additional non-sensitive metadata about the manifest",
+      "description": "Additional manifest metadata surfaced to operators.",
       "additionalProperties": true
     },
     "connectors": {
       "type": "array",
       "minItems": 1,
       "items": {
-        "$ref": "#/definitions/ConnectorEntry"
+        "$ref": "#/$defs/ConnectorEntry"
       }
     }
   },
-  "definitions": {
+  "$defs": {
+    "AuthHeader": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "HTTP header name used for authentication."
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Header value placeholder or env substitution token."
+        }
+      }
+    },
+    "Authentication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["headers"],
+      "properties": {
+        "headers": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/AuthHeader" }
+        }
+      }
+    },
     "ConnectorAuth": {
       "type": "object",
       "additionalProperties": false,
@@ -74,13 +92,26 @@
         "type": {
           "type": "string",
           "enum": ["apiKey", "bearer", "none"],
-          "description": "Authentication strategy required by the connector"
+          "description": "Authentication strategy required by the connector."
         },
         "headerName": {
           "type": "string",
           "minLength": 1,
-          "description": "Optional HTTP header name used for API key/bearer auth"
+          "description": "HTTP header name invoked for apiKey/bearer auth."
         }
+      }
+    },
+    "ConnectorQuotas": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "perMinute": { "type": "integer", "minimum": 0 },
+        "perHour": { "type": "integer", "minimum": 0 },
+        "perDay": { "type": "integer", "minimum": 0 },
+        "concurrent": { "type": "integer", "minimum": 0 },
+        "per_minute": { "type": "integer", "minimum": 0 },
+        "per_hour": { "type": "integer", "minimum": 0 },
+        "per_day": { "type": "integer", "minimum": 0 }
       }
     },
     "ConnectorEntry": {
@@ -90,239 +121,84 @@
         "id",
         "name",
         "version",
-        "displayName",
-        "enabled",
-        "scopes",
-        "ttlSeconds",
         "endpoint",
-        "auth"
-        "status",
-        "endpoint",
-        "authentication",
+        "auth",
         "scopes",
-        "quotas",
-        "ttl_seconds"
+        "ttlSeconds"
       ],
-      "required": ["id", "name", "version", "scopes", "ttlSeconds"],
       "properties": {
         "id": {
           "type": "string",
-          "description": "Stable identifier used by Cortex-OS for the connector",
-          "pattern": "^[a-z0-9][a-z0-9-]{1,62}$"
+          "pattern": "^[a-z0-9][a-z0-9-]{1,62}$",
+          "description": "Stable connector identifier."
         },
         "name": {
           "type": "string",
           "minLength": 1,
-          "description": "Internal connector name used for logging and telemetry"
+          "description": "Human-readable connector name."
         },
         "displayName": {
           "type": "string",
           "minLength": 1,
-          "description": "Human friendly name surfaced to operators and UI clients"
+          "description": "Optional UI display name."
         },
         "version": {
           "type": "string",
           "minLength": 1,
-          "description": "Semantic version or snapshot identifier of the connector definition"
+          "description": "Semantic version or snapshot identifier."
         },
         "description": {
           "type": "string",
-          "description": "Optional description of the connector"
+          "description": "Optional connector description."
         },
-        "enabled": {
-          "type": "boolean",
-          "description": "Flag indicating whether the connector is enabled for use"
+        "endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "HTTPS endpoint exposing the connector surface."
+        },
+        "auth": { "$ref": "#/$defs/ConnectorAuth" },
+        "authentication": { "$ref": "#/$defs/Authentication" },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Static headers attached to outbound requests."
+        },
+        "scopes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Scopes required by the connector."
+        },
+        "quotas": { "$ref": "#/$defs/ConnectorQuotas" },
+        "timeouts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 },
+          "description": "Optional timeout configuration expressed in milliseconds."
         },
         "status": {
           "type": "string",
           "enum": ["enabled", "disabled", "preview"],
-          "description": "Legacy status field supported for backwards compatibility"
+          "description": "Legacy status indicator."
         },
-          "description": "Human readable display name for the connector",
-          "minLength": 1
-        },
-        "version": {
-          "type": "string",
-          "description": "Human-readable connector name",
-          "minLength": 1
-        },
-        "version": {
-          "type": "string",
-          "description": "Semantic version of the connector definition",
-          "minLength": 1
-        },
-        "endpoint": {
-          "type": "string",
-          "format": "uri",
-          "description": "HTTPS endpoint that exposes the connector's MCP surface"
-        },
-        "authentication": {
-          "$ref": "#/definitions/Authentication"
-        },
-        "headers": {
-          "type": "object",
-          "description": "Additional static headers that must accompany outbound requests",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "scopes": {
-          "type": "array",
-          "description": "Scopes required to access this connector",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          },
-          "uniqueItems": true,
-          "minItems": 1
-        },
-          "minItems": 1,
-          "uniqueItems": true
-        },
-        "quotas": {
-          "type": "object",
-          "description": "Optional quota limits for the connector",
-          "default": {},
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "timeouts": {
-          "type": "object",
-          "description": "Optional timeout configuration for the connector",
-          "default": {},
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "status": {
-          "type": "string",
-          "description": "Operational status of the connector",
-          "enum": ["enabled", "disabled"],
-          "default": "enabled"
+        "enabled": {
+          "type": "boolean",
+          "description": "Explicit enablement flag overriding status."
         },
         "ttlSeconds": {
           "type": "integer",
           "minimum": 1,
-          "description": "Number of seconds the connector remains active before requiring refresh"
-        },
-        "endpoint": {
-          "type": "string",
-          "format": "uri",
-          "description": "Endpoint URL used by clients to reach the connector surface"
-        },
-        "auth": {
-          "$ref": "#/definitions/ConnectorAuth"
-        },
-        "quotas": {
-          "type": "object",
-          "description": "Optional quota configuration for the connector",
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "timeouts": {
-          "type": "object",
-          "description": "Optional timeout configuration for the connector",
-          "additionalProperties": {
-            "type": "integer",
-            "minimum": 0
-          }
+          "description": "Number of seconds the connector remains valid."
         },
         "metadata": {
           "type": "object",
-          "description": "Additional non-sensitive metadata about the connector",
-          "additionalProperties": {
-            "type": ["string", "number", "boolean", "array", "object", "null"]
-          }
+          "additionalProperties": true,
+          "description": "Extra metadata surfaced to clients."
         },
         "tags": {
           "type": "array",
-          "description": "Optional classification tags for filtering and UI presentation",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        }
-      }
-    },
-    "ConnectorAuth": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["type"],
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": ["apiKey", "bearer", "none"],
-          "description": "Authentication mechanism required by the connector"
-        },
-        "headerName": {
-          "type": "string",
-          "minLength": 1,
-          "description": "HTTP header name used when type is apiKey or bearer"
-    "Authentication": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["headers"],
-      "properties": {
-        "headers": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/AuthHeader"
-          }
-        }
-      }
-    },
-    "AuthHeader": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name", "value"],
-      "properties": {
-        "name": {
-          "type": "string",
-          "minLength": 1,
-          "description": "HTTP header name used for authentication"
-          "additionalProperties": true
-        },
-        "endpoint": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Value placeholder or environment reference for the header"
-        }
-      }
-    },
-    "QuotaBudget": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "per_minute": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Maximum number of invocations allowed per minute"
-        },
-        "per_hour": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Maximum number of invocations allowed per hour"
-        },
-        "per_day": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Maximum number of invocations allowed per day"
-        },
-        "concurrent": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Maximum number of concurrent executions permitted"
-          "format": "uri",
-          "description": "Optional base endpoint for the connector"
-        },
-        "auth": {
-          "$ref": "#/definitions/ConnectorAuth"
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Optional connector tags."
         }
       }
     }

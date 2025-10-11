@@ -96,11 +96,23 @@ export async function setProfileValue(path: string, value: string): Promise<void
 		// Navigate to the parent object
 		let current: any = profile.budgets;
 		for (let i = 0; i < parts.length - 1; i++) {
-			current = current[parts[i]];
+			// Security: Check for prototype pollution attempts
+			const key = parts[i];
+			if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+				throw new Error('brAInwav: Prototype pollution attempt detected');
+			}
+			// Security: Use hasOwnProperty to prevent prototype chain traversal
+			if (!Object.hasOwn(current, key)) {
+				throw new Error(`brAInwav: Invalid path segment "${key}"`);
+			}
+			current = current[key];
 		}
 
-		// Set the value
+		// Set the value with prototype pollution protection
 		const lastPart = parts[parts.length - 1];
+		if (lastPart === '__proto__' || lastPart === 'constructor' || lastPart === 'prototype') {
+			throw new Error('brAInwav: Prototype pollution attempt detected');
+		}
 		const numValue = parseFloat(value);
 		current[lastPart] = Number.isNaN(numValue) ? value : numValue;
 

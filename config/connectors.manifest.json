@@ -1,27 +1,27 @@
 {
   "$schema": "../schemas/connectors-manifest.schema.json",
-  "id": "brAInwav-connectors",
-  "manifestVersion": "2024.09.18",
-  "generatedAt": "2024-09-18T00:00:00Z",
-  "ttlSeconds": 3600,
-  "id": "01J0XKQ4R6V7Z9P3S5T7W9YBCD",
-  "schema_version": "1.1.0",
-  "generated_at": "2025-01-01T00:00:00Z",
-  "id": "core-connectors",
+  "id": "01JAG0Y4ZP1XK9YZ2FQ0N3WVCH",
   "brand": "brAInwav",
-  "ttlSeconds": 300,
+  "manifestVersion": "2025.10.10",
+  "schemaVersion": "1.1.0",
+  "generatedAt": "2025-10-10T00:00:00Z",
+  "ttlSeconds": 3600,
   "metadata": {
-    "brand": "brAInwav",
-    "surface": "connectors"
+    "surface": "connectors",
+    "owner": "platform"
   },
   "connectors": [
     {
       "id": "perplexity-search",
       "name": "Perplexity Search",
+      "displayName": "Perplexity Search",
       "version": "1.2.0",
-      "status": "enabled",
       "description": "Search aggregation connector that proxies Perplexity Answers without exposing API secrets.",
       "endpoint": "https://connectors.brainwav.ai/perplexity/search",
+      "auth": {
+        "type": "bearer",
+        "headerName": "Authorization"
+      },
       "authentication": {
         "headers": [
           {
@@ -33,12 +33,6 @@
       "headers": {
         "X-Cortex-Connector": "perplexity-search"
       },
-      "scopes": ["search:query", "search:insights"],
-      "quotas": {
-        "per_minute": 30,
-        "per_hour": 300,
-        "per_day": 3000,
-        "concurrent": 8
       "scopes": [
         "search:query",
         "search:insights"
@@ -46,27 +40,27 @@
       "quotas": {
         "perMinute": 30,
         "perHour": 300,
-        "perDay": 3000
+        "perDay": 3000,
+        "concurrent": 8
       },
-      "status": "enabled",
       "ttlSeconds": 3600,
       "metadata": {
         "owner": "integrations",
         "category": "search"
       },
       "tags": ["search", "knowledge"]
-      "auth": {
-        "type": "bearer",
-        "headerName": "Authorization"
-      }
     },
     {
       "id": "github-actions",
       "name": "GitHub Actions Dispatcher",
+      "displayName": "GitHub Actions Dispatcher",
       "version": "0.4.1",
-      "status": "disabled",
-      "description": "Prototype connector that dispatches GitHub workflow runs once security review completes.",
+      "description": "Dispatch GitHub workflow runs after security review completes.",
       "endpoint": "https://connectors.brainwav.ai/github/actions",
+      "auth": {
+        "type": "apiKey",
+        "headerName": "X-GitHub-Token"
+      },
       "authentication": {
         "headers": [
           {
@@ -75,7 +69,6 @@
           }
         ]
       },
-      "scopes": ["repos:read", "actions:trigger"],
       "scopes": [
         "repos:read",
         "actions:trigger"
@@ -85,19 +78,13 @@
         "perHour": 50,
         "perDay": 400
       },
-      "status": "disabled",
       "ttlSeconds": 900,
+      "enabled": false,
       "metadata": {
         "notes": "Disabled until SOC2 control review completes",
         "category": "automation"
       },
       "tags": ["automation", "ci"]
-        "notes": "Disabled until SOC2 control review completes"
-      },
-      "auth": {
-        "type": "apiKey",
-        "headerName": "X-GitHub-Token"
-      }
     },
     {
       "id": "wikidata",
@@ -105,27 +92,25 @@
       "displayName": "Wikidata Semantic Search",
       "version": "2024.09.18",
       "description": "Semantic search over the 2024-09-18 Wikidata snapshot with claims and SPARQL fallbacks.",
-      "enabled": true,
-      "status": "enabled",
+      "endpoint": "https://wd-mcp.wmcloud.org/mcp/",
+      "auth": {
+        "type": "none"
+      },
       "scopes": [
         "wikidata:vector-search",
         "wikidata:claims",
         "wikidata:sparql"
       ],
-      "ttlSeconds": 3600,
-      "endpoint": "https://wd-mcp.wmcloud.org/mcp/",
-      "auth": {
-        "type": "none"
-      },
+      "ttlSeconds": 1800,
       "metadata": {
-        "brand": "brAInwav",
         "dumpDate": "2024-09-18",
         "vectorModel": "jina-embeddings-v3",
         "embeddingDimensions": 1024,
         "supportsMatryoshka": true,
         "languages": ["en", "fr", "ar"],
         "datasetMd5": "dd7375a69774324dead6d3ea5abc01b7"
-      }
+      },
+      "tags": ["knowledge", "graph"]
     }
   ]
 }
