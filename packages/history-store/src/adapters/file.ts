@@ -26,10 +26,15 @@ class FileHistoryStore implements HistoryStore {
 
 	public async append(envelope: Envelope): Promise<void> {
 		const parsed = EnvelopeSchema.parse(envelope);
+		// Ensure payload is present for HistoryRecord
+		const envelopeWithPayload: Envelope = {
+			...parsed,
+			payload: parsed.payload ?? null,
+		};
 		const record: HistoryRecord = {
 			id: parsed.id,
 			sessionId: parsed.sessionId ?? 'unknown',
-			envelope: parsed,
+			envelope: envelopeWithPayload,
 			createdAt: parsed.occurredAt,
 		};
 		const path = buildEventPath(this.config.root, record.sessionId);

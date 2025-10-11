@@ -1,7 +1,7 @@
 import type { Envelope } from '@cortex-os/protocol';
 import { EnvelopeSchema } from '@cortex-os/protocol';
 import Database from 'better-sqlite3';
-import type { HistoryRange, HistoryRecord, HistoryStore, SQLiteConfig } from '../types.js';
+import type { Checkpoint, HistoryRange, HistoryRecord, HistoryStore, SQLiteConfig } from '../types.js';
 
 const CREATE_EVENTS = `
 CREATE TABLE IF NOT EXISTS history_events (
@@ -85,11 +85,13 @@ class SqliteHistoryStore implements HistoryStore {
 			range?.limit ?? null,
 		);
 		for (const row of rows) {
+			// Type assertion for sqlite row
+			const r = row as { id: string; session_id: string; envelope: string; occurred_at: string };
 			yield {
-				id: String(row.id),
-				sessionId: String(row.session_id),
-				envelope: JSON.parse(String(row.envelope)) as Envelope,
-				createdAt: String(row.occurred_at),
+				id: String(r.id),
+				sessionId: String(r.session_id),
+				envelope: JSON.parse(String(r.envelope)) as Envelope,
+				createdAt: String(r.occurred_at),
 			};
 		}
 	}
@@ -98,8 +100,10 @@ class SqliteHistoryStore implements HistoryStore {
 		this.upsertCheckpoint.run(sessionId, JSON.stringify(payload ?? null), new Date().toISOString());
 	}
 
-	public async getCheckpoint(sessionId: string) {
-		const row = this.getCheckpointStmt.get(sessionId);
+	public async getCheckpoint(sessionId: string): Promise<Checkpoint | null> {
+		const row = this.getCheckpointStmt.get(sessionId) as
+			| { session_id: string; payload: string; created_at: string }
+			| undefined;
 		if (!row) {
 			return null;
 		}

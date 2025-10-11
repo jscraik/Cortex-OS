@@ -1,3 +1,6 @@
+import { createFileHistoryStore } from './adapters/file.js';
+import { PostgresHistoryStore } from './adapters/postgres.js';
+import { createSqliteHistoryStore } from './adapters/sqlite.js';
 import type { FileConfig, HistoryStore, PostgresConfig, SQLiteConfig } from './types.js';
 
 export { createFileHistoryStore } from './adapters/file.js';
