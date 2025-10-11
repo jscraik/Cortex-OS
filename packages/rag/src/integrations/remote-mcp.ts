@@ -50,26 +50,41 @@ export interface QueryResult {
 	metadata?: Record<string, unknown>;
 }
 
+export interface RemoteConnectorToolHint {
+        name: string;
+        tags?: string[] | string;
+}
+
+export interface RemoteConnectorHint {
+        id: string;
+        scopes?: string[] | string;
+        tags?: string[] | string;
+        remoteTools?: RemoteConnectorToolHint[];
+}
+
 export interface RemoteRAGConfig extends MCPIntegrationConfig {
-	enableRemoteRetrieval?: boolean;
-	enableDocumentSync?: boolean;
-	fallbackToLocal?: boolean;
-	remoteSearchLimit?: number;
-	hybridSearchWeights?: {
-		local: number;
-		remote: number;
-	};
+        enableRemoteRetrieval?: boolean;
+        enableDocumentSync?: boolean;
+        fallbackToLocal?: boolean;
+        remoteSearchLimit?: number;
+        hybridSearchWeights?: {
+                local: number;
+                remote: number;
+        };
+        connectorHints?: RemoteConnectorHint[];
+        defaultScopeHints?: string[];
 }
 
 export interface RemoteRetrievalOptions extends QueryOptions {
-	useRemoteKnowledge?: boolean;
-	remoteFilters?: KnowledgeSearchFilters;
-	hybridSearch?: boolean;
-	remoteOnly?: boolean;
-	topK?: number;
-	fusionMethod?: 'weighted' | 'rrf';
-	rrfK?: number;
-	workspace?: string | string[];
+        useRemoteKnowledge?: boolean;
+        remoteFilters?: KnowledgeSearchFilters;
+        hybridSearch?: boolean;
+        remoteOnly?: boolean;
+        topK?: number;
+        fusionMethod?: 'weighted' | 'rrf';
+        rrfK?: number;
+        workspace?: string | string[];
+        scopeHints?: string[];
 }
 
 export interface DocumentSyncResult {
@@ -152,14 +167,31 @@ export class RemoteMCPEmbedder implements Embedder {
 }
 
 export class RemoteMCPEnhancedStore implements Store {
-	private readonly localStore: StoreLike;
-	private mcpClient?: AgentMCPClient;
-	private readonly config: RemoteRAGConfig;
+        private readonly localStore: StoreLike;
+        private mcpClient?: AgentMCPClient;
+        private readonly config: RemoteRAGConfig;
+        private readonly connectorHints: Map<string, NormalizedConnectorHint>;
+        private readonly remoteRetrievalEnabled: boolean;
+        private readonly defaultScopeHints: string[];
 
-	constructor(localStore: StoreLike, config: RemoteRAGConfig) {
-		this.localStore = localStore;
-		this.config = config;
-	}
+        constructor(localStore: StoreLike, config: RemoteRAGConfig) {
+                this.localStore = localStore;
+                this.config = config;
+                this.connectorHints = buildConnectorHints(config.connectorHints);
+                const explicit =
+                        typeof config.enableRemoteRetrieval === 'boolean' ? config.enableRemoteRetrieval : undefined;
+                const hasFactsConnector = hasFactsEnabledConnector(this.connectorHints);
+                this.remoteRetrievalEnabled = explicit ?? hasFactsConnector;
+                const scopeSeed = new Set<string>(
+                        Array.isArray(config.defaultScopeHints)
+                                ? config.defaultScopeHints.map((hint) => String(hint))
+                                : [],
+                );
+                if (hasFactsConnector) {
+                        scopeSeed.add('facts');
+                }
+                this.defaultScopeHints = Array.from(scopeSeed);
+        }
 
 	async initialize(): Promise<void> {
 		if (!this.mcpClient) {
@@ -242,9 +274,13 @@ export class RemoteMCPEnhancedStore implements Store {
 		}
 	}
 
-	private shouldUseRemoteRetrieval(options: RemoteRetrievalOptions): boolean {
-		return Boolean(this.config.enableRemoteRetrieval && options.useRemoteKnowledge !== false);
-	}
+        private shouldUseRemoteRetrieval(options: RemoteRetrievalOptions): boolean {
+                const effective =
+                        typeof this.config.enableRemoteRetrieval === 'boolean'
+                                ? this.config.enableRemoteRetrieval
+                                : this.remoteRetrievalEnabled;
+                return Boolean(effective && options.useRemoteKnowledge !== false);
+        }
 
 	private async handleRemoteQuery(
 		vector: number[],
@@ -305,11 +341,11 @@ export class RemoteMCPEnhancedStore implements Store {
 		if (anyStore.delete) await anyStore.delete(ids);
 	}
 
-	private async queryRemoteKnowledgeBase(
-		vector: number[],
-		options: RemoteRetrievalOptions,
-	): Promise<QueryResult[]> {
-		const client =
+        private async queryRemoteKnowledgeBase(
+                vector: number[],
+                options: RemoteRetrievalOptions,
+        ): Promise<QueryResult[]> {
+                const client =
 			this.mcpClient ??
 			(await (async () => {
 				const f = await resolveAgentClientFactory();
@@ -319,23 +355,98 @@ export class RemoteMCPEnhancedStore implements Store {
 				return c;
 			})());
 		const searchQuery = await this.vectorToQuery(vector);
-		const remoteResults = await client.searchKnowledgeBase(searchQuery, {
-			limit: options.topK || this.config.remoteSearchLimit || 10,
-			filters: options.remoteFilters as unknown as Record<string, unknown> | undefined,
-		});
-		return remoteResults.map((result: KnowledgeSearchResult) => ({
-			id: result.id,
-			score: result.score,
-			metadata: {
-				text: result.content,
-				source: result.source,
-				title: result.title,
-				timestamp: result.timestamp,
-				provider: 'remote',
-				...result.metadata,
-			},
-		}));
-	}
+                const filters = this.resolveRemoteFilters(options);
+                const remoteResults = await client.searchKnowledgeBase(searchQuery, {
+                        limit: options.topK || this.config.remoteSearchLimit || 10,
+                        filters,
+                });
+                return remoteResults.map((result: KnowledgeSearchResult) => {
+                        const baseMetadata: Record<string, unknown> = {
+                                text: result.content,
+                                source: result.source,
+                                title: result.title,
+                                timestamp: result.timestamp,
+                                provider: 'remote',
+                                ...(result.metadata ?? {}),
+                        };
+                        const metadata = this.enrichRemoteMetadata(result, baseMetadata);
+                        return {
+                                id: result.id,
+                                score: result.score,
+                                metadata,
+                        };
+                });
+        }
+
+        private resolveRemoteFilters(options: RemoteRetrievalOptions): KnowledgeSearchFilters | undefined {
+                if (options.remoteFilters) return options.remoteFilters;
+                const hints = new Set<string>(
+                        [
+                                ...(Array.isArray(options.scopeHints) ? options.scopeHints : []),
+                                ...this.defaultScopeHints,
+                        ]
+                                .filter((hint): hint is string => typeof hint === 'string')
+                                .map((hint) => hint.toLowerCase()),
+                );
+                const wantsFacts = Array.from(hints).some(
+                        (hint) => hint.includes('fact') || hint.includes('wikidata') || hint.includes('claims'),
+                );
+                if (!wantsFacts) return undefined;
+                const targetHint =
+                        this.connectorHints.get('wikidata') ||
+                        Array.from(this.connectorHints.values()).find((entry) =>
+                                entry.scopes.some((scope) => scope.includes('facts')),
+                        );
+                if (!targetHint) return undefined;
+                const tags = new Set<string>();
+                const sources = new Set<string>();
+                sources.add(`connector:${targetHint.id}`);
+                tags.add(`connector:${targetHint.id}`);
+                const vectorTool = targetHint.remoteTools.find((tool) =>
+                        tool.tags.some((tag) => tag.toLowerCase().includes('vector')) || /vector/i.test(tool.name),
+                );
+                if (vectorTool) {
+                        tags.add(`tool:${vectorTool.name}`);
+                        tags.add('tool:vector');
+                }
+                const filters: KnowledgeSearchFilters = {};
+                if (tags.size > 0) filters.tags = Array.from(tags);
+                if (sources.size > 0) filters.source = Array.from(sources);
+                return filters;
+        }
+
+        private enrichRemoteMetadata(
+                result: KnowledgeSearchResult,
+                metadata: Record<string, unknown>,
+        ): Record<string, unknown> {
+                const toolName = extractRemoteToolName(metadata);
+                const connectorId = extractConnectorId(metadata);
+                const existingWikidata = metadata.wikidata;
+                const shouldAttachClaims =
+                        existingWikidata ||
+                        (toolName ? /wikidata\.get_claims/i.test(toolName) : false) ||
+                        (connectorId ? /wikidata/i.test(connectorId) : false);
+
+                if (!shouldAttachClaims) {
+                        return metadata;
+                }
+
+                const claims = extractClaimsFromMetadata(metadata);
+                const sanitizedClaims = claims.map((claim) => sanitizeRemoteClaim(claim));
+                const identifiers = collectRemoteIdentifiers(sanitizedClaims, metadata);
+                metadata.wikidata = {
+                        connectorId:
+                                connectorId ??
+                                (typeof result.source === 'string' && result.source.toLowerCase().includes('wikidata')
+                                        ? 'wikidata'
+                                        : 'wikidata'),
+                        tool: toolName ?? 'wikidata.get_claims',
+                        qids: identifiers.qids,
+                        claimIds: identifiers.claimIds,
+                        claims: sanitizedClaims,
+                };
+                return metadata;
+        }
 
 	private async syncDocumentsRemote(
 		items: Array<{ id: string; vector: number[]; metadata?: Record<string, unknown> }>,
@@ -577,28 +688,24 @@ export class RemoteMCPDocumentIngestionManager {
 				try {
 					await this.processBatch(batch, options);
 					processed += batch.length;
-					if (task.taskId) {
-						if (this.mcpClient && task.taskId) {
-							await this.mcpClient.updateTaskStatus(
-								task.taskId,
-								'in_progress',
-								`Processed ${processed}/${documents.length} documents`,
-							);
-						}
-					}
+                                        if (task.taskId && this.mcpClient) {
+                                                await this.mcpClient.updateTaskStatus(
+                                                        task.taskId,
+                                                        'in_progress',
+                                                        `Processed ${processed}/${documents.length} documents`,
+                                                );
+                                        }
 				} catch (error) {
 					console.error(`[RAG Remote] Batch processing failed for batch ${i}:`, error);
 				}
 			}
-			if (task.taskId) {
-				if (this.mcpClient && task.taskId) {
-					await this.mcpClient.updateTaskStatus(
-						task.taskId,
-						'completed',
-						`Successfully ingested ${processed}/${documents.length} documents`,
-					);
-				}
-			}
+                        if (task.taskId && this.mcpClient) {
+                                await this.mcpClient.updateTaskStatus(
+                                        task.taskId,
+                                        'completed',
+                                        `Successfully ingested ${processed}/${documents.length} documents`,
+                                );
+                        }
 			return { taskId: task.taskId ?? `task-${Date.now()}`, jobId: `job-${Date.now()}` };
 		} catch (error) {
 			console.error('[RAG Remote] Ingestion job creation failed:', error);
@@ -641,11 +748,208 @@ export class RemoteMCPDocumentIngestionManager {
 }
 
 export function createRemoteMCPEmbedder(
-	config: RemoteRAGConfig,
-	fallbackEmbedder?: Embedder,
+        config: RemoteRAGConfig,
+        fallbackEmbedder?: Embedder,
 ): RemoteMCPEmbedder {
-	return new RemoteMCPEmbedder(config, fallbackEmbedder);
+        return new RemoteMCPEmbedder(config, fallbackEmbedder);
 }
+
+interface NormalizedConnectorHint {
+        id: string;
+        scopes: string[];
+        tags: string[];
+        remoteTools: Array<{ name: string; tags: string[] }>;
+}
+
+const REMOTE_QID_REGEX = /\bQ\d{2,}\b/gi;
+const REMOTE_CLAIM_ID_REGEX = /\b[QP]\d+\$[A-Za-z0-9-]+\b/gi;
+
+const toStringArray = (value: string[] | string | undefined): string[] => {
+        if (Array.isArray(value)) return value.map((entry) => String(entry));
+        if (typeof value === 'string') return [value];
+        return [];
+};
+
+const buildConnectorHints = (hints: RemoteConnectorHint[] | undefined): Map<string, NormalizedConnectorHint> => {
+        const normalized = new Map<string, NormalizedConnectorHint>();
+        if (!Array.isArray(hints)) return normalized;
+        for (const hint of hints) {
+                if (!hint || typeof hint !== 'object' || typeof hint.id !== 'string') continue;
+                const scopes = toStringArray(hint.scopes).map((scope) => scope.toLowerCase());
+                const tags = toStringArray(hint.tags).map((tag) => tag.toLowerCase());
+                const remoteTools = Array.isArray(hint.remoteTools)
+                        ? hint.remoteTools
+                                  .map((tool) => {
+                                          if (!tool || typeof tool !== 'object' || typeof tool.name !== 'string') return undefined;
+                                          return {
+                                                  name: tool.name,
+                                                  tags: toStringArray(tool.tags).map((tag) => tag.toLowerCase()),
+                                          };
+                                  })
+                                  .filter((tool): tool is { name: string; tags: string[] } => Boolean(tool))
+                        : [];
+                normalized.set(hint.id, { id: hint.id, scopes, tags, remoteTools });
+        }
+        return normalized;
+};
+
+const hasFactsEnabledConnector = (hints: Map<string, NormalizedConnectorHint>): boolean => {
+        for (const hint of hints.values()) {
+                if (hint.id === 'wikidata') return true;
+                if (hint.tags.some((tag) => tag.includes('wikidata'))) return true;
+                if (hint.scopes.some((scope) => scope.includes('facts'))) return true;
+        }
+        return false;
+};
+
+const extractRemoteToolName = (metadata: Record<string, unknown>): string | undefined => {
+        const candidates = ['tool', 'toolName', 'mcpTool', 'sourceTool'];
+        for (const key of candidates) {
+                const value = metadata[key];
+                if (typeof value === 'string' && value) return value;
+        }
+        return undefined;
+};
+
+const extractConnectorId = (metadata: Record<string, unknown>): string | undefined => {
+        const candidates = ['connectorId', 'connector', 'provider', 'source'];
+        for (const key of candidates) {
+                const value = metadata[key];
+                if (typeof value === 'string' && value) return value;
+        }
+        return undefined;
+};
+
+const extractClaimsFromMetadata = (metadata: Record<string, unknown>): Array<Record<string, unknown> | string> => {
+        const claims: Array<Record<string, unknown> | string> = [];
+        const addFrom = (value: unknown): void => {
+                if (!value) return;
+                if (Array.isArray(value)) {
+                        for (const entry of value) addFrom(entry);
+                        return;
+                }
+                if (typeof value === 'string') {
+                        claims.push(value);
+                        return;
+                }
+                if (typeof value === 'object') {
+                        const record = value as Record<string, unknown>;
+                        if (record.property || record.claimId || record.guid || record.qid) {
+                                claims.push(record);
+                                return;
+                        }
+                        for (const nested of Object.values(record)) {
+                                addFrom(nested);
+                        }
+                }
+        };
+
+        addFrom(metadata.claims);
+        addFrom(metadata.statements);
+        if (metadata.data && typeof metadata.data === 'object') {
+                addFrom((metadata.data as Record<string, unknown>).claims);
+        }
+        if (metadata.claimsByProperty && typeof metadata.claimsByProperty === 'object') {
+                for (const value of Object.values(metadata.claimsByProperty as Record<string, unknown>)) {
+                        addFrom(value);
+                }
+        }
+        return claims;
+};
+
+const sanitizeRemoteClaim = (claim: Record<string, unknown> | string): Record<string, unknown> | string => {
+        if (typeof claim === 'string') return claim;
+        const allowed = new Set([
+                'property',
+                'propertyId',
+                'propertyLabel',
+                'value',
+                'valueType',
+                'datavalue',
+                'qualifiers',
+                'references',
+                'qid',
+                'entity',
+                'entityId',
+                'item',
+                'subject',
+                'claimId',
+                'guid',
+                'source',
+                'label',
+                'description',
+        ]);
+        const sanitized: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(claim)) {
+                if (allowed.has(key)) sanitized[key] = value;
+        }
+        if (!sanitized.qid && typeof claim.id === 'string' && /^Q\d+/i.test(claim.id)) {
+                sanitized.qid = claim.id;
+        }
+        if (!sanitized.claimId && typeof claim.id === 'string' && claim.id.includes('$')) {
+                sanitized.claimId = claim.id;
+        }
+        return sanitized;
+};
+
+const collectRemoteIdentifiers = (
+        claims: Array<Record<string, unknown> | string>,
+        metadata: Record<string, unknown>,
+): { qids: string[]; claimIds: string[] } => {
+        const qids = new Set<string>();
+        const claimIds = new Set<string>();
+        const QID_KEYS = ['qid', 'entityId', 'entity', 'item', 'subject'];
+        const CLAIM_ID_KEYS = ['claimId', 'guid', 'id', 'statementId'];
+
+        const addQidFromString = (value: unknown): void => {
+                if (typeof value !== 'string') return;
+                const matches = value.match(REMOTE_QID_REGEX);
+                if (!matches) return;
+                for (const match of matches) qids.add(match.toUpperCase());
+        };
+
+        const addClaimIdFromString = (value: unknown): void => {
+                if (typeof value !== 'string') return;
+                const matches = value.match(REMOTE_CLAIM_ID_REGEX);
+                if (!matches) return;
+                for (const match of matches) claimIds.add(match);
+        };
+
+        function collectFromRecord(record: Record<string, unknown>): void {
+                for (const key of QID_KEYS) {
+                        if (key in record) addQidFromString(record[key]);
+                }
+                for (const key of CLAIM_ID_KEYS) {
+                        if (key in record) addClaimIdFromString(record[key]);
+                }
+                if ('references' in record) collectFromValue(record.references);
+                if ('qualifiers' in record) collectFromValue(record.qualifiers);
+        }
+
+        function collectFromValue(value: unknown): void {
+                if (!value) return;
+                if (Array.isArray(value)) {
+                        for (const entry of value) collectFromValue(entry);
+                        return;
+                }
+                if (typeof value === 'string') {
+                        addQidFromString(value);
+                        addClaimIdFromString(value);
+                        return;
+                }
+                if (typeof value === 'object') {
+                        collectFromRecord(value as Record<string, unknown>);
+                }
+        }
+
+        for (const claim of claims) {
+                collectFromValue(claim);
+        }
+
+        collectFromRecord(metadata);
+
+        return { qids: Array.from(qids), claimIds: Array.from(claimIds) };
+};
 
 export function createRemoteMCPEnhancedStore(
 	localStore: StoreLike,
