@@ -50,6 +50,16 @@ export {
 	GraphRAGService,
 	type GraphRAGServiceConfig,
 } from './services/GraphRAGService.js';
+export {
+	ShortTermMemoryStore,
+	type FlushExpiredResult,
+	type ShortTermMemoryEntry,
+	type ShortTermMemorySession,
+	type ShortTermSnapshot,
+	type ShortTermSnapshotEntry,
+	type StoreShortTermInput,
+	type StoreShortTermResult,
+} from './layers/short-term/ShortTermMemoryStore.js';
 
 import { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 import { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';

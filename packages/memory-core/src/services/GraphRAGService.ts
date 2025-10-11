@@ -12,7 +12,7 @@
 import { SecureNeo4j } from '@cortex-os/utils';
 import { GraphEdgeType, GraphNodeType } from '@prisma/client';
 import { z } from 'zod';
-import { createPrefixedId } from '../../agents/src/lib/secure-random.js';
+import { createPrefixedId } from '../../../agents/src/lib/secure-random.js';
 import { prisma, shutdownPrisma } from '../db/prismaClient.js';
 import { assembleContext } from '../retrieval/contextAssembler.js';
 import { expandNeighbors } from '../retrieval/expandGraph.js';
