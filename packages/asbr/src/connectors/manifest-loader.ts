@@ -121,8 +121,12 @@ function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServic
         };
 }
 
+function isConnectorEnabled(connector: { enabled?: boolean; status?: string }): boolean {
+        return connector.enabled ?? (connector.status ? connector.status !== 'disabled' : true);
+}
+
 function buildConnectorEntry(connector: ConnectorsManifest['connectors'][number]): ConnectorServiceEntry {
-        const enabled = connector.enabled ?? (connector.status ? connector.status !== 'disabled' : true);
+        const enabled = isConnectorEnabled(connector);
         const entry: ConnectorServiceEntry = {
                 id: connector.id,
                 version: connector.version,
