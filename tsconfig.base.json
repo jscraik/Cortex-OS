@@ -85,6 +85,12 @@
       "@cortex-os/proof-artifacts/*": [
         "packages/proof-artifacts/src/*"
       ],
+      "@cortex-os/mcp-auth": [
+        "packages/mcp-auth/src/index.ts"
+      ],
+      "@cortex-os/mcp-auth/*": [
+        "packages/mcp-auth/src/*"
+      ],
       "@cortex-os/cortex-sec": [
         "packages/cortex-sec/src/index.ts"
       ],

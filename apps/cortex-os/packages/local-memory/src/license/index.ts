@@ -70,6 +70,9 @@ export class LicenseManager {
 	private cache: License | null = null;
 	private cacheExpiration = 0;
 	private readonly cacheDurationMs = 5 * 60 * 1000;
+	private opAvailableCache: boolean | null = null;
+	private opAvailableCacheExpiration = 0;
+	private readonly opAvailableCacheDurationMs = 60 * 60 * 1000; // Cache for 1 hour
 
 	constructor(config: LicenseConfig = {}) {
 		this.config = {
@@ -151,6 +154,8 @@ export class LicenseManager {
 	clearCache(): void {
 		this.cache = null;
 		this.cacheExpiration = 0;
+		this.opAvailableCache = null;
+		this.opAvailableCacheExpiration = 0;
 	}
 
 	private async fetchLicenseFrom1Password(): Promise<License | null> {
@@ -168,6 +173,7 @@ export class LicenseManager {
 			return null;
 		}
 
+		// Build command - use vault ID or name
 		const command = [
 			'op item get',
 			escapeShellArg(this.config.onePasswordItem),
@@ -176,9 +182,18 @@ export class LicenseManager {
 		].join(' ');
 
 		try {
-			const { stdout } = await execAsync(command);
-			return JSON.parse(stdout) as OnePasswordItem;
+			const { stdout } = await execAsync(command, { timeout: 10000 });
+			const item = JSON.parse(stdout) as OnePasswordItem;
+			console.debug('[brAInwav] License item retrieved from 1Password');
+			return item;
 		} catch (error) {
+			const errorMsg = error instanceof Error ? error.message : String(error);
+			// Provide helpful error message if vault ambiguity detected
+			if (errorMsg.includes('More than one vault matches')) {
+				console.error(
+					'[brAInwav] Multiple vaults with same name detected. Please set CORTEX_LICENSE_1P_VAULT to the vault ID instead of name.',
+				);
+			}
 			this.warn1Password('1Password CLI error', error);
 			return null;
 		}
@@ -241,10 +256,25 @@ export class LicenseManager {
 	}
 
 	private async is1PasswordAvailable(): Promise<boolean> {
+		// Return cached result if still valid
+		if (this.opAvailableCache !== null && Date.now() < this.opAvailableCacheExpiration) {
+			return this.opAvailableCache;
+		}
+
 		try {
-			await execAsync('op --version');
+			// Use whoami which works with desktop app integration (biometric)
+			// This doesn't require a session token when using 1Password app
+			await execAsync('op whoami', { timeout: 5000 });
+
+			// Cache successful result for 1 hour
+			this.opAvailableCache = true;
+			this.opAvailableCacheExpiration = Date.now() + this.opAvailableCacheDurationMs;
+			console.debug('[brAInwav] 1Password CLI available and authenticated');
 			return true;
 		} catch (error) {
+			// Cache failure result (but with shorter duration)
+			this.opAvailableCache = false;
+			this.opAvailableCacheExpiration = Date.now() + 5000; // Only cache failures for 5 seconds
 			this.warn1Password('1Password CLI not available', error);
 			return false;
 		}

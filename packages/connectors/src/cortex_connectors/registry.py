@@ -9,13 +9,10 @@ from typing import Dict, Iterable, List, Optional
 from prometheus_client import Gauge
 
 from .manifest import build_connector_service_map, load_connectors_manifest, sign_connector_service_map
-from .models import ConnectorEntry, ConnectorsManifest
-from .manifest import load_connectors_manifest
-from .models import ConnectorManifestEntry, ConnectorsManifest
-from .signing import generate_service_map_signature
+from .models import BRAND, ConnectorManifestEntry, ConnectorsManifest, determine_enabled
 
 _CONNECTOR_GAUGE = Gauge(
-    "brAInwav_mcp_connector_proxy_up",
+    "brainwav_mcp_connector_proxy_up",
     "Connector availability proxy state",
     ["connector"],
 )
@@ -25,7 +22,7 @@ _CONNECTOR_GAUGE = Gauge(
 class ConnectorRecord:
     """Runtime view of a connector entry."""
 
-    entry: ConnectorEntry
+    entry: ConnectorManifestEntry
     enabled: bool
 
 
@@ -36,6 +33,7 @@ class ConnectorRegistry:
         self._manifest_path = manifest_path
         self._signature_key = signature_key
         self._manifest: Optional[ConnectorsManifest] = None
+        self._gauge_cache: Dict[str, int] = {}
 
     @property
     def manifest(self) -> ConnectorsManifest:
@@ -49,12 +47,31 @@ class ConnectorRegistry:
         self._update_metrics()
 
     def _update_metrics(self) -> None:
-        for connector in self.manifest.connectors:
-            _CONNECTOR_GAUGE.labels(connector.id).set(1 if connector.status == "enabled" else 0)
+        manifest = self._manifest
+        if manifest is None:
+            return
+
+        current_ids = {connector.id for connector in manifest.connectors}
+        stale_ids = set(self._gauge_cache) - current_ids
+
+        for connector_id in stale_ids:
+            try:
+                _CONNECTOR_GAUGE.remove(connector_id)
+            except KeyError:
+                pass
+            finally:
+                self._gauge_cache.pop(connector_id, None)
+
+        for connector in manifest.connectors:
+            status = 1 if determine_enabled(connector) else 0
+            if self._gauge_cache.get(connector.id) == status:
+                continue
+            _CONNECTOR_GAUGE.labels(connector.id).set(status)
+            self._gauge_cache[connector.id] = status
 
     def records(self) -> Iterable[ConnectorRecord]:
         return (
-            ConnectorRecord(entry=connector, enabled=connector.status == "enabled")
+            ConnectorRecord(entry=connector, enabled=determine_enabled(connector))
             for connector in self.manifest.connectors
         )
 
@@ -64,14 +81,13 @@ class ConnectorRegistry:
     def service_map(self) -> Dict[str, object]:
         payload = build_connector_service_map(self.manifest)
         signature = sign_connector_service_map(payload, self._signature_key)
-        return {"payload": payload.model_dump(by_alias=True, mode="json", exclude_none=True), "signature": signature}
-        payload = self.manifest.service_map_payload()
-        signature = generate_service_map_signature(
-            payload.model_dump(mode="json", by_alias=True, exclude_none=True),
-            self._signature_key,
-        )
+        payload_dict = payload.model_dump(by_alias=True, mode="json", exclude_none=True)
+        metadata = payload_dict.setdefault("metadata", {"brand": BRAND})
+        if "brand" not in metadata:
+            metadata["brand"] = BRAND
+        metadata["count"] = len(payload_dict.get("connectors", []))
         return {
-            "payload": payload.model_dump(mode="json", by_alias=True, exclude_none=True),
+            "payload": payload_dict,
             "signature": signature,
         }
 

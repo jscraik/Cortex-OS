@@ -112,10 +112,10 @@ describe('ConnectorProxyManager', () => {
                 expect(registered[0]?.name).toBe('demo.ping');
                 expect(registered[0]?.metadata?.connectorId).toBe('demo');
 
-                const metrics = await getConnectorMetricsRegistry().getMetricsAsJSON();
-                const availability = metrics.find(
-                        (metric) => metric.name === 'brAInwav_mcp_connector_proxy_up',
-                );
+		const metrics = await getConnectorMetricsRegistry().getMetricsAsJSON();
+		const availability = metrics.find(
+			(metric) => metric.name === 'brainwav_mcp_connector_proxy_up',
+		);
                 expect(availability?.values[0]?.value).toBe(1);
         });
 

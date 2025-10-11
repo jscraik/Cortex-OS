@@ -18,6 +18,7 @@ from .models import (
     ConnectorsManifest,
     build_service_map_payload,
 )
+from .schema import ManifestSchemaError, validate_manifest_document
 
 MODULE_PATH = Path(__file__).resolve()
 FALLBACK_MANIFEST_PATH = MODULE_PATH.parents[4] / "config" / "connectors.manifest.json"
@@ -43,10 +44,11 @@ class ConnectorsManifestError(Exception):
 def _candidate_paths(path: Optional[str | Path]) -> Iterable[Path]:
     """Yield unique candidate manifest paths in priority order."""
 
-    candidates: List[Path] = []
     if path:
-        candidates.append(Path(path))
-    candidates.extend([CWD_MANIFEST_PATH, FALLBACK_MANIFEST_PATH])
+        yield Path(path).expanduser()
+        return
+
+    candidates: List[Path] = [CWD_MANIFEST_PATH, FALLBACK_MANIFEST_PATH]
 
     seen: set[Path] = set()
     for candidate in candidates:
@@ -66,8 +68,15 @@ def load_connectors_manifest(manifest_path: Optional[str | Path] = None) -> Conn
         try:
             raw = candidate.read_text(encoding="utf-8")
             payload = json.loads(raw)
+            validate_manifest_document(payload)
             return ConnectorsManifest.model_validate(payload)
-        except (FileNotFoundError, PermissionError, json.JSONDecodeError, ValidationError) as exc:
+        except (
+            FileNotFoundError,
+            PermissionError,
+            json.JSONDecodeError,
+            ValidationError,
+            ManifestSchemaError,
+        ) as exc:
             attempts.append(ManifestLoadAttempt(path=candidate, error=exc))
         except Exception as exc:  # pragma: no cover - defensive
             attempts.append(ManifestLoadAttempt(path=candidate, error=exc))

@@ -1,0 +1,25 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                           KEYBOARD SHORTCUTS                               ║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║ /           Focus search bar                                              ║
+║ ? or Ctrl+/  Toggle this help overlay                                     ║
+║ ESC          Close dialogs/overlays                                       ║
+║ Tab          Navigate between interactive elements                        ║
+║ Space/Enter  Activate selected button/action                              ║
+║ R            Refresh dashboard data                                       ║
+║ F            Toggle fullscreen mode                                       ║
+║ 1-4          Quick jump to metric sections                                ║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║                           STATUS LEGEND                                   ║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║ ✅ OK         Service is healthy and operational                          ║
+║ ⚠️ Degraded   Service is working but with issues                          ║
+║ ⛔ Down       Service is unavailable or failed                            ║
+║ 🔍 Unknown    Service status cannot be determined                        ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+Key Improvements:
+- Comprehensive keyboard shortcuts
+- Status legend with icons
+- Accessibility information
+- Press ESC to close

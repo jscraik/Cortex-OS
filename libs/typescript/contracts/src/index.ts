@@ -98,6 +98,7 @@ export * from './rag-events.js';
 export * from './sandbox-audit-events.js';
 export * from './security-events.js';
 export * from './security-skip-permissions.js';
+export * from './skill-events.js';
 export * from './tooling/events.js';
 
 // Note: Additional package event contracts are available directly from package imports

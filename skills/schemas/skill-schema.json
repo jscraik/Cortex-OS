@@ -1,0 +1,196 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brainwav.ai/schemas/skill-frontmatter.json",
+  "title": "brAInwav Skill Frontmatter Schema",
+  "description": "JSON Schema for YAML frontmatter in brAInwav Cortex-OS skill markdown files",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "description",
+    "version",
+    "author",
+    "category",
+    "tags",
+    "difficulty",
+    "estimatedTokens"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^skill-[\\w-]+$",
+      "description": "Unique skill identifier in kebab-case, must start with 'skill-'",
+      "examples": ["skill-typescript-testing", "skill-security-review"]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 100,
+      "description": "Human-readable skill name",
+      "examples": ["TypeScript Testing Best Practices", "Security Review Checklist"]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Brief description of the skill's purpose and usage"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version number (e.g., 1.0.0)",
+      "examples": ["1.0.0", "2.1.3"]
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Author name or brAInwav team designation",
+      "examples": ["brAInwav Development Team", "John Doe"]
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "coding",
+        "communication",
+        "security",
+        "analysis",
+        "automation",
+        "integration",
+        "testing",
+        "documentation",
+        "other"
+      ],
+      "description": "Primary category for skill classification"
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 50
+      },
+      "description": "Searchable tags for skill discovery",
+      "examples": [["typescript", "testing", "tdd"], ["security", "authentication", "oauth"]]
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["beginner", "intermediate", "advanced", "expert"],
+      "description": "Skill difficulty level"
+    },
+    "estimatedTokens": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000,
+      "description": "Estimated token count for skill execution"
+    },
+    "requiredTools": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "description": "List of MCP tools or dependencies required for this skill",
+      "examples": [["vitest", "typescript"], ["eslint", "biome"]]
+    },
+    "prerequisites": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      },
+      "description": "Required knowledge or skills before using this skill",
+      "examples": [["Basic TypeScript knowledge", "Understanding of async/await"]]
+    },
+    "relatedSkills": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100,
+        "pattern": "^skill-[\\w-]+$"
+      },
+      "description": "Related skill IDs for discovery and navigation",
+      "examples": [["skill-tdd-basics", "skill-typescript-patterns"]]
+    },
+    "deprecated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this skill is deprecated"
+    },
+    "replacedBy": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^skill-[\\w-]+$",
+      "description": "Skill ID that replaces this deprecated skill"
+    },
+    "persuasiveFraming": {
+      "type": "object",
+      "description": "Psychological influence elements for skill adoption",
+      "properties": {
+        "authority": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Authority-based influence (e.g., 'Created by brAInwav security experts')"
+        },
+        "commitment": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Commitment-based influence (e.g., 'Following this improves quality by 80%')"
+        },
+        "scarcity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Scarcity-based influence (e.g., 'Limited to advanced implementations')"
+        },
+        "socialProof": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Social proof influence (e.g., 'Used by 500+ developers')"
+        },
+        "reciprocity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Reciprocity influence (e.g., 'We provide this to help you succeed')"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "skill-typescript-testing",
+      "name": "TypeScript Testing Best Practices",
+      "description": "Comprehensive guide to testing TypeScript applications with Vitest and TDD methodology",
+      "version": "1.0.0",
+      "author": "brAInwav Development Team",
+      "category": "testing",
+      "tags": ["typescript", "testing", "tdd", "vitest"],
+      "difficulty": "intermediate",
+      "estimatedTokens": 500,
+      "requiredTools": ["vitest", "typescript"],
+      "prerequisites": ["Basic TypeScript knowledge", "Understanding of async/await"],
+      "relatedSkills": ["skill-tdd-basics", "skill-typescript-patterns"],
+      "deprecated": false,
+      "persuasiveFraming": {
+        "authority": "Created by brAInwav development experts with 10+ years of testing experience",
+        "commitment": "Following this skill improves test coverage by 200-300%",
+        "socialProof": "Used successfully in 100+ production projects"
+      }
+    }
+  ]
+}

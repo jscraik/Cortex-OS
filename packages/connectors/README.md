@@ -10,18 +10,18 @@ Manifest-driven Python package that registers Cortex-OS connectors with the offi
 # 1. Sync dependencies
 uv sync --package packages/connectors
 
-# 2. Export required secrets (use 1Password CLI)
-export CONNECTORS_SIGNATURE_KEY="$(op read op://vault/CONNECTORS_SIGNATURE_KEY)"
-export CONNECTORS_API_KEY="$(op read op://vault/CONNECTORS_API_KEY)"
-export MCP_API_KEY="$(op read op://vault/MCP_API_KEY)"
+# 2. Point to the 1Password env export that contains connector secrets
+# (see docs/development/1password-env.md for creating the export)
+export BRAINWAV_ENV_FILE="$HOME/.brainwav/connectors.env"
 
-# 3. Launch server with bundled Apps widget (exposes HTTP, SSE, and metrics)
-uv run --package packages/connectors cortex-connectors-server
+# 3. Launch server with bundled Apps widget using op run (exposes HTTP, SSE, and metrics)
+op run --env-file="$BRAINWAV_ENV_FILE" -- \
+  uv run --package packages/connectors cortex-connectors-server
 
-# 4. Hit health + service map + SSE
-curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/health
-curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/v1/connectors/service-map
-curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/v1/connectors/stream
+# 4. Hit health + service map + SSE (reuse op run to inject secrets)
+op run --env-file="$BRAINWAV_ENV_FILE" -- curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/health
+op run --env-file="$BRAINWAV_ENV_FILE" -- curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/v1/connectors/service-map
+op run --env-file="$BRAINWAV_ENV_FILE" -- curl -H "Authorization: Bearer $CONNECTORS_API_KEY" http://localhost:3026/v1/connectors/stream
 ```
 
 ---

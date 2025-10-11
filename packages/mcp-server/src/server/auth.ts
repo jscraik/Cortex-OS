@@ -6,11 +6,10 @@
  */
 
 import type { Logger } from 'pino';
+import { loadAuthConfig } from '../config/auth.js';
 import { createHttpAuthenticator, type HttpAuthContext } from '../security/http-auth.js';
 import { BRAND, createBrandedLog } from '../utils/brand.js';
 import { parseNumberEnv } from '../utils/config.js';
-
-const EXPERIMENTAL_RESOURCE_PATH = '/.well-known/oauth-protected-resource';
 
 /**
  * Create and configure HTTP authenticator
@@ -18,31 +17,45 @@ const EXPERIMENTAL_RESOURCE_PATH = '/.well-known/oauth-protected-resource';
 export function createAuthenticator(logger: Logger) {
 	const configuredInterval = parseNumberEnv(process.env.MCP_AUTH_LOG_INTERVAL, 0);
 	const authLogIntervalEnv = configuredInterval > 0 ? configuredInterval : undefined;
+	const authConfig = loadAuthConfig();
 
-	const httpAuthenticator = createHttpAuthenticator({
+	const authorizationUrl = authConfig.auth0
+		? `https://${authConfig.auth0.domain}/.well-known/openid-configuration`
+		: undefined;
+	const resourceMetadataUrl = authConfig.auth0
+		? new URL('/.well-known/oauth-protected-resource', authConfig.auth0.resource).toString()
+		: undefined;
+
+	const authenticator = createHttpAuthenticator({
 		brandPrefix: BRAND.prefix,
 		connectLogMessage: BRAND.connectLog,
 		logger,
 		logInterval: authLogIntervalEnv,
+		authConfig,
+		realm: BRAND.prefix,
+		authorizationUrl,
+		resourceMetadataUrl,
 	});
 
-	httpAuthenticator.logAcceptedHeaders();
+	authenticator.logAcceptedHeaders();
 
-	const experimentalEnabled = process.env.MCP_AUTH_EXPERIMENTAL === 'true';
-	if (experimentalEnabled) {
+	if (resourceMetadataUrl) {
 		logger.info(
-			createBrandedLog('auth_experimental_enabled', { resource: EXPERIMENTAL_RESOURCE_PATH }),
-			'Experimental OAuth protected resource metadata enabled',
+			createBrandedLog('auth_oauth_metadata_ready', { resource: resourceMetadataUrl }),
+			'OAuth protected resource metadata configured',
 		);
-		Object.assign(httpAuthenticator, { experimentalResource: EXPERIMENTAL_RESOURCE_PATH });
-	} else {
-		Object.assign(httpAuthenticator, { experimentalResource: null });
 	}
 
-	return httpAuthenticator;
+	return {
+		authenticator,
+		config: authConfig,
+		authorizationUrl,
+		resourceMetadataUrl,
+	};
 }
 
 /**
  * Export type for use in server setup
  */
+export type AuthenticatorBundle = ReturnType<typeof createAuthenticator>;
 export type { HttpAuthContext };

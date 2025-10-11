@@ -50,6 +50,18 @@ The bundle is exported as ESM with hashed filenames so the connectors server can
 | `pnpm --filter apps/chatgpt-dashboard test` | Unit tests (Jest + Testing Library) for hooks/components. |
 | `pnpm --filter apps/chatgpt-dashboard test:a11y` | Accessibility audits via `jest-axe`. |
 | `pnpm --filter apps/chatgpt-dashboard test:perf` | Synthetic performance budget tests (LCP/TBT). |
+| `pnpm --filter apps/chatgpt-dashboard test:e2e` | ChatGPT Apps preview harness (Playwright) – spins up ASBR + connectors server and exercises the widget end-to-end. |
+
+### E2E Preview Harness
+
+The Playwright-based harness (`test:e2e`) bootstraps the full stack needed for the ChatGPT Apps experience:
+
+1. Builds the production widget bundle.
+2. Launches the Python connectors server (`scripts/connectors/run-connectors-server.sh`) with `NO_AUTH=true`.
+3. Starts the ASBR HTTP server (via `cortex-asbr`) and captures the temporary bearer token.
+4. Drives the widget in Chromium, verifying lazy-loaded sections hydrate and the refresh action calls `/v1/connectors/service-map`.
+
+Artifacts (service-map payloads + screenshots) are written to `tasks/connectors-manifest-runtime/test-logs/apps-preview/` for checklist evidence. Use `PLAYWRIGHT_BROWSERS_PATH=0 pnpm --filter apps/chatgpt-dashboard test:e2e` inside CI environments where browsers are preinstalled.
 
 Enforce ≥94% coverage and capture reports as PR evidence.
 

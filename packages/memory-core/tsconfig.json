@@ -15,7 +15,11 @@
     ],
     "moduleResolution": "NodeNext",
     "ignoreDeprecations": "5.0",
-    "module": "NodeNext"
+    "module": "NodeNext",
+    "paths": {
+      "@/skills/*": ["./src/skills/*"],
+      "@/skills": ["./src/skills/index.ts"]
+    }
   },
   "include": [
     "src/**/*",

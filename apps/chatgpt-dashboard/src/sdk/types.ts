@@ -1,11 +1,25 @@
+export interface ConnectorAuth {
+	type: 'bearer' | 'apiKey' | 'none';
+	headerName?: string;
+}
+
+export interface ConnectorQuota {
+	perMinute?: number;
+	perHour?: number;
+	perDay?: number;
+	concurrent?: number;
+}
+
 export interface ConnectorServiceEntry {
 	id: string;
 	displayName: string;
 	version: string;
+	description?: string;
 	endpoint: string;
 	scopes: string[];
-	auth: Record<string, unknown>;
-	quotas?: Record<string, unknown>;
+	auth: ConnectorAuth;
+	headers?: Record<string, string>;
+	quotas?: ConnectorQuota;
 	metadata?: Record<string, unknown>;
 	enabled: boolean;
 	status?: 'online' | 'offline' | 'degraded' | 'unknown';
@@ -17,4 +31,5 @@ export interface ConnectorServiceEntry {
 		lastFailureAt?: string;
 		failureReason?: string;
 	};
+	timeouts?: Record<string, number>;
 }

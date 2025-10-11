@@ -1,3 +1,7 @@
+---
+trigger: always_on
+alwaysApply: true
+---
 # Task Folder Structure Guide
 
 **Authoritative Reference for Task Organization**
@@ -37,11 +41,14 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
 ## Phase-by-Phase File Creation
 
 ### Phase 0: Task Initialization
+
 1. Create task folder: `~/tasks/[feature-name]/`
 2. No files yet - just the directory structure
 
 ### Phase 1: Research
+
 **Required files:**
+
 - `research.md` - Complete research findings including:
   - RAID analysis (Risks, Assumptions, Issues, Dependencies)
   - Feasibility studies (PIECES assessments)
@@ -51,7 +58,9 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
   - Existing patterns and integration points
 
 ### Phase 2: Planning
+
 **Required files:**
+
 - `implementation-plan.md` - High-level strategy with:
   - SRS (Software Requirements Specification)
   - Architecture overview
@@ -69,10 +78,13 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
   - Pseudocode examples
 
 **Optional subfolders:**
+
 - `design/` - Architecture diagrams, wireframes, integration maps
 
 ### Phase 3: Implementation
+
 **Required files:**
+
 - `implementation-log.md` - Real-time progress notes:
   - Completed checklist items
   - Challenges encountered
@@ -80,23 +92,30 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
   - Deviations from plan
 
 **Required subfolders:**
+
 - `test-logs/` - Store test execution results as they're created
 
 ### Phase 4: Review, Testing, Validation & Monitoring
+
 **Required files:**
+
 - `code-review.md` - Review findings and resolutions
 - `HITL-feedback.md` - Human approval decisions (if applicable)
 
 **Required subfolders:**
+
 - `test-logs/` - Comprehensive test results (unit, integration, system, acceptance, a11y, security, performance)
 - `validation/` - CI/CD deployment validation reports
 - `refactoring/` - Refactoring plans and summaries
 
 ### Phase 5: Verification
+
 **Required files:**
+
 - `lessons-learned.md` - Key insights and takeaways
 
 **Required subfolders:**
+
 - `verification/` - Quality gate results:
   - Lint results
   - Test coverage reports
@@ -105,7 +124,9 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
   - CI/CD pipeline evidence
 
 ### Phase 6: Archive
+
 **Required files:**
+
 - `SUMMARY.md` - Comprehensive final summary including:
   - Research findings and decisions
   - Implementation details and challenges
@@ -121,6 +142,7 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
 ## Examples
 
 ### Example 1: Simple Bug Fix
+
 ```
 ~/tasks/fix-mcp-auth-bug/
 ├── research.md              # Investigation findings
@@ -138,6 +160,7 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
 ```
 
 ### Example 2: New Feature with UI
+
 ```
 ~/tasks/dashboard-metrics-widget/
 ├── research.md
@@ -167,19 +190,22 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
 
 ## Agent Responsibilities
 
-### When Starting a New Task:
+### When Starting a New Task
+
 1. Create `~/tasks/[feature-name]/` directory immediately
 2. Start with `research.md` in Phase 1
 3. Never skip phases or required files
 4. Follow the hierarchy of authority (see AGENTS.md)
 
-### During Task Execution:
+### During Task Execution
+
 - Update files as you progress through phases
 - Keep `implementation-log.md` current with real-time notes
 - Create subfolders as needed before adding files to them
 - Mark checklist items in `implementation-checklist.md` as completed
 
-### Before Archiving:
+### Before Archiving
+
 - Ensure all required files exist and are complete
 - Create comprehensive `SUMMARY.md`
 - Verify all subfolders contain relevant artifacts
@@ -188,6 +214,7 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
 ## Common Mistakes to Avoid
 
 ❌ **DON'T:**
+
 - Store task files in flat structure at `~/tasks/[feature].md`
 - Skip required files (research, plans, checklists, summary)
 - Mix multiple tasks in one folder
@@ -195,6 +222,7 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
 - Archive incomplete task folders
 
 ✅ **DO:**
+
 - Create dedicated folder for each task
 - Follow phase-by-phase file creation
 - Use descriptive folder names (kebab-case slugs)
@@ -204,6 +232,7 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
 ## Integration with Local Memory
 
 After creating/updating task artifacts:
+
 1. Store key decisions in local memory MCP/REST API
 2. Tag with task name for retrieval
 3. Reference `LocalMemoryEntryId` in relevant task files
@@ -212,6 +241,7 @@ After creating/updating task artifacts:
 ## Compliance
 
 This structure is **mandatory** per:
+
 - `.cortex/rules/agentic-coding-workflow.md`
 - `.github/copilot-instructions.md`
 - `AGENTS.md` (root)

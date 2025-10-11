@@ -1,5 +1,5 @@
 ## OpenAI Apps SDK Implementation Guide
-
+[`Apps SDK`](https://developers.openai.com/apps-sdk)
 This guide distills the core steps for building, testing, and shipping ChatGPT Apps with the OpenAI Apps SDK. Use it alongside the official documentation when planning features or reviewing pull requests.
 
 ### 1. Understand the MCP foundation

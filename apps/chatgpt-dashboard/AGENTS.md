@@ -38,6 +38,7 @@ slo:
 ## 1) Inheritance & Governance
 
 - Follow governance priority: `/.cortex/rules/vision.md` → `/.cortex/rules/agentic-coding-workflow.md` → `/.cortex/rules/code-review-checklist.md` → `/CODESTYLE.md` → `/AGENTS.md` (root) → this file.
+- **Time freshness guard:** anchor timezone/date context per `/.cortex/rules/_time-freshness.md` before executing tasks or shipping guidance.
 - Cite relevant sections in PRs and reviews.
 
 ---
@@ -136,3 +137,10 @@ pnpm --filter apps/chatgpt-dashboard build && pnpm --filter apps/chatgpt-dashboa
 - Attach bundle report to PR (size + hashed filenames).
 - Record manifest compatibility tests (UI vs server) in evidence checklist.
 - Update connectors operator docs with widget changes.
+
+## Time Freshness & Date Handling
+
+- Align with /.cortex/rules/_time-freshness.md: anchor decisions to the harness-declared timezone and today's date.
+- Treat "latest" or similar questions as freshness checks; verify sources or confirm with stakeholders before responding.
+- Convert relative timeline language in docs, runbooks, and handoffs to explicit ISO-8601 dates (e.g., 2025-10-11) to avoid ambiguity.
+- Call out past vs. future dates explicitly when summarizing historical context or scheduling workstreams.

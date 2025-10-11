@@ -1,0 +1,18 @@
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📋 ACTIVITY LOG                                   [ Auto-scroll: ON ] Clear │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 14:32:15 ✅ Agent-Orchestrator: Health check passed                       │
+│ 14:32:12 ⚠️ MCP-Registry: Latency spike detected (avg: 250ms)             │
+│ 14:32:08 ⛔ Memory-Service: Connection timeout after 30s                  │
+│ 14:32:05 🔄 Memory-Service: Retrying connection (attempt 2/3)            │
+│ 14:32:01 📝 System: Configuration updated via dashboard                   │
+│ 14:31:58 ✅ MCP-Registry: Service health restored                        │
+│ 14:31:55 🔄 User: Refreshed connector status                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+Key Improvements:
+- Real-time updates via SSE
+- Auto-scroll toggle
+- Clear activity history
+- Status icons for log entries
+- Time stamps with locale formatting

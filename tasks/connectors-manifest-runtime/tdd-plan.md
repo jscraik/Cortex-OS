@@ -78,7 +78,7 @@ Deliver a manifest-driven connectors experience: sign and publish the `/v1/conne
 ### Required Research
 - [x] Research document completed: `project-documentation/connectors/manifest-runtime-research.md`.
 - [x] Approach defined in feature spec.
-- [ ] Open questions from spec resolved (schema sharing, secrets distribution).
+- [x] Open questions from spec resolved (schema sharing, secrets distribution) — canonical JSON schema generated to `schemas/connectors.manifest.schema.json`; connectors secrets loaded via 1Password env export with `op run` + `BRAINWAV_ENV_FILE`.
 
 ### Internal Dependencies
 - **Package**: `@cortex-os/asbr` – exposes signed service map.
@@ -310,3 +310,117 @@ Ensure `CONNECTORS_SIGNATURE_KEY`, `CONNECTORS_MANIFEST_PATH`, `CONNECTORS_API_K
 - Performance & accessibility tests automated and included in CI summary.
 - Governance references cited in PR: `/.cortex/rules/agentic-coding-workflow.md` §3, `/CODESTYLE.md` §2, `packages/*/AGENTS.md` front-matter.
 - Review sign-off includes filled CI checklist.
+
+---
+
+## Performance Considerations
+
+### Expected Performance
+- **Operation**: Service map signing pipeline — Target ≤ 150 ms median latency per request; Measurement: Vitest integration harness with instrumentation timer assertions.
+- **Operation**: ChatGPT Apps widget hydration — Target LCP ≤ 2500 ms and TBT ≤ 300 ms on synthetic bundle run; Measurement: `widget.perf.test.ts` thresholds recorded in CI artifacts.
+- **Operation**: SSE connector event stream — Target startup handshake ≤ 1 s with authenticated client; Measurement: Python e2e test timing and structured logs.
+
+### Optimization Opportunities
+- Defer heavy connector metadata to on-demand fetches in the Apps widget to keep initial payload small.
+- Cache signed manifests in the ASBR layer with TTL from manifest metadata to avoid redundant signing work.
+- Parallelize connector health probes with `AbortController` so slow endpoints do not block registry refresh.
+
+---
+
+## Rollout Plan
+
+### Phase 1: Initial Release
+- [ ] Deploy manifest loader and connectors Python service to the shared development namespace.
+- [ ] Run smoke tests for `/v1/connectors/service-map` and ChatGPT Apps widget hydration against dev manifests.
+- [ ] Register signing keys in 1Password and confirm environment variables via `op run` scripts.
+
+### Phase 2: Validation
+- [ ] Execute cross-package integration tests in staging with real connector sandboxes enabled.
+- [ ] Validate telemetry and dashboards show connector proxy gauges and manifest freshness.
+- [ ] Coordinate manual verification with operator HITL checklist and document results in `implementation-log.md`.
+
+### Phase 3: Production
+- [ ] Promote signed manifest artifact through release pipeline with Cosign attestation.
+- [ ] Roll out MCP bridge and ASBR updates via progressive deployment (25% → 100%) while monitoring alerts.
+- [ ] Announce availability to operators and update runbooks with production URLs and ports.
+
+---
+
+## Monitoring & Observability
+
+### Metrics to Track
+- `brainwav_mcp_connector_proxy_up` gauge (per connector) — signals remote availability and debounced failures.
+- `brainwav_connector_refresh_latency_ms` histogram — captures manifest fetch and registry hydration timing.
+- `brainwav_apps_widget_lcp_ms` distribution — ensures Apps widget stays within performance budget.
+
+### Alerts to Configure
+- Alert: `brainwav_mcp_connector_proxy_up == 0` for any connector > 5 minutes; Severity: Critical; Response: fail over to cached manifest and notify on-call operator.
+- Alert: Manifest signing failures > 1% over 15 minutes; Severity: Warning; Response: rotate CONNECTORS_SIGNATURE_KEY and redeploy signer.
+
+### Dashboards
+- Extend Ops Dashboard with connectors panel tracking manifest freshness, proxy gauges, SSE throughput, and Apps widget web vitals.
+
+---
+
+## Rollback Plan
+
+### Conditions for Rollback
+- MCP server bootstrap detects manifest signature mismatch or schema violation.
+- `/v1/connectors/service-map` returns ≥ 2% 5xx responses over a 10-minute rolling window affecting agents.
+
+### Rollback Procedure
+1. Revert to the last known-good signed manifest artifact stored in ops S3 bucket and redeploy ASBR with pinned version.
+2. Disable connectors registry feature flag in ASBR and MCP bridge via configuration and restart affected services.
+3. Validate legacy execution paths through smoke tests, then notify stakeholders and document the incident per Governance Pack.
+
+---
+
+## Future Enhancements
+
+### Deferred to Later
+- Multi-tenant manifest overrides with namespace scoping once GA telemetry stabilizes.
+- CI automation that diffs TS and Python manifest schemas to block incompatible changes before merge.
+
+### Ideas for Iteration
+- Progressive delivery framework for connectors that ramps exposure based on health metrics.
+- Surfacing connector health data inside the Apps widget UI for operator self-service diagnostics.
+
+---
+
+## Lessons Learned (Post-Implementation)
+
+> **Note**: Populate after implementation concludes.
+
+### What Went Well
+- Pending.
+
+### What Could Be Improved
+- Pending.
+
+### Unexpected Challenges
+- Pending.
+
+### Insights for Future Work
+- Pending.
+
+---
+
+## References
+
+### Internal Documentation
+- `tasks/connectors-manifest-runtime-spec.md`
+- `project-documentation/connectors/manifest-runtime-research.md`
+- `docs/runbooks/connectors.md`
+- `docs/operators/chatgpt-connector-bridge.md`
+
+### External Resources
+- OpenAI Apps SDK documentation (Apps widget integration guidelines).
+- Pydantic Settings reference for secure configuration management.
+- Starlette / Uvicorn deployment guide for async Python services.
+
+---
+
+**Implementation Started**: Not Started  
+**Implementation Completed**: Not Started  
+**Tests All Green**: No  
+**Quality Gates Passed**: No

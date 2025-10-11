@@ -214,11 +214,11 @@ async function main() {
 	const hybrid = loadHybridConfig(logger);
 	const ollama = loadOllamaConfig(hybrid);
 	const connectorsConfig = loadConnectorsConfig(logger);
-	const { server } = createServer(logger, config);
+	const { server, auth, oauthOptions } = createServer(logger, config);
 	const piecesProxy = createPiecesProxy(config, logger);
 	const connectorsProxy = createConnectorsProxy(connectorsConfig, logger);
 
-	registerTools(server, logger, { piecesProxy, config, ollama, hybrid });
+	registerTools(server, logger, { piecesProxy, config, ollama, hybrid, auth, oauthOptions });
 	createPrompts(server, logger);
 	createResources(server, logger);
 
@@ -226,7 +226,7 @@ async function main() {
 	await validateOllamaDeployment(ollama, logger);
 	await attachPiecesTools(server, logger, piecesProxy);
 	await attachConnectorsTools(server, logger, connectorsProxy);
-	const transport = await startTransport(server, logger, config);
+	const transport = await startTransport(server, logger, config, auth);
 
 	setupShutdownHandlers(logger, transport, piecesProxy, connectorsProxy, heartbeatStopper);
 	setupProcessErrorHandlers(logger);

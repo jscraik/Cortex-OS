@@ -6,6 +6,7 @@
  */
 
 import { createAgentToolkitMcpTools } from '@cortex-os/agent-toolkit';
+import { noAuthScheme, combineSecuritySchemes, type ToolSecurityScheme } from '@cortex-os/mcp-auth';
 import type { FastMCP } from 'fastmcp';
 import type { HybridConfig } from '../config/hybrid.js';
 import type { OllamaConfig } from '../config/ollama.js';
@@ -16,12 +17,23 @@ import { registerCodebaseTools } from './codebase-tools.js';
 import { registerHybridTools } from './hybrid-tools.js';
 import { registerMemoryTools } from './memory-tools.js';
 import { registerOllamaChat } from './ollama-chat.js';
+import { registerCreateDocTool } from './create-doc.js';
+import type { AuthenticatorBundle } from '../server/auth.js';
 
 type ToolContext = {
 	piecesProxy: PiecesMCPProxy | null;
 	config: ServerConfig;
 	ollama: OllamaConfig;
 	hybrid: HybridConfig | null;
+	auth: AuthenticatorBundle;
+	oauthOptions: {
+		enabled: boolean;
+		protectedResource?: {
+			authorizationServers: string[];
+			resource: string;
+			scopes: Record<string, string[]>;
+		};
+	};
 };
 
 /**
@@ -62,12 +74,61 @@ function enableAgentToolkit(server: FastMCP, logger: any) {
  */
 export function registerTools(server: FastMCP, logger: any, context: ToolContext) {
 	const { config, piecesProxy, ollama } = context;
+	const scopeRegistry = new Map<string, Set<string>>();
+	const originalAddTool = server.addTool.bind(server);
+	server.addTool = (definition: any) => {
+		const incoming: ToolSecurityScheme[] | undefined = Array.isArray(definition.securitySchemes)
+			? definition.securitySchemes
+			: undefined;
+		const normalized = combineSecuritySchemes(incoming ?? [noAuthScheme()]);
+		const requiresToken = normalized.some((scheme) => scheme.type === 'oauth2');
+		const allowsAnonymous = normalized.some((scheme) => scheme.type === 'noauth');
+		const enforcedScopes = new Set<string>();
+		for (const scheme of normalized) {
+			if (scheme.type === 'oauth2') {
+				const scopeSet = scopeRegistry.get(definition.name) ?? new Set<string>();
+				for (const scope of scheme.scopes) {
+					scopeSet.add(scope);
+					enforcedScopes.add(scope);
+				}
+				scopeRegistry.set(definition.name, scopeSet);
+			}
+		}
+		const originalExecute = definition.execute?.bind(definition);
+		const shouldEnforce = requiresToken && !allowsAnonymous && originalExecute;
+		return originalAddTool({
+			...definition,
+			securitySchemes: normalized,
+			execute: shouldEnforce
+				? async (args: unknown, execContext: any) => {
+					const token = execContext?.session?.token;
+					if (!token) {
+						throw new Error(
+							`Tool '${definition.name}' requires OAuth scopes: ${Array.from(enforcedScopes).join(', ')}`,
+						);
+					}
+					const provided = new Set([...(token.scopes ?? []), ...(token.permissions ?? [])]);
+					for (const scope of enforcedScopes) {
+						if (!provided.has(scope)) {
+							throw new Error(
+								`Tool '${definition.name}' requires scope '${scope}' (granted: ${Array.from(provided).join(', ') || 'none'})`,
+							);
+						}
+					}
+					return originalExecute(args, execContext);
+				}
+				: originalExecute,
+		});
+	};
 
 	// Register memory tools
 	registerMemoryTools(server, logger);
 
 	// Register codebase tools
 	registerCodebaseTools(server, logger);
+
+	// Register documentation creation tool (requires docs.write scope)
+	registerCreateDocTool(server, logger);
 
 	// Register hybrid tools (Pieces integration)
 	registerHybridTools(server, logger, piecesProxy);
@@ -92,6 +153,14 @@ export function registerTools(server: FastMCP, logger: any, context: ToolContext
 		}
 	} else {
 		logger.info(createBrandedLog('agent_toolkit_disabled'), 'Agent-toolkit tools disabled');
+	}
+
+	if (context.oauthOptions.protectedResource) {
+		const scopesObject: Record<string, string[]> = {};
+		for (const [toolName, set] of scopeRegistry.entries()) {
+			scopesObject[toolName] = Array.from(set).sort();
+		}
+		context.oauthOptions.protectedResource.scopes = scopesObject;
 	}
 }
 

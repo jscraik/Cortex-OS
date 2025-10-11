@@ -189,7 +189,12 @@ export async function createLocalMemoryApp(): Promise<Express> {
 }
 
 export async function startLocalMemoryServer(options: LocalMemoryServerOptions = {}) {
-	const port = options.port ?? parseInt(process.env.LOCAL_MEMORY_PORT || '9400', 10);
+	// Support both LOCAL_MEMORY_PORT and MEMORY_API_PORT for backward compatibility
+	// MEMORY_API_PORT takes precedence as it's the canonical port registry value
+	const port = options.port ?? parseInt(
+		process.env.MEMORY_API_PORT || process.env.LOCAL_MEMORY_PORT || '3028',
+		10
+	);
 	const host = (options.host ?? process.env.LOCAL_MEMORY_HOST) || '0.0.0.0';
 
 	const app = await createLocalMemoryApp();

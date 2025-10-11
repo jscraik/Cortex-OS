@@ -132,6 +132,18 @@ pnpm test:smart
 pnpm structure:validate
 ```
 
+
+### Optional: Vibe Check MCP Oversight (brAInwav)
+
+- Purpose: External MCP server providing CPI-based oversight via tools: vibe_check, vibe_learn, update/reset/check_constitution.
+- Install server locally: `npx @pv-bhat/vibe-check-mcp start --http --port 2091` (or use stdio).
+- Configure Cortex-OS to use it by setting:
+  - `VIBE_CHECK_HTTP_URL=http://127.0.0.1:2091`
+- Enforcement policy: AGENTS.md mandates calling vibe_check after planning and before writes/network. Logs and errors include brAInwav branding.
+  - Persist env: add `export VIBE_CHECK_HTTP_URL=...` to your shell rc (~/.zshrc) or create `.env.local` at repo root with the same line.
+
+- Disable or switch server by unsetting the env or pointing to another URL.
+
 For detailed setup instructions, see [docs/quick-start.md](./docs/quick-start.md).
 
 ---

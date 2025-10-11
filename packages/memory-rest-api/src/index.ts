@@ -239,7 +239,8 @@ function defaultSparseEmbedding(text: string): Promise<{ indices: number[]; valu
 async function main(): Promise<void> {
 	try {
 		const api = new MemoryRestApi({
-			port: parseInt(process.env.API_PORT || '9700', 10),
+			// Use MEMORY_API_PORT for consistency with port registry (config/ports.env)
+			port: parseInt(process.env.MEMORY_API_PORT || process.env.API_PORT || '3028', 10),
 			host: process.env.API_HOST || '127.0.0.1',
 			enableSwagger: process.env.ENABLE_SWAGGER !== 'false',
 		});

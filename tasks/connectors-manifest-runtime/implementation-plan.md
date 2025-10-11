@@ -333,9 +333,11 @@ The Apps bundle can be served locally and renders connector status using mocked 
 1. **Where should the shared manifest schema live for reuse across Node and Python?**
    - **Decision needed by**: 2025-10-15
    - **Options**: (a) Generate JSON schema from Zod and import in Python, (b) Maintain hand-written JSON schema committed in `schemas/`.
+   - **Resolution (2025-10-11)**: Use the Zod source of truth in `packages/asbr` and emit a canonical JSON schema during `pnpm build:smart`, writing the artifact to `schemas/connectors.manifest.schema.json`. TypeScript loads the Zod objects directly, while Python loads the generated schema via `pydantic` validators. Add a CI check ensuring the generated schema is committed so both runtimes stay in sync.
 
 2. **How will we distribute connector-specific secrets (API keys) to the Python connectors server?**
    - **Decision needed by**: 2025-10-18
    - **Impact**: Blocks deployment automation; options include 1Password env bundles or dedicated secret manager entries.
+   - **Resolution (2025-10-11)**: Reuse the existing 1Password-driven workflow by requiring operators to launch the connectors server with `op run --env-file=$BRAINWAV_ENV_FILE -- uvicorn ...`. Secrets remain in the 1Password vault export referenced by `BRAINWAV_ENV_FILE`, and `pydantic-settings` binds them into the server config. Document the requirement in the connectors runbook and ensure startup checks fail fast when `CONNECTORS_API_KEY` or signature keys are missing.
 
 ---

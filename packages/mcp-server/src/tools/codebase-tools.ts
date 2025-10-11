@@ -6,6 +6,7 @@
  */
 
 import { withSpan } from '@cortex-os/mcp-bridge/runtime/telemetry/tracing';
+import { noAuthScheme, oauth2Scheme } from '@cortex-os/mcp-auth';
 import { execa } from 'execa';
 import type { FastMCP } from 'fastmcp';
 import { z } from 'zod';
@@ -44,6 +45,7 @@ export function registerCodebaseTools(server: FastMCP, logger: any) {
 			idempotentHint: true,
 			title: 'brAInwav Codebase Search',
 		},
+		securitySchemes: [noAuthScheme(), oauth2Scheme(['search.read'])],
 		async execute(args) {
 			return runTool('codebase.search', async () => {
 				logger.info(createBrandedLog('codebase.search', { args }), 'Searching codebase');

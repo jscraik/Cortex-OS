@@ -18,7 +18,9 @@ async def test_health_endpoint_unprotected(settings: Settings) -> None:
     async with build_client(app) as client:
         response = await client.get("/health")
         assert response.status_code == 200
-        assert response.json()["status"] == "ok"
+        body = response.json()
+        assert body["status"] == "ok"
+        assert body["brand"] == "brAInwav"
 
 
 @pytest.mark.asyncio
@@ -60,7 +62,7 @@ async def test_metrics_exposed(settings: Settings) -> None:
     async with build_client(app) as client:
         response = await client.get("/metrics", headers={"Authorization": f"Bearer {settings.api_key}"})
         assert response.status_code == 200
-        assert "brAInwav_mcp_connector_proxy_up" in response.text
+        assert "brainwav_mcp_connector_proxy_up" in response.text
 
 
 @pytest.mark.asyncio

@@ -12,6 +12,12 @@ Operators use this runbook to provision, rotate, and validate Cortex-OS connecto
 - Optional fields (`quotas`, `timeouts`, `metadata`, `endpoint`, `auth`) are surfaced downstream when present.
 - All manifests must validate against `schemas/connectors-manifest.schema.json` and produce a signed payload using `CONNECTORS_SIGNATURE_KEY`.
 
+## Environment Bootstrapping
+
+- Operators **must** source secrets through 1Password. Set `BRAINWAV_ENV_FILE` to the exported vault path and launch the runtime with `op run --env-file="$BRAINWAV_ENV_FILE" -- uv run --package packages/connectors cortex-connectors-server`.
+- The command above ensures `CONNECTORS_SIGNATURE_KEY`, `CONNECTORS_API_KEY`, and `MCP_API_KEY` are injected without writing plaintext `.env` files. Startup will fail fast if any secret is missing.
+- Local bypass (`NO_AUTH=true`) is permitted only for sandbox debugging and must never be enabled in shared environments.
+
 ## Connector Inventory
 
 | Connector ID | Description | Auth Mode | Secrets Required | TTL (seconds) | Notes |
@@ -33,7 +39,7 @@ Operators use this runbook to provision, rotate, and validate Cortex-OS connecto
 3. **Health checks**
    - `GET /v1/connectors/service-map` returns `200` with `brand: "brAInwav"`.
    - SSE stream (`/v1/connectors/events`) emits `status` events every 15s.
-   - Metrics: `brAInwav_mcp_connector_proxy_up{connector="wikidata"}=1`.
+- Metrics: `brainwav_mcp_connector_proxy_up{connector="wikidata"}=1`.
 4. **Rollback**
    - Restore previous manifest from Git history.
    - Redeploy runtimes with the prior `CONNECTORS_SIGNATURE_KEY` if rotated.

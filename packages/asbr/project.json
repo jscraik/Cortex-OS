@@ -6,6 +6,9 @@
     "targets": {
         "build": {
             "executor": "@nx/rollup:rollup",
+            "dependsOn": [
+                "generate-schema"
+            ],
             "outputs": [
                 "{options.outputPath}"
             ],
@@ -42,6 +45,12 @@
                 "ci": {
                     "coverage": true
                 }
+            }
+        },
+        "generate-schema": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "pnpm ts-node --esm scripts/connectors/generate-schema.ts"
             }
         }
     },

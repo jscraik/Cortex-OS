@@ -3,11 +3,21 @@ import { FastMCP, type FastMcpServer } from 'fastmcp';
 import type { Logger } from 'pino';
 import { BRAND, createBrandedLog, createHealthResponse } from '../utils/brand.js';
 import type { ServerConfig } from '../utils/config.js';
-import { createAuthenticator } from './auth.js';
+import { createAuthenticator, type AuthenticatorBundle } from './auth.js';
+
+type ProtectedResourceState = {
+	authorizationServers: string[];
+	resource: string;
+	scopes: Record<string, string[]>;
+};
 
 export type ServerRuntime = {
 	server: FastMcpServer;
-	authenticator: ReturnType<typeof createAuthenticator>;
+	auth: AuthenticatorBundle;
+	oauthOptions: {
+		enabled: boolean;
+		protectedResource?: ProtectedResourceState;
+	};
 };
 
 const SERVER_NAME = 'brainwav-cortex-memory';
@@ -25,13 +35,24 @@ function resolveIncomingMessage(request: unknown): IncomingMessage | undefined {
 }
 
 export function createServer(logger: Logger, config: ServerConfig): ServerRuntime {
-	const authenticator = createAuthenticator(logger);
+	const auth = createAuthenticator(logger);
+	const oauthOptions = auth.config.auth0
+		? {
+				enabled: true,
+				protectedResource: {
+					authorizationServers: [`https://${auth.config.auth0.domain}`],
+					resource: auth.config.auth0.resource,
+					scopes: {} as Record<string, string[]>,
+				},
+		  }
+		: { enabled: false };
 	const server = new FastMCP({
 		name: SERVER_NAME,
 		version: SERVER_VERSION,
 		authenticate: async (request) => {
-			return authenticator.authenticate(resolveIncomingMessage(request));
+			return auth.authenticator.authenticate(resolveIncomingMessage(request));
 		},
+		oauth: oauthOptions,
 		health: {
 			enabled: true,
 			path: '/health',
@@ -56,5 +77,5 @@ export function createServer(logger: Logger, config: ServerConfig): ServerRuntim
 		logger.info(createBrandedLog('client_disconnect'), BRAND.disconnectLog);
 	});
 
-	return { server, authenticator };
+	return { server, auth, oauthOptions };
 }

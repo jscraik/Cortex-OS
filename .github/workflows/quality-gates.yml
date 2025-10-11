@@ -170,6 +170,14 @@ jobs:
         run: |
           pnpm --filter @cortex-os/orchestration exec vitest run tests/tool-dispatch.budget.test.ts tests/spool-settled.test.ts
 
+      - name: MCP Auth unit tests
+        if: inputs.run-tests
+        run: pnpm --filter @cortex-os/mcp-auth test
+
+      - name: MCP Server auth integration tests
+        if: inputs.run-tests
+        run: pnpm --filter @cortex-os/mcp-server run test:int -- --runInBand
+
       - name: Build
         if: inputs.run-build
         run: |

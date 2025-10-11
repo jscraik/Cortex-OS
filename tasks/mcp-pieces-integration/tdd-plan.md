@@ -2,149 +2,182 @@
 
 ## Overview
 
-This TDD plan follows Test-Driven Development principles for implementing Pieces OS integration with the Cortex MCP hub.
+This TDD plan follows Test-Driven Development principles for extending the existing Pieces OS integration within the Cortex MCP hub, leveraging established Cortex-OS architectural patterns and maintaining compliance with `.cortex/` governance requirements.
+
+**Architecture Note**: This implementation extends the existing `PiecesMCPProxy` and `RemoteToolProxy` infrastructure in `packages/mcp-server` rather than creating parallel systems, ensuring proper A2A event integration and maintaining package dependency boundaries.
 
 ## BDD Acceptance Scenarios
 
-### Feature: Pieces Drive Proxy
+### Feature: Extended Pieces Integration
 
 ```gherkin
-Scenario: Drive proxy connects successfully
-  Given Pieces Drive is running on port 39301
+Scenario: Enhanced Pieces proxy connection with multiple services
+  Given Pieces OS services are running on configured endpoints
+  When the MCP hub initializes with existing PiecesMCPProxy
+  Then the proxy should connect to all configured Pieces services
+  And "Successfully connected to Pieces OS services" should be logged
+  And tools should be registered with "pieces." prefix per existing pattern
+  And telemetry should record connection status via existing metrics
+
+Scenario: Pieces proxy handles partial service availability
+  Given some Pieces OS services are NOT running
   When the MCP hub initializes
-  Then the Drive proxy should connect via SSE
-  And "Successfully connected to Pieces Drive" should be logged
-  And drive tools should be registered with "pieces_drive." prefix
+  Then the PiecesMCPProxy should log warnings for unavailable services
+  And the MCP hub should continue with available tools only
+  And unavailable tools should be omitted from registration
+  And A2A events should be emitted for service status changes
 
-Scenario: Drive proxy handles service unavailable
-  Given Pieces Drive is NOT running
+Scenario: Pieces proxy emits A2A events for tool execution
+  Given the Pieces proxy is connected
+  When a client calls "pieces.search_code"
+  Then the proxy should forward the request to Pieces OS
+  And return the Pieces response as MCP tool result
+  And emit A2A event "cortex.pieces.tool.completed" via EventBus
+  And include execution context in event payload
+
+Scenario: Drive integration extends existing proxy
+  Given Pieces Drive endpoint is configured separately
   When the MCP hub initializes
-  Then the Drive proxy should log a warning
-  And the MCP hub should continue with local tools only
-  And no drive tools should be registered
-
-Scenario: Drive proxy reconnects after disconnection
-  Given the Drive proxy is connected
-  When the SSE connection drops
-  Then the proxy should wait 5 seconds
-  And attempt to reconnect
-  And log the reconnection attempt
-
-Scenario: Drive tool execution
-  Given the Drive proxy is connected
-  When a client calls "pieces_drive.list_files"
-  Then the proxy should forward the request to Pieces Drive
-  And return the Drive response as MCP tool result
-  And emit an A2A event for the tool execution
+  Then the existing PiecesMCPProxy should include Drive tools
+  And Drive tools should be registered with "pieces.drive." prefix
+  And follow the same connection/reconnection patterns as other Pieces tools
 ```
 
-### Feature: Pieces Copilot Proxy
+### Feature: Enhanced Pieces Copilot Integration
 
 ```gherkin
-Scenario: Copilot proxy with context assembly
-  Given the Copilot proxy is connected
-  When a client calls "pieces_copilot.ask" with query "explain this code"
-  Then the system should first run memory.hybrid_search for relevant context
-  And include Drive files in the context
-  And include LTM memories in the context
-  And send the assembled context to Copilot
+Scenario: Copilot integration with enhanced context assembly
+  Given the Pieces Copilot tools are available via PiecesMCPProxy
+  When a client calls "pieces.copilot.ask" with query "explain this code"
+  Then the system should first run performLocalHybridSearch for relevant context
+  And include local memory results in the context
+  And include existing Pieces LTM results in the context
+  And send the assembled context to Pieces Copilot
   And return Copilot's response to the client
+  And emit A2A event "cortex.copilot.query.completed"
 
-Scenario: Copilot interaction persistence
+Scenario: Copilot interaction persistence via MemoryProvider
   Given a Copilot query completes successfully
   When the response is returned
-  Then the interaction should be stored in local memory
+  Then the interaction should be stored via MemoryProvider interface
   And tagged with domain "copilot"
-  And include the query, context, and response
+  And include the query, context, and response in structured format
+  And follow the existing memory-core storage patterns
+
+Scenario: Copilot tools extend existing Pieces proxy
+  Given the PiecesMCPProxy is initialized
+  When Copilot tools are discovered via listTools()
+  Then Copilot tools should be registered with "pieces.copilot." prefix
+  And follow the same RemoteTool patterns as other Pieces tools
+  And include proper error handling via RemoteToolProxy
 ```
 
-### Feature: Enhanced Hybrid Search
+### Feature: Enhanced Hybrid Search Extension
 
 ```gherkin
-Scenario: Hybrid search with all sources
-  Given local memory, LTM, Drive, and Copilot are available
+Scenario: Extended hybrid search with all Pieces sources
+  Given local memory, existing Pieces LTM, and new Pieces services are available
   When a client calls memory.hybrid_search with query "meeting notes"
-  And include_pieces=true
-  And include_drive=true
-  And include_copilot=true
-  Then results from all 4 sources should be queried in parallel
-  And results should be deduplicated
+  And include_pieces=true (existing parameter)
+  And include_drive=true (new parameter)
+  And include_copilot=true (new parameter)
+  Then results from all sources should be queried in parallel via existing patterns
+  And results should be deduplicated using existing normalizePiecesResults logic
   And results should be reranked by relevance
-  And each result should have source attribution
+  And each result should have source attribution ('cortex-local', 'pieces-ltm', 'pieces-drive', 'pieces-copilot')
   And the response should complete within 500ms
+  And telemetry should be recorded via observeHybridSearch
 
-Scenario: Hybrid search with source failures
-  Given local memory is available
-  But Pieces Drive is offline
+Scenario: Hybrid search with graceful degradation
+  Given local memory is available via performLocalHybridSearch
+  But some Pieces services are offline
   When a client calls memory.hybrid_search with include_drive=true
   Then results from available sources should be returned
-  And the response should include a warning about offline sources
+  And the response should include warnings about offline sources
   And the operation should not fail
+  And existing error handling patterns should be maintained
 
-Scenario: Hybrid search with optional sources
-  Given all services are available
-  When a client calls memory.hybrid_search with include_copilot=false
-  Then Copilot should NOT be queried
-  And results from local, LTM, and Drive should be returned
+Scenario: Hybrid search extends existing implementation
+  Given the existing memory.hybrid_search tool is working
+  When new parameters (include_drive, include_copilot) are added
+  Then the existing performLocalHybridSearch logic should be preserved
+  And new Pieces services should be queried via existing PiecesMCPProxy
+  And result merging should extend existing normalization logic
 ```
 
-### Feature: Context Bridge
+### Feature: Context Bridge via Memory-Core Integration
 
 ```gherkin
-Scenario: Pieces event capture and storage
-  Given the context bridge is enabled
-  When Pieces OS emits a code change event
-  Then the bridge should capture the event
+Scenario: Pieces event capture via MemoryProvider
+  Given the context bridge is enabled via configuration
+  When Pieces OS emits a code change event through existing event channels
+  Then the bridge should capture the event using existing event patterns
   And create a summary of the change
-  And store it in local memory with domain "code"
-  And tag it with session metadata
+  And store it via MemoryProvider interface with domain "code"
+  And tag it with session metadata following existing memory-core patterns
+  And emit A2A event "cortex.memory.event.stored"
 
-Scenario: Context bridge filtering
+Scenario: Context bridge filtering via memory-core
   Given the context bridge is enabled
-  And PIECES_CONTEXT_FILTERS="code,notes"
+  And PIECES_CONTEXT_FILTERS="code,notes" (environment variable)
   When Pieces OS emits a meeting event
   Then the event should NOT be captured
   Because "meetings" is not in the filter list
+  And the filtering should use existing memory-core query patterns
 
-Scenario: Context bridge disabled
-  Given the context bridge is disabled via PIECES_CONTEXT_BRIDGE_ENABLED=false
+Scenario: Context bridge integrates with existing memory services
+  Given the context bridge is enabled
+  And MemoryProvider is configured (LocalMemoryProvider or RemoteMemoryProvider)
   When Pieces OS emits events
-  Then no events should be captured
-  And no storage operations should occur
+  Then events should be stored using the configured MemoryProvider
+  And follow the same validation and storage patterns as other memory operations
+  And maintain consistency with existing memory-core contracts
 ```
 
-### Feature: Memory Reporting
+### Feature: Enhanced Memory Reporting via Hybrid Search
 
 ```gherkin
-Scenario: Generate daily report
-  Given local memory contains entries from today
-  And Pieces LTM contains entries from today
+Scenario: Generate comprehensive daily report
+  Given local memory contains entries from today via MemoryProvider
+  And Pieces LTM contains entries from today via existing integration
+  And Pieces Drive/Copilot have activity logs
   When a client calls memory.report with time_range=today
-  Then entries from all sources should be retrieved
-  And a summary should be generated
+  Then entries from all sources should be retrieved via performLocalHybridSearch
+  And a summary should be generated using existing result formatting
   And the report should be formatted as markdown
-  And include sections for: meetings, code changes, notes
+  And include sections for: meetings, code changes, notes, Pieces interactions
 
-Scenario: Domain-filtered reporting
-  Given entries exist across multiple domains
+Scenario: Domain-filtered reporting via memory-core
+  Given entries exist across multiple domains via MemoryProvider
   When a client calls memory.report with domain="code"
   Then only code-related entries should be included
   And the report should focus on development activities
+  And use existing memory-core domain filtering patterns
+
+Scenario: Enhanced reporting with new Pieces sources
+  Given the extended hybrid search is implemented
+  When a client calls memory.report with include_drive=true and include_copilot=true
+  Then the report should include Pieces Drive file activities
+  And the report should include Pieces Copilot interaction summaries
+  And maintain compatibility with existing report formats
 ```
 
 ## TDD Unit Tests
 
-### Phase 1: Pieces Drive Proxy (Days 1-2)
+### Phase 1: Extended Pieces Integration (Days 1-2)
 
-#### RED: `packages/mcp-server/src/__tests__/pieces-drive-proxy.test.ts`
+#### RED: `packages/mcp-server/src/__tests__/pieces-integration.test.ts`
 
 ```typescript
-describe('PiecesDriveProxy', () => {
-  describe('connection', () => {
-    it('should connect to Pieces Drive via SSE', async () => {
-      // RED: No implementation yet
-      const proxy = new PiecesDriveProxy({
-        endpoint: 'http://localhost:39301/...',
+import { PiecesMCPProxy } from '../pieces-proxy.js';
+import { EventBus } from '@cortex-os/a2a-core/bus.js';
+
+describe('Extended Pieces Integration', () => {
+  describe('enhanced PiecesMCPProxy', () => {
+    it('should connect to multiple Pieces services', async () => {
+      // RED: Extend existing proxy for multiple services
+      const proxy = new PiecesMCPProxy({
+        endpoint: 'http://localhost:39300/model_context_protocol/2024-11-05/sse',
         enabled: true,
         logger: mockLogger,
       });
@@ -152,149 +185,195 @@ describe('PiecesDriveProxy', () => {
       expect(proxy.isConnected()).toBe(true);
     });
 
-    it('should handle connection failure gracefully', async () => {
-      // RED: No error handling yet
-      const proxy = new PiecesDriveProxy({
-        endpoint: 'http://invalid:9999/...',
+    it('should emit A2A events for tool execution', async () => {
+      // RED: Add A2A event emission to existing proxy
+      const mockEventBus = { emitEvent: vi.fn() };
+      const proxy = new PiecesMCPProxy({
+        endpoint: 'http://localhost:39300/...',
+        enabled: true,
+        logger: mockLogger,
+        eventBus: mockEventBus,
+      });
+      await proxy.connect();
+
+      await proxy.callTool('search_code', { query: 'test' });
+
+      expect(mockEventBus.emitEvent).toHaveBeenCalledWith({
+        type: 'cortex.pieces.tool.completed',
+        payload: expect.objectContaining({
+          tool: 'search_code',
+          source: 'pieces_os',
+        }),
+      });
+    });
+
+    it('should handle partial service availability', async () => {
+      // RED: Add graceful degradation for partial failures
+      const proxy = new PiecesMCPProxy({
+        endpoint: 'http://localhost:39300/...',
         enabled: true,
         logger: mockLogger,
       });
-      await expect(proxy.connect()).resolves.not.toThrow();
-      expect(proxy.isConnected()).toBe(false);
-      expect(mockLogger.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to connect to Pieces Drive')
-      );
-    });
 
-    it('should auto-reconnect after disconnection', async () => {
-      // RED: No reconnect logic yet
-      const proxy = new PiecesDriveProxy({...});
-      await proxy.connect();
-      
-      // Simulate disconnection
-      await proxy['transport'].close();
-      
-      // Wait for reconnect attempt (5 seconds)
-      await new Promise(resolve => setTimeout(resolve, 5500));
-      
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining('Attempting to reconnect')
-      );
+      // Mock partial service failure
+      vi.spyOn(proxy, 'callTool').mockImplementation(async (tool) => {
+        if (tool === 'drive.list_files') {
+          throw new Error('Drive service unavailable');
+        }
+        return { success: true };
+      });
+
+      const availableTools = proxy.getTools().filter(t => !t.name.startsWith('drive.'));
+      expect(availableTools.length).toBeGreaterThan(0);
     });
   });
 
-  describe('tool discovery', () => {
-    it('should discover Drive tools via listTools()', async () => {
-      // RED: No tool discovery yet
-      const proxy = new PiecesDriveProxy({...});
-      await proxy.connect();
-      
-      const tools = proxy.getTools();
-      expect(tools).toContainEqual(
-        expect.objectContaining({ name: 'list_files' })
-      );
-    });
+  describe('A2A integration', () => {
+    it('should integrate with existing EventBus', async () => {
+      // RED: Ensure proper A2A integration
+      const mockEventBus = new EventBus();
+      const emitSpy = vi.spyOn(mockEventBus, 'emitEvent');
 
-    it('should return empty array when disconnected', () => {
-      // RED: No disconnected state handling
-      const proxy = new PiecesDriveProxy({...});
-      expect(proxy.getTools()).toEqual([]);
-    });
-  });
+      const proxy = new PiecesMCPProxy({
+        endpoint: 'http://localhost:39300/...',
+        enabled: true,
+        logger: mockLogger,
+        eventBus: mockEventBus,
+      });
 
-  describe('tool execution', () => {
-    it('should forward tool calls to Pieces Drive', async () => {
-      // RED: No execution logic yet
-      const proxy = new PiecesDriveProxy({...});
-      await proxy.connect();
-      
-      const result = await proxy.callTool('list_files', { path: '/code' });
-      expect(result).toHaveProperty('content');
-      expect(mockTransport.callTool).toHaveBeenCalledWith(
-        'list_files',
-        { path: '/code' }
+      await proxy.callTool('test_tool', {});
+
+      expect(emitSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: expect.stringMatching(/^cortex\.pieces\./),
+          payload: expect.objectContaining({
+            brand: 'brAInwav',
+            timestamp: expect.any(String),
+          }),
+        })
       );
     });
   });
 });
 ```
 
-#### GREEN: Implement minimal code to pass tests
+#### GREEN: Extend existing PiecesMCPProxy
 
-1. Create `PiecesDriveProxy` class following `PiecesMCPProxy` pattern
-2. Implement SSE connection via `@modelcontextprotocol/sdk`
-3. Add graceful error handling
-4. Implement auto-reconnect with 5-second delay
-5. Add tool discovery via `listTools()`
-6. Implement tool execution forwarding
+1. **Extend PiecesMCPProxy** to support multiple Pieces service endpoints
+2. **Add A2A event emission** via existing EventBus integration
+3. **Enhance RemoteToolProxy** to handle partial service availability
+4. **Leverage existing telemetry** via setPiecesProxyStatus
+5. **Maintain existing connection/reconnection** patterns from RemoteToolProxy
 
-#### REFACTOR: Improve code quality
+#### REFACTOR: Improve integration quality
 
-1. Extract common proxy logic to base class
-2. Add type safety for tool schemas
-3. Improve logging with structured context
-4. Add metrics/telemetry hooks
+1. **Extract service configuration** to separate module for multiple endpoints
+2. **Add structured A2A event schemas** following a2a-contracts patterns
+3. **Enhance error handling** using existing RemoteToolProxy patterns
+4. **Improve telemetry integration** with existing metrics framework
 
-### Phase 2: Pieces Copilot Proxy (Days 3-4)
+### Phase 2: Enhanced Copilot Integration (Days 3-4)
 
-#### RED: `packages/mcp-server/src/__tests__/pieces-copilot-proxy.test.ts`
+#### RED: `packages/mcp-server/src/__tests__/copilot-integration.test.ts`
 
 ```typescript
-describe('PiecesCopilotProxy', () => {
-  describe('context assembly', () => {
-    it('should gather context before Copilot query', async () => {
-      // RED: No context assembly yet
-      const proxy = new PiecesCopilotProxy({...});
-      await proxy.connect();
-      
-      mockMemoryProvider.search.mockResolvedValue([/* local results */]);
-      mockPiecesLTM.callTool.mockResolvedValue([/* LTM results */]);
-      mockPiecesDrive.callTool.mockResolvedValue([/* Drive results */]);
-      
-      await proxy.callTool('ask', { question: 'What did we discuss?' });
-      
-      expect(mockMemoryProvider.search).toHaveBeenCalled();
-      expect(mockPiecesLTM.callTool).toHaveBeenCalled();
-      expect(mockPiecesDrive.callTool).toHaveBeenCalled();
-    });
+import { performLocalHybridSearch } from '../search-utils.js';
+import { createMemoryProviderFromEnv } from '@cortex-os/memory-core/index.js';
+import { EventBus } from '@cortex-os/a2a-core/bus.js';
 
-    it('should format context for Copilot', async () => {
-      // RED: No context formatting yet
-      const proxy = new PiecesCopilotProxy({...});
-      const context = await proxy['assembleContext']('test query');
-      
+describe('Enhanced Copilot Integration', () => {
+  describe('context assembly via existing patterns', () => {
+    it('should use performLocalHybridSearch for context', async () => {
+      // RED: Extend existing hybrid search for Copilot context
+      const mockMemoryProvider = createMemoryProviderFromEnv();
+      const searchSpy = vi.spyOn(mockMemoryProvider, 'search');
+
+      searchSpy.mockResolvedValue([
+        { id: '1', content: 'Local memory result', score: 0.9 },
+      ]);
+
+      const context = await assembleCopilotContext('test query', {
+        memoryProvider: mockMemoryProvider,
+        includeLocal: true,
+        includePieces: true,
+      });
+
+      expect(searchSpy).toHaveBeenCalledWith({
+        query: 'test query',
+        limit: 10,
+      });
       expect(context).toHaveProperty('local_memories');
-      expect(context).toHaveProperty('ltm_entries');
-      expect(context).toHaveProperty('drive_files');
+      expect(context).toHaveProperty('pieces_ltm');
+    });
+
+    it('should integrate with existing PiecesMCPProxy', async () => {
+      // RED: Use existing Pieces proxy for Copilot tools
+      const mockPiecesProxy = {
+        isConnected: () => true,
+        callTool: vi.fn().mockResolvedValue({ response: 'LTM result' }),
+      };
+
+      const context = await assembleCopilotContext('test query', {
+        piecesProxy: mockPiecesProxy,
+        includePieces: true,
+      });
+
+      expect(mockPiecesProxy.callTool).toHaveBeenCalledWith('ask_pieces_ltm', {
+        question: 'test query',
+        chat_llm: 'gpt-4',
+        topics: [],
+        related_questions: [],
+      });
     });
   });
 
-  describe('interaction persistence', () => {
-    it('should store Copilot interactions in local memory', async () => {
-      // RED: No persistence yet
-      const proxy = new PiecesCopilotProxy({...});
-      await proxy.callTool('ask', { question: 'test' });
-      
-      expect(mockMemoryProvider.store).toHaveBeenCalledWith(
-        expect.objectContaining({
-          domain: 'copilot',
-          content: expect.stringContaining('test'),
-        })
-      );
+  describe('interaction persistence via MemoryProvider', () => {
+    it('should store via MemoryProvider interface', async () => {
+      // RED: Use memory-core storage patterns
+      const mockMemoryProvider = createMemoryProviderFromEnv();
+      const storeSpy = vi.spyOn(mockMemoryProvider, 'store');
+
+      storeSpy.mockResolvedValue({ id: 'stored123' });
+
+      await storeCopilotInteraction({
+        memoryProvider: mockMemoryProvider,
+        query: 'test query',
+        response: 'test response',
+        context: { local_memories: [], pieces_ltm: [] },
+      });
+
+      expect(storeSpy).toHaveBeenCalledWith({
+        content: expect.stringContaining('test query'),
+        domain: 'copilot',
+        tags: ['copilot', 'pieces'],
+        metadata: expect.objectContaining({
+          query: 'test query',
+          response: 'test response',
+          sources: expect.arrayContaining(['local', 'pieces']),
+        }),
+      });
     });
   });
 
-  describe('A2A events', () => {
-    it('should emit events for Copilot interactions', async () => {
-      // RED: No event emission yet
-      const proxy = new PiecesCopilotProxy({...});
-      await proxy.callTool('ask', { question: 'test' });
-      
-      expect(mockEventManager.emitEvent).toHaveBeenCalledWith({
+  describe('A2A event integration', () => {
+    it('should emit events via existing EventBus', async () => {
+      // RED: Use A2A patterns for event emission
+      const mockEventBus = new EventBus();
+      const emitSpy = vi.spyOn(mockEventBus, 'emitEvent');
+
+      await emitCopilotEvent(mockEventBus, {
+        type: 'query.completed',
+        query: 'test query',
+        response: 'test response',
+      });
+
+      expect(emitSpy).toHaveBeenCalledWith({
         type: 'cortex.copilot.query.completed',
         payload: expect.objectContaining({
-          query: 'test',
+          brand: 'brAInwav',
+          query: 'test query',
           source: 'pieces_copilot',
+          timestamp: expect.any(String),
         }),
       });
     });
@@ -302,274 +381,597 @@ describe('PiecesCopilotProxy', () => {
 });
 ```
 
-#### GREEN: Implement Copilot proxy
+#### GREEN: Implement enhanced Copilot integration
 
-1. Create `PiecesCopilotProxy` class
-2. Implement context assembly logic
-3. Format context for Copilot
-4. Add interaction persistence
-5. Emit A2A events
+1. **Extend existing hybrid-tools.ts** to support Copilot context assembly
+2. **Integrate with performLocalHybridSearch** for local context retrieval
+3. **Use existing PiecesMCPProxy** for Pieces LTM and Copilot tool calls
+4. **Store interactions via MemoryProvider** interface following memory-core patterns
+5. **Emit A2A events via EventBus** using a2a-core integration
 
 #### REFACTOR
 
-1. Extract context assembly to separate module
-2. Add caching for repeated contexts
-3. Optimize parallel queries
+1. **Extract context assembly** to `src/utils/context-assembly.ts` module
+2. **Add context caching** using existing memory patterns
+3. **Optimize parallel queries** leveraging existing performLocalHybridSearch patterns
 
-### Phase 3: Enhanced Hybrid Search (Days 5-6)
+### Phase 3: Enhanced Hybrid Search Extension (Days 5-6)
 
-#### RED: `packages/mcp-server/src/tools/__tests__/hybrid-search.test.ts`
+#### RED: `packages/mcp-server/src/tools/__tests__/enhanced-hybrid-search.test.ts`
 
 ```typescript
-describe('memory.hybrid_search', () => {
-  describe('multi-source aggregation', () => {
-    it('should query all enabled sources in parallel', async () => {
-      // RED: No multi-source logic yet
-      const startTime = Date.now();
-      
-      const result = await hybridSearch({
+import { performLocalHybridSearch } from '../../search-utils.js';
+import { normalizePiecesResults } from '../../pieces-normalizer.js';
+
+describe('Enhanced memory.hybrid_search', () => {
+  describe('extend existing hybrid search', () => {
+    it('should extend existing performLocalHybridSearch with Drive/Copilot', async () => {
+      // RED: Extend existing hybrid-tools.ts implementation
+      const mockPerformLocalHybridSearch = vi.fn().mockResolvedValue([
+        { id: '1', content: 'Local result', score: 0.9, tags: [], importance: 1, metadata: {} },
+      ]);
+
+      const result = await enhancedHybridSearch({
         query: 'test',
         include_pieces: true,
         include_drive: true,
         include_copilot: true,
+        limit: 10,
       });
-      
+
+      expect(mockPerformLocalHybridSearch).toHaveBeenCalledWith('test', { limit: 10 });
+      expect(result).toHaveProperty('local');
+      expect(result).toHaveProperty('pieces');
+      expect(result).toHaveProperty('total');
+    });
+
+    it('should query new Pieces sources in parallel', async () => {
+      // RED: Add parallel querying for Drive/Copilot
+      const mockPiecesProxy = {
+        isConnected: () => true,
+        callTool: vi.fn(),
+      };
+
+      mockPiecesProxy.callTool
+        .mockResolvedValueOnce({ drive_results: [{ id: 'd1', content: 'Drive file' }] })
+        .mockResolvedValueOnce({ copilot_results: [{ id: 'c1', content: 'Copilot response' }] });
+
+      const startTime = Date.now();
+      const result = await queryPiecesSources(mockPiecesProxy, 'test query', {
+        include_drive: true,
+        include_copilot: true,
+      });
       const duration = Date.now() - startTime;
-      expect(duration).toBeLessThan(500);
-      expect(result.sources).toHaveLength(4);
+
+      expect(duration).toBeLessThan(500); // Parallel execution
+      expect(mockPiecesProxy.callTool).toHaveBeenCalledTimes(2);
+      expect(result).toHaveProperty('drive');
+      expect(result).toHaveProperty('copilot');
     });
 
-    it('should deduplicate results across sources', async () => {
-      // RED: No deduplication yet
-      mockLocalMemory.search.mockResolvedValue([
-        { id: '1', content: 'duplicate' },
-      ]);
-      mockPiecesLTM.callTool.mockResolvedValue([
-        { id: '1', content: 'duplicate' },
-      ]);
-      
-      const result = await hybridSearch({ query: 'test' });
-      expect(result.combined).toHaveLength(1);
-    });
+    it('should use existing normalizePiecesResults for new sources', async () => {
+      // RED: Leverage existing normalization logic
+      const mockPiecesResponse = {
+        drive_results: [{ id: 'd1', content: 'Drive file', relevance_score: 0.8 }],
+        copilot_results: [{ id: 'c1', content: 'Copilot response', relevance_score: 0.9 }],
+      };
 
-    it('should attribute source for each result', async () => {
-      // RED: No source attribution yet
-      const result = await hybridSearch({
-        query: 'test',
-        include_pieces: true,
-      });
-      
-      expect(result.combined[0]).toHaveProperty('source');
-      expect(['cortex-local', 'pieces-ltm', 'pieces-drive', 'pieces-copilot'])
-        .toContain(result.combined[0].source);
+      const normalized = normalizePiecesResults(mockPiecesResponse);
+
+      expect(normalized).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'd1',
+            content: 'Drive file',
+            source: 'pieces-drive',
+            score: 0.8,
+          }),
+          expect.objectContaining({
+            id: 'c1',
+            content: 'Copilot response',
+            source: 'pieces-copilot',
+            score: 0.9,
+          }),
+        ])
+      );
     });
   });
 
-  describe('graceful degradation', () => {
-    it('should continue with partial results if source fails', async () => {
-      // RED: No error handling yet
-      mockPiecesDrive.callTool.mockRejectedValue(new Error('Drive offline'));
-      
-      const result = await hybridSearch({
+  describe('maintain existing patterns', () => {
+    it('should preserve existing telemetry patterns', async () => {
+      // RED: Use existing observeHybridSearch function
+      const mockObserveHybridSearch = vi.fn();
+
+      await enhancedHybridSearchWithTelemetry({
         query: 'test',
         include_drive: true,
-      });
-      
-      expect(result.sources).not.toContainEqual(
-        expect.objectContaining({ name: 'pieces-drive' })
+      }, mockObserveHybridSearch);
+
+      expect(mockObserveHybridSearch).toHaveBeenCalledWith(
+        expect.any(Number), // duration
+        expect.any(Number), // localCount
+        expect.any(Number), // piecesCount
       );
-      expect(result.warnings).toContain('Drive offline');
+    });
+
+    it('should handle partial failures using existing patterns', async () => {
+      // RED: Extend existing error handling
+      const mockPiecesProxy = {
+        isConnected: () => true,
+        callTool: vi.fn(),
+      };
+
+      mockPiecesProxy.callTool.mockRejectedValue(new Error('Drive service unavailable'));
+
+      const result = await enhancedHybridSearch({
+        query: 'test',
+        include_drive: true,
+        include_pieces: false,
+        include_copilot: false,
+      });
+
+      expect(result.warnings).toContain('Drive service unavailable');
+      expect(result.total).toBeGreaterThanOrEqual(0); // Should still return results
     });
   });
 });
 ```
 
-#### GREEN: Implement enhanced hybrid search
+#### GREEN: Extend existing hybrid search implementation
 
-1. Update `memory.hybrid_search` tool
-2. Add parallel querying for all sources
-3. Implement deduplication logic
-4. Add source attribution
-5. Handle partial failures gracefully
+1. **Extend hybrid-tools.ts** to add `include_drive` and `include_copilot` parameters
+2. **Use existing performLocalHybridSearch** for local memory queries
+3. **Leverage existing PiecesMCPProxy** for new Pieces service queries
+4. **Extend normalizePiecesResults** to handle Drive/Copilot response formats
+5. **Maintain existing observeHybridSearch** telemetry patterns
 
 #### REFACTOR
 
-1. Extract deduplication to utility function
-2. Add reranking algorithm
-3. Optimize parallel execution
+1. **Extract source querying** to `src/utils/pieces-source-query.ts` module
+2. **Extend existing deduplication** logic to handle new source types
+3. **Optimize result merging** using existing normalization patterns
 
-### Phase 4: Context Bridge (Days 7-8)
+### Phase 4: Context Bridge via Memory-Core (Days 7-8)
 
 #### RED: `packages/memory-core/src/__tests__/context-bridge.test.ts`
 
 ```typescript
-describe('ContextBridge', () => {
-  describe('event capture', () => {
-    it('should capture Pieces OS events', async () => {
-      // RED: No capture logic yet
-      const bridge = new ContextBridge({
+import { createMemoryProviderFromEnv } from '../index.js';
+import { EventBus } from '@cortex-os/a2a-core/bus.js';
+
+describe('Context Bridge via MemoryProvider', () => {
+  describe('integration with memory-core patterns', () => {
+    it('should store Pieces events via MemoryProvider interface', async () => {
+      // RED: Use existing MemoryProvider for event storage
+      const memoryProvider = createMemoryProviderFromEnv();
+      const storeSpy = vi.spyOn(memoryProvider, 'store');
+
+      storeSpy.mockResolvedValue({ id: 'event123' });
+
+      const contextBridge = new ContextBridge({
         enabled: true,
+        memoryProvider,
         filters: ['code', 'notes'],
       });
-      
-      await bridge.start();
-      
-      // Simulate Pieces event
-      await simulatePiecesEvent({
+
+      await contextBridge.captureEvent({
         type: 'code_change',
-        data: { file: 'test.ts', changes: '...' },
+        data: { file: 'test.ts', changes: 'added function' },
+        timestamp: new Date().toISOString(),
       });
-      
-      expect(mockMemoryProvider.store).toHaveBeenCalled();
+
+      expect(storeSpy).toHaveBeenCalledWith({
+        content: expect.stringContaining('code_change'),
+        domain: 'code',
+        tags: ['pieces', 'code_change', 'code'],
+        metadata: expect.objectContaining({
+          eventType: 'code_change',
+          source: 'pieces_os',
+          file: 'test.ts',
+        }),
+      });
     });
 
-    it('should filter events by domain', async () => {
-      // RED: No filtering yet
-      const bridge = new ContextBridge({
-        filters: ['code'],
+    it('should use existing memory-core filtering patterns', async () => {
+      // RED: Leverage MemoryProvider search for filtering
+      const memoryProvider = createMemoryProviderFromEnv();
+      const storeSpy = vi.spyOn(memoryProvider, 'store');
+
+      const contextBridge = new ContextBridge({
+        enabled: true,
+        memoryProvider,
+        filters: ['code'], // Only capture code events
       });
-      
-      await simulatePiecesEvent({ type: 'meeting', data: {...} });
-      expect(mockMemoryProvider.store).not.toHaveBeenCalled();
+
+      // Should capture - matches filter
+      await contextBridge.captureEvent({
+        type: 'code_change',
+        data: { file: 'test.ts' },
+      });
+
+      // Should not capture - doesn't match filter
+      await contextBridge.captureEvent({
+        type: 'meeting',
+        data: { title: 'Team sync' },
+      });
+
+      expect(storeSpy).toHaveBeenCalledTimes(1);
+      expect(storeSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ domain: 'code' })
+      );
     });
 
-    it('should not capture when disabled', async () => {
-      // RED: No disable logic yet
-      const bridge = new ContextBridge({ enabled: false });
-      await simulatePiecesEvent({ type: 'code_change', data: {...} });
-      expect(mockMemoryProvider.store).not.toHaveBeenCalled();
+    it('should work with both LocalMemoryProvider and RemoteMemoryProvider', async () => {
+      // RED: Test provider abstraction
+      const localProvider = createMemoryProviderFromEnv();
+      const remoteProvider = {
+        store: vi.fn().mockResolvedValue({ id: 'remote123' }),
+        search: vi.fn(),
+      };
+
+      const localBridge = new ContextBridge({
+        enabled: true,
+        memoryProvider: localProvider,
+      });
+
+      const remoteBridge = new ContextBridge({
+        enabled: true,
+        memoryProvider: remoteProvider,
+      });
+
+      const event = { type: 'test', data: {} };
+
+      await localBridge.captureEvent(event);
+      await remoteBridge.captureEvent(event);
+
+      expect(localBridge.memoryProvider.store).toHaveBeenCalled();
+      expect(remoteBridge.memoryProvider.store).toHaveBeenCalled();
+    });
+  });
+
+  describe('A2A event emission', () => {
+    it('should emit events via existing EventBus', async () => {
+      // RED: Use A2A patterns for event notifications
+      const mockEventBus = new EventBus();
+      const emitSpy = vi.spyOn(mockEventBus, 'emitEvent');
+      const memoryProvider = createMemoryProviderFromEnv();
+
+      const contextBridge = new ContextBridge({
+        enabled: true,
+        memoryProvider,
+        eventBus: mockEventBus,
+      });
+
+      await contextBridge.captureEvent({
+        type: 'code_change',
+        data: { file: 'test.ts' },
+      });
+
+      expect(emitSpy).toHaveBeenCalledWith({
+        type: 'cortex.memory.event.stored',
+        payload: expect.objectContaining({
+          brand: 'brAInwav',
+          eventType: 'code_change',
+          source: 'pieces_os',
+          timestamp: expect.any(String),
+        }),
+      });
+    });
+  });
+
+  describe('environment configuration', () => {
+    it('should respect PIECES_CONTEXT_BRIDGE_ENABLED environment variable', async () => {
+      // RED: Use environment-based configuration
+      const originalEnabled = process.env.PIECES_CONTEXT_BRIDGE_ENABLED;
+      process.env.PIECES_CONTEXT_BRIDGE_ENABLED = 'false';
+
+      const memoryProvider = createMemoryProviderFromEnv();
+      const storeSpy = vi.spyOn(memoryProvider, 'store');
+
+      const contextBridge = new ContextBridge({
+        enabled: true,
+        memoryProvider,
+      });
+
+      await contextBridge.captureEvent({ type: 'test', data: {} });
+
+      expect(storeSpy).not.toHaveBeenCalled();
+
+      process.env.PIECES_CONTEXT_BRIDGE_ENABLED = originalEnabled;
     });
   });
 });
 ```
 
-#### GREEN: Implement context bridge
+#### GREEN: Implement context bridge via memory-core
 
-1. Create `ContextBridge` class
-2. Implement Pieces event listener
-3. Add event transformation logic
-4. Implement domain filtering
-5. Store captured events in memory
+1. **Create ContextBridge class** that uses MemoryProvider interface
+2. **Integrate with existing memory-core** storage patterns
+3. **Use environment variables** for configuration (PIECES_CONTEXT_FILTERS, PIECES_CONTEXT_BRIDGE_ENABLED)
+4. **Emit A2A events** via EventBus for event notifications
+5. **Support both LocalMemoryProvider and RemoteMemoryProvider** implementations
 
 #### REFACTOR
 
-1. Extract event transformers to separate modules
-2. Add batching for high-volume captures
-3. Optimize storage calls
+1. **Extract event processing** to `src/utils/event-processor.ts` module
+2. **Add event batching** using existing memory-core queue patterns
+3. **Optimize storage calls** leveraging memory-core transaction patterns
 
-### Phase 5: Memory Reporting (Days 9-10)
+### Phase 5: Enhanced Memory Reporting (Days 9-10)
 
-#### RED: `packages/memory-core/src/__tests__/reporting.test.ts`
+#### RED: `packages/mcp-server/src/tools/__tests__/memory-reporting.test.ts`
 
 ```typescript
-describe('memory.report', () => {
-  describe('report generation', () => {
-    it('should generate time-based reports', async () => {
-      // RED: No time filtering yet
-      const report = await generateReport({
-        time_range: { start: '2025-10-10T00:00:00Z' },
+import { performLocalHybridSearch } from '../../search-utils.js';
+import { generateMarkdownReport } from '../../utils/report-generator.js';
+
+describe('Enhanced memory.report tool', () => {
+  describe('extend existing reporting patterns', () => {
+    it('should use performLocalHybridSearch for report data', async () => {
+      // RED: Use existing hybrid search for reporting
+      const mockPerformLocalHybridSearch = vi.fn().mockResolvedValue([
+        {
+          id: '1',
+          content: 'Code change in app.ts',
+          domain: 'code',
+          tags: ['typescript', 'feature'],
+          importance: 2,
+          metadata: { file: 'app.ts' },
+        },
+        {
+          id: '2',
+          content: 'Meeting notes about planning',
+          domain: 'meetings',
+          tags: ['planning', 'team'],
+          importance: 1,
+          metadata: { attendees: ['alice', 'bob'] },
+        },
+      ]);
+
+      const report = await generateMemoryReport({
+        time_range: { start: '2025-10-10T00:00:00Z', end: '2025-10-10T23:59:59Z' },
+        domain: undefined, // All domains
         format: 'markdown',
       });
-      
+
+      expect(mockPerformLocalHybridSearch).toHaveBeenCalled();
       expect(report).toContain('# Daily Report');
-      expect(report).toContain('## Meetings');
       expect(report).toContain('## Code Changes');
+      expect(report).toContain('## Meetings');
     });
 
-    it('should filter by domain', async () => {
-      // RED: No domain filtering yet
-      const report = await generateReport({
+    it('should filter reports by domain using memory-core patterns', async () => {
+      // RED: Use existing domain filtering
+      const report = await generateMemoryReport({
         domain: 'code',
         format: 'markdown',
+        include_drive: true,
+        include_copilot: true,
       });
-      
+
       expect(report).toContain('## Code Activities');
+      expect(report).toContain('### Local Memory');
+      expect(report).toContain('### Pieces Drive');
+      expect(report).toContain('### Pieces Copilot');
       expect(report).not.toContain('## Meetings');
     });
 
-    it('should aggregate from multiple sources', async () => {
-      // RED: No multi-source aggregation yet
-      const report = await generateReport({
-        include_pieces: true,
+    it('should integrate new Pieces sources in reports', async () => {
+      // RED: Include new Pieces services in reporting
+      const mockPiecesProxy = {
+        isConnected: () => true,
+        callTool: vi.fn(),
+      };
+
+      mockPiecesProxy.callTool
+        .mockResolvedValueOnce({
+          drive_results: [
+            { id: 'd1', content: 'Modified main.js', type: 'file_change' }
+          ]
+        })
+        .mockResolvedValueOnce({
+          copilot_results: [
+            { id: 'c1', content: 'Helped with React component', type: 'interaction' }
+          ]
+        });
+
+      const report = await generateMemoryReportWithPieces({
+        piecesProxy: mockPiecesProxy,
         include_drive: true,
+        include_copilot: true,
+        format: 'markdown',
       });
-      
-      expect(mockHybridSearch).toHaveBeenCalled();
+
+      expect(report).toContain('### Pieces Drive');
+      expect(report).toContain('### Pieces Copilot');
+      expect(report).toContain('Modified main.js');
+      expect(report).toContain('Helped with React component');
+    });
+  });
+
+  describe('maintain compatibility with existing formats', () => {
+    it('should generate markdown format by default', async () => {
+      // RED: Preserve existing markdown format
+      const report = await generateMemoryReport({
+        format: 'markdown',
+      });
+
+      expect(report).toMatch(/^# /); // H1 header
+      expect(report).toMatch(/^## /); // H2 headers
+      expect(report).toMatch(/^- /); // Bullet points
+      expect(typeof report).toBe('string');
+    });
+
+    it('should include structured metadata in reports', async () => {
+      // RED: Add structured metadata following existing patterns
+      const report = await generateMemoryReport({
+        time_range: { start: '2025-10-10T00:00:00Z' },
+        format: 'markdown',
+      });
+
+      expect(report).toContain('**Generated:**');
+      expect(report).toContain('**Time Range:**');
+      expect(report).toContain('**Sources:**');
+      expect(report).toContain('brAInwav');
+    });
+  });
+
+  describe('error handling and graceful degradation', () => {
+    it('should handle unavailable Pieces services in reports', async () => {
+      // RED: Graceful degradation for partial failures
+      const mockPiecesProxy = {
+        isConnected: () => false,
+        callTool: vi.fn().mockRejectedValue(new Error('Service unavailable')),
+      };
+
+      const report = await generateMemoryReportWithPieces({
+        piecesProxy: mockPiecesProxy,
+        include_drive: true,
+        include_copilot: true,
+      });
+
+      expect(report).toContain('### Pieces Drive');
+      expect(report).toContain('*Service unavailable*');
+      expect(report).toContain('### Pieces Copilot');
+      expect(report).toContain('*Service unavailable*');
     });
   });
 });
 ```
 
-#### GREEN: Implement reporting
+#### GREEN: Enhance existing memory reporting
 
-1. Enhance `generateReport` function
-2. Add time-based filtering
-3. Add domain filtering
-4. Integrate hybrid search
-5. Implement markdown formatting
+1. **Extend existing memory reporting** to include new Pieces sources
+2. **Use performLocalHybridSearch** as the primary data source
+3. **Add support for include_drive and include_copilot** parameters
+4. **Maintain existing markdown format** and structure
+5. **Integrate with existing PiecesMCPProxy** for Pieces-specific data
 
 #### REFACTOR
 
-1. Extract formatters to separate modules
-2. Add template system
-3. Support multiple output formats
+1. **Extract report generation** to `src/utils/report-generator.ts` module
+2. **Add template system** for different report formats
+3. **Optimize data aggregation** using existing hybrid search patterns
 
 ## Test Coverage Goals
 
-- **Unit Tests**: ≥95% coverage for all new code
-- **Integration Tests**: All proxy combinations
-- **E2E Tests**: Full workflow from client to storage
-- **Performance Tests**: Hybrid search < 500ms
-- **Error Scenarios**: All failure modes covered
+- **Unit Tests**: ≥95% coverage for all new code (following Cortex-OS standards)
+- **Integration Tests**: All Pieces integration scenarios via mcp-server
+- **E2E Tests**: Full workflow from client to memory-core storage
+- **Performance Tests**: Hybrid search < 500ms with telemetry
+- **Security Tests**: OWASP compliance for all new interfaces
+- **Accessibility Tests**: WCAG 2.2 AA compliance for any UI components
+- **A2A Event Tests**: All event emission patterns validated
 
 ## Red-Green-Refactor Cycles
 
-Each feature follows strict TDD:
+Each feature follows strict TDD with Cortex-OS patterns:
 
-1. **RED**: Write failing test first
-2. **GREEN**: Write minimal code to pass
-3. **REFACTOR**: Improve without changing behavior
-4. **Repeat**: Next test
+1. **RED**: Write failing test using existing Vitest configuration
+2. **GREEN**: Write minimal code extending existing patterns
+3. **REFACTOR**: Improve without changing behavior, maintain A2A contracts
+4. **Repeat**: Next test with proper package dependency compliance
 
 ## Test Execution Strategy
 
 ```bash
-# Run all tests
+# Run all tests with existing Cortex-OS patterns
 pnpm test
+pnpm test:coverage
 
-# Run specific phase tests
-pnpm --filter @cortex-os/mcp-server test pieces-drive-proxy
-pnpm --filter @cortex-os/mcp-server test pieces-copilot-proxy
-pnpm --filter @cortex-os/mcp-server test hybrid-search
+# Run specific phase tests using existing packages
+pnpm --filter @cortex-os/mcp-server test pieces-integration
+pnpm --filter @cortex-os/mcp-server test copilot-integration
+pnpm --filter @cortex-os/mcp-server test enhanced-hybrid-search
 pnpm --filter @cortex-os/memory-core test context-bridge
-pnpm --filter @cortex-os/memory-core test reporting
+pnpm --filter @cortex-os/mcp-server test memory-reporting
 
-# Run integration tests
-pnpm --filter @apps/cortex-os test:integration
+# Run integration tests via existing framework
+pnpm test:integration
+pnpm mcp:test
 
-# Run performance tests
+# Performance and security tests
 pnpm test:performance
+pnpm security:scan
+pnpm structure:validate
 ```
 
-## Mocking Strategy
+## Mocking Strategy (Following Cortex-OS Patterns)
 
-- **Pieces Services**: Mock SSE transport, simulate responses
-- **Memory Provider**: Mock storage/search operations
-- **Event Manager**: Mock A2A event emission
-- **File System**: Mock for context bridge file operations
+- **Pieces Services**: Mock RemoteToolProxy and SSE transport patterns
+- **Memory Provider**: Use createMemoryProviderFromEnv with mock implementations
+- **A2A EventBus**: Mock via @cortex-os/a2a-core/test utilities
+- **Telemetry**: Mock observeHybridSearch and metrics functions
+- **Configuration**: Use existing config loading patterns
 
-## CI Integration
+## Package Dependencies & Import Boundaries
 
-All tests run in CI:
-- Pre-commit: Unit tests for changed files
-- PR checks: Full test suite
-- Post-merge: Integration tests
-- Nightly: Performance tests
+### Allowed Dependencies (per Nx constraints)
+- **mcp-server** can depend on: `mcp-bridge`, `memory-core`, `a2a-core`, `tool-spec`
+- **memory-core** can depend on: `contracts`, `tool-spec`, `utils`
+- **All packages** can use: `@cortex-os/agent-toolkit` utilities
+
+### Forbidden Patterns
+- ❌ Direct imports between packages (use published packages)
+- ❌ Bypassing RemoteToolProxy for external services
+- ❌ Direct database access (use MemoryProvider interface)
+- ❌ Custom event systems (use existing EventBus)
+
+## Governance & Quality Gates
+
+### Compliance Requirements
+- **All code** must pass `pnpm lint` and `pnpm typecheck`
+- **All tests** must achieve ≥90% coverage (≥95% for new code)
+- **Security** must pass `pnpm security:scan` (OWASP rules)
+- **Structure** must pass `pnpm structure:validate`
+- **Dependencies** must respect Nx constraints and ESLint rules
+
+### BrAInwav Branding Requirements
+- All logs must use `createBrandedLog()` with proper context
+- All A2A events must include `brand: 'brAInwav'` field
+- All error messages must follow Cortex-OS patterns
+- All metrics must use existing telemetry framework
+
+### Memory Management Requirements
+- All memory operations must use MemoryProvider interface
+- All context must be persisted per `.github/instructions/memories.instructions.md`
+- All decisions must be stored in local memory with proper domain tagging
+- Dual-mode MCP/REST parity must be maintained
+
+## CI Integration (Cortex-OS Pipeline)
+
+All tests run in existing CI pipeline:
+- **Pre-commit**: Unit tests for changed files, lint, typecheck
+- **PR checks**: Full test suite, security scan, structure validation
+- **Post-merge**: Integration tests, performance benchmarks
+- **Nightly**: Full regression suite, dependency updates validation
+
+### Required Evidence in PRs
+- Test coverage reports showing ≥90% threshold
+- Security scan results (no ERROR severity findings)
+- Structure validation output
+- Performance benchmarks for hybrid search (< 500ms)
+- Memory persistence evidence per governance requirements
 
 ---
 
-**TDD Plan Created**: 2025-10-10
-**Next Phase**: Implementation (follow RED-GREEN-REFACTOR)
-**Test Framework**: Vitest with @testing-library
+**TDD Plan Updated**: 2025-10-11
+**Next Phase**: Implementation (follow RED-GREEN-REFACTOR with Cortex-OS patterns)
+**Test Framework**: Vitest (existing configuration) with proper package isolation
+**Architecture**: Extends existing PiecesMCPProxy and memory-core patterns
+**Compliance**: Fully aligned with Cortex-OS governance and Nx constraints
+
+## Key Architectural Changes Made
+
+1. **✅ Extended Existing PiecesMCPProxy** instead of creating parallel proxy systems
+2. **✅ Integrated A2A Events** via existing EventBus from @cortex-os/a2a-core
+3. **✅ Leveraged MemoryProvider Interface** for all storage operations
+4. **✅ Used Existing Hybrid Search Patterns** via performLocalHybridSearch
+5. **✅ Maintained Package Dependency Boundaries** per Nx constraints
+6. **✅ Followed BrAInwav Branding** requirements throughout
+7. **✅ Ensured Governance Compliance** with .cortex/ rules
+8. **✅ Aligned with Existing Testing Framework** and quality gates
+
+This updated TDD plan can now be safely implemented without breaking the existing Cortex-OS codebase structure while extending Pieces OS integration capabilities.
 
 Co-authored-by: brAInwav Development Team

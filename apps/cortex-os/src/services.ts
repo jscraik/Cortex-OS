@@ -14,6 +14,7 @@ import { getRunsRoot } from './run-bundle/paths.js';
 import { RunBundleRecorder } from './run-bundle/recorder.js';
 import { initRunBundle } from './run-bundle/writer.js';
 
+import { runVibeCheckGuard } from './operational/vibe-check-guard.js';
 const DEFAULT_IMPORTANCE = 5;
 const RUNS_ROOT = getRunsRoot();
 
@@ -213,7 +214,16 @@ export function provideOrchestration(): OrchestrationFacade {
 			await recorder.recordPrompts([]);
 
 			try {
-				const result = (await facade.run(task, agents, context, subAgents)) as {
+				// brAInwav-vibe-check: pre-action oversight gate (soft-enforced)
+			try {
+				const plan = typeof task?.plan === 'string' ? task.plan : JSON.stringify(task);
+				await runVibeCheckGuard({ goal: task?.name ?? 'cortex-task', plan, sessionId: runId });
+				console.log('brAInwav-vibe-check: completed for run', runId);
+			} catch (e) {
+				console.warn('brAInwav-vibe-check: oversight call failed (soft)', { runId, error: String(e) });
+			}
+
+			const result = (await facade.run(task, agents, context, subAgents)) as {
 					ctx?: { promptCaptures?: PromptCapture[] };
 				};
 				const promptCaptures = Array.isArray(result.ctx?.promptCaptures)

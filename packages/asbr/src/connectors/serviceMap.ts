@@ -10,6 +10,7 @@ import {
 	connectorManifestEntrySchema,
 	connectorsManifestSchema,
 } from '../types/connectors.js';
+import { assertManifestDocument } from './schema.js';
 
 const BRAND = 'brAInwav';
 const DEFAULT_MANIFEST_PATH = resolve(process.cwd(), 'config', 'connectors.manifest.json');
@@ -102,6 +103,7 @@ async function loadManifest(manifestPath?: string): Promise<ConnectorsManifest> 
 	try {
 		const payload = await readFile(target, 'utf-8');
 		const json = JSON.parse(payload) as unknown;
+		assertManifestDocument(json);
 		return connectorsManifestSchema.parse(json);
 	} catch (error) {
 		const reason = error instanceof Error ? error.message : String(error);

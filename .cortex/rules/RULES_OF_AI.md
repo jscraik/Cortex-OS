@@ -1,5 +1,34 @@
 # brAInwav Cortex-OS: Rules of AI
 
+**Version**: 1.1.0  
+**Last Updated**: 2025-10-11  
+**Maintainer**: brAInwav Development Team
+
+---
+
+## 🏛️ Hierarchy of Authority
+
+When documents overlap or conflict, follow this order (highest to lowest):
+
+1. **Governance Pack (`/.cortex/rules/`)** — binding project rules (this document is part of it)
+2. **CODESTYLE.md** (root) — coding & testing conventions enforced by CI
+3. **AGENTS.md** (root) — operational rules for agents; defaults for the repo
+4. **Package-level `AGENTS.md`** — may tighten rules but cannot weaken repo standards
+5. **Model guides** (`CLAUDE.md`, `QWEN.md`, `GEMINI.md`) — adapter specifics only
+
+### Governance Pack Files (Mandatory Reading)
+
+- **[Time Freshness Guard](/_time-freshness.md)** — timezone/date handling rules
+- **[Vision](/vision.md)** — end-state, scope, non-goals, allowed interfaces
+- **[Agentic Coding Workflow](/agentic-coding-workflow.md)** — task lifecycle, gates, handoffs
+- **[Task Folder Structure](/TASK_FOLDER_STRUCTURE.md)** — mandatory `~/tasks/[feature]/` organization
+- **[Code Review Checklist](/code-review-checklist.md)** — evidence-backed review criteria
+- **[CI Review Checklist](/CHECKLIST.cortex-os.md)** — step-by-step execution checklist
+- **This document (RULES_OF_AI.md)** — ethical guardrails, branding, production bars
+- **[Constitution](/constitution.md)** — binding charter for decision authority
+
+---
+
 ## 🏛️ GOVERNANCE: brAInwav Project Structure Standards
 
 **CRITICAL**: This repository follows strict governance standards for file placement and structural integrity. Only approved files belong at the root level to maintain architectural clarity and brAInwav standards.
@@ -71,7 +100,32 @@ All commits must:
 
 ## 🔄 Mandatory Agentic Coding Workflow
 
-All AI agents working on brAInwav Cortex-OS must follow this structured 5-phase workflow:
+All AI agents working on brAInwav Cortex-OS must follow this structured **7-phase workflow**. For complete details, see **[agentic-coding-workflow.md](agentic-coding-workflow.md)**.
+
+### Task Folder Structure (MANDATORY)
+
+All task artifacts must be stored in `~/tasks/[feature-name]/` following the **[TASK_FOLDER_STRUCTURE.md](TASK_FOLDER_STRUCTURE.md)** specification:
+
+```
+~/tasks/[feature-name]/
+├── research.md              # Phase 1: Research findings, RAID analysis
+├── implementation-plan.md   # Phase 2: High-level strategy, SRS
+├── tdd-plan.md             # Phase 2: BDD scenarios, TDD test outlines
+├── implementation-checklist.md  # Phase 2: Actionable tasks with checkboxes
+├── implementation-log.md    # Phase 3: Real-time progress notes
+├── code-review.md          # Phase 4: Review findings and resolutions
+├── HITL-feedback.md        # Phase 4: Human-in-the-loop decisions
+├── lessons-learned.md      # Phase 5: Key insights and takeaways
+├── SUMMARY.md              # Phase 7: Comprehensive final summary
+├── design/                 # Architecture diagrams, wireframes
+├── test-logs/              # Test execution results
+├── verification/           # Quality gate results, coverage reports
+├── validation/             # CI/CD deployment validation
+├── refactoring/            # Refactoring plans and summaries
+└── monitoring/             # Production monitoring logs
+```
+
+**Reference**: See [TASK_FOLDER_STRUCTURE.md](TASK_FOLDER_STRUCTURE.md) for complete requirements and examples.
 
 ### 0. Tasks
 
@@ -153,29 +207,67 @@ All AI agents working on brAInwav Cortex-OS must follow this structured 5-phase 
 - **Update task status** to **"verified"** once complete
 - **Store lessons learned** in local memory for future reference
 
-### 5. Archive
+### 5. Verification
 
-- **Archive completed TDD plan**: Move `[feature]-tdd-plan.md` and related documentation to the appropriate location:
-  - Package-specific documentation: `apps/[app-name]/docs/` or `packages/[package-name]/docs/`
-  - System-wide documentation: root directory `docs/` or `project-documentation/`
-  - Architectural decisions: `project-documentation/`
-- **Update all documentation**: Ensure all reports, implementation notes, and brAInwav-specific configurations are properly documented and placed in correct directories
-- **MANDATORY: Update change documentation**:
-  - **CHANGELOG.md**: Add entry documenting what was completed, files changed, and impact
-  - **README.md**: Update relevant sections if new features or significant changes were made
-  - **Website documentation**: Update `/Users/jamiecraik/.Cortex-OS/website/README.md` for user-facing changes
-- **Complete implementation checklist**: Mark all remaining checklist items as complete and archive the final checklist in local memory
-- **Comprehensive knowledge archival**: Store detailed task summary including technical decisions, brAInwav integration requirements, security considerations, and lessons learned for future AI agent development sessions
+- **Run quality gates**: Execute `pnpm lint && pnpm test && pnpm security:scan`
+- **Validate structure**: Run `pnpm structure:validate` to ensure repo organization compliance
+- **Check coverage**: Ensure ≥90% coverage maintained (PR merge gates: branch ≥65%, mutation ≥75%)
+- **Test accessibility**: Validate WCAG 2.2 AA compliance where applicable
+- **Reality Filter validation**: Verify all generated/inferred content is labeled with `[Inference]`, `[Speculation]`, or `[Unverified]` tags
+- **brAInwav branding verification**: Confirm all outputs, error messages, and logs include brAInwav references
+- **Mock production claims audit**: Validate no code claims production-readiness while containing:
+  - `Math.random()` fake data
+  - Hardcoded mocks or TODOs in production paths
+  - Placeholder implementations
+  - Fake metrics or telemetry
+- **Close feedback loops**: Address all issues from code review, testing, HITL, and refactoring
+- **Store lessons learned**: Document resolutions and insights in `~/tasks/[feature]/lessons-learned.md` and local memory
 
-**Verification Checklist:**
+**Verification Checklist**:
 
-- [ ] All tests passing with 90%+ coverage
+- [ ] All tests passing with ≥90% coverage (branch ≥65% for PR merge)
 - [ ] No security vulnerabilities introduced
 - [ ] brAInwav branding present in outputs/errors
-- [ ] Code follows CODESTYLE.md requirements
+- [ ] Code follows CODESTYLE.md requirements (≤40 lines/function, named exports, async/await)
 - [ ] Package boundaries and governance rules respected
 - [ ] Documentation updated to reflect changes
 - [ ] Performance and accessibility requirements met
+- [ ] Reality Filter applied - no unverified claims presented as fact
+
+### 6. Monitoring, Iteration & Scaling
+
+- **Active monitoring**: Maintain deployment dashboards and log analysis
+- **Track metrics**: Monitor performance, cost, and user metrics
+- **Iterate rapidly**: Respond to feedback, incidents, and drift
+- **Update tests**: Adjust monitoring hooks and documentation as needed
+- **Model updates**: For AI components, record model performance, drift detection, and retraining activities in `~/tasks/[feature]/monitoring/`
+- **Scale & optimize**: Consider scalability and efficiency improvements; document in task folder
+
+### 7. Archive
+
+- **Archive artifacts**: Move all task artifacts to long-term storage (remains under `~/tasks/[feature]/` but flagged as archived):
+  - Final SRS, design diagrams, plans
+  - Test logs, HITL feedback, refactoring summaries
+  - Verification reports, monitoring logs
+  - Comprehensive task summary
+- **MANDATORY: Update change documentation**:
+  - **CHANGELOG.md**: Add entry documenting what was completed, files changed, and impact
+  - **README.md**: Update relevant sections if new features or significant changes were made
+  - **Website documentation**: Update for user-facing changes
+- **Update package documentation**: Refresh package READMEs, runbooks, and monitoring guides
+- **Record outcomes**: Mark all checklist items complete in `implementation-checklist.md`
+- **Write comprehensive SUMMARY.md**: Capture:
+  - Research findings and decisions
+  - Implementation details and challenges
+  - Review comments and resolutions
+  - Test outcomes and coverage
+  - HITL decisions and rationales
+  - Refactoring notes
+  - Verification results
+  - Monitoring/iteration lessons
+- **Ensure traceability**: The archived `~/tasks/[feature]/` folder contains full context for reproducibility and auditability
+
+
 
 ## 🛡️ Enforcement Mechanisms
 
@@ -206,7 +298,59 @@ Violating these rules results in:
 
 ---
 
+## 🔗 Integration Points & System Boundaries
+
+Per **[vision.md](vision.md)** section 2, Cortex-OS exposes **only** these controlled interfaces:
+
+### Allowed Integration Surfaces
+
+1. **MCP (Model Context Protocol)** over HTTP/SSE (and optional STDIO)
+   - FastMCP v3 server: `/mcp`, `/sse`, `/health`, `/metrics`
+   - API-key auth required by default (dev may allow `NO_AUTH=true`)
+   - Tools/Resources/Prompts registered, not embedded
+   - Single MCP hub — no duplicate MCPs per package
+
+2. **A2A (Agent-to-Agent Hub)** for intra-runtime messaging
+   - Central bus for topics, intents, envelopes
+   - Policies for routing, retries, backoff, auditing
+   - No direct cross-domain imports
+
+3. **REST API** for programmatic control and integrations
+   - Authenticated endpoints
+   - Rate-limited
+   - Policy-guarded
+
+4. **Frontier Model Adapters**
+   - OpenAI/Anthropic/Google adapters
+   - ChatGPT Connectors/Apps SDK
+   - Perplexity SSE
+
+### Non-Goals (Prohibited)
+
+- Multiple MCP servers per package (duplication)
+- Unbounded interfaces beyond MCP/A2A/REST/frontier
+- Opaque AI actions without evidence/logs
+- Side channels or undocumented ports
+
+### Package Vision Alignment
+
+When implementing features, verify alignment with package vision per **[vision.md](vision.md)** section 4:
+
+- **packages/mcp-server**: Zero business logic; registry loader only
+- **packages/mcp-core**: Protocol utilities, schemas, error taxonomy
+- **packages/a2a**: Central hub only (no per-package A2A)
+- **packages/memory-core**: Single source of truth for memories
+- **packages/rag**: Deterministic pipelines with versioned configs
+- **packages/agents**: Role-scoped with policy gates
+- **packages/orchestration**: LangGraph graphs for core flows
+
+**"Done Means"**: Every package has explicit completion criteria in vision.md. Verify implementation meets these before claiming completion.
+
+---
+
 **Maintained by: brAInwav Development Team**
+
+---
 
 # RULES_OF_AI.md
 
@@ -260,30 +404,54 @@ See `_time-freshness.md` for timezone and date handling rules that all agents mu
 
 **MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:
 
-### Function Length Limits
+### Function Length Limits (CODESTYLE.md Enforcement)
 - **Maximum 40 lines per function** - Split immediately if readability suffers
 - **Strictly enforced in CI** - Build failures for violations
 - **No exceptions** for any code
+- Use composition and guard clauses to reduce complexity
 
 ### Export Requirements
 - **Named exports only** - `export const functionName = ...`
 - **Default exports forbidden** - `export default` will cause build failures
 - **Required for tree-shaking and debugging**
 
-### Class Usage Restrictions
+### Class Usage Restrictions (CODESTYLE.md §3)
 - **Classes only when framework-required** (React ErrorBoundary, etc.)
 - **Prefer functional composition** over OOP patterns
-- **Justification required in code review for any class usage**
+- **Justification required in code review** for any class usage
+- Minimize hidden state and side effects
 
 ### Async/Await Requirements
 - **Use async/await exclusively** - Never use `.then()` chains
 - **Promise chains are forbidden** and caught by linters
 - **Violations will block PR merges**
 
-### Project References
-- **All packages must set `composite: true`** in tsconfig.json
-- **Required for Nx task graph optimization**
-- **Missing configuration will cause build failures**
+### TypeScript Project Configuration (CODESTYLE.md §3.1)
+
+**All buildable TypeScript packages MUST have**:
+
+```json
+{
+  "compilerOptions": {
+    "composite": true,      // REQUIRED - enables incremental builds
+    "outDir": "dist",       // REQUIRED - standard output directory
+    "noEmit": false,        // REQUIRED when composite: true
+    "module": "NodeNext",   // REQUIRED - ESM support
+    "moduleResolution": "NodeNext"  // REQUIRED - ESM resolution
+  },
+  "include": ["src/**/*"],  // REQUIRED - source files only
+  "exclude": ["dist", "node_modules", "**/*.test.ts", "tests/**/*"]
+}
+```
+
+**Templates**: Available in `.cortex/templates/tsconfig/`
+- Use `tsconfig.lib.json` for libraries
+- Use `tsconfig.spec.json` for test configurations
+- See templates for complete setup instructions
+
+**Migration**: Run `pnpm tsx scripts/migrate-tsconfig.ts` for existing packages
+
+**Validation**: `pnpm structure:validate` checks compliance
 
 ---
 
@@ -341,11 +509,23 @@ The AI must prioritize human welfare and safety above all else, while respecting
 ## 9. AI Development Requirements
 
 ### Mandatory Local Memory Usage
+
+Per **[AGENTS.md](../../AGENTS.md)** section 14:
+
 - **Store all architectural decisions** with reasoning and context
 - **Document lessons learned** from code reviews and refactoring
 - **Track effective development strategies** for future reference
 - **Maintain persistent context** across development sessions
 - **Use semantic search** to find relevant past decisions
+- **Dual-mode operation**: Follow `docs/local-memory-fix-summary.md` for MCP/REST parity
+- **Memory entry verification**: PR reviewers must confirm memory entries exist
+- **Operate per `.github/instructions/memories.instructions.md`**: Document evidence in TDD plan
+
+**At every decision, refactor, or rectification**:
+1. Append rationale and evidence to `.github/instructions/memories.instructions.md`
+2. Persist same entry via Local Memory MCP/REST dual mode
+3. Tag with task name for retrieval
+4. Reference `LocalMemoryEntryId` in task files
 
 ### Development Patterns to Avoid
 1. **Default exports** - `export default class/Function` → Always use named exports
@@ -385,39 +565,101 @@ await memory.store({
 
 These rules form the foundation of responsible AI development and deployment in Cortex-OS.
 
-## Phase 6: Reality Filter
+## 🕐 Time Freshness & Date Handling (MANDATORY)
 
-Ensure you update the instructional documentation and README.md
+Per **[_time-freshness.md](_time-freshness.md)**, all agents must:
 
-**NEW**
+- **Anchor to current date**: The user's timezone is provided at session start. Today's date is the reference point.
+- **Treat dates correctly**: Dates before today are past; dates after are future.
+- **Verify freshness**: When asked for "latest", "most recent", "today's", etc., do not assume knowledge is current—verify or ask.
+- **Use ISO-8601**: Convert relative language ("yesterday", "next week") to explicit ISO-8601 dates (e.g., `2025-10-11`).
+- **Separate past/future**: Clearly distinguish historical context from future dates to prevent timeline drift.
 
-# Reality Filter –
+**Example**:
+```markdown
+❌ "The latest version was released recently"
+✅ "The latest version (v2.1.0) was released on 2025-10-08"
+```
 
-- [ ] Never present generated, inferred, speculated, or deduced content as fact.
+---
 
-- [ ] If you cannot verify something directly, say:  
-  - "I cannot verify this."
-  - "I do not have access to that information."
-  - "My knowledge base does not contain that."
+## 🎯 Reality Filter & Truthfulness (MANDATORY)
 
-- [ ] Label unverified content at the start of a sentence:  
-  - [Inference]  
-  - [Speculation]  
-  - [Unverified]
+Per **[constitution.md](constitution.md)** Phase 5 verification requirements:
 
-- [ ] Ask for clarification if information is missing. Do not guess or fill gaps.
+### Core Principles
 
-- [ ] If any part is unverified, label the entire response.
+- [ ] **Never present generated, inferred, speculated, or deduced content as fact**
+- [ ] **Label all unverified content** at the start of sentences with:
+  - `[Inference]` — logical deduction from available data
+  - `[Speculation]` — educated guess without confirmation
+  - `[Unverified]` — claim that cannot be verified against code/docs
 
-- [ ] Do not paraphrase or reinterpret input unless requested.
+### When Uncertain
 
-- [ ] Label claims with these words unless sourced:  
-  - Prevent, Guarantee, Will never, Fixes, Eliminates, Ensures that
+If you cannot verify something directly, explicitly state:
+- "I cannot verify this."
+- "I do not have access to that information."
+- "My knowledge base does not contain that."
 
-- [ ] For LLM-behavior claims (including yourself), include:  
-  - [Inference] or [Unverified], with a note that it's based on observed patterns
+### Dangerous Claims (Require Evidence)
 
-- [ ] If directive is broken, say:  
-  > Correction: I previously made an unverified claim. That was incorrect and should have been labeled.
+Label these words unless you have source code proof:
+- Prevent, Guarantee, Will never, Fixes, Eliminates, Ensures that
 
-- [ ] Never override or alter input unless asked.
+### LLM Behavior Claims
+
+For claims about LLM behavior (including your own):
+- Include `[Inference]` or `[Unverified]` tag
+- Add note: "based on observed patterns" or "according to documentation"
+
+### Self-Correction Protocol
+
+If you violate this directive, immediately say:
+> Correction: I previously made an unverified claim. That was incorrect and should have been labeled `[Inference/Speculation/Unverified]`.
+
+### Additional Rules
+
+- [ ] Ask for clarification if information is missing—do not guess or fill gaps
+- [ ] If any part is unverified, label the entire response
+- [ ] Do not paraphrase or reinterpret input unless requested
+- [ ] Never override or alter user input unless explicitly asked
+
+**Integration with Verification Phase**: During Phase 5 verification, validate that all documentation and code comments comply with Reality Filter requirements.
+
+---
+
+## 10. Quality Gates: Coverage, Mutation, TDD (CODESTYLE.md §10)
+
+**PR Merge Gate (must pass)** — Updated thresholds per CODESTYLE.md:
+
+- Branch coverage ≥ **65%** (`BRANCH_MIN` env override)
+- Mutation score ≥ **75%** (`MUTATION_MIN` env override)
+
+**Aspirational baselines (Vitest config)** — Maintain where possible:
+
+- Statements 90% • Branches 90% • Functions 90% • Lines 95%
+
+**Readiness workflows**
+
+- Package-level release readiness may enforce **≥95%** coverage (per workflow policy)
+- Changed-lines coverage must be **≥95%** per PR
+
+**Mutation testing**
+
+- Use **Stryker** for JS/TS packages
+- Enforce `MUTATION_MIN` in CI
+- Produce badges/metrics in `reports/badges/`
+
+**TDD enforcement** — Use `packages/tdd-coach`:
+
+- Dev watch mode for real-time feedback
+- Pre-commit validation for staged files
+- CI status check blocks non-compliant PRs
+- Required for Phase 2 (Planning) TDD plan creation
+
+---
+
+## 11. Automation & Agent-Toolkit (MANDATORY for agents)
+
+Per **CODESTYLE.md §11** and **RULES_OF_AI.md §9**:

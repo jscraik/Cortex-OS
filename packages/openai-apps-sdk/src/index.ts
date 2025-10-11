@@ -30,3 +30,5 @@ export const createClient = (): AppsClient => {
 };
 
 export type { AppsClient as Client };
+export * from './agents/instructor-js-adapter.js';
+export * from './agents/openai-agents-js-adapter.js';

@@ -19,6 +19,7 @@
 When documents overlap, follow this order (highest first):
 
 1. **Governance Pack (`/.cortex/rules/`)** — binding project rules:
+   - [Time Freshness Guard](/.cortex/rules/_time-freshness.md) — anchors every agent interaction to the user's declared timezone/date and enforces recency checks.
    - [Vision](/.cortex/rules/vision.md) — end-state, scope, non-goals, and interfaces.
    - [Agentic Coding Workflow](/.cortex/rules/agentic-coding-workflow.md) — task lifecycle, gates, handoffs.
    - [Task Folder Structure](/.cortex/rules/TASK_FOLDER_STRUCTURE.md) — mandatory organization for `~/tasks/[feature-name]/`.
@@ -173,6 +174,14 @@ Document test evidence in the TDD plan and link results in the PR description.
 - Semantic HTML, correct ARIA roles, consistent focus order, target size ≥ 44×44 CSS px.
 - Keyboard complete; no color-only signaling.
 - CLI/TUI paths expose `--plain` and screen-reader friendly output.
+
+## 11.1) Vibe Check MCP Enforcement (brAInwav)
+
+- Oversight: All agents must call the Vibe Check MCP tool `vibe_check` after planning and before any file writes, network calls, or long-running executions.
+- Configuration: set VIBE_CHECK_HTTP_URL (default http://127.0.0.1:2091). Logs and errors must include brAInwav branding.
+- Constitution: use `update_constitution/reset_constitution/check_constitution` to enforce per-session rules.
+- Evidence: PRs must attach logs containing the string "brAInwav-vibe-check" around plan→act gates or CI will block.
+
 - Test with axe/jest-axe where applicable; attach reports to the TDD plan.
 
 ---
@@ -351,3 +360,12 @@ just codemod 'find(:[x])' 'replace(:[x])' .
 - `PLAYBOOK.403-mcp.md` — quick response guide for auth failures.
 
 Agents must cite the relevant section IDs from these documents in every PR review and handoff. Non-compliance blocks merges automatically.
+
+---
+
+## 22) Time Freshness & Date Handling
+
+- Anchor all reasoning to the user's timezone and "today" value declared by the harness; do not infer or reuse cached timestamps.
+- Treat any request for the "latest", "current", or similar data as a freshness check: verify sources or ask for clarification before answering.
+- Convert relative language in responses to explicit ISO-8601 dates (e.g., `2025-10-11`) to avoid ambiguity and to comply with [Time Freshness Guard](/.cortex/rules/_time-freshness.md).
+- When referencing historical context, clearly separate past vs. future dates using the harness-provided current date to prevent timeline drift in downstream agents.

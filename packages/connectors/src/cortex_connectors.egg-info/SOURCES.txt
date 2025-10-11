@@ -8,6 +8,7 @@ src/cortex_connectors/instructor_proxy.py
 src/cortex_connectors/manifest.py
 src/cortex_connectors/models.py
 src/cortex_connectors/registry.py
+src/cortex_connectors/schema.py
 src/cortex_connectors/server.py
 src/cortex_connectors/settings.py
 src/cortex_connectors/signing.py

@@ -13,6 +13,7 @@ import {
 	ConnectorsManifestSchema,
 } from '@cortex-os/asbr-schemas';
 import { signConnectorPayload } from './signature.js';
+import { assertManifestDocument } from './schema.js';
 
 const BRAND = 'brAInwav' as const;
 const MODULE_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -47,6 +48,7 @@ export async function loadConnectorsManifest(manifestPath?: string): Promise<Con
 		try {
 			const raw = await readFile(candidate, 'utf-8');
 			const parsed = JSON.parse(raw) as unknown;
+			assertManifestDocument(parsed);
 			return ConnectorsManifestSchema.parse(parsed);
 		} catch (error) {
 			attempts.push({ path: candidate, error });
@@ -229,8 +231,11 @@ function normalizeQuotas(
 }
 
 function buildCandidatePaths(manifestPath?: string): string[] {
-	const candidates = [manifestPath, WORKING_DIR_MANIFEST_PATH, FALLBACK_MANIFEST_PATH]
-		.filter((value): value is string => Boolean(value))
+	if (manifestPath) {
+		return [resolve(manifestPath)];
+	}
+
+	const candidates = [WORKING_DIR_MANIFEST_PATH, FALLBACK_MANIFEST_PATH]
 		.map((path) => resolve(path));
 
 	return Array.from(new Set(candidates));

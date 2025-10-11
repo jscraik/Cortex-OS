@@ -38,6 +38,8 @@ slo:
 ## 1) Inheritance & Governance
 
 - **Nearest file wins**: this file governs only this subtree.  
+- **Time freshness guard:** follow `/.cortex/rules/_time-freshness.md` to anchor timezone/date context before executing tasks.
+
 - Cannot contradict root rules. When in doubt, follow this order:
   1) `/.cortex/rules/vision.md`  
   2) `/.cortex/rules/agentic-coding-workflow.md`  
@@ -253,6 +255,13 @@ packages/security/
 ```
 
 ---
+
+## Time Freshness & Date Handling
+
+- Align with /.cortex/rules/_time-freshness.md: anchor decisions to the harness-declared timezone and today's date.
+- Treat "latest" or similar questions as freshness checks; verify sources or confirm with stakeholders before responding.
+- Convert relative timeline language in docs, runbooks, and handoffs to explicit ISO-8601 dates (e.g., 2025-10-11) to avoid ambiguity.
+- Call out past vs. future dates explicitly when summarizing historical context or scheduling workstreams.
 
 ## 17) Links
 

@@ -35,4 +35,4 @@ if [[ -z "${CONNECTORS_API_KEY:-}" && "${NO_AUTH:-false}" != "true" ]]; then
 	echo "[connectors] warning: CONNECTORS_API_KEY is unset (set NO_AUTH=true for local dev)" >&2
 fi
 
-exec uv run --project "$PROJECT_ROOT/packages/connectors" python -m cortex_connectors.server
+exec uv run --project "$PROJECT_ROOT/packages/connectors" cortex-connectors-server
