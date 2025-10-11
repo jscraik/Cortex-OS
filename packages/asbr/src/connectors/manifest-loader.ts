@@ -104,10 +104,13 @@ async function readConnectorsManifest(path: string): Promise<ConnectorsManifest>
 }
 
 function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServiceMapPayload {
+        const generatedAt = new Date().toISOString();
         const connectors = manifest.connectors
                 .map((connector) => buildConnectorEntry(connector))
                 .sort((left, right) => left.id.localeCompare(right.id));
 
+        const minConnectorTTL = connectors.length > 0 ? Math.min(...connectors.map((connector) => connector.ttlSeconds)) : 1;
+        const ttlSeconds = Math.max(1, manifest.ttlSeconds ?? minConnectorTTL);
         if (connectors.length === 0) {
                 throw new ValidationError('Connectors manifest must contain at least one connector entry', {
                         brand: BRAND,
@@ -127,6 +130,21 @@ function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServic
         };
 }
 
+function isConnectorEnabled(connector: { enabled?: boolean; status?: string }): boolean {
+        return connector.enabled ?? (connector.status ? connector.status !== 'disabled' : true);
+}
+
+function buildConnectorEntry(connector: ConnectorsManifest['connectors'][number]): ConnectorServiceEntry {
+        const enabled = isConnectorEnabled(connector);
+        const entry: ConnectorServiceEntry = {
+                id: connector.id,
+                version: connector.version,
+                displayName: connector.displayName ?? connector.name,
+                endpoint: connector.endpoint,
+                auth: connector.auth,
+                scopes: [...connector.scopes],
+                ttlSeconds: connector.ttlSeconds,
+                enabled,
 function buildConnectorEntry(connector: ConnectorsManifest['connectors'][number]): ConnectorServiceEntry {
         const authHeaders = connector.authentication.headers;
         const primaryHeader = authHeaders[0];
@@ -168,6 +186,16 @@ function buildConnectorEntry(connector: ConnectorsManifest['connectors'][number]
         };
 }
 
+        if (connector.metadata) {
+                entry.metadata = { ...connector.metadata };
+        }
+
+        if (connector.quotas && Object.keys(connector.quotas).length > 0) {
+                entry.quotas = { ...connector.quotas };
+        }
+
+        if (connector.timeouts && Object.keys(connector.timeouts).length > 0) {
+                entry.timeouts = { ...connector.timeouts };
 function normalizeQuotas(quotas: ConnectorsManifest['connectors'][number]['quotas']):
         | ConnectorServiceEntry['quotas']
         | undefined {
@@ -195,6 +223,12 @@ function buildHeadersRecord(
 ): ConnectorServiceEntry['headers'] | undefined {
         const merged = new Map<string, string>();
 
+        if (connector.description) {
+                entry.description = connector.description;
+        }
+
+        if (connector.tags && connector.tags.length > 0) {
+                entry.tags = [...connector.tags];
         for (const header of authHeaders) {
                 merged.set(header.name, header.value);
         }

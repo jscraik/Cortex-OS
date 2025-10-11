@@ -1,5 +1,9 @@
 {
   "$schema": "../schemas/connectors-manifest.schema.json",
+  "id": "brAInwav-connectors",
+  "manifestVersion": "2024.09.18",
+  "generatedAt": "2024-09-18T00:00:00Z",
+  "ttlSeconds": 3600,
   "id": "01J0XKQ4R6V7Z9P3S5T7W9YBCD",
   "schema_version": "1.1.0",
   "generated_at": "2025-01-01T00:00:00Z",
@@ -7,7 +11,8 @@
   "brand": "brAInwav",
   "ttlSeconds": 300,
   "metadata": {
-    "generatedAt": "2025-01-01T00:00:00Z"
+    "brand": "brAInwav",
+    "surface": "connectors"
   },
   "connectors": [
     {
@@ -96,22 +101,30 @@
     },
     {
       "id": "wikidata",
-      "name": "Wikidata Vector Search",
+      "name": "Wikidata Semantic Search",
+      "displayName": "Wikidata Semantic Search",
       "version": "2024.09.18",
-      "scopes": [
-        "facts:query",
-        "facts:claims"
-      ],
+      "description": "Semantic search over the 2024-09-18 Wikidata snapshot with claims and SPARQL fallbacks.",
+      "enabled": true,
       "status": "enabled",
-      "ttlSeconds": 300,
-      "metadata": {
-        "brand": "brAInwav",
-        "provider": "Wikidata",
-        "snapshot": "2024-09-18"
-      },
+      "scopes": [
+        "wikidata:vector-search",
+        "wikidata:claims",
+        "wikidata:sparql"
+      ],
+      "ttlSeconds": 3600,
       "endpoint": "https://wd-mcp.wmcloud.org/mcp/",
       "auth": {
         "type": "none"
+      },
+      "metadata": {
+        "brand": "brAInwav",
+        "dumpDate": "2024-09-18",
+        "vectorModel": "jina-embeddings-v3",
+        "embeddingDimensions": 1024,
+        "supportsMatryoshka": true,
+        "languages": ["en", "fr", "ar"],
+        "datasetMd5": "dd7375a69774324dead6d3ea5abc01b7"
       }
     }
   ]

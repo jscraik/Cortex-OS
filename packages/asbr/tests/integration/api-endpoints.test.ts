@@ -320,6 +320,25 @@ describe('ASBR API Integration Tests', () => {
                                 .expect(200);
 
                         expect(response.body).toMatchObject({
+                                id: 'brAInwav-connectors',
+                                brand: 'brAInwav',
+                        });
+                        expect(typeof response.body.signature).toBe('string');
+                        expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
+                        expect(typeof response.body.generatedAt).toBe('string');
+                        expect(response.body.ttlSeconds).toBe(3600);
+                        expect(response.body.connectors).toEqual([
+                                {
+                                        id: 'wikidata',
+                                        version: '2024.09.18',
+                                        displayName: 'Wikidata Semantic Search',
+                                        endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+                                        auth: { type: 'none' },
+                                        scopes: [
+                                                'wikidata:vector-search',
+                                                'wikidata:claims',
+                                                'wikidata:sparql',
+                                        ],
                                 id: '01J0XKQ4R6V7Z9P3S5T7W9YBCD',
                                 brand: 'brAInwav',
                                 generatedAt: '2025-01-01T00:00:00Z',
@@ -359,6 +378,13 @@ describe('ASBR API Integration Tests', () => {
                                         enabled: true,
                                         metadata: {
                                                 brand: 'brAInwav',
+                                                dumpDate: '2024-09-18',
+                                                embeddingDimensions: 1024,
+                                                languages: ['en', 'fr', 'ar'],
+                                                supportsMatryoshka: true,
+                                                vectorModel: 'jina-embeddings-v3',
+                                                datasetMd5: 'dd7375a69774324dead6d3ea5abc01b7',
+                                        },
                                                 owner: 'integrations',
                                                 category: 'search',
                                         },

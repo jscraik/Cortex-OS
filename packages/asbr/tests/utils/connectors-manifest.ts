@@ -11,6 +11,10 @@ export interface TestManifestContext {
 }
 
 const DEFAULT_MANIFEST: ConnectorsManifest = {
+        id: 'test-manifest',
+        manifestVersion: '1.0.0',
+        generatedAt: '2024-01-01T00:00:00Z',
+        ttlSeconds: 300,
         id: '01J0XKQ4R6V7Z9P3S5T7W9YBCE',
         schema_version: '1.1.0',
         generated_at: '2025-01-01T00:00:00Z',
@@ -18,8 +22,14 @@ const DEFAULT_MANIFEST: ConnectorsManifest = {
                 {
                         id: 'docs',
                         name: 'Docs Connector',
+                        displayName: 'Docs Connector',
                         version: '1.0.0',
                         status: 'enabled',
+                        enabled: true,
+                        ttlSeconds: 180,
+                        endpoint: 'https://example.invalid/v1/mcp/docs',
+                        auth: { type: 'none' },
+                        metadata: { brand: 'brAInwav' },
                         description: 'Example connector used in tests.',
                         endpoint: 'https://example.invalid/docs',
                         authentication: {

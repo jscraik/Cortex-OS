@@ -6,6 +6,7 @@ import base64
 import json
 import hmac
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
@@ -86,6 +87,46 @@ def load_connectors_manifest(manifest_path: Optional[str | Path] = None) -> Conn
 def build_connector_service_map(manifest: ConnectorsManifest) -> ConnectorServiceMapPayload:
     """Create the ASBR-facing service map from the manifest."""
 
+    generated_at = (
+        manifest.generated_at
+        if manifest.generated_at is not None
+        else datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    )
+
+    connectors: List[ConnectorServiceMapEntry] = []
+    for entry in sorted(manifest.connectors, key=lambda item: item.id):
+        is_enabled = entry.enabled
+        if entry.status is not None:
+            is_enabled = entry.status != "disabled" and entry.enabled
+
+        connector = ConnectorServiceMapEntry(
+            id=entry.id,
+            version=entry.version,
+            display_name=entry.display_name,
+            endpoint=entry.endpoint,
+            auth=entry.auth,
+            scopes=list(entry.scopes),
+            ttl_seconds=entry.ttl_seconds,
+            enabled=is_enabled,
+            metadata=dict(entry.metadata),
+            description=entry.description,
+            tags=list(entry.tags) if entry.tags else None,
+        )
+
+        if entry.quotas:
+            connector.quotas = dict(entry.quotas)
+
+        if entry.timeouts:
+            connector.timeouts = dict(entry.timeouts)
+
+        connectors.append(connector)
+
+    min_connector_ttl = min((connector.ttl_seconds for connector in connectors), default=1)
+    ttl_seconds = max(manifest.ttl_seconds or min_connector_ttl, 1)
+
+    return ConnectorServiceMap(
+        id=manifest.id,
+        generated_at=generated_at,
     connectors = [
         _build_service_entry(entry)
         for entry in sorted(manifest.connectors, key=lambda item: item.id)

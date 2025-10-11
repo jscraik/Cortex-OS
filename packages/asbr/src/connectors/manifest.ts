@@ -3,12 +3,16 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import {
+        ConnectorServiceMapPayloadSchema,
         ConnectorServiceMapSchema,
         type ConnectorServiceEntry,
         ConnectorsManifestSchema,
+        type ConnectorServiceMap,
+        type ConnectorServiceMapPayload,
         type ConnectorsManifest,
         type ConnectorServiceMapEntry,
 } from './manifest-schema.js';
+import { canonicalizeConnectorPayload } from './signature.js';
 import { signConnectorPayload, type ConnectorServiceMapPayload } from './signature.js';
 
 const MODULE_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -58,6 +62,32 @@ export async function loadConnectorsManifest(manifestPath?: string): Promise<Con
 
 export function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServiceMapPayload {
         const connectors = manifest.connectors
+                .map((connector) => ({
+                        id: connector.id,
+                        version: connector.version,
+                        displayName: connector.displayName ?? connector.name,
+                        endpoint: connector.endpoint,
+                        auth: connector.auth,
+                        scopes: [...connector.scopes],
+                        ttlSeconds: connector.ttlSeconds,
+                        enabled: connector.enabled ?? (connector.status ? connector.status !== 'disabled' : true),
+                        metadata: connector.metadata ? { ...connector.metadata } : undefined,
+                        quotas: connector.quotas ? { ...connector.quotas } : undefined,
+                        timeouts: connector.timeouts ? { ...connector.timeouts } : undefined,
+                        description: connector.description,
+                        ...(connector.tags && connector.tags.length > 0
+                                ? { tags: [...connector.tags] }
+                                : {}),
+                }))
+                .sort((left, right) => left.id.localeCompare(right.id));
+
+        const minConnectorTTL = connectors.length > 0 ? Math.min(...connectors.map((connector) => connector.ttlSeconds)) : 1;
+        const ttlSeconds = Math.max(1, manifest.ttlSeconds ?? minConnectorTTL);
+
+        const serviceMap: ConnectorServiceMapPayload = {
+                id: manifest.id,
+                brand: 'brAInwav',
+                generatedAt: manifest.generatedAt ?? new Date().toISOString(),
                 .map((connector) => buildConnectorEntry(connector))
                 .sort((left, right) => left.id.localeCompare(right.id));
 
@@ -89,6 +119,7 @@ export function buildConnectorServiceMap(manifest: ConnectorsManifest): Connecto
                 connectors,
         };
 
+        return ConnectorServiceMapPayloadSchema.parse(serviceMap);
         return ConnectorServiceMapPayloadSchema.parse(payload);
 }
 
@@ -137,6 +168,16 @@ export function signConnectorServiceMap(payload: ConnectorServiceMapPayload, sec
                 throw new Error('CONNECTORS_SIGNATURE_KEY is required to sign the connectors service map');
         }
 
+        const payload = ConnectorServiceMapPayloadSchema.parse({
+                id: serviceMap.id,
+                brand: serviceMap.brand,
+                generatedAt: serviceMap.generatedAt,
+                ttlSeconds: serviceMap.ttlSeconds,
+                connectors: serviceMap.connectors,
+        });
+
+        const canonical = canonicalizeConnectorPayload(payload);
+        return createHmac('sha256', secret).update(canonical).digest('hex');
         return signConnectorPayload(serviceMap, secret);
 }
 

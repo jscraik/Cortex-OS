@@ -293,9 +293,20 @@ const ConnectorQuotaBudgetSchema = z
 
 export const ConnectorManifestEntrySchema = z
         .object({
-                id: z.string().min(1),
+                id: z.string().regex(/^[a-z0-9][a-z0-9-]{1,62}$/),
                 name: z.string().min(1),
+                displayName: z.string().min(1),
                 version: z.string().min(1),
+                description: z.string().min(1).optional(),
+                scopes: z.array(z.string().min(1)).min(1),
+                quotas: z.record(z.number().int().nonnegative()).default({}),
+                timeouts: z.record(z.number().int().nonnegative()).default({}),
+                status: z.enum(['enabled', 'disabled', 'preview']).optional(),
+                enabled: z.boolean().default(true),
+                ttlSeconds: z.number().int().positive(),
+                metadata: z.record(z.unknown()).optional(),
+                endpoint: z.string().url(),
+                auth: ConnectorAuthSchema,
                 status: z.enum(['enabled', 'disabled', 'preview']).default('enabled'),
                 description: z.string().min(1).optional(),
                 endpoint: z.string().url(),
@@ -341,6 +352,11 @@ export const ConnectorManifestEntrySchema = z
 
 export const ConnectorsManifestSchema = z
         .object({
+                $schema: z.string().min(1).optional(),
+                id: z.string().min(1),
+                manifestVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+                generatedAt: z.string().datetime({ offset: true }).optional(),
+                ttlSeconds: z.number().int().positive().optional(),
                 id: z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/),
                 $schema: z.string().min(1).optional(),
                 schema_version: z.string().regex(/^\d+\.\d+\.\d+$/),
@@ -361,6 +377,11 @@ export const ConnectorServiceEntrySchema = z
                 auth: ConnectorAuthSchema,
                 scopes: z.array(z.string().min(1)).min(1),
                 ttlSeconds: z.number().int().positive(),
+                enabled: z.boolean().default(true),
+                metadata: z.record(z.unknown()).optional(),
+                quotas: z.record(z.number().int().nonnegative()).optional(),
+                timeouts: z.record(z.number().int().nonnegative()).optional(),
+                description: z.string().min(1).optional(),
                 enabled: z.boolean(),
                 metadata: z
                         .object({ brand: z.literal('brAInwav') })

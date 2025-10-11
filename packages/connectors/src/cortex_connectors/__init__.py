@@ -8,6 +8,7 @@ from .manifest import (
 )
 from .models import (
     ConnectorAuth,
+    ConnectorEntry,
     ConnectorManifestEntry,
     ConnectorServiceMap,
     ConnectorServiceMapEntry,
@@ -17,6 +18,7 @@ from .models import (
 
 __all__ = [
     "ConnectorAuth",
+    "ConnectorEntry",
     "ConnectorManifestEntry",
     "ConnectorServiceMap",
     "ConnectorServiceMapEntry",

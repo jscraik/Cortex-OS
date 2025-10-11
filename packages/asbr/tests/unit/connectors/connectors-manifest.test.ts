@@ -38,6 +38,22 @@ describe('connectors manifest', () => {
                 vi.setSystemTime(fixedNow);
 
                 expect(serviceMap).toEqual({
+                        id: 'brAInwav-connectors',
+                        brand: 'brAInwav',
+                        generatedAt: '2024-09-18T00:00:00Z',
+                        ttlSeconds: 3600,
+                        connectors: [
+                                {
+                                        id: 'wikidata',
+                                        version: '2024.09.18',
+                                        displayName: 'Wikidata Semantic Search',
+                                        endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+                                        auth: { type: 'none' },
+                                        scopes: [
+                                                'wikidata:vector-search',
+                                                'wikidata:claims',
+                                                'wikidata:sparql',
+                                        ],
                         id: '01J0XKQ4R6V7Z9P3S5T7W9YBCD',
                         brand: 'brAInwav',
                         generatedAt: '2025-01-01T00:00:00Z',
@@ -74,6 +90,19 @@ describe('connectors manifest', () => {
                                         enabled: true,
                                         metadata: {
                                                 brand: 'brAInwav',
+                                                dumpDate: '2024-09-18',
+                                                embeddingDimensions: 1024,
+                                                languages: ['en', 'fr', 'ar'],
+                                                supportsMatryoshka: true,
+                                                vectorModel: 'jina-embeddings-v3',
+                                                datasetMd5: 'dd7375a69774324dead6d3ea5abc01b7',
+                                        },
+                                },
+                        ],
+                });
+
+                const signature = signConnectorServiceMap({ ...serviceMap, signature: '' }, 'test-secret');
+                expect(signature).toBe('3e080d883ac7d57c88fa843c7ca2a59806dfdf2c5e549376b9b809a1d36c252c');
                                                 owner: 'integrations',
                                                 category: 'search',
                                         },

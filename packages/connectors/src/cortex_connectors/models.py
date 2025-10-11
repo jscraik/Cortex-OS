@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Any, Dict, List, Literal, Optional
+
+from pydantic import AnyUrl, BaseModel, ConfigDict, Field, field_validator
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Literal
 
@@ -29,6 +33,19 @@ class ConnectorManifestEntry(BaseModel):
 
     id: str = Field(..., pattern=r"^[a-z0-9][a-z0-9-]{1,62}$")
     name: str = Field(..., min_length=1)
+    display_name: str = Field(..., alias="displayName", min_length=1)
+    version: str = Field(..., min_length=1)
+    description: Optional[str] = Field(default=None, min_length=1)
+    enabled: bool = True
+    status: Optional[Literal["enabled", "disabled", "preview"]] = None
+    scopes: List[str] = Field(..., min_length=1)
+    ttl_seconds: int = Field(..., alias="ttlSeconds", ge=1)
+    endpoint: AnyUrl
+    auth: ConnectorAuth
+    quotas: Dict[str, int] = Field(default_factory=dict)
+    timeouts: Dict[str, int] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    tags: List[str] = Field(default_factory=list)
     version: str = Field(..., min_length=1)
     status: Literal["enabled", "disabled", "preview"]
     description: Optional[str] = Field(default=None, min_length=1)
@@ -71,6 +88,12 @@ class ConnectorsManifest(BaseModel):
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
+    schema_uri: Optional[str] = Field(default=None, alias="$schema", min_length=1)
+    id: str = Field(..., min_length=1)
+    manifest_version: str = Field(..., alias="manifestVersion", pattern=r"^\d+\.\d+\.\d+$")
+    generated_at: Optional[str] = Field(default=None, alias="generatedAt")
+    ttl_seconds: Optional[int] = Field(default=None, alias="ttlSeconds", ge=1)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
     id: str = Field(..., pattern=r"^[0-9A-HJKMNP-TV-Z]{26}$")
     schema_uri: Optional[str] = Field(default=None, alias="$schema", min_length=1)
     schema_version: str = Field(..., pattern=r"^\d+\.\d+\.\d+$")
@@ -136,11 +159,26 @@ class ConnectorServiceMapEntry(BaseModel):
     id: str
     name: str
     version: str
+    display_name: str = Field(..., alias="displayName")
     display_name: str = Field(..., alias="displayName", min_length=1)
     endpoint: AnyUrl
     auth: ConnectorAuth
     scopes: List[str]
     ttl_seconds: int = Field(..., alias="ttlSeconds", ge=1)
+    enabled: bool = True
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    quotas: Optional[Dict[str, int]] = None
+    timeouts: Optional[Dict[str, int]] = None
+    description: Optional[str] = None
+    tags: List[str] = Field(default_factory=list)
+
+    @field_validator("scopes")
+    @classmethod
+    def ensure_unique_scopes(cls, value: List[str]) -> List[str]:
+        if len(value) != len(set(value)):
+            msg = "scopes must contain unique entries"
+            raise ValueError(msg)
+        return value
     enabled: bool
     metadata: Dict[str, Any] = Field(default_factory=lambda: {"brand": "brAInwav"})
     quotas: Optional[ConnectorQuotaBudget] = None

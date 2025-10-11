@@ -17,6 +17,40 @@ The manifest must satisfy the shared `ConnectorsManifestSchema` exported from `@
 
 ```json
 {
+  "id": "brAInwav-connectors",
+  "manifestVersion": "2024.09.18",
+  "generatedAt": "2024-09-18T00:00:00Z",
+  "ttlSeconds": 3600,
+  "connectors": [
+    {
+      "id": "wikidata",
+      "name": "Wikidata Semantic Search",
+      "displayName": "Wikidata Semantic Search",
+      "version": "2024.09.18",
+      "endpoint": "https://wd-mcp.wmcloud.org/mcp/",
+      "auth": { "type": "none" },
+      "scopes": [
+        "wikidata:vector-search",
+        "wikidata:claims",
+        "wikidata:sparql"
+      ],
+      "ttlSeconds": 3600,
+      "enabled": true,
+      "metadata": {
+        "brand": "brAInwav",
+        "dumpDate": "2024-09-18",
+        "vectorModel": "jina-embeddings-v3",
+        "embeddingDimensions": 1024,
+        "supportsMatryoshka": true,
+        "languages": ["en", "fr", "ar"],
+        "datasetMd5": "dd7375a69774324dead6d3ea5abc01b7"
+      }
+    }
+  ]
+}
+```
+
+Each connector entry must declare at least one scope, a semantic version, an endpoint, authentication details, and a positive TTL (`ttlSeconds`). Optional fields such as `quotas`, `timeouts`, `metadata`, `description`, and `tags` are passed through to consumers when present.
   "$schema": "../schemas/connectors-manifest.schema.json",
   "id": "01J0XKQ4R6V7Z9P3S5T7W9YBCE",
   "schema_version": "1.1.0",
@@ -85,6 +119,21 @@ The loader in `packages/asbr/src/connectors/manifest-loader.ts` performs the fol
 6. Re-validate the signed response using `ConnectorServiceMapSchema` before returning it to clients.
 
 Missing files or secrets trigger a `503 Service Unavailable` response with structured logs (`brand:"brAInwav"`, `component:"connectors"`).
+
+## Wikidata Semantic Search Connector
+
+The bundled manifest exposes a Wikidata semantic search connector backed by the 2024-09-18 project dump hosted on `wd-mcp.wmcloud.org`. The connector fans out across three capabilities:
+
+- `wikidata:vector-search` – vector similarity over Jina `v3` embeddings of entity abstracts.
+- `wikidata:claims` – structured entity claims hydration for fast follow-up lookups.
+- `wikidata:sparql` – pass-through SPARQL queries for advanced graph exploration.
+
+The entry is unauthenticated (`auth.type: "none"`) because the upstream SSE gateway is publicly accessible. Metadata embedded in the manifest advertises the underlying snapshot (`dumpDate`), embedding model (`vectorModel` / `embeddingDimensions`), language coverage, and the MD5 checksum of the published dataset (`datasetMd5`).
+
+### Refresh Policy
+
+- `ttlSeconds: 3600` — ASBR and the Python connectors runtime re-fetch and re-sign the manifest at most once per hour. Downstream caches should respect the shared TTL emitted in the service map response.
+- Operators replacing the Wikidata snapshot should bump `manifestVersion`, `generatedAt`, and the connector `version`/`metadata` fields, then redeploy both the manifest file and the signing key.
 
 ## Local Testing
 
