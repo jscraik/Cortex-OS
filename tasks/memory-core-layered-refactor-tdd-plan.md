@@ -81,7 +81,6 @@ Implement a layered memory architecture in `@cortex-os/memory-core` that separat
 - [x] Review existing `MemoryWorkflowEngine` usage for short-term orchestration
 - [x] Analyse current SQLite + Qdrant integration points in `LocalMemoryProvider`
 - [x] Review compliance requirements from memory hygiene guidance (source pointers, deletion)
-- [ ] Confirm availability of Qdrant collection management utilities for semantic/long-term split
 
 ### Internal Dependencies
 - **Package**: `@cortex-os/tool-spec` – shared request/response contracts for memory APIs
