@@ -1,4 +1,20 @@
 # Cortex Memory Decision Log
+## 2025-10-11 Local Memory enforcement automation (CI + workflow)
+- Decision: Added automated enforcement for the standardized Local Memory section across all `AGENTS.md` files, including a pnpm script, CI wiring, and governance checklist updates that require `brAInwav-vibe-check` evidence.
+- Impacted Surfaces: AGENTS.md, package.json, scripts/vibe-check/enforce-local-memory.sh, scripts/vibe-check/README.md, .cortex/rules/CHECKLIST.cortex-os.md, .cortex/rules/code-review-checklist.md
+- Evidence: `pnpm enforce:agents:local-memory` (fix mode) run at 2025-10-11T18:50:03Z (see `/tmp/vibe-check-response.log` with "Okay, let's pause." guidance), CI wiring validated via local execution.
+- LocalMemoryEntryId: [Unverified] Local Memory persistence pending (CI-only automation update).
+- RESTReference: [Not Applicable] (automation metadata only)
+
+## 2025-01-11 Wikidata Semantic Layer - Static remoteTools Manifest
+- Decision: Selected Option 1 (static manifest) over dynamic injection or hybrid routing for Wikidata SPARQL integration. Provides explicit MCP contract validation, simpler reasoning for agents, and clearer governance boundaries. 4 prioritized user stories (P1: schema validation, P1: SPARQL tool integration). 47 tests across 12 suites with RED-GREEN-REFACTOR TDD methodology.
+- Impacted Surfaces: packages/mcp (schema validation), apps/cortex-os/packages/wikidata-sparql (new package), packages/service-map (discovery), packages/agent-planning (integration)
+- Evidence: tasks/semantic-wikidata-integration/{research.md, feature-spec.md, tdd-plan.md, implementation-checklist.md} (2,831 lines total), RAID analysis complete, PRP gates G0-G7 aligned, coverage target ≥95%, performance budgets <50ms service-map <100ms planning
+- LocalMemoryEntryId: mem-2025-01-11-wikidata-semantic-layer-1736634000
+- RESTReference: http://localhost:3028/api/v1/memories/mem-2025-01-11-wikidata-semantic-layer-1736634000
+- Phase: Research & Planning Complete (Phases 1-2), Ready for Implementation (Phase 3)
+- Vibe Check: Server confirmed running (port 2091), MCP protocol client integration deferred to implementation phase
+
 ## 2025-10-11 Vibe Check MCP oversight integrated (soft-enforce)
 - Decision: Added HTTP client + guard; orchestration pre-action calls vibe_check; docs and ports notes updated
 - Impacted Surfaces: apps/cortex-os/src/services.ts, src/operational/vibe-check-guard.ts, src/mcp/clients/vibe-check-client.ts, AGENTS.md, README.md, config/ports.env
