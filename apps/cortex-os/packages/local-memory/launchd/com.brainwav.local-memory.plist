@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Service identification -->
+    <key>Label</key>
+    <string>com.brainwav.local-memory</string>
+    
+    <!-- Program to run -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>__INSTALL_DIR__/scripts/start-local-memory.sh</string>
+    </array>
+    
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>__INSTALL_DIR__</string>
+    
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:__NODE_PATH__</string>
+        <key>MEMORY_API_PORT</key>
+        <string>3028</string>
+        <key>LOCAL_MEMORY_HOST</key>
+        <string>127.0.0.1</string>
+        <key>MEMORY_LOG_LEVEL</key>
+        <string>info</string>
+    </dict>
+    
+    <!-- Run at load (system startup/user login) -->
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <!-- Keep alive - restart if crashes -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+        <key>Crashed</key>
+        <true/>
+    </dict>
+    
+    <!-- Throttle interval (seconds to wait before restart) -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+    
+    <!-- Standard output -->
+    <key>StandardOutPath</key>
+    <string>__INSTALL_DIR__/logs/launchd-stdout.log</string>
+    
+    <!-- Standard error -->
+    <key>StandardErrorPath</key>
+    <string>__INSTALL_DIR__/logs/launchd-stderr.log</string>
+    
+    <!-- Process type (background service) -->
+    <key>ProcessType</key>
+    <string>Background</string>
+    
+    <!-- Nice value (lower priority) -->
+    <key>Nice</key>
+    <integer>5</integer>
+    
+    <!-- Enable low-priority I/O -->
+    <key>LowPriorityIO</key>
+    <true/>
+    
+    <!-- Session type -->
+    <key>LimitLoadToSessionType</key>
+    <string>Aqua</string>
+</dict>
+</plist>

@@ -1,5 +1,5 @@
-import { createRemoteJWKSet, errors, jwtVerify } from 'jose';
-import type { JWTPayload, JWTVerifyOptions, RemoteJWKSet } from 'jose';
+import { createLocalJWKSet, createRemoteJWKSet, errors, jwtVerify } from 'jose';
+import type { JWTPayload, JWTVerifyOptions, JWKS, RemoteJWKSet } from 'jose';
 import {
 	type Auth0JwtConfig,
 	type Auth0JwtError,
@@ -43,19 +43,29 @@ function toConfig(options: VerifyAuth0JwtOptions): Auth0JwtConfig {
 }
 
 function createFetcher(signalResolver: () => AbortSignal | undefined) {
-	return async (url: URL, init?: RequestInit) => {
-		const signal = init?.signal ?? signalResolver();
-		return fetch(url, { ...init, signal });
-	};
+    return async (url: URL, init?: RequestInit) => {
+        const signal = init?.signal ?? signalResolver();
+        return fetch(url, { ...init, signal });
+    };
 }
 
-function getJwks(config: Auth0JwtConfig, signal: AbortSignal | undefined): RemoteJWKSet {
+function getJwks(
+	config: Auth0JwtConfig,
+	signal: AbortSignal | undefined,
+overrideFetcher?: (url: URL, init?: RequestInit) => Promise<Response>,
+	overrideSet?: JWKS,
+): RemoteJWKSet {
 	const cacheKey = `${config.issuer}:${config.jwksCacheTtlMs}`;
 	const cached = jwksCache.get(cacheKey);
 	if (cached) {
 		return cached;
 	}
-	const fetcher = createFetcher(() => signal);
+	if (overrideSet) {
+		const local = createLocalJWKSet(overrideSet);
+		jwksCache.set(cacheKey, local);
+		return local;
+	}
+	const fetcher = overrideFetcher ?? createFetcher(() => signal);
 	const remote = createRemoteJWKSet(new URL(config.jwksUrl), {
 		cache: true,
 		cacheMaxAge: config.jwksCacheTtlMs,
@@ -81,9 +91,10 @@ function extractScopes(payload: JWTPayload): { scopes: string[]; permissions: st
 	const permissionsClaim = Array.isArray(payload.permissions)
 		? payload.permissions.filter((item): item is string => typeof item === 'string')
 		: [];
+	const permissions = uniqueStrings(permissionsClaim);
 	return {
-		scopes: uniqueStrings(scopeClaim),
-		permissions: uniqueStrings(permissionsClaim),
+		scopes: uniqueStrings(scopeClaim.concat(permissions)),
+		permissions,
 	};
 }
 
@@ -180,7 +191,7 @@ export async function verifyAuth0Jwt(
 	}
 	const config = toConfig(options);
 	try {
-		const jwks = getJwks(config, options.signal);
+		const jwks = getJwks(config, options.signal, options.fetcher, options.jwks);
 		const verifyOptions: JWTVerifyOptions = {
 			issuer: config.issuer,
 			audience: config.audience,

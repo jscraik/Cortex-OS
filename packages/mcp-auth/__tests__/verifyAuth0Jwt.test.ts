@@ -1,15 +1,13 @@
 import { exportJWK, generateKeyPair, SignJWT } from 'jose';
-import { beforeAll, beforeEach, afterAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { clearAuthVerifierCache, verifyAuth0Jwt } from '../src/jwt/verifyAuth0Jwt.js';
 
 const AUTH0_DOMAIN = 'unit-tests.auth0.com';
 const ISSUER = `https://${AUTH0_DOMAIN}/`;
 const AUDIENCE = 'https://api.cortex-os.dev/mcp';
-const JWKS_PATH = `${ISSUER}.well-known/jwks.json`;
 const KID = 'test-key';
 let privateKey: CryptoKey;
-let fetchMock: ReturnType<typeof vi.fn>;
-let originalFetch: typeof fetch;
+let jwks: { keys: Array<Record<string, unknown>> };
 
 async function createToken(
 	expiresInSeconds: number,
@@ -34,27 +32,11 @@ beforeAll(async () => {
 	const pair = await generateKeyPair('RS256');
 	privateKey = pair.privateKey;
 	const jwk = await exportJWK(pair.publicKey);
-	fetchMock = vi.fn(async (input) => {
-		const url = typeof input === 'string' ? input : input instanceof URL ? input.href : '';
-		if (url === JWKS_PATH) {
-			return new Response(JSON.stringify({ keys: [{ ...jwk, kid: KID, use: 'sig', alg: 'RS256' }] }), {
-				status: 200,
-				headers: { 'Content-Type': 'application/json' },
-			});
-		}
-		return new Response('not found', { status: 404 });
-	});
-	originalFetch = globalThis.fetch;
-	globalThis.fetch = fetchMock as typeof fetch;
-});
-
-afterAll(() => {
-	globalThis.fetch = originalFetch;
+	jwks = { keys: [{ ...jwk, kid: KID, use: 'sig', alg: 'RS256' }] };
 });
 
 beforeEach(() => {
 	clearAuthVerifierCache();
-	fetchMock.mockClear();
 });
 
 describe('verifyAuth0Jwt', () => {
@@ -64,12 +46,11 @@ describe('verifyAuth0Jwt', () => {
 		domain: AUTH0_DOMAIN,
 		audience: AUDIENCE,
 		requiredScopes: ['search.read'],
+		jwks,
 	});
-	// DEBUG
-	console.log('valid token result', result);
-		expect(result.ok).toBe(true);
-		if (result.ok) {
-			expect(result.scopes).toContain('search.read');
+	expect(result.ok).toBe(true);
+	if (result.ok) {
+		expect(result.scopes).toContain('search.read');
 			expect(result.clientId).toBe('chatgpt-client');
 			expect(result.subject).toBe('auth0|user');
 		}
@@ -81,6 +62,7 @@ describe('verifyAuth0Jwt', () => {
 			domain: AUTH0_DOMAIN,
 			audience: AUDIENCE,
 			requiredScopes: ['docs.write'],
+			jwks,
 		});
 		expect(result.ok).toBe(true);
 		if (result.ok) {
@@ -93,6 +75,7 @@ describe('verifyAuth0Jwt', () => {
 		const result = await verifyAuth0Jwt(token, {
 			domain: AUTH0_DOMAIN,
 			audience: AUDIENCE,
+			jwks,
 		});
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
@@ -105,6 +88,7 @@ describe('verifyAuth0Jwt', () => {
 		const result = await verifyAuth0Jwt(token, {
 			domain: AUTH0_DOMAIN,
 			audience: 'https://other.example/api',
+			jwks,
 		});
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
@@ -113,11 +97,12 @@ describe('verifyAuth0Jwt', () => {
 	});
 
 	it('rejects wrong issuer', async () => {
-		const token = await createToken(300, { iss: 'https://malicious.example/' });
-		const result = await verifyAuth0Jwt(token, {
-			domain: AUTH0_DOMAIN,
-			audience: AUDIENCE,
-		});
+	const token = await createToken(300);
+	const result = await verifyAuth0Jwt(token, {
+		domain: 'malicious.example.com',
+		audience: AUDIENCE,
+		jwks,
+	});
 		expect(result.ok).toBe(false);
 		if (!result.ok) {
 			expect(result.code).toBe('issuer_mismatch');
@@ -130,6 +115,7 @@ describe('verifyAuth0Jwt', () => {
 			domain: AUTH0_DOMAIN,
 			audience: AUDIENCE,
 			requiredScopes: ['docs.write'],
+			jwks,
 		});
 		expect(result.ok).toBe(false);
 		if (!result.ok) {

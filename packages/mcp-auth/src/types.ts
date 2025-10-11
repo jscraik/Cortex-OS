@@ -1,4 +1,4 @@
-import type { JWTPayload } from 'jose';
+import type { JWTPayload, JWKS } from 'jose';
 
 export type VerifyAuth0JwtOptions = {
 	domain: string;
@@ -7,6 +7,8 @@ export type VerifyAuth0JwtOptions = {
 	jwksCacheTtlMs?: number;
 	clockToleranceSec?: number;
 	signal?: AbortSignal;
+	fetcher?: (url: URL, init?: RequestInit) => Promise<Response>;
+	jwks?: JWKS;
 };
 
 export type Auth0JwtConfig = {

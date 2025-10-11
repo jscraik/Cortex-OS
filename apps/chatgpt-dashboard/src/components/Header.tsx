@@ -2,8 +2,54 @@ import * as React from 'react';
 
 import { useTTL } from '../hooks/useTTL';
 
-export function Header(): React.ReactElement {
-	const { label, urgent, ttl } = useTTL(120);
+interface HeaderProps {
+	ttlSeconds?: number;
+	generatedAt?: string;
+	onRefresh: () => void | Promise<void>;
+	loading: boolean;
+	refreshing: boolean;
+	error?: string;
+	connectorCount: number;
+}
+
+const formatTimestamp = (value?: string): string => {
+	if (!value) return 'Waiting for manifest';
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) return 'Waiting for manifest';
+	return date.toLocaleString();
+};
+
+const statusBadge = (props: { error?: string; loading: boolean; count: number }) => {
+	if (props.error) {
+		return {
+			text: props.error.slice(0, 80),
+			className: 'bg-status-red-bg text-status-red',
+		};
+	}
+	if (props.loading) {
+		return {
+			text: 'Loading connectors…',
+			className: 'bg-neutral-100 text-neutral-600',
+		};
+	}
+	return {
+		text: `Connectors: ${props.count}`,
+		className: 'bg-status-green-bg text-status-green',
+	};
+};
+
+export function Header({
+	ttlSeconds,
+	generatedAt,
+	onRefresh,
+	loading,
+	refreshing,
+	error,
+	connectorCount,
+}: HeaderProps): React.ReactElement {
+	const { ttl, label, urgent } = useTTL(ttlSeconds);
+	const updatedLabel = React.useMemo(() => formatTimestamp(generatedAt), [generatedAt]);
+	const badge = React.useMemo(() => statusBadge({ error, loading, count: connectorCount }), [error, loading, connectorCount]);
 
 	return (
 		<header className="sticky top-0 z-20 h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-6 lg:px-8 backdrop-blur supports-backdrop-blur:bg-white/80">
@@ -15,22 +61,16 @@ export function Header(): React.ReactElement {
 						Production
 					</span>
 				</div>
-				{ttl > 0 && (
-					<span
-						className={`text-xs font-mono font-medium px-3 py-1.5 rounded-lg transition ${urgent ? 'bg-status-red-bg text-status-red animate-pulse' : 'bg-neutral-100 text-neutral-700'}`}
-					>
-						<i className="fa-solid fa-clock mr-1" aria-hidden="true" />
-						{label}
-					</span>
-				)}
-				<button
-					id="incidents-pill"
-					type="button"
-					className="bg-status-green-bg text-status-green text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-2"
+				<span
+					className={`text-xs font-mono font-medium px-3 py-1.5 rounded-lg transition ${ttl > 0 ? (urgent ? 'bg-status-red-bg text-status-red animate-pulse' : 'bg-neutral-100 text-neutral-700') : 'bg-neutral-100 text-neutral-600'}`}
 				>
-					<i className="fa-solid fa-shield-check" aria-hidden="true" />
-					Incidents: 0
-				</button>
+					<i className="fa-solid fa-clock mr-1" aria-hidden="true" />
+					{label}
+				</span>
+				<span className={`text-xs font-medium px-3 py-1.5 rounded-full ${badge.className}`} aria-live="polite">
+					<i className="fa-solid fa-diagram-project mr-1" aria-hidden="true" />
+					{badge.text}
+				</span>
 			</div>
 			<div className="flex-1 max-w-xl mx-6 hidden md:block">
 				<div className="relative">
@@ -44,7 +84,16 @@ export function Header(): React.ReactElement {
 				</div>
 			</div>
 			<div className="flex items-center gap-3">
-				<ButtonIcon icon="fa-arrows-rotate" label="Refresh" />
+				<span className="hidden lg:block text-xs text-neutral-500" aria-live="polite">
+					Updated {updatedLabel}
+				</span>
+				<ButtonIcon
+					icon={refreshing ? 'fa-spinner' : 'fa-arrows-rotate'}
+					label="Refresh"
+					onClick={onRefresh}
+					disabled={refreshing}
+					busy={refreshing}
+				/>
 				<ButtonIcon icon="fa-question-circle" label="Help" />
 				<div className="relative">
 					<ButtonIcon icon="fa-bell" label="Notifications" />
@@ -63,16 +112,23 @@ export function Header(): React.ReactElement {
 interface ButtonIconProps {
 	icon: string;
 	label: string;
+	onClick?: () => void | Promise<void>;
+	disabled?: boolean;
+	busy?: boolean;
 }
 
-function ButtonIcon({ icon, label }: ButtonIconProps): React.ReactElement {
+function ButtonIcon({ icon, label, onClick, disabled, busy }: ButtonIconProps): React.ReactElement {
+	const iconClass = busy ? 'fa-solid fa-spinner fa-spin' : `fa-solid ${icon}`;
 	return (
 		<button
 			type="button"
-			className="text-neutral-500 hover:text-neutral-800 w-10 h-10 grid place-items-center rounded-full hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent"
+			onClick={disabled ? undefined : onClick}
+			disabled={disabled}
+			className={`text-neutral-500 w-10 h-10 grid place-items-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:text-neutral-800 hover:bg-neutral-100'}`}
 			aria-label={label}
+			aria-busy={busy}
 		>
-			<i className={`fa-solid ${icon}`} aria-hidden="true" />
+			<i className={iconClass} aria-hidden="true" />
 		</button>
 	);
 }

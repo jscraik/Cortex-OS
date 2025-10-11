@@ -155,6 +155,7 @@ console.log(resp.output_text);
 - ⚠️ Research template ➜ ✅ Aligned (template IDs referenced)
 
 **Next Steps**:
+
 1. Execute implementation per 20-step plan
 2. Call `vibe_check` MCP tool at Step 3 (attach logs to PR)
 3. Follow TDD: Write RED tests → GREEN implementation → REFACTOR
