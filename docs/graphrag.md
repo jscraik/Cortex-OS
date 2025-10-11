@@ -32,6 +32,15 @@ In CI, prefer affected ingestion by using Nx affected project lists to avoid ful
 4. **Context assembly**: `assembleContext` prioritizes DOC/ADR/CONTRACT nodes, deduplicates by path/span, and returns ≤24 chunks.
 5. **Response**: `GraphRAGService` packages sources, graph context metrics, and optional citations with brAInwav branding.
 
+### Remote knowledge connectors
+
+- When the ASBR manifest exposes `connector:wikidata`, remote retrieval is enabled by default for fact-centric scopes so long as
+  callers do not explicitly opt out (`useRemoteKnowledge !== false`).
+- Scope hints (`facts`, `knowledge:facts`, `claims`) seed the remote filters so the Wikidata vector tool is attempted before
+  falling back to local embeddings.
+- Responses produced from `wikidata.get_claims` include structured metadata with the originating QIDs and claim IDs. These are
+  stitched into the final bundle so downstream consumers can surface provenance alongside the retrieved text.
+
 ## Adapter Exposure
 
 - **REST**: `/api/v1/graphrag/query`, `/health`, `/stats` in `packages/memory-rest-api` forward requests to `GraphRAGService`.

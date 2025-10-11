@@ -22,6 +22,11 @@ Legend:
   - Per-package coverage thresholds (>= 90%) enforced via `vitest` config in `@cortex-os/rag`.
   - Added/validated integration tests for timeouts, degraded mode, and reliability behavior.
 - Removed external Archon references from runtime paths; MCP client surface retained as a local, optional shim for remote KB use.
+- Remote Wikidata bridge for fact queries:
+  - Remote retrieval toggles on automatically when the ASBR manifest exposes `connector:wikidata` unless callers explicitly
+    disable it.
+  - Scope hints now propagate as `remoteFilters` to prefer the Wikidata vector tool before falling back to local embeddings.
+  - Metadata returned from `wikidata.get_claims` is stitched into the final bundle with QIDs and claim IDs for provenance.
 - Ollama updated to v0.12.0 where containerized (Docker compose pinned); docs now recommend Homebrew as the
   primary install on macOS with Docker as fallback.
 - Pg dependency remains optional (`optionalDependencies.pg`), pgvector store uses `@cortex-os/observability` for operation/latency metrics.
