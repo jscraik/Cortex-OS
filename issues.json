@@ -1,1 +1,48 @@
-[]
+[
+  {
+    "file": "packages/workflow-orchestrator/src/cli/commands/profile.ts",
+    "line": 105,
+    "end_line": 106,
+    "severity": "low",
+    "category": "codestyle",
+    "description": "Use of Object.hasOwn instead of Object.prototype.hasOwnProperty.call - while functionally correct, the original implementation used the more widely compatible pattern. Object.hasOwn requires Node 16.9.0+",
+    "evidence": "if (!Object.hasOwn(current, key)) {",
+    "fix": "Consider using Object.prototype.hasOwnProperty.call(current, key) for broader compatibility, as shown in test implementation",
+    "tests_to_add": "Existing tests in profile.security.test.ts already cover this - verify Node version requirement documented",
+    "rule": null,
+    "standards": [
+      "codestyle:1-general-principles"
+    ]
+  },
+  {
+    "file": "scripts/memory/memory-regression-guard.mjs",
+    "line": 265,
+    "end_line": 265,
+    "severity": "low",
+    "category": "brainwav-branding",
+    "description": "File contains 0 instances of 'brAInwav' branding in comments, error messages, or logs. While this is a utility script, errors and logs should include branding for consistency",
+    "evidence": "const escape = (v) => String(v).replace(/\\\\/g, '\\\\\\\\').replace(/\"/g, '\\\\\"').replace(/\\n/g, '\\\\n');",
+    "fix": "Add brAInwav branding to error/log messages in this script, e.g., log('ERROR', '[brAInwav] ...')",
+    "tests_to_add": "Add test to verify log output includes brAInwav prefix",
+    "rule": "brainwav.branding.missing-in-logs",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#branding"
+    ]
+  },
+  {
+    "file": "packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 1208,
+    "end_line": 1208,
+    "severity": "low",
+    "category": "quality",
+    "description": "Comment mentions 'TODOs' in context - while not a violation (comment is explaining what to avoid), ensure no actual TODO markers exist in production paths",
+    "evidence": "// Provide a runtime-inspectable circuit breaker state without TODOs or placeholders",
+    "fix": "No change needed - this is documentation explaining the design principle. Verified no actual TODO markers present.",
+    "tests_to_add": "No additional test needed - existing tests cover functionality",
+    "rule": null,
+    "standards": [
+      "codestyle:0-brainwav-production-standards"
+    ]
+  }
+]

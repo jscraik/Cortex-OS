@@ -1,0 +1,25 @@
+--- a/scripts/memory/memory-regression-guard.mjs
++++ b/scripts/memory/memory-regression-guard.mjs
+@@ -37,7 +37,7 @@ const reportsDir = join(rootDir, 'reports');
+ 
+ function log(level, msg) {
+ const ts = new Date().toISOString();
+-console.error(`[${ts}] [MEM-GUARD] [${level}] ${msg}`);
++console.error(`[${ts}] [brAInwav] [MEM-GUARD] [${level}] ${msg}`);
+ }
+ 
+ function parseArgs() {
+@@ -428,7 +428,7 @@ function main() {
+ const file = opts.file || latestLogFile();
+ if (!file) {
+ o memory log file found (.memory/logs/*.jsonl). Run memory-snapshot-runner first.',
++'[brAInwav] No memory log file found (.memory/logs/*.jsonl). Run memory-snapshot-runner first.',
+ a/packages/workflow-orchestrator/src/cli/commands/profile.ts
++++ b/packages/workflow-orchestrator/src/cli/commands/profile.ts
+@@ -102,7 +102,7 @@ export async function setProfileValue(path: string, value: string): Promise<void
+ new Error('brAInwav: Prototype pollution attempt detected');
+ Security: Use hasOwnProperty to prevent prototype chain traversal
+-if (!Object.hasOwn(current, key)) {
++if (!Object.prototype.hasOwnProperty.call(current, key)) {
+ new Error(`brAInwav: Invalid path segment "${key}"`);
+ t = current[key];
