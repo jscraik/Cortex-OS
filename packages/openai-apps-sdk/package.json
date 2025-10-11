@@ -15,6 +15,18 @@
   "devDependencies": {
     "typescript": "^5.9.3"
   },
+  "peerDependencies": {
+    "@openai/agents": "^0.1.9",
+    "instructor": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@openai/agents": {
+      "optional": true
+    },
+    "instructor": {
+      "optional": true
+    }
+  },
   "sideEffects": false
 }
 

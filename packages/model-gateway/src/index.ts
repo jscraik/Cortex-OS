@@ -37,4 +37,10 @@ export type {
 } from './mcp/tools.js';
 export { modelGatewayMcpTools } from './mcp/tools.js';
 export { createModelRouter } from './model-router.js';
+export {
+	type ChatRequest,
+	createOpenAIAgentsProvider,
+	type OpenAIAgentsProvider,
+	type OpenAIAgentsProviderConfig,
+} from './providers/openai-agents.provider.js';
 export { createServer, start } from './server.js';
