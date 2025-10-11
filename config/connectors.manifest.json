@@ -4,11 +4,101 @@
   "manifestVersion": "2024.09.18",
   "generatedAt": "2024-09-18T00:00:00Z",
   "ttlSeconds": 3600,
+  "id": "01J0XKQ4R6V7Z9P3S5T7W9YBCD",
+  "schema_version": "1.1.0",
+  "generated_at": "2025-01-01T00:00:00Z",
+  "id": "core-connectors",
+  "brand": "brAInwav",
+  "ttlSeconds": 300,
   "metadata": {
     "brand": "brAInwav",
     "surface": "connectors"
   },
   "connectors": [
+    {
+      "id": "perplexity-search",
+      "name": "Perplexity Search",
+      "version": "1.2.0",
+      "status": "enabled",
+      "description": "Search aggregation connector that proxies Perplexity Answers without exposing API secrets.",
+      "endpoint": "https://connectors.brainwav.ai/perplexity/search",
+      "authentication": {
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer ${PERPLEXITY_API_KEY}"
+          }
+        ]
+      },
+      "headers": {
+        "X-Cortex-Connector": "perplexity-search"
+      },
+      "scopes": ["search:query", "search:insights"],
+      "quotas": {
+        "per_minute": 30,
+        "per_hour": 300,
+        "per_day": 3000,
+        "concurrent": 8
+      "scopes": [
+        "search:query",
+        "search:insights"
+      ],
+      "quotas": {
+        "perMinute": 30,
+        "perHour": 300,
+        "perDay": 3000
+      },
+      "status": "enabled",
+      "ttlSeconds": 3600,
+      "metadata": {
+        "owner": "integrations",
+        "category": "search"
+      },
+      "tags": ["search", "knowledge"]
+      "auth": {
+        "type": "bearer",
+        "headerName": "Authorization"
+      }
+    },
+    {
+      "id": "github-actions",
+      "name": "GitHub Actions Dispatcher",
+      "version": "0.4.1",
+      "status": "disabled",
+      "description": "Prototype connector that dispatches GitHub workflow runs once security review completes.",
+      "endpoint": "https://connectors.brainwav.ai/github/actions",
+      "authentication": {
+        "headers": [
+          {
+            "name": "X-GitHub-Token",
+            "value": "${GITHUB_TOKEN:provided-at-runtime}"
+          }
+        ]
+      },
+      "scopes": ["repos:read", "actions:trigger"],
+      "scopes": [
+        "repos:read",
+        "actions:trigger"
+      ],
+      "quotas": {
+        "perMinute": 5,
+        "perHour": 50,
+        "perDay": 400
+      },
+      "status": "disabled",
+      "ttlSeconds": 900,
+      "metadata": {
+        "notes": "Disabled until SOC2 control review completes",
+        "category": "automation"
+      },
+      "tags": ["automation", "ci"]
+        "notes": "Disabled until SOC2 control review completes"
+      },
+      "auth": {
+        "type": "apiKey",
+        "headerName": "X-GitHub-Token"
+      }
+    },
     {
       "id": "wikidata",
       "name": "Wikidata Semantic Search",

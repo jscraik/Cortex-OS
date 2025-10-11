@@ -8,6 +8,8 @@ from typing import Dict, Iterable, List, Optional
 
 from prometheus_client import Gauge
 
+from .manifest import build_connector_service_map, load_connectors_manifest, sign_connector_service_map
+from .models import ConnectorEntry, ConnectorsManifest
 from .manifest import load_connectors_manifest
 from .models import ConnectorManifestEntry, ConnectorsManifest
 from .signing import generate_service_map_signature
@@ -23,7 +25,7 @@ _CONNECTOR_GAUGE = Gauge(
 class ConnectorRecord:
     """Runtime view of a connector entry."""
 
-    entry: ConnectorManifestEntry
+    entry: ConnectorEntry
     enabled: bool
 
 
@@ -60,6 +62,9 @@ class ConnectorRegistry:
         return [record for record in self.records() if record.enabled]
 
     def service_map(self) -> Dict[str, object]:
+        payload = build_connector_service_map(self.manifest)
+        signature = sign_connector_service_map(payload, self._signature_key)
+        return {"payload": payload.model_dump(by_alias=True, mode="json", exclude_none=True), "signature": signature}
         payload = self.manifest.service_map_payload()
         signature = generate_service_map_signature(
             payload.model_dump(mode="json", by_alias=True, exclude_none=True),

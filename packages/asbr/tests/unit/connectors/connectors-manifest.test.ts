@@ -54,6 +54,38 @@ describe('connectors manifest', () => {
                                                 'wikidata:claims',
                                                 'wikidata:sparql',
                                         ],
+                        id: '01J0XKQ4R6V7Z9P3S5T7W9YBCD',
+                        brand: 'brAInwav',
+                        generatedAt: '2025-01-01T00:00:00Z',
+                        ttlSeconds: 900,
+                        connectors: [
+                                {
+                                        id: 'github-actions',
+                                        version: '0.4.1',
+                                        displayName: 'GitHub Actions Dispatcher',
+                                        endpoint: 'https://connectors.brainwav.ai/github/actions',
+                                        auth: { type: 'apiKey', headerName: 'X-GitHub-Token' },
+                                        scopes: ['repos:read', 'actions:trigger'],
+                                        ttlSeconds: 900,
+                                        enabled: false,
+                                        metadata: {
+                                                brand: 'brAInwav',
+                                                notes: 'Disabled until SOC2 control review completes',
+                                                category: 'automation',
+                                        },
+                                        quotas: { perMinute: 5, perHour: 50 },
+                                        headers: { 'X-GitHub-Token': '${GITHUB_TOKEN:provided-at-runtime}' },
+                                        description:
+                                                'Prototype connector that dispatches GitHub workflow runs once security review completes.',
+                                        tags: ['automation', 'ci'],
+                                },
+                                {
+                                        id: 'perplexity-search',
+                                        version: '1.2.0',
+                                        displayName: 'Perplexity Search',
+                                        endpoint: 'https://connectors.brainwav.ai/perplexity/search',
+                                        auth: { type: 'bearer', headerName: 'Authorization' },
+                                        scopes: ['search:query', 'search:insights'],
                                         ttlSeconds: 3600,
                                         enabled: true,
                                         metadata: {
@@ -71,6 +103,23 @@ describe('connectors manifest', () => {
 
                 const signature = signConnectorServiceMap({ ...serviceMap, signature: '' }, 'test-secret');
                 expect(signature).toBe('3e080d883ac7d57c88fa843c7ca2a59806dfdf2c5e549376b9b809a1d36c252c');
+                                                owner: 'integrations',
+                                                category: 'search',
+                                        },
+                                        quotas: { perMinute: 30, perHour: 300, concurrent: 8 },
+                                        headers: {
+                                                Authorization: 'Bearer ${PERPLEXITY_API_KEY}',
+                                                'X-Cortex-Connector': 'perplexity-search',
+                                        },
+                                        description:
+                                                'Search aggregation connector that proxies Perplexity Answers without exposing API secrets.',
+                                        tags: ['search', 'knowledge'],
+                                },
+                        ],
+                });
+
+                const signature = signConnectorServiceMap(serviceMap, 'test-secret');
+                expect(signature).toBe('p1BDrOB5DkN2G8Q6TKF6bRuBKHSxDhClD_d1nByCK3g');
                 try {
                         const manifest = await loadConnectorsManifest(manifestPath);
                         const serviceMap = buildConnectorServiceMap(manifest);
