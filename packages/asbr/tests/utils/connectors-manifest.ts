@@ -11,19 +11,36 @@ export interface TestManifestContext {
 }
 
 const DEFAULT_MANIFEST: ConnectorsManifest = {
-        id: 'test-manifest',
-        ttlSeconds: 300,
+        id: '01J0XKQ4R6V7Z9P3S5T7W9YBCE',
+        schema_version: '1.1.0',
+        generated_at: '2025-01-01T00:00:00Z',
         connectors: [
                 {
                         id: 'docs',
                         name: 'Docs Connector',
                         version: '1.0.0',
-                        scopes: ['docs:read'],
-                        quotas: { requestsPerMinute: 60 },
-                        timeouts: { request: 3000 },
                         status: 'enabled',
-                        ttlSeconds: 180,
-                        metadata: { brand: 'brAInwav' },
+                        description: 'Example connector used in tests.',
+                        endpoint: 'https://example.invalid/docs',
+                        authentication: {
+                                headers: [
+                                        {
+                                                name: 'Authorization',
+                                                value: 'Bearer ${DOCS_TOKEN}',
+                                        },
+                                ],
+                        },
+                        headers: {
+                                'X-Docs-Connector': 'docs',
+                        },
+                        scopes: ['docs:read'],
+                        quotas: {
+                                per_minute: 60,
+                                per_hour: 600,
+                        },
+                        ttl_seconds: 180,
+                        metadata: { owner: 'documentation', category: 'docs' },
+                        tags: ['docs'],
                 },
         ],
 };
