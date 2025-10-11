@@ -11,6 +11,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+#### CodeQL Security Fixes - Modules 7-10 (2025-01-11)
+
+**Module 7: ReDoS Prevention** (Alerts #203, #254)
+- Added input length validation to `apps/cortex-os/packages/local-memory/src/retrieval/index.ts`
+  - Maximum path length: 1000 characters
+  - Maximum environment variable name: 100 characters
+- Added input length validation to `packages/agents/src/prompt-registry.ts`
+  - Maximum prompt name length: 500 characters
+- Created comprehensive test suite with 12 test cases covering edge cases and attack vectors
+- Impact: Prevents ReDoS attacks through bounded input validation before regex operations
+
+**Module 8: Loop Bounds** (Alert #252)
+- Added bounds checking to `packages/memory-core/src/providers/LocalMemoryProvider.ts`
+  - Embedding dimension validation: 1-10,000
+  - Text iteration limit: 10,000 characters maximum
+- Created comprehensive test suite with 7 test cases
+- Impact: Prevents excessive memory allocation and unbounded loop iteration
+
+**Module 9: Prototype Pollution Prevention** (Alert #263)
+- Enhanced `packages/workflow-orchestrator/src/cli/commands/profile.ts` with prototype pollution guards
+  - Blacklisted dangerous keys: `__proto__`, `constructor`, `prototype`
+  - Added `hasOwnProperty` checks for safe property traversal
+  - Path segment validation to prevent prototype chain manipulation
+- Created comprehensive test suite with 9 test cases
+- Impact: Prevents prototype pollution attacks in configuration updates
+
+**Module 10: Security Verification & Fixes** (Alerts #264, #174, #211)
+- Verified `packages/security/src/a2a-gateway/envelope.ts` uses cryptographically secure `randomUUID()`
+- Verified `packages/rag/src/lib/content-security.ts` has comprehensive XSS/injection protection
+- Fixed identity replacement bug in `scripts/memory/memory-regression-guard.mjs`
+  - Corrected Prometheus label escaping: `replace(/"/g, '\\"')` 
+  - Added newline escaping for completeness
+- Deferred test infrastructure alerts (#261, #262, #253, #197) as non-production code
+
+**Security Test Coverage**
+- 4 new security test files created
+- 28 new test cases covering:
+  - Input validation edge cases
+  - Attack vector prevention
+  - Boundary condition handling
+  - brAInwav error message verification
+
+**Code Quality**
+- All changes follow brAInwav coding standards
+- Named exports only (no default exports)
+- Functions ≤ 40 lines
+- Async/await exclusively
+- brAInwav branding in all error messages
+- TypeScript strict mode compliant
+
+**Progress**: 65% complete (20/31 CodeQL alerts resolved)
+
 ### Added
 
 #### TypeScript Project References - Phase 3A (2025-01-22)
