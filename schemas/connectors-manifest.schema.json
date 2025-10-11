@@ -4,12 +4,17 @@
   "title": "ConnectorsManifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "connectors"],
+  "required": ["id", "schema_version", "connectors"],
   "properties": {
     "$schema": {
       "type": "string",
       "description": "Optional schema reference pointer for tooling",
       "format": "uri-reference"
+    },
+    "id": {
+      "type": "string",
+      "description": "ULID used as the stable identifier for the generated service map",
+      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
     },
     "schema_version": {
       "type": "string",
@@ -35,8 +40,10 @@
       "additionalProperties": false,
       "required": [
         "id",
+        "name",
         "version",
         "status",
+        "endpoint",
         "authentication",
         "scopes",
         "quotas",
@@ -47,6 +54,11 @@
           "type": "string",
           "description": "Stable identifier used by Cortex-OS for the connector",
           "pattern": "^[a-z0-9][a-z0-9-]{1,62}$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human readable display name for the connector",
+          "minLength": 1
         },
         "version": {
           "type": "string",
@@ -63,8 +75,20 @@
           "description": "Human readable description of the connector",
           "minLength": 1
         },
+        "endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "HTTPS endpoint that exposes the connector's MCP surface"
+        },
         "authentication": {
           "$ref": "#/definitions/Authentication"
+        },
+        "headers": {
+          "type": "object",
+          "description": "Additional static headers that must accompany outbound requests",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "scopes": {
           "type": "array",
@@ -88,6 +112,14 @@
           "description": "Additional non-sensitive metadata about the connector",
           "additionalProperties": {
             "type": ["string", "number", "boolean", "array", "object", "null"]
+          }
+        },
+        "tags": {
+          "type": "array",
+          "description": "Optional classification tags for filtering and UI presentation",
+          "items": {
+            "type": "string",
+            "minLength": 1
           }
         }
       }
@@ -126,7 +158,6 @@
     "QuotaBudget": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["per_minute", "per_hour", "per_day"],
       "properties": {
         "per_minute": {
           "type": "integer",
@@ -142,6 +173,11 @@
           "type": "integer",
           "minimum": 0,
           "description": "Maximum number of invocations allowed per day"
+        },
+        "concurrent": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum number of concurrent executions permitted"
         }
       }
     }

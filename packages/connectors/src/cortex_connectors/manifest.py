@@ -2,16 +2,22 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import hmac
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 from pydantic import ValidationError
 
 from .models import (
+    ConnectorAuth,
+    ConnectorAuthHeader,
+    ConnectorEntry,
+    ConnectorQuota,
+    ConnectorQuotaBudget,
     ConnectorServiceMap,
     ConnectorServiceMapEntry,
     ConnectorsManifest,
@@ -80,20 +86,20 @@ def build_connector_service_map(manifest: ConnectorsManifest) -> ConnectorServic
     """Create the ASBR-facing service map from the manifest."""
 
     connectors = [
-        ConnectorServiceMapEntry(
-            id=entry.id,
-            version=entry.version,
-            status=entry.status,
-            scopes=list(entry.scopes),
-            quotas=entry.quotas,
-            ttl_seconds=entry.ttl_seconds,
-        )
+        _build_service_entry(entry)
         for entry in sorted(manifest.connectors, key=lambda item: item.id)
     ]
 
+    if not connectors:
+        msg = "Connectors manifest must declare at least one connector"
+        raise ConnectorsManifestError(msg, attempts=[])
+
+    ttl_seconds = max(1, min(entry.ttl_seconds for entry in connectors))
+
     return ConnectorServiceMap(
-        schema_version=manifest.schema_version,
+        id=manifest.id,
         generated_at=manifest.generated_at,
+        ttl_seconds=ttl_seconds,
         connectors=connectors,
     )
 
@@ -106,7 +112,68 @@ def sign_connector_service_map(service_map: ConnectorServiceMap, secret: str) ->
         raise ValueError(msg)
 
     payload = json.dumps(
-        service_map.model_dump(mode="json", exclude_none=True),
+        service_map.model_dump(mode="json", by_alias=True, exclude_none=True),
         separators=(",", ":"),
+        sort_keys=True,
     ).encode("utf-8")
-    return hmac.new(secret.encode("utf-8"), payload, sha256).hexdigest()
+    signature = hmac.new(secret.encode("utf-8"), payload, sha256).digest()
+    return base64.urlsafe_b64encode(signature).rstrip(b"=").decode("ascii")
+
+
+def _build_service_entry(connector: ConnectorEntry) -> ConnectorServiceMapEntry:
+    primary_header = connector.authentication.headers[0]
+
+    auth_type = "none"
+    header_name: Optional[str] = None
+    if primary_header:
+        header_name = primary_header.name
+        if primary_header.name.lower() == "authorization" or primary_header.value.startswith("Bearer "):
+            auth_type = "bearer"
+        else:
+            auth_type = "apiKey"
+
+    metadata = {"brand": "brAInwav", **connector.metadata}
+    quotas = _build_quota_budget(connector.quotas)
+    headers = _merge_headers(connector.headers, connector.authentication.headers)
+
+    return ConnectorServiceMapEntry(
+        id=connector.id,
+        version=connector.version,
+        display_name=connector.display_name,
+        endpoint=connector.endpoint,
+        auth=ConnectorAuth(type=auth_type, header_name=header_name),
+        scopes=list(connector.scopes),
+        ttl_seconds=connector.ttl_seconds,
+        enabled=connector.enabled,
+        metadata=metadata,
+        quotas=quotas,
+        headers=headers,
+        description=connector.description,
+        tags=connector.tags,
+    )
+
+
+def _build_quota_budget(quotas: ConnectorQuota) -> Optional[ConnectorQuotaBudget]:
+    data: Dict[str, int] = {}
+    if quotas.per_minute is not None:
+        data["perMinute"] = quotas.per_minute
+    if quotas.per_hour is not None:
+        data["perHour"] = quotas.per_hour
+    if quotas.concurrent is not None:
+        data["concurrent"] = quotas.concurrent
+
+    return ConnectorQuotaBudget.model_validate(data) if data else None
+
+
+def _merge_headers(
+    extra_headers: Optional[Dict[str, str]],
+    auth_headers: List[ConnectorAuthHeader],
+) -> Optional[Dict[str, str]]:
+    merged: Dict[str, str] = {}
+    for header in auth_headers:
+        merged[header.name] = header.value
+
+    if extra_headers:
+        merged.update(extra_headers)
+
+    return merged or None

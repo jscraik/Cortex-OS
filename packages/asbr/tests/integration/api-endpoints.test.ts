@@ -320,35 +320,56 @@ describe('ASBR API Integration Tests', () => {
                                 .expect(200);
 
                         expect(response.body).toMatchObject({
-                                schema_version: '1.0.0',
+                                id: '01J0XKQ4R6V7Z9P3S5T7W9YBCD',
+                                brand: 'brAInwav',
+                                generatedAt: '2025-01-01T00:00:00Z',
+                                ttlSeconds: 900,
                         });
                         expect(typeof response.body.signature).toBe('string');
-                        expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
-                        expect(response.body.generated_at).toBe('2025-01-01T00:00:00Z');
+                        expect(response.body.signature).toMatch(/^[A-Za-z0-9_-]{43}$/);
                         expect(response.body.connectors).toEqual([
                                 {
                                         id: 'github-actions',
                                         version: '0.4.1',
-                                        status: 'disabled',
+                                        displayName: 'GitHub Actions Dispatcher',
+                                        endpoint: 'https://connectors.brainwav.ai/github/actions',
+                                        auth: { type: 'apiKey', headerName: 'X-GitHub-Token' },
                                         scopes: ['repos:read', 'actions:trigger'],
-                                        quotas: {
-                                                per_minute: 5,
-                                                per_hour: 50,
-                                                per_day: 400,
+                                        ttlSeconds: 900,
+                                        enabled: false,
+                                        metadata: {
+                                                brand: 'brAInwav',
+                                                notes: 'Disabled until SOC2 control review completes',
+                                                category: 'automation',
                                         },
-                                        ttl_seconds: 900,
+                                        quotas: { perMinute: 5, perHour: 50 },
+                                        headers: { 'X-GitHub-Token': '${GITHUB_TOKEN:provided-at-runtime}' },
+                                        description:
+                                                'Prototype connector that dispatches GitHub workflow runs once security review completes.',
+                                        tags: ['automation', 'ci'],
                                 },
                                 {
                                         id: 'perplexity-search',
                                         version: '1.2.0',
-                                        status: 'enabled',
+                                        displayName: 'Perplexity Search',
+                                        endpoint: 'https://connectors.brainwav.ai/perplexity/search',
+                                        auth: { type: 'bearer', headerName: 'Authorization' },
                                         scopes: ['search:query', 'search:insights'],
-                                        quotas: {
-                                                per_minute: 30,
-                                                per_hour: 300,
-                                                per_day: 3000,
+                                        ttlSeconds: 3600,
+                                        enabled: true,
+                                        metadata: {
+                                                brand: 'brAInwav',
+                                                owner: 'integrations',
+                                                category: 'search',
                                         },
-                                        ttl_seconds: 3600,
+                                        quotas: { perMinute: 30, perHour: 300, concurrent: 8 },
+                                        headers: {
+                                                Authorization: 'Bearer ${PERPLEXITY_API_KEY}',
+                                                'X-Cortex-Connector': 'perplexity-search',
+                                        },
+                                        description:
+                                                'Search aggregation connector that proxies Perplexity Answers without exposing API secrets.',
+                                        tags: ['search', 'knowledge'],
                                 },
                         ]);
                 });

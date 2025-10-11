@@ -104,17 +104,19 @@ async function readConnectorsManifest(path: string): Promise<ConnectorsManifest>
 }
 
 function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServiceMapPayload {
-        const generatedAt = new Date().toISOString();
-        const nowEpoch = Math.floor(Date.now() / 1000);
-        const connectors = manifest.connectors.map((connector) => buildConnectorEntry(connector, nowEpoch));
-        let minConnectorTTL: number | undefined = undefined;
-        if (manifest.connectors.length > 0) {
-                minConnectorTTL = Math.min(...manifest.connectors.map((connector) => connector.ttlSeconds));
+        const connectors = manifest.connectors
+                .map((connector) => buildConnectorEntry(connector))
+                .sort((left, right) => left.id.localeCompare(right.id));
+
+        if (connectors.length === 0) {
+                throw new ValidationError('Connectors manifest must contain at least one connector entry', {
+                        brand: BRAND,
+                        component: 'connectors',
+                });
         }
-        const ttlSeconds = Math.max(
-                1,
-                manifest.ttlSeconds ?? minConnectorTTL ?? 1,
-        );
+
+        const ttlSeconds = Math.max(1, Math.min(...connectors.map((connector) => connector.ttlSeconds)));
+        const generatedAt = manifest.generated_at ?? new Date().toISOString();
 
         return {
                 id: manifest.id,
@@ -125,38 +127,83 @@ function buildConnectorServiceMap(manifest: ConnectorsManifest): ConnectorServic
         };
 }
 
-function buildConnectorEntry(
-        connector: ConnectorsManifest['connectors'][number],
-        nowEpoch: number,
-): ConnectorServiceEntry {
-        const entry: ConnectorServiceEntry = {
-                id: connector.id,
-                name: connector.name,
-                version: connector.version,
-                scopes: connector.scopes,
-                status: connector.status,
-                ttl: nowEpoch + connector.ttlSeconds,
+function buildConnectorEntry(connector: ConnectorsManifest['connectors'][number]): ConnectorServiceEntry {
+        const authHeaders = connector.authentication.headers;
+        const primaryHeader = authHeaders[0];
+
+        let authType: ConnectorServiceEntry['auth']['type'] = 'none';
+        let headerName: string | undefined;
+        if (primaryHeader) {
+                headerName = primaryHeader.name;
+                const normalizedName = primaryHeader.name.toLowerCase();
+                if (normalizedName === 'authorization' || primaryHeader.value.startsWith('Bearer ')) {
+                        authType = 'bearer';
+                } else {
+                        authType = 'apiKey';
+                }
+        }
+
+        const metadata = {
+                brand: BRAND,
+                ...(connector.metadata ?? {}),
         };
 
-        if (Object.keys(connector.quotas).length > 0) {
-                entry.quotas = connector.quotas;
+        const quotas = normalizeQuotas(connector.quotas);
+        const headers = buildHeadersRecord(connector.headers, authHeaders);
+
+        return {
+                id: connector.id,
+                version: connector.version,
+                displayName: connector.name,
+                endpoint: connector.endpoint,
+                auth: { type: authType, ...(headerName ? { headerName } : {}) },
+                scopes: [...connector.scopes],
+                ttlSeconds: connector.ttl_seconds,
+                enabled: connector.status === 'enabled',
+                metadata,
+                ...(quotas ? { quotas } : {}),
+                ...(headers ? { headers } : {}),
+                ...(connector.description ? { description: connector.description } : {}),
+                ...(connector.tags ? { tags: connector.tags } : {}),
+        };
+}
+
+function normalizeQuotas(quotas: ConnectorsManifest['connectors'][number]['quotas']):
+        | ConnectorServiceEntry['quotas']
+        | undefined {
+        if (!quotas) {
+                return undefined;
         }
 
-        if (Object.keys(connector.timeouts).length > 0) {
-                entry.timeouts = connector.timeouts;
+        const mapped: NonNullable<ConnectorServiceEntry['quotas']> = {};
+        if (typeof quotas.per_minute === 'number') {
+                mapped.perMinute = quotas.per_minute;
+        }
+        if (typeof quotas.per_hour === 'number') {
+                mapped.perHour = quotas.per_hour;
+        }
+        if (typeof quotas.concurrent === 'number') {
+                mapped.concurrent = quotas.concurrent;
         }
 
-        if (connector.metadata) {
-                entry.metadata = connector.metadata;
+        return Object.keys(mapped).length > 0 ? mapped : undefined;
+}
+
+function buildHeadersRecord(
+        headers: ConnectorsManifest['connectors'][number]['headers'],
+        authHeaders: ConnectorsManifest['connectors'][number]['authentication']['headers'],
+): ConnectorServiceEntry['headers'] | undefined {
+        const merged = new Map<string, string>();
+
+        for (const header of authHeaders) {
+                merged.set(header.name, header.value);
         }
 
-        if (connector.endpoint) {
-                entry.endpoint = connector.endpoint;
+        if (headers) {
+                for (const [key, value] of Object.entries(headers)) {
+                        merged.set(key, value);
+                }
         }
 
-        if (connector.auth) {
-                entry.auth = connector.auth;
-        }
-
-        return entry;
+        return merged.size > 0 ? Object.fromEntries(merged.entries()) : undefined;
 }

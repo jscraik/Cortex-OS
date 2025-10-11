@@ -17,25 +17,47 @@ The manifest must satisfy the shared `ConnectorsManifestSchema` exported from `@
 
 ```json
 {
-  "id": "prod-connectors",
-  "ttlSeconds": 300,
+  "$schema": "../schemas/connectors-manifest.schema.json",
+  "id": "01J0XKQ4R6V7Z9P3S5T7W9YBCE",
+  "schema_version": "1.1.0",
+  "generated_at": "2025-01-01T00:00:00Z",
   "connectors": [
     {
       "id": "docs",
       "name": "Docs Connector",
       "version": "1.0.0",
-      "scopes": ["docs:read"],
-      "quotas": {"requestsPerMinute": 60},
-      "timeouts": {"request": 3000},
       "status": "enabled",
-      "ttlSeconds": 180,
-      "metadata": {"brand": "brAInwav"}
+      "description": "Read-only documentation search surface.",
+      "endpoint": "https://connectors.example.invalid/docs",
+      "authentication": {
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer ${DOCS_TOKEN}"
+          }
+        ]
+      },
+      "headers": {
+        "X-Docs-Connector": "docs"
+      },
+      "scopes": ["docs:read"],
+      "quotas": {
+        "per_minute": 60,
+        "per_hour": 600,
+        "concurrent": 8
+      },
+      "ttl_seconds": 300,
+      "metadata": {
+        "owner": "knowledge",
+        "category": "documentation"
+      },
+      "tags": ["docs", "search"]
     }
   ]
 }
 ```
 
-Each connector entry must declare at least one scope, a semantic version, and a positive TTL (`ttlSeconds`). Optional fields such as `quotas`, `timeouts`, `metadata`, `endpoint`, and `auth` are passed through to consumers when present.
+Connector entries must provide a stable identifier, human-readable `name`, HTTPS `endpoint`, explicit authentication headers, at least one scope, and a positive `ttl_seconds`. Optional `headers`, `metadata`, `tags`, and quota limits are surfaced to clients when present. `metadata.brand` is injected automatically when the service map is generated.
 
 ## Runtime Behaviour
 
@@ -43,9 +65,10 @@ The loader in `packages/asbr/src/connectors/manifest-loader.ts` performs the fol
 
 1. Resolve the manifest path (`CONNECTORS_MANIFEST_PATH` or default `config/connectors.manifest.json`).
 2. Validate the manifest against `ConnectorsManifestSchema`.
-3. Derive per-connector TTL expirations (`now + ttlSeconds`), compute a shared response TTL, and attach the `brand: "brAInwav"` metadata.
-4. Canonicalize the payload and sign it with `CONNECTORS_SIGNATURE_KEY` using HMAC-SHA256.
-5. Re-validate the signed response using `ConnectorServiceMapSchema` before returning it to clients.
+3. Convert manifest records into the canonical service map shape: camelCase field names (`displayName`, `ttlSeconds`, `enabled`), merged authentication/extra headers, camel-cased quota keys, and enforced `metadata.brand`.
+4. Derive the response TTL from the lowest per-connector `ttl_seconds` value.
+5. Canonicalize the payload and sign it with `CONNECTORS_SIGNATURE_KEY` using base64url-encoded HMAC-SHA256.
+6. Re-validate the signed response using `ConnectorServiceMapSchema` before returning it to clients.
 
 Missing files or secrets trigger a `503 Service Unavailable` response with structured logs (`brand:"brAInwav"`, `component:"connectors"`).
 

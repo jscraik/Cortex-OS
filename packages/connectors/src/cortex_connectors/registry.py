@@ -8,8 +8,8 @@ from typing import Dict, Iterable, List, Optional
 
 from prometheus_client import Gauge
 
-from .manifest import ConnectorManifest, ConnectorManifestEntry
-from .signing import generate_service_map_signature
+from .manifest import build_connector_service_map, load_connectors_manifest, sign_connector_service_map
+from .models import ConnectorEntry, ConnectorsManifest
 
 _CONNECTOR_GAUGE = Gauge(
     "brAInwav_mcp_connector_proxy_up",
@@ -22,7 +22,7 @@ _CONNECTOR_GAUGE = Gauge(
 class ConnectorRecord:
     """Runtime view of a connector entry."""
 
-    entry: ConnectorManifestEntry
+    entry: ConnectorEntry
     enabled: bool
 
 
@@ -32,17 +32,17 @@ class ConnectorRegistry:
     def __init__(self, manifest_path: Path, signature_key: str) -> None:
         self._manifest_path = manifest_path
         self._signature_key = signature_key
-        self._manifest: Optional[ConnectorManifest] = None
+        self._manifest: Optional[ConnectorsManifest] = None
 
     @property
-    def manifest(self) -> ConnectorManifest:
+    def manifest(self) -> ConnectorsManifest:
         if self._manifest is None:
-            self._manifest = ConnectorManifest.load(self._manifest_path)
+            self._manifest = load_connectors_manifest(self._manifest_path)
             self._update_metrics()
         return self._manifest
 
     def refresh(self) -> None:
-        self._manifest = ConnectorManifest.load(self._manifest_path)
+        self._manifest = load_connectors_manifest(self._manifest_path)
         self._update_metrics()
 
     def _update_metrics(self) -> None:
@@ -59,9 +59,9 @@ class ConnectorRegistry:
         return [record for record in self.records() if record.enabled]
 
     def service_map(self) -> Dict[str, object]:
-        payload = self.manifest.service_map_payload()
-        signature = generate_service_map_signature(payload, self._signature_key)
-        return {"payload": payload, "signature": signature}
+        payload = build_connector_service_map(self.manifest)
+        signature = sign_connector_service_map(payload, self._signature_key)
+        return {"payload": payload.model_dump(by_alias=True, mode="json", exclude_none=True), "signature": signature}
 
 
 __all__ = ["ConnectorRegistry", "ConnectorRecord"]

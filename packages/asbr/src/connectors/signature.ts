@@ -9,7 +9,7 @@ export function canonicalizeConnectorPayload(payload: ConnectorServiceMapPayload
 
 export function signConnectorPayload(payload: ConnectorServiceMapPayload, key: string): string {
         const canonical = canonicalizeConnectorPayload(payload);
-        return createHmac('sha256', key).update(canonical).digest('hex');
+        return createHmac('sha256', key).update(canonical).digest('base64url');
 }
 
 function canonicalStringify(value: unknown): string {
