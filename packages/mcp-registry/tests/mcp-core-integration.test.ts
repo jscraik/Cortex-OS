@@ -34,15 +34,16 @@ describe('MCP Core Integration', () => {
 
 		// Verify all tools are registered
 		const registeredTools = toolRegistry.list();
-		expect(registeredTools).toHaveLength(5);
+                expect(registeredTools).toHaveLength(6);
 
-		const toolNames = registeredTools.map((tool) => tool.name).sort();
-		expect(toolNames).toEqual([
-			'registry.get',
-			'registry.list',
-			'registry.register',
-			'registry.stats',
-			'registry.unregister',
+                const toolNames = registeredTools.map((tool) => tool.name).sort();
+                expect(toolNames).toEqual([
+                        'registry.marketplaceImport',
+                        'registry.get',
+                        'registry.list',
+                        'registry.register',
+                        'registry.stats',
+                        'registry.unregister',
 		]);
 	});
 
