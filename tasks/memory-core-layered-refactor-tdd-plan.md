@@ -96,7 +96,7 @@ Implement a layered memory architecture in `@cortex-os/memory-core` that separat
 ```bash
 pnpm install
 # Optional: start local Qdrant for integration tests
-./docker/scripts/dev-qdrant-up.sh
+docker-compose -f docker/qdrant-compose.yml up -d
 # Ensure MEMORY_DB_PATH points to writable sqlite file under repo data/
 export MEMORY_DB_PATH="./data/unified-memories.db"
 ```
