@@ -1,7 +1,7 @@
 import type { ServerInfo } from '@cortex-os/mcp-core';
 import { z } from 'zod';
 
-const MARKETPLACE_BASE_URL = 'https://mcpmarket.com/api/servers';
+const MARKETPLACE_BASE_URL = process.env.MARKETPLACE_BASE_URL || 'https://mcpmarket.com/api/servers';
 
 const MarketplaceStartCommandSchema = z.object({
         type: z.string().min(1),
