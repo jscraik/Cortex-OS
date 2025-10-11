@@ -19,7 +19,7 @@ Implement a layered memory architecture in `@cortex-os/memory-core` that separat
 > **Integration Note**: This task aligns with PRP Runner quality gates to ensure consistent quality standards.
 
 ### Enforcement Profile Reference
-- **Source**: `packages/workflow-common/src/schemas/enforcement-profile.ts` (default brAInwav profile)
+- **Source**: `packages/workflow-common/src/schemas/enforcement-profile.ts` (planned location, default brAInwav profile)
 - **Coverage Targets**: From PRP G2 (Test Plan gate)
   - Lines: `95%` (from `enforcementProfile.budgets.coverageLines` defaults)
   - Branches: `95%` (from `enforcementProfile.budgets.coverageBranches` defaults)
