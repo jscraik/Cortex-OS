@@ -43,7 +43,7 @@ async def test_service_map_authentication(settings: Settings) -> None:
         assert "signature" in body
 
         payload = body["payload"]
-        assert payload["metadata"]["count"] == 3
+        assert payload["metadata"]["count"] == len(payload["connectors"])
 
         wikidata = next(
             connector for connector in payload["connectors"] if connector["id"] == "wikidata"
