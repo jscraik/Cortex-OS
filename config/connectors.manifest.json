@@ -1,55 +1,76 @@
 {
-  "$schema": "../schemas/connectors-manifest.schema.json",
-  "schema_version": "1.0.0",
-  "generated_at": "2025-01-01T00:00:00Z",
+  "id": "core-connectors",
+  "brand": "brAInwav",
+  "ttlSeconds": 300,
+  "metadata": {
+    "generatedAt": "2025-01-01T00:00:00Z"
+  },
   "connectors": [
     {
       "id": "perplexity-search",
+      "name": "Perplexity Search",
       "version": "1.2.0",
-      "status": "enabled",
-      "description": "Search aggregation connector that proxies Perplexity Answers without exposing API secrets.",
-      "authentication": {
-        "headers": [
-          {
-            "name": "Authorization",
-            "value": "Bearer ${PERPLEXITY_API_KEY}"
-          }
-        ]
-      },
-      "scopes": ["search:query", "search:insights"],
+      "scopes": [
+        "search:query",
+        "search:insights"
+      ],
       "quotas": {
-        "per_minute": 30,
-        "per_hour": 300,
-        "per_day": 3000
+        "perMinute": 30,
+        "perHour": 300,
+        "perDay": 3000
       },
-      "ttl_seconds": 3600,
+      "status": "enabled",
+      "ttlSeconds": 3600,
       "metadata": {
         "owner": "integrations",
         "category": "search"
+      },
+      "auth": {
+        "type": "bearer",
+        "headerName": "Authorization"
       }
     },
     {
       "id": "github-actions",
+      "name": "GitHub Actions Dispatcher",
       "version": "0.4.1",
-      "status": "disabled",
-      "description": "Prototype connector that dispatches GitHub workflow runs once security review completes.",
-      "authentication": {
-        "headers": [
-          {
-            "name": "X-GitHub-Token",
-            "value": "${GITHUB_TOKEN:provided-at-runtime}"
-          }
-        ]
-      },
-      "scopes": ["repos:read", "actions:trigger"],
+      "scopes": [
+        "repos:read",
+        "actions:trigger"
+      ],
       "quotas": {
-        "per_minute": 5,
-        "per_hour": 50,
-        "per_day": 400
+        "perMinute": 5,
+        "perHour": 50,
+        "perDay": 400
       },
-      "ttl_seconds": 900,
+      "status": "disabled",
+      "ttlSeconds": 900,
       "metadata": {
         "notes": "Disabled until SOC2 control review completes"
+      },
+      "auth": {
+        "type": "apiKey",
+        "headerName": "X-GitHub-Token"
+      }
+    },
+    {
+      "id": "wikidata",
+      "name": "Wikidata Vector Search",
+      "version": "2024.09.18",
+      "scopes": [
+        "facts:query",
+        "facts:claims"
+      ],
+      "status": "enabled",
+      "ttlSeconds": 300,
+      "metadata": {
+        "brand": "brAInwav",
+        "provider": "Wikidata",
+        "snapshot": "2024-09-18"
+      },
+      "endpoint": "https://wd-mcp.wmcloud.org/mcp/",
+      "auth": {
+        "type": "none"
       }
     }
   ]

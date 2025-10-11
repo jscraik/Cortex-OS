@@ -10,7 +10,7 @@
 import type { Application } from 'express';
 import { join } from 'node:path';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { initializeAuth } from '../../src/api/auth.js';
 import { type ASBRServer, createASBRServer } from '../../src/api/server.js';
 import type { Profile, TaskInput } from '../../src/types/index.js';
@@ -314,43 +314,61 @@ describe('ASBR API Integration Tests', () => {
 
         describe('Connector Service Map', () => {
                 it('should return connector service map', async () => {
-                        const response = await request(app)
-                                .get('/v1/connectors/service-map')
-                                .set('Authorization', `Bearer ${authToken}`)
-                                .expect(200);
+                        vi.useFakeTimers();
+                        vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
 
-                        expect(response.body).toMatchObject({
-                                schema_version: '1.0.0',
-                        });
-                        expect(typeof response.body.signature).toBe('string');
-                        expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
-                        expect(response.body.generated_at).toBe('2025-01-01T00:00:00Z');
-                        expect(response.body.connectors).toEqual([
-                                {
-                                        id: 'github-actions',
-                                        version: '0.4.1',
-                                        status: 'disabled',
-                                        scopes: ['repos:read', 'actions:trigger'],
-                                        quotas: {
-                                                per_minute: 5,
-                                                per_hour: 50,
-                                                per_day: 400,
+                        try {
+                                const response = await request(app)
+                                        .get('/v1/connectors/service-map')
+                                        .set('Authorization', `Bearer ${authToken}`)
+                                        .expect(200);
+
+                                expect(response.body).toMatchObject({ brand: 'brAInwav' });
+                                expect(typeof response.body.signature).toBe('string');
+                                expect(response.body.signature).toMatch(/^[a-f0-9]{64}$/);
+                                expect(response.body.generatedAt).toBe('2025-01-01T00:00:00.000Z');
+                                expect(response.body.connectors).toEqual([
+                                        {
+                                                id: 'github-actions',
+                                                name: 'GitHub Actions Dispatcher',
+                                                version: '0.4.1',
+                                                scopes: ['repos:read', 'actions:trigger'],
+                                                status: 'disabled',
+                                                ttl: 1735690500,
+                                                metadata: { notes: 'Disabled until SOC2 control review completes' },
+                                                auth: { type: 'apiKey', headerName: 'X-GitHub-Token' },
+                                                quotas: { perMinute: 5, perHour: 50, perDay: 400 },
                                         },
-                                        ttl_seconds: 900,
-                                },
-                                {
-                                        id: 'perplexity-search',
-                                        version: '1.2.0',
-                                        status: 'enabled',
-                                        scopes: ['search:query', 'search:insights'],
-                                        quotas: {
-                                                per_minute: 30,
-                                                per_hour: 300,
-                                                per_day: 3000,
+                                        {
+                                                id: 'perplexity-search',
+                                                name: 'Perplexity Search',
+                                                version: '1.2.0',
+                                                scopes: ['search:query', 'search:insights'],
+                                                status: 'enabled',
+                                                ttl: 1735693200,
+                                                metadata: { owner: 'integrations', category: 'search' },
+                                                auth: { type: 'bearer', headerName: 'Authorization' },
+                                                quotas: { perMinute: 30, perHour: 300, perDay: 3000 },
                                         },
-                                        ttl_seconds: 3600,
-                                },
-                        ]);
+                                        {
+                                                id: 'wikidata',
+                                                name: 'Wikidata Vector Search',
+                                                version: '2024.09.18',
+                                                scopes: ['facts:query', 'facts:claims'],
+                                                status: 'enabled',
+                                                ttl: 1735689900,
+                                                metadata: {
+                                                        brand: 'brAInwav',
+                                                        provider: 'Wikidata',
+                                                        snapshot: '2024-09-18',
+                                                },
+                                                endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+                                                auth: { type: 'none' },
+                                        },
+                                ]);
+                        } finally {
+                                vi.useRealTimers();
+                        }
                 });
         });
 

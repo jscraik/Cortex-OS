@@ -39,14 +39,13 @@ const createManifest = (signatureKey: string) => {
                         {
                                 id: 'demo',
                                 version: '1.0.0',
-                                displayName: 'Demo Connector',
+                                name: 'Demo Connector',
                                 endpoint: 'https://connectors.invalid/v1/mcp',
                                 auth: { type: 'apiKey', headerName: 'X-Api-Key' },
                                 scopes: ['demo:read'],
-                                ttlSeconds: 120,
-                                enabled: true,
+                                status: 'enabled' as const,
+                                ttl: 1760270520,
                                 metadata: { brand: 'brAInwav' },
-                                headers: { 'X-Trace': 'allowed' },
                         },
                 ],
         };

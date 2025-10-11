@@ -16,12 +16,12 @@ const createSamplePayload = () => ({
                 {
                         id: 'connector-example',
                         version: '1.0.0',
-                        displayName: 'Example Connector',
+                        name: 'Example Connector',
                         endpoint: 'https://example.invalid/v1/mcp',
                         auth: { type: 'apiKey', headerName: 'Authorization' },
                         scopes: ['sample:read'],
-                        ttlSeconds: 120,
-                        enabled: true,
+                        status: 'enabled' as const,
+                        ttl: 1760270520,
                         metadata: { brand: 'brAInwav', surface: 'remote' },
                         quotas: { perMinute: 60 },
                 },
@@ -33,12 +33,12 @@ describe('connectors service map schema', () => {
                 const result = connectorEntrySchema.safeParse({
                         id: 'example',
                         version: '1.0.0',
-                        displayName: 'Example',
-                        endpoint: 'https://example.invalid',
-                        auth: { type: 'none' },
+                        name: 'Example',
                         scopes: ['demo'],
-                        ttlSeconds: 60,
+                        status: 'enabled',
+                        ttl: 60,
                         metadata: { brand: 'brAInwav', category: 'demo' },
+                        auth: { type: 'none' },
                 });
 
                 expect(result.success).toBe(true);
@@ -50,7 +50,7 @@ describe('connectors service map schema', () => {
                 const canonical = canonicalizeServiceMapPayload(payload);
 
                 expect(canonical).toMatchInlineSnapshot(
-                        '"{\"brand\":\"brAInwav\",\"connectors\":[{\"auth\":{\"type\":\"apiKey\"},\"displayName\":\"Example Connector\",\"enabled\":true,\"endpoint\":\"https://example.invalid/v1/mcp\",\"id\":\"connector-example\",\"metadata\":{\"brand\":\"brAInwav\",\"surface\":\"remote\"},\"quotas\":{\"perMinute\":60},\"scopes\":[\"sample:read\"],\"ttlSeconds\":120,\"version\":\"1.0.0\"}],\"generatedAt\":\"2025-10-12T12:00:00.000Z\",\"id\":\"01HZ7ZWJ5XJ8W4T7N6MZ2V1PQB\",\"ttlSeconds\":120}"',
+                        '"{\"brand\":\"brAInwav\",\"connectors\":[{\"auth\":{\"type\":\"apiKey\"},\"id\":\"connector-example\",\"metadata\":{\"brand\":\"brAInwav\",\"surface\":\"remote\"},\"name\":\"Example Connector\",\"quotas\":{\"perMinute\":60},\"scopes\":[\"sample:read\"],\"status\":\"enabled\",\"ttl\":1760270520,\"version\":\"1.0.0\"}],\"generatedAt\":\"2025-10-12T12:00:00.000Z\",\"id\":\"01HZ7ZWJ5XJ8W4T7N6MZ2V1PQB\",\"ttlSeconds\":120}"',
                 );
         });
 
