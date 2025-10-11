@@ -105,13 +105,17 @@ The `memory-core` package integrates with **Pieces OS Long-Term Memory** via the
 
 > 💡 **Pro Tip — Turbocharge Local Memory MCP**: Running a local Qdrant instance drops semantic search latency from ~100 ms to <10 ms for large corpora. Local Memory auto-detects Qdrant and falls back to SQLite when it is unavailable, so you can opt-in without risking downtime.
 
+### Install and Run Qdrant Locally
+
+Qdrant provides pre-built binaries for macOS, Linux, and Windows. See the [Qdrant installation guide](https://qdrant.tech/documentation/quick-start/) for the latest instructions for your platform.
+
+**macOS (Apple Silicon or Intel):**
+
 ```bash
-# Download, unpack, and start Qdrant locally
+# Download, unpack, and start Qdrant (macOS)
 curl -L https://github.com/qdrant/qdrant/releases/latest/download/qdrant-x86_64-apple-darwin.tar.gz -o qdrant.tar.gz
 tar -xzf qdrant.tar.gz && chmod +x qdrant && mkdir -p ~/.local-memory && mv qdrant ~/.local-memory/
 cd ~/.local-memory && ./qdrant &
-```
-
 With Qdrant running, Local Memory automatically enables vector indexing and hybrid search acceleration—no extra configuration required. Power users can then scale to millions of memories while maintaining consistent <10 ms retrieval times.
 
 ### Integration Pattern
