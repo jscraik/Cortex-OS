@@ -202,6 +202,13 @@ export async function fetchMarketplaceServer(
         if (!slug.trim()) {
                 throw new MarketplaceProviderError('validation_error', 'Marketplace slug must not be empty');
         }
+        // Validate slug: only allow lowercase letters, numbers, dashes, and underscores
+        if (!/^[a-z0-9_-]+$/.test(slug)) {
+                throw new MarketplaceProviderError(
+                        'validation_error',
+                        'Marketplace slug contains invalid characters. Only lowercase letters, numbers, dashes, and underscores are allowed.'
+                );
+        }
 
         const url = `${MARKETPLACE_BASE_URL}/${encodeURIComponent(slug)}`;
 
