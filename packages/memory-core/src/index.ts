@@ -44,12 +44,15 @@ export {
 	GraphRAGIngestService,
 } from './services/GraphRAGIngestService.js';
 export {
-	createGraphRAGService,
-	type GraphRAGQueryRequest,
-	type GraphRAGResult,
-	GraphRAGService,
-	type GraphRAGServiceConfig,
+        createGraphRAGService,
+        type GraphRAGQueryRequest,
+        type GraphRAGResult,
+        GraphRAGService,
+        type GraphRAGServiceConfig,
 } from './services/GraphRAGService.js';
+export { EvidenceGate } from './context-graph/evidence/EvidenceGate.js';
+export { ABACEngine } from './context-graph/security/ABACEngine.js';
+export { AuditLogger } from './context-graph/audit/AuditLogger.js';
 
 import { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 import { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';

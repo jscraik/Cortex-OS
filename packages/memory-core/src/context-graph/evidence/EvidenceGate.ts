@@ -1,382 +1,364 @@
-/**
- * Evidence Gate for brAInwav Cortex-OS
- *
- * Implements evidence-first filtering and ABAC compliance for context operations.
- * Ensures governance compliance before any routing decisions or data access.
- *
- * Key Features:
- * - ABAC (Attribute-Based Access Control) validation
- * - Evidence generation and audit trails
- * - Policy enforcement and violation detection
- * - Security compliance validation
- * - Audit logging and chain of custody
- */
-
 import { randomUUID } from 'node:crypto';
-import type { EvidenceRecord } from './types.js';
+import { AuditLogger } from '../audit/AuditLogger.js';
+import { ABACEngine } from '../security/ABACEngine.js';
+import type {
+        AccessAttemptLogPayload,
+        AccessContext,
+        AccessDecisionResult,
+        AuditLogEntry,
+        ComplianceValidationResult,
+        EvidenceGenerationPayload,
+        EvidenceRecord,
+        PolicyName,
+        RiskLevel,
+        SecurityScanInput,
+        SecurityScanResult,
+} from './types.js';
 
-export interface AccessContext {
-	user: {
-		id: string;
-		role: string;
-		permissions?: string[];
-		department?: string;
-		clearanceLevel?: number;
-	};
-	resource: {
-		id: string;
-		type: string;
-		sensitivity?: string;
-		classification?: string;
-		owner?: string;
-	};
-	action: string;
-	requestId?: string;
-	timestamp?: string;
+export interface EvidenceGateDependencies {
+        abacEngine?: ABACEngine;
+        auditLogger?: AuditLogger;
 }
 
-export interface AccessResult {
-	granted: boolean;
-	policiesApplied?: string[];
-	evidence?: any;
-	reason?: string;
-	violationType?: string;
-	riskLevel?: string;
-	requiresEscalation?: boolean;
+export interface AccessValidationResult {
+        granted: boolean;
+        policiesApplied: PolicyName[];
+        evidence: Record<string, unknown>;
+        reason?: string;
+        violationType?: string;
+        riskLevel: RiskLevel;
+        requiresEscalation: boolean;
+        metadata: {
+                brainwavValidated: boolean;
+                evaluationTimestamp: string;
+                conflictResolution?: 'deny-by-default' | 'allow';
+                additionalNotes?: string;
+        };
 }
 
-export interface EvidenceGeneration {
-	id: string;
-	userId: string;
-	resourceId: string;
-	action: string;
-	granted: boolean;
-	policiesEvaluated: string[];
-	decisionTime: Date;
-	brainwavGenerated: boolean;
-	signature: string;
+export interface GeneratedEvidence {
+        id: string;
+        userId: string;
+        resourceId: string;
+        action: string;
+        granted: boolean;
+        policiesEvaluated: string[];
+        decisionTime: Date;
+        brainwavGenerated: boolean;
+        signature: string;
+        violationType?: string;
+        violationDetails?: string;
+        riskLevel?: RiskLevel;
+        requiresEscalation?: boolean;
 }
 
-export interface AuditEntry {
-	id: string;
-	userId: string;
-	resourceId: string;
-	action: string;
-	granted: boolean;
-	policiesApplied: string[];
-	timestamp: string;
-	brainwavAudited: boolean;
-	immutable: boolean;
+interface EvidenceChainLink {
+        id: string;
+        signature?: string;
+        timestamp?: string;
 }
 
 export class EvidenceGate {
-	private readonly auditLog: AuditEntry[] = [];
-	private readonly evidenceRecords: Map<string, EvidenceRecord> = new Map();
+        private readonly abacEngine: ABACEngine;
+        private readonly auditLogger: AuditLogger;
+        private readonly evidenceRecords = new Map<string, EvidenceRecord>();
+        private readonly auditEntries = new Map<string, AuditLogEntry>();
 
-	async validateAccess(context: AccessContext): Promise<AccessResult> {
-		const timestamp = context.timestamp || new Date().toISOString();
+        constructor(dependencies: EvidenceGateDependencies = {}) {
+                this.abacEngine = dependencies.abacEngine ?? new ABACEngine();
+                this.auditLogger = dependencies.auditLogger ?? new AuditLogger();
+        }
 
-		// Basic role-based access control
-		const roleAllowed = this.checkRoleBasedAccess(context.user.role, context.resource.type);
+        async validateAccess(context: AccessContext): Promise<AccessValidationResult> {
+                const decision = await this.abacEngine.checkAccess(context);
+                const baseMetadata = decision.metadata ?? {
+                        evaluationTimestamp: context.timestamp ?? new Date().toISOString(),
+                };
+                const metadata = {
+                        ...baseMetadata,
+                        brainwavValidated: true,
+                };
 
-		// Clearance level check (if specified)
-		const clearanceValid = this.checkClearanceLevel(
-			context.user.clearanceLevel,
-			context.resource.sensitivity,
-		);
+                await this.logAccessAttempt(context, decision);
 
-		// Department authorization check (if specified)
-		const departmentAuthorized = this.checkDepartmentAuthorization(
-			context.user.department,
-			context.resource.owner,
-		);
+                if (!decision.allowed && decision.violation) {
+                        await this.logPolicyViolation(context, decision);
+                }
 
-		const policiesApplied = [];
-		let granted = true;
-		let reason: string | undefined;
+                return {
+                        granted: decision.allowed,
+                        policiesApplied: decision.policiesApplied ?? [],
+                        evidence: decision.evidence,
+                        reason: decision.reason,
+                        violationType: decision.violation?.type,
+                        riskLevel: decision.riskLevel ?? (decision.allowed ? 'low' : 'medium'),
+                        requiresEscalation: decision.requiresEscalation ?? false,
+                        metadata,
+                };
+        }
 
-		if (!roleAllowed) {
-			granted = false;
-			reason = 'Role not authorized for resource type';
-			policiesApplied.push('role-based');
-		}
+        async generateEvidence(
+                context: AccessContext,
+                accessResult: AccessValidationResult,
+        ): Promise<GeneratedEvidence> {
+                const decisionTime = new Date();
+                const id = `evidence-${randomUUID()}`;
+                const signature = this.createEvidenceSignature(context, accessResult, decisionTime);
+                const violationType = accessResult.violationType ?? this.deriveViolationType(accessResult);
+                const violationDetails = this.describeViolation(accessResult);
+                const riskLevel = accessResult.riskLevel ?? (accessResult.granted ? 'low' : 'medium');
+                const requiresEscalation =
+                        accessResult.requiresEscalation || violationType === 'clearance-level';
+                const evidence = accessResult.evidence ?? {};
+                const policiesApplied = accessResult.policiesApplied ?? [];
 
-		if (!clearanceValid) {
-			granted = false;
-			reason = reason ? `${reason}; Insufficient clearance level` : 'Insufficient clearance level';
-			policiesApplied.push('clearance-level');
-		}
+                const record: EvidenceRecord = {
+                        id,
+                        userId: context.user.id,
+                        resourceId: context.resource.id,
+                        action: context.action,
+                        granted: accessResult.granted,
+                        evidence,
+                        policiesApplied,
+                        timestamp: decisionTime.toISOString(),
+                        signature,
+                        brainwavGenerated: true,
+                        violationType,
+                        violationDetails,
+                        riskLevel,
+                        requiresEscalation,
+                };
 
-		if (!departmentAuthorized) {
-			granted = false;
-			reason = reason ? `${reason}; Department not authorized` : 'Department not authorized';
-			policiesApplied.push('department-access');
-		}
+                this.evidenceRecords.set(id, record);
 
-		const evidence = {
-			roleMatch: roleAllowed,
-			clearanceSufficient: clearanceValid,
-			departmentAuthorized,
-			brainwavCompliant: true,
-			requiredClearance: this.getRequiredClearance(context.resource.sensitivity),
-			userClearance: context.user.clearanceLevel || 0,
-		};
+                const auditPayload: EvidenceGenerationPayload = {
+                        evidenceId: id,
+                        userId: context.user.id,
+                        resourceId: context.resource.id,
+                        action: context.action,
+                        granted: accessResult.granted,
+                        policiesApplied,
+                        signature,
+                        timestamp: record.timestamp,
+                        metadata: {
+                                violationType,
+                                violationDetails,
+                        },
+                };
 
-		// Log access attempt
-		const auditEntry: AuditEntry = {
-			id: `audit-${randomUUID()}`,
-			userId: context.user.id,
-			resourceId: context.resource.id,
-			action: context.action,
-			granted,
-			policiesApplied,
-			timestamp,
-			brainwavAudited: true,
-			immutable: true,
-		};
+                const entry = await this.auditLogger.logEvidenceGeneration(auditPayload);
+                this.persistAuditEntry(entry);
 
-		this.auditLog.push(auditEntry);
+                return {
+                        id,
+                        userId: context.user.id,
+                        resourceId: context.resource.id,
+                        action: context.action,
+                        granted: accessResult.granted,
+                        policiesEvaluated: policiesApplied,
+                        decisionTime,
+                        brainwavGenerated: true,
+                        signature,
+                        violationType,
+                        violationDetails,
+                        riskLevel,
+                        requiresEscalation,
+                };
+        }
 
-		return {
-			granted,
-			policiesApplied,
-			evidence,
-			reason,
-			violationType: granted ? undefined : this.determineViolationType(context, evidence),
-			riskLevel: granted ? 'low' : this.assessRiskLevel(context, evidence),
-			requiresEscalation:
-				!granted && (evidence.requiredClearance || 0) > (context.user.clearanceLevel || 0),
-		};
-	}
+        async createAuditEntry(accessLog: AccessAttemptLogPayload): Promise<AuditLogEntry | undefined> {
+                const entry = await this.auditLogger.logAccessAttempt(accessLog);
+                this.persistAuditEntry(entry);
+                return entry;
+        }
 
-	async generateEvidence(
-		context: AccessContext,
-		accessResult: AccessResult,
-	): Promise<EvidenceGeneration> {
-		const evidence: EvidenceGeneration = {
-			id: `evidence-${randomUUID()}`,
-			userId: context.user.id,
-			resourceId: context.resource.id,
-			action: context.action,
-			granted: accessResult.granted,
-			policiesEvaluated: accessResult.policiesApplied || [],
-			decisionTime: new Date(),
-			brainwavGenerated: true,
-			signature: this.generateSignature(context, accessResult),
-		};
+        async verifyEvidenceChain(chain: EvidenceChainLink[]): Promise<{
+                valid: boolean;
+                chainIntact: boolean;
+                signaturesValid: boolean;
+                noTampering: boolean;
+                brainwavVerified: boolean;
+        }> {
+                const chainIntact = this.isChronological(chain);
+                const signaturesValid = chain.every((link) => this.signatureMatches(link));
+                const noTampering = signaturesValid && chain.every((link) => this.isImmutable(link.id));
+                const brainwavVerified = chain.every((link) => this.isBrainwavGenerated(link.id));
 
-		// Store evidence record
-		const record: EvidenceRecord = {
-			id: evidence.id,
-			userId: context.user.id,
-			resourceId: context.resource.id,
-			action: context.action,
-			granted: accessResult.granted,
-			evidence: accessResult.evidence,
-			policiesApplied: accessResult.policiesApplied || [],
-			timestamp: evidence.decisionTime.toISOString(),
-			signature: evidence.signature,
-			brainwavGenerated: true,
-		};
+                return {
+                        valid: chainIntact && signaturesValid && noTampering,
+                        chainIntact,
+                        signaturesValid,
+                        noTampering,
+                        brainwavVerified,
+                };
+        }
 
-		this.evidenceRecords.set(evidence.id, record);
+        async validateCompliance(
+                context: AccessContext,
+                complianceResult: Record<string, { compliant: boolean; riskLevel: RiskLevel; mitigations: string[] }>,
+        ): Promise<ComplianceValidationResult> {
+                return this.abacEngine.validateCompliance(context, complianceResult);
+        }
 
-		return evidence;
-	}
+        async performSecurityCheck(
+                context: AccessContext,
+                securityScan: SecurityScanInput,
+        ): Promise<SecurityScanResult> {
+                const result = this.abacEngine.performSecurityScan(context, securityScan);
 
-	createAuditEntry(accessLog: any): AuditEntry {
-		const entry: AuditEntry = {
-			id: `audit-${randomUUID()}`,
-			userId: accessLog.userId,
-			resourceId: accessLog.resourceId,
-			action: accessLog.action,
-			granted: accessLog.granted,
-			policiesApplied: accessLog.policiesApplied,
-			timestamp: accessLog.timestamp,
-			brainwavAudited: true,
-			immutable: true,
-		};
+                if (result.blocked) {
+                        const entry = await this.auditLogger.logPolicyViolation({
+                                userId: context.user.id,
+                                resourceId: context.resource.id,
+                                violation: 'security-violation',
+                                details: result.summary,
+                                riskLevel: result.riskLevel,
+                                requiresEscalation: result.requiresHumanReview,
+                                requestId: context.requestId,
+                        });
+                        this.persistAuditEntry(entry);
+                }
 
-		this.auditLog.push(entry);
-		return entry;
-	}
+                return result;
+        }
 
-	async verifyEvidenceChain(
-		evidenceChain: any[],
-	): Promise<{
-		valid: boolean;
-		chainIntact: boolean;
-		signaturesValid: boolean;
-		noTampering: boolean;
-		brainwavVerified: boolean;
-	}> {
-		// Simple verification - in a real implementation, this would use cryptographic signatures
-		const signaturesValid = evidenceChain.every(
-			(item) => item.signature && item.signature.length > 0,
-		);
-		const chainIntact = evidenceChain.length > 0;
-		const noTampering = signaturesValid; // Simplified check
-		const brainwavVerified = evidenceChain.every(
-			(item) => item.brainwavGenerated || item.brainwavAudited,
-		);
+        private async logAccessAttempt(context: AccessContext, decision: AccessDecisionResult): Promise<void> {
+                const payload: AccessAttemptLogPayload = {
+                        userId: context.user.id,
+                        resourceId: context.resource.id,
+                        action: context.action,
+                        granted: decision.allowed,
+                        policiesApplied: decision.policiesApplied ?? [],
+                        requestId: context.requestId,
+                        timestamp: context.timestamp,
+                };
+                const entry = await this.auditLogger.logAccessAttempt(payload);
+                this.persistAuditEntry(entry);
+        }
 
-		return {
-			valid: signaturesValid && chainIntact && noTampering,
-			chainIntact,
-			signaturesValid,
-			noTampering,
-			brainwavVerified,
-		};
-	}
+        private async logPolicyViolation(context: AccessContext, decision: AccessDecisionResult): Promise<void> {
+                if (!decision.violation) {
+                        return;
+                }
 
-	async validateCompliance(
-		_context: AccessContext,
-		_complianceResult: any,
-	): Promise<{ compliant: boolean; owaspLLMTop10: any; brainwavComplianceValidated: boolean }> {
-		// Simplified OWASP LLM Top-10 compliance check
-		const owaspLLMTop10 = {
-			llm01: {
-				compliant: true,
-				riskLevel: 'low',
-				mitigations: ['input-sanitization', 'prompt-guardrails'],
-			},
-			llm02: {
-				compliant: true,
-				riskLevel: 'low',
-				mitigations: ['output-validation', 'content-filtering'],
-			},
-			llm03: {
-				compliant: true,
-				riskLevel: 'medium',
-				mitigations: ['data-validation', 'source-verification'],
-			},
-		};
+                const details = this.describeViolationFromDecision(decision);
+                const entry = await this.auditLogger.logPolicyViolation({
+                        userId: context.user.id,
+                        resourceId: context.resource.id,
+                        violation: decision.violation.type,
+                        details,
+                        riskLevel: decision.violation.riskLevel ?? 'medium',
+                        requiresEscalation: decision.violation.requiresEscalation,
+                        requestId: context.requestId,
+                        timestamp: context.timestamp,
+                });
+                this.persistAuditEntry(entry);
+        }
 
-		const compliant = Object.values(owaspLLMTop10).every((check) => check.compliant);
+        private persistAuditEntry(entry?: AuditLogEntry): void {
+                if (!entry) {
+                        return;
+                }
+                this.auditEntries.set(entry.id, entry);
+        }
 
-		return {
-			compliant,
-			owaspLLMTop10,
-			brainwavComplianceValidated: true,
-		};
-	}
+        private signatureMatches(link: EvidenceChainLink): boolean {
+                const record = this.evidenceRecords.get(link.id);
+                const auditEntry = this.auditEntries.get(link.id);
+                if (record && link.signature) {
+                        return record.signature === link.signature;
+                }
+                if (auditEntry && link.signature) {
+                        return auditEntry.signature === link.signature;
+                }
+                return Boolean(link.signature);
+        }
 
-	async performSecurityCheck(
-		_context: AccessContext,
-		securityScan: any,
-	): Promise<{
-		blocked: boolean;
-		securityFlags: string[];
-		riskLevel: string;
-		requiresHumanReview: boolean;
-		brainwavSecurityBlocked: boolean;
-	}> {
-		const securityFlags: string[] = [];
+        private isChronological(chain: EvidenceChainLink[]): boolean {
+                if (chain.length === 0) {
+                        return false;
+                }
+                for (let index = 1; index < chain.length; index += 1) {
+                        const previous = chain[index - 1]?.timestamp;
+                        const current = chain[index]?.timestamp;
+                        if (previous && current && new Date(previous) > new Date(current)) {
+                                return false;
+                        }
+                }
+                return true;
+        }
 
-		if (securityScan.sqlInjectionRisk === 'high') {
-			securityFlags.push('sql-pattern');
-		}
+        private isImmutable(id: string): boolean {
+                const entry = this.auditEntries.get(id);
+                if (entry) {
+                        return entry.immutable;
+                }
+                const record = this.evidenceRecords.get(id);
+                if (record) {
+                        return true;
+                }
+                return true;
+        }
 
-		if (securityScan.piiDetected) {
-			securityFlags.push('pii-pattern');
-		}
+        private isBrainwavGenerated(id: string): boolean {
+                const record = this.evidenceRecords.get(id);
+                if (record) {
+                        return record.brainwavGenerated === true;
+                }
+                const entry = this.auditEntries.get(id);
+                if (entry) {
+                        return entry.brainwavAudited === true;
+                }
+                return true;
+        }
 
-		const blocked = securityFlags.length > 0;
-		const riskLevel = this.assessSecurityRisk(securityScan);
-		const requiresHumanReview = riskLevel === 'high' || securityFlags.includes('sql-pattern');
+        private createEvidenceSignature(
+                context: AccessContext,
+                accessResult: AccessValidationResult,
+                decisionTime: Date,
+        ): string {
+                const payload = [
+                        context.user.id,
+                        context.resource.id,
+                        context.action,
+                        String(accessResult.granted),
+                        decisionTime.toISOString(),
+                ].join(':');
+                return Buffer.from(payload).toString('base64');
+        }
 
-		return {
-			blocked,
-			securityFlags,
-			riskLevel,
-			requiresHumanReview,
-			brainwavSecurityBlocked: blocked,
-		};
-	}
+        private describeViolation(accessResult: AccessValidationResult): string | undefined {
+                if (accessResult.granted) {
+                        return undefined;
+                }
+                if (accessResult.violationType === 'clearance-level') {
+                        const required = accessResult.evidence?.requiredClearance;
+                        const user = accessResult.evidence?.userClearance;
+                        if (typeof required === 'number' && typeof user === 'number') {
+                                const baseline = `User clearance ${user} < required clearance ${required}`;
+                                return accessResult.reason
+                                        ? `${accessResult.reason}; ${baseline}`
+                                        : baseline;
+                        }
+                }
+                return accessResult.reason;
+        }
 
-	private checkRoleBasedAccess(userRole: string, resourceType: string): boolean {
-		const rolePermissions: Record<string, string[]> = {
-			developer: ['graph_slice', 'context_pack', 'model_route'],
-			senior_developer: ['graph_slice', 'context_pack', 'model_route', 'admin_access'],
-			qa_engineer: ['graph_slice', 'context_pack'],
-			intern: ['graph_slice'],
-			admin: ['graph_slice', 'context_pack', 'model_route', 'admin_access', 'system_config'],
-		};
+        private describeViolationFromDecision(decision: AccessDecisionResult): string {
+                if (decision.violation?.type === 'clearance-level') {
+                        const required = decision.evidence?.requiredClearance;
+                        const user = decision.evidence?.userClearance;
+                        if (typeof required === 'number' && typeof user === 'number') {
+                                return `User clearance ${user} < required clearance ${required}`;
+                        }
+                }
+                return decision.violation?.details ?? decision.reason ?? 'Policy violation detected';
+        }
 
-		return rolePermissions[userRole]?.includes(resourceType) || false;
-	}
-
-	private checkClearanceLevel(userClearance?: number, resourceSensitivity?: string): boolean {
-		if (!userClearance || !resourceSensitivity) return true;
-
-		const requiredLevels: Record<string, number> = {
-			low: 1,
-			medium: 2,
-			high: 3,
-			critical: 4,
-			confidential: 3,
-			secret: 4,
-			top_secret: 5,
-		};
-
-		const required = requiredLevels[resourceSensitivity] || 1;
-		return userClearance >= required;
-	}
-
-	private checkDepartmentAuthorization(userDepartment?: string, resourceOwner?: string): boolean {
-		if (!userDepartment || !resourceOwner) return true;
-
-		// Simple department check - in real implementation, this would be more sophisticated
-		return userDepartment === 'engineering' || resourceOwner === 'shared';
-	}
-
-	private getRequiredClearance(sensitivity?: string): number {
-		const levels: Record<string, number> = {
-			low: 1,
-			medium: 2,
-			high: 3,
-			critical: 4,
-			confidential: 3,
-			secret: 4,
-			top_secret: 5,
-		};
-
-		return levels[sensitivity || 'low'] || 1;
-	}
-
-	private determineViolationType(_context: AccessContext, evidence: any): string {
-		if (!evidence.roleMatch) return 'role-based';
-		if (!evidence.clearanceSufficient) return 'clearance-level';
-		if (!evidence.departmentAuthorized) return 'department-access';
-		return 'unknown';
-	}
-
-	private assessRiskLevel(context: AccessContext, evidence: any): string {
-		if (
-			!evidence.clearanceSufficient &&
-			(evidence.requiredClearance || 0) > (context.user.clearanceLevel || 0) + 1
-		) {
-			return 'high';
-		}
-		if (!evidence.roleMatch) {
-			return 'medium';
-		}
-		return 'low';
-	}
-
-	private assessSecurityRisk(securityScan: any): string {
-		if (securityScan.sqlInjectionRisk === 'high' || securityScan.exfiltrationRisk === 'high') {
-			return 'high';
-		}
-		if (securityScan.piiDetected || securityScan.sqlInjectionRisk === 'medium') {
-			return 'medium';
-		}
-		return 'low';
-	}
-
-	private generateSignature(context: AccessContext, accessResult: AccessResult): string {
-		// Simple signature generation - in real implementation, this would use cryptographic signing
-		const data = `${context.user.id}:${context.resource.id}:${context.action}:${accessResult.granted}:${Date.now()}`;
-		return Buffer.from(data).toString('base64');
-	}
+        private deriveViolationType(accessResult: AccessValidationResult): string | undefined {
+                if (accessResult.granted) {
+                        return undefined;
+                }
+                return accessResult.violationType ?? 'policy-violation';
+        }
 }
