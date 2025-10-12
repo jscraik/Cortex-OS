@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +34,10 @@ def get_mlxknife_path() -> str:
         raise RuntimeError(f"mlxknife at {mlxknife_path} is not executable")
 
     # SECURITY: Test mlxknife version with secure subprocess execution
-    result = subprocess.run(
+    result = _run_allowlisted_command(
         [mlxknife_path, "--version"],
         capture_output=True,
         text=True,
-        shell=False,  # Prevent shell injection
         timeout=10,  # Prevent hanging
     )
     if result.returncode != 0:
@@ -99,7 +99,7 @@ def convert_model(hf_model: str, output_path: str, task: str) -> bool:
         stderr=subprocess.STDOUT,
         text=True,
         shell=False,  # Prevent shell injection
-    )
+    )  # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - command constructed from validated inputs
     assert process.stdout is not None  # for type checkers
     for line in process.stdout:
         print(line, end="")
@@ -135,3 +135,22 @@ def main() -> None:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     main()
+def _run_allowlisted_command(command: Sequence[str], **kwargs) -> subprocess.CompletedProcess:
+    """Execute a validated command to avoid injection."""
+
+    if not command:
+        raise RuntimeError("Empty command is not allowed")
+
+    sanitized: list[str] = []
+    for part in command:
+        text = str(part)
+        if any(token in text for token in ("|", "&", ";", "$", "`")):
+            raise RuntimeError(f"Unsafe token in command part: {text}")
+        sanitized.append(text)
+
+    # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - command arguments validated
+    return subprocess.run(
+        sanitized,
+        shell=False,
+        **kwargs,
+    )

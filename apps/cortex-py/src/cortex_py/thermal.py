@@ -7,7 +7,7 @@ import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Protocol
+from typing import Any, Dict, Iterable, List, Optional, Protocol, Sequence
 
 try:  # pragma: no cover - optional dependency
     import psutil  # type: ignore
@@ -20,6 +20,30 @@ from .a2a.models import A2AEnvelope
 
 class ThermalProbeError(RuntimeError):
     """Raised when a thermal probe fails to provide data."""
+
+
+def _run_static_command(command: Sequence[str], *, timeout: float) -> subprocess.CompletedProcess:
+    """Run a predefined command after validating each argument."""
+
+    if not command:
+        raise ThermalProbeError("empty command is not allowed")
+
+    sanitized: list[str] = []
+    for part in command:
+        if not isinstance(part, str):  # pragma: no cover - guard rail
+            raise ThermalProbeError("command parts must be strings")
+        if any(token in part for token in ("|", "&", ";", "$", "`")):
+            raise ThermalProbeError(f"unsafe token in command part: {part}")
+        sanitized.append(part)
+
+    # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - command arguments are constant and validated
+    return subprocess.run(
+        sanitized,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+    )
 
 
 class ThermalProbe(Protocol):
@@ -197,13 +221,7 @@ class DarwinPowermetricsProbe:
 
     def read(self) -> ThermalReading:
         try:
-            completed = subprocess.run(
-                self._COMMAND,
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=3,
-            )
+            completed = _run_static_command(self._COMMAND, timeout=3)
         except (FileNotFoundError, subprocess.SubprocessError, subprocess.TimeoutExpired) as exc:
             raise ThermalProbeError(f"pmset thermlog failed: {exc}") from exc
 
@@ -234,13 +252,7 @@ class WindowsWmiProbe:
 
     def read(self) -> ThermalReading:
         try:
-            completed = subprocess.run(
-                self._COMMAND,
-                check=True,
-                capture_output=True,
-                text=True,
-                timeout=3,
-            )
+            completed = _run_static_command(self._COMMAND, timeout=3)
         except (FileNotFoundError, subprocess.SubprocessError, subprocess.TimeoutExpired) as exc:
             raise ThermalProbeError(f"wmic query failed: {exc}") from exc
 

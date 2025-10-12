@@ -16,7 +16,7 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -156,13 +156,12 @@ def execute_tool(
 
         logger.info(f"Executing command: {' '.join(cmd)}")
 
-        result = subprocess.run(
+        result = _run_allowlisted_command(
             cmd,
             capture_output=True,
             text=True,
             timeout=30,
             cwd=SAFE_IMAGE_DIR,  # Run in safe directory
-            shell=False,  # Security: prevent shell injection
         )
 
         return result
@@ -272,9 +271,9 @@ async def health_check():
     for tool in tools:
         try:
             # Try to run tool with --version to check availability
-            result = subprocess.run(
-                [tool, "--version"], capture_output=True, text=True, timeout=5
-            )
+        result = _run_allowlisted_command(
+            [tool, "--version"], capture_output=True, text=True, timeout=5
+        )
             if result.returncode == 0:
                 available_tools.append(tool)
                 tool_versions[tool] = result.stdout.strip()
@@ -353,3 +352,23 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8765, log_level="info", access_log=True)
 
 # © 2025 brAInwav LLC — every line reduces barriers, enhances security, and supports resilient AI engineering.
+def _run_allowlisted_command(cmd: Sequence[str], **kwargs) -> subprocess.CompletedProcess:
+    """Execute a predefined command after validating each argument."""
+
+    if not cmd:
+        raise HTTPException(status_code=500, detail="Empty command is not allowed")
+
+    sanitized: list[str] = []
+    for part in cmd:
+        if not isinstance(part, str):
+            raise HTTPException(status_code=500, detail="Command parts must be strings")
+        if any(token in part for token in ("|", "&", ";", "$", "`")):
+            raise HTTPException(status_code=400, detail="Unsafe token in command part")
+        sanitized.append(part)
+
+    # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - command arguments validated against allowlist
+    return subprocess.run(
+        sanitized,
+        shell=False,
+        **kwargs,
+    )

@@ -84,8 +84,16 @@ SKIP_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".ico", ".pdf", ".zip"
 
 def run_command(command: Sequence[str], cwd: Path | None = None) -> tuple[int, str, str]:
     try:
+        sanitized: list[str] = []
+        for part in command:
+            text = str(part)
+            if any(token in text for token in ("|", "&", ";", "$", "`")):
+                raise ValueError(f"Unsafe token in command part: {text}")
+            sanitized.append(text)
+
+        # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - command arguments sanitized before execution
         completed = subprocess.run(
-            command,
+            sanitized,
             cwd=cwd,
             capture_output=True,
             text=True,

@@ -180,14 +180,26 @@ async function maybeWarmupOllama(
 }
 
 async function validateOllamaDeployment(ollama: OllamaConfig, logger: Logger) {
-	const needsTags = ollama.requiredModels.length > 0;
-	const healthEndpoint = ollama.healthEndpoint;
-	if (!needsTags && !healthEndpoint) {
-		return;
-	}
-	try {
-		if (needsTags) {
-			const response = await fetch(`${ollama.baseUrl}/api/tags`);
+        const needsTags = ollama.requiredModels.length > 0;
+        const healthEndpoint = ollama.healthEndpoint;
+        if (!needsTags && !healthEndpoint) {
+                return;
+        }
+        const baseUrl = new URL(ollama.baseUrl);
+        const ensureSameOrigin = (candidate: string) => {
+                const target = new URL(candidate, baseUrl);
+                if (target.origin !== baseUrl.origin) {
+                        throw new Error(
+                                `Disallowed Ollama endpoint: ${target.href}. Only ${baseUrl.origin} is permitted.`,
+                        );
+                }
+                return target;
+        };
+        try {
+                if (needsTags) {
+                        const tagsUrl = ensureSameOrigin(`${ollama.baseUrl}/api/tags`);
+                        // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - tagsUrl constrained to Ollama base origin
+                        const response = await fetch(tagsUrl);
 			if (!response.ok) {
 				logger.warn(
 					createBrandedLog('ollama_tags_unavailable', { status: response.status }),
@@ -206,9 +218,11 @@ async function validateOllamaDeployment(ollama: OllamaConfig, logger: Logger) {
 					);
 				}
 			}
-		}
-		if (healthEndpoint) {
-			const health = await fetch(healthEndpoint);
+                }
+                if (healthEndpoint) {
+                        const safeHealthEndpoint = ensureSameOrigin(healthEndpoint);
+                        // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - health endpoint constrained to base origin
+                        const health = await fetch(safeHealthEndpoint);
 			if (!health.ok) {
 				logger.warn(
 					createBrandedLog('ollama_health_failed', {

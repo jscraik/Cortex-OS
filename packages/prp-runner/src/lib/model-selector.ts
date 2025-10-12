@@ -2,6 +2,8 @@ import { z } from 'zod';
 import type { ASBRAIIntegration } from '../asbr-ai-integration.js';
 import { checkMlxAvailability } from '../lib/infra/mlx.js';
 
+const OLLAMA_TAGS_ENDPOINT = new URL('http://127.0.0.1:11434/api/tags');
+
 // Model provider types
 export type ModelProvider =
 	| 'mlx'
@@ -161,8 +163,9 @@ export class ModelSelector {
 		} catch {
 			this._mlxAvailable = false;
 		}
-		try {
-			const response = await fetch('http://localhost:11434/api/tags');
+                try {
+                        // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - endpoint fixed to localhost Ollama API
+                        const response = await fetch(OLLAMA_TAGS_ENDPOINT);
 			this._ollamaAvailable = response.ok;
 		} catch {
 			this._ollamaAvailable = false;
