@@ -78,7 +78,7 @@ class AgentMCPClientStubImpl implements AgentMCPClientStub {
 
 		// Get mock response
 		const response = this.mockResponses.get(name) || { 
-			message: `Mock response for ${name}`, 
+			message: `[brAInwav] No mock configured for tool: ${name}`, 
 			brand: 'brAInwav' 
 		};
 

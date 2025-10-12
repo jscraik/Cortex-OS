@@ -1,0 +1,63 @@
+[
+  {
+    "file": "packages/rag/src/stubs/agent-mcp-client.ts",
+    "line": 81,
+    "end_line": 82,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Mock response pattern detected in production code path. Line contains 'Mock response for ${name}' which violates brAInwav production standards.",
+    "evidence": "message: `Mock response for ${name}`, brand: 'brAInwav'",
+    "fix": "Replace mock message with proper test-only implementation or throw descriptive error for production paths",
+    "tests_to_add": "Add test to verify default response behavior does not contain 'Mock' in message",
+    "rule": "brainwav.mock-response-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#production-ready-standards"
+    ]
+  },
+  {
+    "file": "packages/rag/src/integrations/remote-mcp.ts",
+    "line": 1117,
+    "end_line": 1117,
+    "severity": "medium",
+    "category": "types",
+    "description": "Use of 'any' type violates TypeScript safety standards. Should use proper interface type.",
+    "evidence": "const wikidataMetadata: any = { qid: topResult.qid };",
+    "fix": "Replace 'any' with proper type: const wikidataMetadata: Partial<WikidataMetadata> = { qid: topResult.qid, brand: 'brAInwav' };",
+    "tests_to_add": "Add test to verify metadata object structure matches WikidataMetadata interface",
+    "rule": "typescript-any-prohibition",
+    "standards": [
+      "codestyle:2-typescript-strict-types"
+    ]
+  },
+  {
+    "file": "packages/rag/src/integrations/remote-mcp.ts",
+    "line": 1232,
+    "end_line": 1232,
+    "severity": "low",
+    "category": "performance",
+    "description": "Hardcoded placeholder embedding array may impact performance and testing accuracy",
+    "evidence": "const embedding = new Array(1024).fill(0.1); // Placeholder embedding",
+    "fix": "Use configurable or injected embedding generator for better testability and accuracy",
+    "tests_to_add": "Add test to verify fallback embedding generation behavior",
+    "rule": "placeholder-implementation",
+    "standards": [
+      "codestyle:1-general-principles#determinism"
+    ]
+  },
+  {
+    "file": "packages/rag/src/integrations/remote-mcp.ts",
+    "line": 1101,
+    "end_line": 1101,
+    "severity": "low",
+    "category": "codestyle",
+    "description": "Hardcoded SPARQL query reduces flexibility and testability",
+    "evidence": "const sparqlQuery = `SELECT ?inventor WHERE { ?inventor wdt:P31 wd:Q5 . ?inventor wdt:P106 wd:Q901 }`;",
+    "fix": "Extract SPARQL query to configurable parameter or constant for better maintainability",
+    "tests_to_add": "Add test to verify SPARQL query generation is configurable",
+    "rule": "hardcoded-configuration",
+    "standards": [
+      "codestyle:1-general-principles#dry"
+    ]
+  }
+]
