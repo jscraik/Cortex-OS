@@ -1,11 +1,11 @@
-# Vitest runtime configuration for memory optimization
-NODE_OPTIONS=--max-old-space-size=4096 --expose-gc
-VITEST_MAX_THREADS=2
-VITEST_MIN_THREADS=1
-VITEST_MAX_FORKS=2
-VITEST_MIN_FORKS=1
+# Vitest runtime configuration for optimized performance
+NODE_OPTIONS=--max-old-space-size=2048 --expose-gc
+VITEST_MAX_THREADS=4
+VITEST_MIN_THREADS=2
+VITEST_MAX_FORKS=4
+VITEST_MIN_FORKS=2
 # Force garbage collection between tests
 VITEST_FORCE_GC=true
-# Reduce memory usage
-VITEST_NO_COVERAGE=true
-VITEST_DISABLE_CONSOLE_INTERCEPT=true
+# Enable selective coverage for performance
+VITEST_COVERAGE_THRESHOLD=80
+VITEST_DISABLE_CONSOLE_INTERCEPT=false

@@ -1,17 +1,18 @@
 import { RemoteToolProxy } from '@cortex-os/mcp-bridge/runtime/remote-proxy';
 import type {
-        RemoteTool,
-        RemoteToolProxyOptions,
+	RemoteTool,
+	RemoteToolProxyOptions,
 } from '@cortex-os/mcp-bridge/runtime/remote-proxy';
 import type { ConnectorEntry, ServiceMapPayload } from '@cortex-os/protocol';
 import type { ServerLogger } from '../server.js';
 import type { VersionedToolRegistry } from '../registry/toolRegistry.js';
 import { setConnectorAvailabilityGauge } from './metrics.js';
 import {
-        ConnectorManifestError,
-        type ConnectorServiceMapOptions,
-        loadConnectorServiceMap,
+	ConnectorManifestError,
+	type ConnectorServiceMapOptions,
+	loadConnectorServiceMap,
 } from './service-map.js';
+import { normalizeWikidataToolName } from './normalization.js';
 
 export interface ConnectorProxyManagerOptions extends ConnectorServiceMapOptions {
         connectorsApiKey: string;
@@ -122,7 +123,9 @@ export class ConnectorProxyManager {
                 }
 
                 for (const tool of tools) {
-                        const fullName = `${entry.id}.${tool.name}`;
+                        const normalized = normalizeWikidataToolName(tool.name, entry.id, entry);
+                        const fullName = normalized.normalizedName;
+
                         if (this.registeredTools.has(fullName)) {
                                 continue;
                         }
@@ -131,11 +134,13 @@ export class ConnectorProxyManager {
                                 name: fullName,
                                 description: tool.description,
                                 inputSchema: tool.inputSchema,
-                                handler: async (args: Record<string, unknown>) => proxy.callTool(tool.name, args),
+                                handler: async (args: Record<string, unknown>) =>
+                                        proxy.callTool(normalized.originalName, args),
                                 metadata: {
                                         connectorId: entry.id,
                                         connectorName: entry.name,
-                                        scopes: entry.scopes,
+                                        scopes: normalized.scopes,
+                                        tags: normalized.tags,
                                         brand: 'brAInwav',
                                 },
                         });

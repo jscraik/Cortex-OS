@@ -1,0 +1,12 @@
+sequenceDiagram
+    participant Client
+    participant ST as ShortTermMemoryStore
+    participant SQL as SQLite Episodic
+    participant Q as Qdrant
+    Client->>ST: storeShortTerm(sessionId, input)
+    ST-->>Client: id, storedAt, layer=short_term
+    ST-->>SQL: promote(sessionId) [future]
+    Client->>SQL: store(input)
+    SQL->>Q: scheduleVectorIndexing(id, payload with memory_layer)
+    Q-->>SQL: vectorIndexed=true
+    SQL-->>Client: { id, vectorIndexed }

@@ -321,6 +321,50 @@ const ConnectorQuotaSchema = z
 
 const ConnectorTimeoutSchema = z.record(z.string().min(1), z.number().int().nonnegative());
 
+/**
+ * ConnectorRemoteToolSchema
+ *
+ * Defines metadata for remote MCP tools that can be discovered by brAInwav agents
+ * through the connector service-map. Enables semantic routing and multi-step workflows.
+ *
+ * Required fields:
+ * - name: Dot-notation identifier (e.g., "wikidata.sparql", "connector.tool_name")
+ *
+ * Optional fields:
+ * - description: Human-readable description (should include brAInwav context)
+ * - tags: Semantic tags for filtering (e.g., ["vector", "sparql", "semantic"])
+ * - scopes: Authorization/capability scopes (e.g., ["facts", "provenance"])
+ *
+ * @example
+ * ```typescript
+ * const tool: ConnectorRemoteTool = {
+ *   name: 'wikidata.sparql',
+ *   description: 'brAInwav SPARQL endpoint for semantic queries',
+ *   tags: ['sparql', 'semantic'],
+ *   scopes: ['facts', 'provenance']
+ * };
+ * ```
+ *
+ * @see tasks/wikidata-semantic-layer-integration/tdd-plan.md
+ */
+export const ConnectorRemoteToolSchema = z
+	.object({
+		name: z
+			.string()
+			.min(1, 'brAInwav: Tool name cannot be empty')
+			.regex(
+				/^[a-z0-9_-]+\.[a-z0-9_-]+$/,
+				'brAInwav: Tool name must follow dot-notation (connector.tool_name)',
+			),
+		description: z
+			.string()
+			.min(10, 'brAInwav: Description must be at least 10 characters')
+			.optional(),
+		tags: z.array(z.string().min(1)).optional(),
+		scopes: z.array(z.string().min(1)).optional(),
+	})
+	.strict();
+
 export const ConnectorManifestEntrySchema = z
 	.object({
 		id: z.string().regex(/^[a-z0-9][a-z0-9-]{1,62}$/),
@@ -340,6 +384,7 @@ export const ConnectorManifestEntrySchema = z
 		ttlSeconds: z.number().int().positive(),
 		metadata: z.record(z.string(), z.unknown()).optional(),
 		tags: z.array(z.string().min(1)).optional(),
+		remoteTools: z.array(ConnectorRemoteToolSchema).optional(),
 	})
 	.strict();
 
@@ -388,6 +433,7 @@ export const ConnectorServiceEntrySchema = z
 		description: z.string().min(1).optional(),
 		tags: z.array(z.string().min(1)).optional(),
 		timeouts: ConnectorTimeoutSchema.optional(),
+		remoteTools: z.array(ConnectorRemoteToolSchema).optional(),
 	})
 	.strict();
 
@@ -407,6 +453,7 @@ export const ConnectorServiceMapPayloadSchema = ConnectorServiceMapSchema.omit({
 
 export type ConnectorAuth = z.infer<typeof ConnectorAuthSchema>;
 export type ConnectorAuthHeader = z.infer<typeof ConnectorAuthHeaderSchema>;
+export type ConnectorRemoteTool = z.infer<typeof ConnectorRemoteToolSchema>;
 export type ConnectorManifestEntry = z.infer<typeof ConnectorManifestEntrySchema>;
 export type ConnectorsManifest = z.infer<typeof ConnectorsManifestSchema>;
 export type ConnectorServiceEntry = z.infer<typeof ConnectorServiceEntrySchema>;

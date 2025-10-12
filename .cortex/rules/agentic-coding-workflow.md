@@ -2,140 +2,163 @@
 trigger: always_on
 alwaysApply: true
 ---
-# 🔄 Agentic Coding Workflow (Oct 2025)
+# 🔄 Agentic Coding Workflow (Oct 2025)
 
-This workflow governs all agentic and brAInwav development activities.  It aligns with current industry
-standards for AI‑powered and collaborative software development, combining clear research, planning, implementation,
-review, verification, monitoring and archiving steps.  **All documentation, artifacts and context for each task must
+This workflow governs all agentic and brAInwav development activities. It aligns with current industry
+standards for AI-powered and collaborative software development, combining clear research, planning, implementation,
+review, verification, monitoring and archiving steps. **All documentation, artifacts and context for each task must
 be stored in `~/tasks/[feature]/`, organized into subfolders and files named for the feature.**
+
+> **Authority & Enforcement**
+> - This workflow inherits the Governance Pack (`/.cortex/rules/*`) and `CODESTYLE.md`.
+> - CI blocks merges if required evidence is missing or rules are violated.
+> - Cross-refs: **Code Review Checklist** (`/.cortex/rules/code-review-checklist.md`), **Agentic Coding Workflow** (this file), **Time Freshness Guard** (`/.cortex/rules/_time-freshness.md`).
+
+---
 
 ## 0. Tasks
 
-- **Operate on a task basis:** Treat each feature, bugfix or enhancement as a discrete, context‑rich task.
+- **Operate on a task basis:** Treat each feature, bugfix or enhancement as a discrete, context-rich task.
   Use descriptive slugs (e.g., `copilot-enhancement`, `brainwav-integration`) to identify tasks.
 - **Store context:** Maintain notes, RAID logs and artifacts in Markdown files within `~/tasks/[feature]/`.
   Persist data via MCP/REST APIs when needed, never storing unencrypted secrets or PII.
-- **Continuous context:** Each task's folder forms a complete audit trail of research, planning, implementation,
+- **Continuous context:** Each task folder forms a complete audit trail of research, planning, implementation,
   review, testing and monitoring.
 
-### Task Analysis & Quality Requirements
+### 0.1 Preflight Guards & Governance Hooks (mandatory)
+
+- **Time Freshness Guard:** Anchor reasoning to the harness-provided timezone and "today". Convert relative dates
+  to **ISO-8601** in specs, PRs, and user-visible docs (`/.cortex/rules/_time-freshness.md`).
+- **Vibe Check MCP (Oversight):** After planning and **before any file writes, network calls, or long runs**,
+  call `vibe_check` (configured via `VIBE_CHECK_HTTP_URL`, default `http://127.0.0.1:2091`). Attach logs containing
+  `"brAInwav-vibe-check"` to the task folder and the PR. Missing logs **blocks** merge.
+- **Local Memory parity:** On each decision/refactor/rectification, append rationale + evidence to
+  `.github/instructions/memories.instructions.md` **and** persist via Local Memory **MCP/REST dual-mode**.
+  Reviewers confirm entries exist (see `docs/local-memory-fix-summary.md`).
+- **Hybrid Model — Live-Only Rule:** Embeddings, rerankers, and generations must use **live engines** only
+  (MLX, Ollama, or approved Frontier). **No stubs, no recorded outputs, no "dry_run" modes.**
+  Pre-merge run `pnpm models:health && pnpm models:smoke`; attach logs (model IDs, vector norms/shape, latency).
+  If live engines unavailable, mark task **blocked** and escalate per Constitution.
+- **Branding in logs/errors:** All new/changed logs/errors must include `"[brAInwav]"` and structured fields
+  `brand:"brAInwav"`, request/run IDs. Missing branding is a policy violation.
+
+---
+
+## Task Analysis & Quality Requirements
 
 - **RAID analysis:** Identify Risks, Assumptions, Issues and Dependencies
-  [oai_citation:0‡smartsheet.com][raid-def];
-  update the RAID log (kept in `~/tasks/[feature]/`) throughout the lifecycle
+  [oai_citation:0‡smartsheet.com][raid-def]; keep an up-to-date RAID log in `~/tasks/[feature]/`
   [oai_citation:1‡smartsheet.com][raid-how].
-- **Optional frameworks:** Use SOAR or NOISE if a more opportunity‑focused analysis is desired.
-- **Define quality gates & guardrails:** At task inception, specify non‑functional requirements (security, performance,
-  reliability, compliance).  Set quality gates (predefined criteria) [oai_citation:2‡techtarget.com][quality-gate]
-  and continuous guardrails [oai_citation:3‡sonatype.com][guardrails] and record them in the task folder.
+- **Optional frameworks:** SOAR or NOISE for opportunity-focused analysis.
+- **Define quality gates & guardrails:** At task inception, specify non-functionals (security, performance,
+  reliability, compliance). Set quality gates [oai_citation:2‡techtarget.com][quality-gate] and guardrails
+  [oai_citation:3‡sonatype.com][guardrails] and record them in the task folder.
+- **Coverage & mutation targets (repo-wide):** **≥90% global**, **≥95% changed lines**, **≥90% mutation** (where enabled).
+
+---
 
 ## 1. Research
 
 - **Semantic code search & reuse analysis.**
-- **Discovery phase:** Identify use cases, gather requirements, analyse feasibility and ROI, and create a roadmap to
-  reduce the high failure rate of AI projects [oai_citation:4‡botscrew.com][discovery-phase].
-  Document findings in `~/tasks/[feature]/`.
-- **Feasibility studies:** Apply PIECES (Performance, Information, Economics, Control, Efficiency, Services)
-  assessments and capture results in the task folder.
-- **Technical spikes:** Conduct time‑boxed spikes to resolve uncertainties
-  [oai_citation:5‡agileanalytics.cloud][tech-spike] and save spike documentation (problem statement, setup, results)
-  under `~/tasks/[feature]/`.
-- **Proof‑of‑Concept evaluations:** Follow PoC phases—need, ideation, evaluation, design, presentation
+- **Discovery:** Identify use cases and feasibility; reduce the high failure rate of AI projects
+  [oai_citation:4‡botscrew.com][discovery-phase]. Archive findings under the task.
+- **Feasibility spikes:** Time-box spikes [oai_citation:5‡agileanalytics.cloud][tech-spike]; store setup/results.
+- **PoC evaluations:** Follow need→ideation→evaluation→design→presentation phases
   [oai_citation:6‡our-thinking.nashtechglobal.com][poc-phases]
-  [oai_citation:7‡our-thinking.nashtechglobal.com][poc-step4]—and store PoC artifacts in `~/tasks/[feature]/`.
-- **Batch evaluations & guardrails:** Define success thresholds for hallucination, accuracy, relevance and bias,
-  and include compliance/ethics considerations.  Save evaluation reports in the task folder.
-- **Documentation:** Record all research outputs—requirements, architectural choices, security/accessibility goals,
-  PoC/spike findings—in `~/tasks/[feature]/`.
+  [oai_citation:7‡our-thinking.nashtechglobal.com][poc-step4].
+- **Batch evals & guardrails:** Define thresholds for hallucination, accuracy, relevance, bias; include ethics.
+- **Hybrid model proofing:** Any measurement that references model outputs must come from **live** MLX/Ollama/Frontier,
+  not recorded artifacts. Store sample IDs, model names, and latency in `research/`.
+
+---
 
 ## 2. Planning
 
-- **Review research artifacts** stored in `~/tasks/[feature]/` and build a clear implementation plan.
-- **Implementation plan:** Break down objectives, tasks, dependencies and timelines (MoSCoW or similar
-  prioritisation) and save `implementation-plan.md` under the task folder.
-- **Software Requirements Specification (SRS):** Create an SRS detailing methodology, frameworks, scope, architecture
-  and technology choices [oai_citation:8‡botscrew.com][srs-example]; store it in `~/tasks/[feature]/`.
-- **High‑level architecture:** Produce diagrams, wireframes and integration maps; save these visuals in a `design`
-  subfolder.
-- **One‑page business case:** Summarise problem/opportunity, proposed solution, benefits, costs and risks; save in
-  the task folder.
-- **Task breakdown:** Decompose the feature into modules and tasks with pseudocode/examples and store in
-  `implementation-checklist.md`.
-- **brAInwav requirements:** Plan branding, MCP/A2A integration, security scanning, accessibility (WCAG 2.2 AA),
-  internationalization/localization, monitoring hooks, rollback procedures and AI governance. Ensure all system
-  outputs include "brAInwav" reference and comply with constitutional standards.
-- **BDD & TDD planning:** Define Given‑When‑Then acceptance scenarios for BDD [oai_citation:9‡qt.io][bdd-behavior]
-  and outline TDD unit tests (red‑green‑refactor cycles [oai_citation:10‡qt.io][tdd-test]).
-  Store BDD scenarios and TDD outlines in `~/tasks/[feature]/`.
+- **Review research artifacts** in the task folder; build a clear implementation plan.
+- **Implementation plan:** Objectives, tasks, dependencies and timelines (MoSCoW or similar).
+  Save `implementation-plan.md`.
+- **SRS:** Methodology, scope, architecture, technology choices
+  [oai_citation:8‡botscrew.com][srs-example]; save `srs.md`.
+- **Design:** Diagrams, wireframes, integration maps → `design/`.
+- **One-page business case:** Problem/opportunity, solution, benefits, costs, risks.
+- **BDD & TDD planning:** Given-When-Then scenarios [oai_citation:9‡qt.io][bdd-behavior] and unit-test
+  outlines (red-green-refactor) [oai_citation:10‡qt.io][tdd-test].
+- **Governance prep:** Plan to attach in PR:
+  - Vibe-check logs, coverage/mutation reports, **Code Review Checklist** (see §4), **models:health/smoke** logs,
+  - Accessibility reports (WCAG 2.2 AA), security scans, **branding** spot checks.
+
+---
 
 ## 3. Implementation
 
-- **Execute the plan:** Follow the implementation checklist stored in the task folder.
-- **Apply TDD:** Write failing tests, implement minimal code to pass, then refactor [oai_citation:11‡qt.io][tdd-cycle].
-  Record test files in the repository and document progress in `implementation-log.md`.
-- **Use BDD acceptance tests:** Implement tests defined during planning [oai_citation:12‡qt.io][tdd-bdd-choice].
-- **Adhere to standards:** Use named exports, keep functions ≤ 40 lines, prefer `async/await`, validate inputs,
-  handle errors gracefully, sanitize data, protect secrets and implement fairness/bias mitigations.
-- **Observability & guardrails:** Embed logging, metrics and automated security/quality checks.
-  Note any deviations or findings in the task folder.
+- **Execute TDD:** Write failing tests, implement minimal code, refactor
+  [oai_citation:11‡qt.io][tdd-cycle]. Track in `implementation-log.md`.
+- **BDD acceptance tests:** Implement scenarios as planned
+  [oai_citation:12‡qt.io][tdd-bdd-choice].
+- **Follow CODESTYLE (hard checks, prod paths):**
+  - **Named exports only** (no default); **≤40 lines per function**; ESM; **strict types at boundaries**.
+  - `async/await` with **`AbortSignal`** for cancelable I/O; never swallow errors (attach `cause`).
+  - **No `any`** in production code (tests/justified compat shims only).
+  - **No ambient randomness/time** in core logic; inject seeds/clocks.
+  - **No cross-domain imports**; use declared interfaces (A2A topics, MCP tools/resources/prompts).
+- **Absolute prohibitions (prod paths):** `Math.random()` fabricating data; placeholder adapters;
+  `TODO/FIXME/HACK`; `console.warn("not implemented")`; fake/recorded telemetry; "will be wired later/follow-up".
+- **Security & supply chain:** Use env/secret managers; **no hard-coded secrets**.
+  Semgrep (block ERROR), gitleaks (block ANY), OSV clean per lockfile, CycloneDX SBOM, SLSA/in-toto provenance.
+- **Env & config:** Use shared loader (`scripts/utils/dotenv-loader.mjs` or `@cortex-os/utils`);
+  **never** call `dotenv.config()` directly. Don't raise `pnpm childConcurrency`/Nx parallelism beyond mitigations.
+- **Observability:** Structured logs with `brand:"brAInwav"`, request/run IDs; OTel traces/metrics.
+
+---
 
 ## 4. Review, Testing, Validation & Monitoring
 
-- **Comprehensive testing:** Conduct unit, integration, system, acceptance, accessibility, security and performance
-  tests.  Document test results in `~/tasks/[feature]/test-logs/`.
-- **CI/CD & deployment validation:** Run pipelines with automated testing, infrastructure-as-code and scalable rollback
+- **Comprehensive testing:** Unit, integration, system, acceptance, accessibility, security, performance.
+  Store artifacts under `test-logs/` or `validation/`.
+- **Code Review (enforced):**
+  - A **human reviewer who is not the PR author** must complete `/.cortex/rules/code-review-checklist.md`.
+  - Paste a filled copy as a **top-level PR comment** and link it in the PR description:
+    `CODE-REVIEW-CHECKLIST: /.cortex/rules/code-review-checklist.md`.
+  - **BLOCKER** items must be PASS; **MAJOR** need fixes or a Constitution waiver; **MINOR** require a follow-up task.
+  - Include evidence pointers (`file://path:line-range`, logs/trace IDs, screenshots, URLs).
+- **CI/CD & deployment validation:** IaC, rollbacks, and promotion checks
   [oai_citation:13‡zeet.co][deploy-post] [oai_citation:14‡zeet.co][deploy-ci].
-  Store deployment validation reports in `validation/`.
-- **HITL integration:** For high‑stakes or compliance‑sensitive areas, include human approval steps.
-  Use frameworks like HULA where AI produces changes, humans review/approve, and feedback informs model tuning.
-  Record HITL decisions and rationales in `HITL-feedback.md`.
-- **Refactor continuously:** Identify technical debt via code reviews and automated analysis, plan scope and perform
-  small incremental improvements [oai_citation:15‡teamhub.com][refactor-def]
-  [oai_citation:16‡teamhub.com][refactor-need].  Save refactoring plans and summaries in `refactoring/`.
-- **Code review:** Apply the structured checklist to examine design, logic, complexity, error handling, documentation,
-  security, performance, usability, ethics and collaboration practices.  Store review comments and resolutions in
-  `code-review.md`.
-- **Maintenance mindset:** Use continuous monitoring to catch issues in production.
-  Document user feedback, bug reports and performance metrics in `monitoring/`.
+- **HITL for high-stakes:** Record decisions and rationale in `HITL-feedback.md`.
+- **Refactor continuously:** Plan small, incremental improvements
+  [oai_citation:15‡teamhub.com][refactor-def]
+  [oai_citation:16‡teamhub.com][refactor-need].
 
-## 5. Verification
+---
 
-- **Quality gates:** Run `pnpm lint`, `pnpm test`, `pnpm security:scan` and record results in
-  `~/tasks/[feature]/verification/`.
-- **Check structure & coverage:** Validate scaffolding (`pnpm structure:validate`) and ensure ≥ 90 % coverage
-  (include a11y and i18n tests).  Store coverage reports.
-- **CI/CD and supply chain checks:** Confirm all pipelines succeed and supply‑chain security/AI governance checks pass.
-  Save evidence in `verification/`.
-- **Reality Filter validation:** Verify all generated/inferred content is properly labeled with `[Inference]`,
-  `[Speculation]`, or `[Unverified]` tags. Never present unverified content as factual.
-- **brAInwav branding verification:** Confirm all outputs, error messages, and logs include brAInwav references
-  per constitutional requirements.
-- **Mock production claims audit:** Validate no code claims production-readiness while containing fake data, mocks,
-  TODOs, or placeholders.
-- **Close feedback loops:** Address all issues from code review, testing, HITL and refactoring.
-  Document final resolutions and lessons learned in `lesson-learned.md`.
+## 5. Verification (gate to merge)
+
+- **Quality gates:** `pnpm lint`, `pnpm test`, `pnpm security:scan`; archive results in `verification/`.
+- **Coverage & mutation:** **≥90% global**, **≥95% changed lines**, **≥90% mutation** (where enabled).
+- **Structure & A11y:** `pnpm structure:validate`; include a11y & i18n tests; attach axe/jest-axe reports.
+- **Hybrid model live-only checks:** `pnpm models:health && pnpm models:smoke`; attach logs showing **live** MLX/Ollama/Frontier engines (model IDs, vector norms/shape, latency).
+- **Branding verification:** Confirm logs/errors include `[brAInwav]` and structured `brand:"brAInwav"`.
+- **Mock production claims audit:** Ensure no prod-readiness claims if fake data/mocks/TODOs/placeholder code exists.
+- **Vibe-check evidence:** Confirm `"brAInwav-vibe-check"` logs at plan→act gates.
+- **Checklists present:** CI fails if the Code Review Checklist token or top-level comment is missing.
+
+---
 
 ## 6. Monitoring, Iteration & Scaling
 
-- **Active monitoring:** Maintain deployment dashboards and log analysis; track performance, cost and user metrics.
-- **Iterate:** Rapidly respond to feedback, incidents and drift.
-  Update tests, monitoring hooks and documentation accordingly.
-- **Model updates & retraining:** For AI components, record model performance, drift detection and retraining
-  activities in `monitoring/`.
-- **Scale & optimize:** Consider scalability and efficiency improvements; document changes in the task folder.
+- **Active monitoring:** Dashboards and log analysis; track performance, cost, user metrics.
+- **Iterate:** Respond to feedback/incidents; update tests, monitoring hooks, docs.
+- **Model lifecycle:** Log drift detection and retraining activities in `monitoring/`.
+- **Scale & optimize:** Record efficiency improvements and their impact.
+
+---
 
 ## 7. Archive
 
-- **Archive artifacts:** Move final SRS, design diagrams, plans, test logs, HITL feedback, refactoring summaries,
-  verification reports, monitoring logs and the comprehensive task summary into long‑term storage
-  (remains under `~/tasks/[feature]/` but flagged as archived).
-- **Update documentation:** Refresh package and system docs, READMEs and change logs.
-  Ensure runbooks and monitoring guides reflect new features.
-- **Record outcomes:** Mark checklist items as complete and write a final summary capturing research findings,
-  implementation details, review comments, test outcomes, HITL decisions, refactoring notes, verification results
-  and monitoring/iteration lessons.
-- **Ensure traceability:** The archived `~/tasks/[feature]/` folder contains the full context, enabling
-  reproducibility, auditability and future agent learning.
+- **Archive artifacts:** Final SRS, diagrams, plans, test logs, HITL feedback, refactors, verification reports,
+  monitoring logs, and the task summary remain under `~/tasks/[feature]/` (flagged archived).
+- **PR audit trail:** On merge, CI mirrors the filled review checklist to
+  `.cortex/audit/reviews/<PR_NUMBER>-<SHORT_SHA>.md`.
+- **Ensure traceability:** The archived task folder must enable reproducibility, auditability, and future agent learning.
 
 [raid-def]: https://www.smartsheet.com/content/raid-project-management#:~:text=In%20project%20management%2C%20RAID%20stands,communication%20throughout%20the%20project%20lifecycle
 [raid-how]: https://www.smartsheet.com/content/raid-project-management#:~:text=How%20to%20Do%20a%20RAID,Analysis

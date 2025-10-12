@@ -24,11 +24,7 @@ class MockAgentToolkitMCPTools {
 		];
 	}
 
-	async executeTool(
-		toolName: string,
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		_params: Record<string, unknown>,
-	) {
+	async executeTool(toolName: string, _params: Record<string, unknown>) {
 		// Parameters are intentionally unused for this mock implementation
 		// Simulate brAInwav error handling
 		if (!toolName || typeof toolName !== 'string') {

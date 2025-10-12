@@ -178,7 +178,15 @@ PIECES_MCP_ENABLED=true            # Set to 'false' to disable
 
 # Authentication (optional)
 MCP_API_KEY=your-api-key-here
+AUTH_MODE=oauth2
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_AUDIENCE=https://your-mcp-resource
+MCP_RESOURCE_URL=https://your-mcp-resource
+REQUIRED_SCOPES=search.read docs.write memory.read memory.write memory.delete
+REQUIRED_SCOPES_ENFORCE=true
 ```
+
+> When enabling OAuth2, configure matching scopes in the Auth0 API, enable RBAC + “Add Permissions in Access Token”, and restart the server so `/.well-known/oauth-protected-resource` advertises the same `REQUIRED_SCOPES`.
 
 ### LaunchAgent Configuration (macOS)
 

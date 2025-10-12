@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { ensureAppsClient, type ServiceMapPayload } from '../sdk/appsClient';
-import type { ConnectorServiceEntry } from '../sdk/types';
+import { ensureAppsClient, type ServiceMapPayload } from '../sdk/appsClient.js';
+import type { ConnectorServiceEntry } from '../sdk/types.js';
 
 const CONNECTORS_ROUTE = '/v1/connectors/service-map';
 const AUTO_REFRESH_BUFFER_MS = 5_000;
@@ -103,13 +103,18 @@ const statusLabelFor = (
 
 const normaliseConnector = (entry: Record<string, unknown>, generatedAt: string): ConnectorCard => {
 	const id = typeof entry.id === 'string' && entry.id.length > 0 ? entry.id : 'unknown-connector';
-	const displayName = typeof entry.displayName === 'string' && entry.displayName.length > 0 ? entry.displayName : id;
-	const version = typeof entry.version === 'string' && entry.version.length > 0 ? entry.version : '0.0.0';
+	const displayName =
+		typeof entry.displayName === 'string' && entry.displayName.length > 0 ? entry.displayName : id;
+	const version =
+		typeof entry.version === 'string' && entry.version.length > 0 ? entry.version : '0.0.0';
 	const endpoint = typeof entry.endpoint === 'string' ? entry.endpoint : '';
 	const scopes = toStringArray(entry.scopes);
 	const tags = toStringArray(entry.tags);
 	const metadata = isRecord(entry.metadata) ? (entry.metadata as Record<string, unknown>) : {};
-	const ttlSeconds = typeof entry.ttlSeconds === 'number' && Number.isFinite(entry.ttlSeconds) ? entry.ttlSeconds : 0;
+	const ttlSeconds =
+		typeof entry.ttlSeconds === 'number' && Number.isFinite(entry.ttlSeconds)
+			? entry.ttlSeconds
+			: 0;
 	const enabled = typeof entry.enabled === 'boolean' ? entry.enabled : true;
 	const status = typeof entry.status === 'string' ? entry.status : undefined;
 	const expiresAt = ttlSeconds > 0 ? computeExpiryIso(generatedAt, ttlSeconds) : null;
@@ -121,7 +126,8 @@ const normaliseConnector = (entry: Record<string, unknown>, generatedAt: string)
 		endpoint,
 		scopes,
 		auth: toAuth(entry.auth),
-		headers: Object.keys(toStringMap(entry.headers)).length > 0 ? toStringMap(entry.headers) : undefined,
+		headers:
+			Object.keys(toStringMap(entry.headers)).length > 0 ? toStringMap(entry.headers) : undefined,
 		quotas: isRecord(entry.quotas) ? (entry.quotas as ConnectorServiceEntry['quotas']) : undefined,
 		metadata,
 		enabled,
@@ -146,8 +152,12 @@ const normaliseMap = (value: unknown): NormalisedMap | null => {
 
 	const id = typeof payload.id === 'string' ? payload.id : 'unknown-map';
 	const brand = typeof payload.brand === 'string' ? payload.brand : 'brAInwav';
-	const generatedAt = typeof payload.generatedAt === 'string' ? payload.generatedAt : new Date().toISOString();
-	const ttlSeconds = typeof payload.ttlSeconds === 'number' && Number.isFinite(payload.ttlSeconds) ? payload.ttlSeconds : 60;
+	const generatedAt =
+		typeof payload.generatedAt === 'string' ? payload.generatedAt : new Date().toISOString();
+	const ttlSeconds =
+		typeof payload.ttlSeconds === 'number' && Number.isFinite(payload.ttlSeconds)
+			? payload.ttlSeconds
+			: 60;
 	const connectorsValue = payload.connectors;
 	if (!Array.isArray(connectorsValue) || connectorsValue.length === 0) {
 		return null;
@@ -194,7 +204,9 @@ const fetchViaHttp = async (signal: AbortSignal): Promise<NormalisedMap> => {
 
 	if (!response.ok) {
 		const body = await response.text().catch(() => '');
-		throw new Error(`[brAInwav] Connectors manifest request failed (${response.status} ${body.slice(0, 120)})`);
+		throw new Error(
+			`[brAInwav] Connectors manifest request failed (${response.status} ${body.slice(0, 120)})`,
+		);
 	}
 
 	const json = await response.json();
@@ -225,7 +237,9 @@ const ttlFromMetadata = (metadata: ConnectorMetadata | undefined): number => {
 	return Number.isFinite(remaining) ? Math.max(0, remaining) : 0;
 };
 
-const buildStateFromMap = (map: NormalisedMap): {
+const buildStateFromMap = (
+	map: NormalisedMap,
+): {
 	connectors: ConnectorCard[];
 	metadata: ConnectorMetadata;
 } => {
@@ -251,6 +265,7 @@ export const useConnectorState = (): ConnectorState => {
 	const timerRef = React.useRef<number | null>(null);
 	const controllerRef = React.useRef<AbortController | null>(null);
 	const mountedRef = React.useRef(true);
+	const runFetchRef = React.useRef<((reason: FetchReason) => Promise<void>) | null>(null);
 
 	const scheduleAutoRefresh = React.useCallback((metadata?: ConnectorMetadata) => {
 		if (timerRef.current !== null) {
@@ -261,49 +276,54 @@ export const useConnectorState = (): ConnectorState => {
 		const delay = Math.max(0, Date.parse(metadata.expiresAt) - Date.now() - AUTO_REFRESH_BUFFER_MS);
 		if (delay <= 0) return;
 		timerRef.current = window.setTimeout(() => {
-			runFetch('auto');
+			runFetchRef.current?.('auto');
 		}, delay);
 	}, []);
 
-	const runFetch = React.useCallback(async (reason: FetchReason) => {
-		controllerRef.current?.abort();
-		const controller = new AbortController();
-		controllerRef.current = controller;
+	const runFetch = React.useCallback(
+		async (reason: FetchReason) => {
+			controllerRef.current?.abort();
+			const controller = new AbortController();
+			controllerRef.current = controller;
 
-		setState((prev) => ({
-			...prev,
-			loading: reason === 'initial',
-			refreshing: reason === 'manual' || reason === 'auto',
-			error: reason === 'initial' ? undefined : prev.error,
-		}));
-
-		try {
-			const client = (await ensureAppsClient()) as AppsClientLike | null;
-			const viaClient = client ? await fetchViaAppsClient(client) : null;
-			const map = viaClient ?? (await fetchViaHttp(controller.signal));
-			if (!mountedRef.current) return;
-			const next = buildStateFromMap(map);
-			setState({
-				connectors: next.connectors,
-				metadata: next.metadata,
-				loading: false,
-				refreshing: false,
-				error: undefined,
-			});
-			scheduleAutoRefresh(next.metadata);
-		} catch (error) {
-			if (!mountedRef.current || controller.signal.aborted) {
-				return;
-			}
-			const message = error instanceof Error ? error.message : String(error);
 			setState((prev) => ({
 				...prev,
-				loading: false,
-				refreshing: false,
-				error: message.startsWith('[brAInwav]') ? message : `[brAInwav] ${message}`,
+				loading: reason === 'initial',
+				refreshing: reason === 'manual' || reason === 'auto',
+				error: reason === 'initial' ? undefined : prev.error,
 			}));
-		}
-	}, [scheduleAutoRefresh]);
+
+			try {
+				const client = (await ensureAppsClient()) as AppsClientLike | null;
+				const viaClient = client ? await fetchViaAppsClient(client) : null;
+				const map = viaClient ?? (await fetchViaHttp(controller.signal));
+				if (!mountedRef.current) return;
+				const next = buildStateFromMap(map);
+				setState({
+					connectors: next.connectors,
+					metadata: next.metadata,
+					loading: false,
+					refreshing: false,
+					error: undefined,
+				});
+				scheduleAutoRefresh(next.metadata);
+			} catch (error) {
+				if (!mountedRef.current || controller.signal.aborted) {
+					return;
+				}
+				const message = error instanceof Error ? error.message : String(error);
+				setState((prev) => ({
+					...prev,
+					loading: false,
+					refreshing: false,
+					error: message.startsWith('[brAInwav]') ? message : `[brAInwav] ${message}`,
+				}));
+			}
+		},
+		[scheduleAutoRefresh],
+	);
+
+	runFetchRef.current = runFetch;
 
 	const refresh = React.useCallback(async () => {
 		await runFetch('manual');
@@ -320,10 +340,13 @@ export const useConnectorState = (): ConnectorState => {
 		};
 	}, [runFetch]);
 
-	return React.useMemo<ConnectorState>(() => ({
-		...state,
-		refresh,
-	}), [state, refresh]);
+	return React.useMemo<ConnectorState>(
+		() => ({
+			...state,
+			refresh,
+		}),
+		[state, refresh],
+	);
 };
 
 export type { ConnectorCard, ConnectorMetadata };

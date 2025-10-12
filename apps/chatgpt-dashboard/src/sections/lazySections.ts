@@ -1,8 +1,8 @@
-import { preloadableLazy } from '../utils/preloadableLazy';
+import { preloadableLazy } from '../utils/preloadableLazy.js';
 
-export const LogsSection = preloadableLazy(() => import('./LogsSection'));
-export const TracesSection = preloadableLazy(() => import('./TracesSection'));
-export const MetricsSection = preloadableLazy(() => import('./MetricsSection'));
-export const AgentsSection = preloadableLazy(() => import('./AgentsSection'));
-export const WorkflowsSection = preloadableLazy(() => import('./WorkflowsSection'));
-export const ConnectorsSection = preloadableLazy(() => import('./ConnectorsSection'));
+export const LogsSection = preloadableLazy(() => import('./LogsSection.js'));
+export const TracesSection = preloadableLazy(() => import('./TracesSection.js'));
+export const MetricsSection = preloadableLazy(() => import('./MetricsSection.js'));
+export const AgentsSection = preloadableLazy(() => import('./AgentsSection.js'));
+export const WorkflowsSection = preloadableLazy(() => import('./WorkflowsSection.js'));
+export const ConnectorsSection = preloadableLazy(() => import('./ConnectorsSection.js'));

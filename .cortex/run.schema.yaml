@@ -1,0 +1,15 @@
+type: object
+required: [phase, agents_sha, task_id, run_id, started_at]
+properties:
+  phase:
+    enum: ["R","G","F","REVIEW"]
+  agents_sha:
+    type: string
+    pattern: "^[0-9a-f]{7,40}$"
+  task_id:
+    type: string
+  run_id:
+    type: string
+  started_at:
+    type: string
+    format: date-time
