@@ -1,0 +1,18 @@
+{
+    "name": "@cortex-os/memory-core",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/memory-core/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": [
+                "{projectRoot}/dist"
+            ],
+            "options": {
+                "tsConfig": "packages/memory-core/tsconfig.json",
+                "outputPath": "packages/memory-core/dist"
+            }
+        }
+    }
+}

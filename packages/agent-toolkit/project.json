@@ -1,0 +1,18 @@
+{
+    "name": "@cortex-os/agent-toolkit",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/agent-toolkit/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": [
+                "{projectRoot}/dist"
+            ],
+            "options": {
+                "tsConfig": "packages/agent-toolkit/tsconfig.json",
+                "outputPath": "packages/agent-toolkit/dist"
+            }
+        }
+    }
+}

@@ -7,6 +7,7 @@ import type {
 import { safeExecFileWithRetry } from '@cortex-os/security';
 import type { ValidationTool } from '../domain/ToolInterfaces.js';
 import { resolveToolsDirFromOverride, type ToolsDirOverride } from './paths.js';
+import { execWithRetry } from './execUtil.js';
 
 function createScriptPathPromise(
 	scriptName: string,
