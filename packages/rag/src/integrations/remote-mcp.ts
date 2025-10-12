@@ -1313,7 +1313,7 @@ async function fallbackToLocal(
  * @returns Contextual SPARQL query string with entity-specific bindings
  */
 function generateContextualSparqlQuery(qid: string): string {
-	const normalizedQid = String(qid || '').trim().toUpperCase();
+	const normalizedQid = String(qid ?? '').trim().toUpperCase();
 
 	// Fallback to the original broad query if the identifier cannot be
 	// normalized - this guards against unexpected tool responses while
