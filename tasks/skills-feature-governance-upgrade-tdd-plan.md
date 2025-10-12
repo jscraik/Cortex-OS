@@ -34,7 +34,7 @@ docs/architecture/
 ```
 
 ## 2) Implementation Plan
-1. **Codify governance guardrails.** Amend `/.cortex/rules/vision.md` and root `AGENTS.md` to define the skills subsystem as a governed surface (ingestion path, required evidence, and audit hooks). Update package-level `AGENTS.md` (memory-core, rag, mcp-server) to inherit the repo rules and specify local gates (coverage minima, model evidence, vib e-check timing) for skill work.
+1. **Codify governance guardrails.** Amend `/.cortex/rules/vision.md` and root `AGENTS.md` to define the skills subsystem as a governed surface (ingestion path, required evidence, and audit hooks). Update package-level `AGENTS.md` (memory-core, rag, mcp-server) to inherit the repo rules and specify local gates (coverage minima, model evidence, vibe-check timing) for skill work.
 2. **Introduce a first-class SkillManager in memory-core.** Create `src/skills/manager/SkillManager.ts` that composes the existing loader, validators, and registry. The manager should:
    - Accept `SkillLoader`, `SkillRegistry`, the new `SkillIndexer` adapter, and configuration (skills directory, watcher debounce, telemetry sinks).
    - Provide methods `initialize()`, `refreshSkill(filePath)`, `removeSkill(filePath)`, `search(query)`, and `apply(skillId, context)` returning typed results.
