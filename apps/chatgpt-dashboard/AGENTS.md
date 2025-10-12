@@ -39,6 +39,8 @@ slo:
 
 - Follow governance priority: `/.cortex/rules/vision.md` → `/.cortex/rules/agentic-coding-workflow.md` → `/.cortex/rules/code-review-checklist.md` → `/CODESTYLE.md` → `/AGENTS.md` (root) → this file.
 - **Time freshness guard:** anchor timezone/date context per `/.cortex/rules/_time-freshness.md` before executing tasks or shipping guidance.
+- **Mandatory Templates:** Must use all templates from `/.cortex/templates/` - feature specs, research, TDD plans, constitution updates.
+- **Vibe Check MCP:** Call `vibe_check` tool after planning and before file writes/network calls. Config: VIBE_CHECK_HTTP_URL (default http://127.0.0.1:2091).
 - Cite relevant sections in PRs and reviews.
 
 ---
@@ -137,6 +139,10 @@ pnpm --filter apps/chatgpt-dashboard build && pnpm --filter apps/chatgpt-dashboa
 - Attach bundle report to PR (size + hashed filenames).
 - Record manifest compatibility tests (UI vs server) in evidence checklist.
 - Update connectors operator docs with widget changes.
+- **Code Review Checklist:** Completed `/.cortex/rules/code-review-checklist.md` linked in PR with all BLOCKER items ☑ PASS.
+- **Vibe Check Evidence:** PR contains logs with "brAInwav-vibe-check" at plan→act gates.
+- **Memory Persistence:** Decision logged in `.github/instructions/memories.instructions.md` and persisted via Local Memory MCP/REST.
+- **Live Model Evidence:** Model IDs and sample inference logs attached for hybrid model changes (if applicable).
 
 ## Time Freshness & Date Handling
 
