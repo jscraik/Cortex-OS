@@ -334,7 +334,6 @@ async function main() {
 	const heartbeatStopper = await maybeWarmupOllama(config, ollama, logger);
 	await validateOllamaDeployment(ollama, logger);
         await attachPiecesTools(server, logger, piecesProxy, driveProxy, copilotProxy, contextBridge);
-        registerPiecesTools(server, logger, { piecesProxy, driveProxy, copilotProxy, contextBridge });
 	await attachConnectorsTools(server, logger, connectorsProxy);
 	const transport = await startTransport(server, logger, config, auth);
 
