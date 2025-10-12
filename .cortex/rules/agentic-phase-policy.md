@@ -1,37 +1,60 @@
-# Agentic Phase Policy (R→G→F→Review)
+# Agentic Phase Policy (R→G→F→REVIEW)
 
-**Goal:** Agents must auto-progress through phases without stopping for HITL, and request HITL **only** at Review.
+**Goal:** Agents must auto-progress through phases without stopping for HITL, and request HITL **only** at **REVIEW**.
+
+---
 
 ## Phases & Gates
+
 - **R (Red)** — write failing tests; plan minimal pass.
-  - Allowed: plan, write tests, code gen in "minimal", `vibe_check`, local memory ops.
-  - Forbidden: `human_input`, production deploy, merge.
-  - Auto-advance → **G** when `pnpm test` shows new tests fail then pass on next commit.
+  - **Allowed:** planning, write tests, minimal code-gen, `vibe_check`, Local Memory ops.
+  - **Forbidden:** `human_input`, production deploy, merge.
+  - **Auto-advance → G when:** CI shows new tests **fail first**, then **pass** on the next commit (recorded by phase logs).
 
 - **G (Green)** — implement to pass.
-  - Allowed: code, fix tests, `models:health/smoke` (live only), security scans.
-  - Forbidden: `human_input`.
-  - Auto-advance → **F** when `pnpm test` passes + coverage ≥ 90% global & 95% changed lines.
+  - **Allowed:** code, fix tests, `pnpm models:health/smoke` (**live only**), security scans.
+  - **Forbidden:** `human_input`.
+  - **Auto-advance → F when:**  
+    - `pnpm test` **passes**,  
+    - Coverage ≥ **90% global** & **95% changed lines**,  
+    - **Mutation ≥ 90%** (where enabled).
 
 - **F (Finished)** — refactor, docs, a11y, observability.
-  - Allowed: refactor w/o behavior change, docs, a11y, SBOM/provenance.
-  - Forbidden: `human_input`.
-  - Auto-advance → **Review** when:
-    - a11y reports attached, SBOM + scans pass,
-    - `pnpm structure:validate` passes,
-    - `pnpm models:health && pnpm models:smoke` logs attached (live engines only: MLX/Ollama/Frontier).
+  - **Allowed:** refactor (no behavior change), docs, a11y, SBOM/provenance, structure guard.
+  - **Forbidden:** `human_input`.
+  - **Auto-advance → REVIEW when:**  
+    - axe/jest-axe **a11y reports attached**,  
+    - SBOM + scanners **pass** (Semgrep ERROR=block, gitleaks ANY=block, OSV clean),  
+    - `pnpm structure:validate` **passes**,  
+    - `pnpm models:health && pnpm models:smoke` logs attached (live engines only: **MLX/Ollama/Frontier** with model IDs, dims/norms, latency),  
+    - **Local Memory parity** entry recorded for decisions/refactors (MCP & REST).
 
-- **Review**
-  - Allowed: `human_input` (HITL), code-review checklist completion, approvals/waivers per Constitution.
-  - Merge only if **all BLOCKERs** in `/.cortex/rules/code-review-checklist.md` are PASS.
+- **REVIEW**
+  - **Allowed:** `human_input` (HITL), Code Review Checklist completion, approvals/waivers per Constitution.
+  - **Merge only if:** **all BLOCKERs** in `/.cortex/rules/code-review-checklist.md` are **PASS** and required evidence tokens are present.
+
+---
 
 ## Hard Rules
-- **HITL only at Review.** Any `human_input` before Review is a policy violation.
-- **Governance required:** Load the nearest `AGENTS.md` and record `agents_sha` in `.cortex/run.yaml` and in the first `vibe_check` log.
-- **Hybrid model = Live only:** No stubs/recordings/dry-runs for embeddings/rerankers/generation.
+
+- **HITL only at REVIEW.** Any `human_input` before REVIEW is a policy violation.
+- **Governance required.** Load the nearest `AGENTS.md` and record its SHA in `.cortex/run.yaml`; include it in the first `vibe_check` log.
+- **Hybrid model = Live only.** No stubs/recordings/"dry_run" for embeddings/rerankers/generation. Engines must be **live** (MLX, Ollama, Frontier).
+- **Time Freshness Guard.** Anchor dates to harness "today"; surface **ISO-8601** in specs/PRs/logs; treat "latest/current" as freshness checks.
+
+---
 
 ## Evidence Tokens (CI scans logs for these)
+
 - `AGENTS_MD_SHA:<sha>`
 - `PHASE_TRANSITION:<from>-><to>`
 - `brAInwav-vibe-check`
-- `MODELS:LIVE:OK engine=<mlx|ollama|frontier>`
+- `MODELS:LIVE:OK engine=<mlx|ollama|frontier> model=<id> dims=<n> norm≈<v> latency_ms=<n>`
+- `A11Y_REPORT:OK`
+- `STRUCTURE_GUARD:OK`
+- `COVERAGE:OK CHANGED_LINES:OK MUTATION:OK`
+- `MEMORY_PARITY:OK`
+- `CODE-REVIEW-CHECKLIST: /.cortex/rules/code-review-checklist.md`
+
+> **Overrides:** Rolling a phase **back** requires a Constitution waiver and must emit  
+> `PHASE_OVERRIDE:<from>-><to> link=<waiver-url>`; otherwise CI blocks.
