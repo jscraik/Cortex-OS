@@ -1,17 +1,22 @@
-import request from 'supertest';
+import type { AddressInfo } from 'node:net';
+import request, { type SuperTest, type Test } from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createASBRServer } from '../../src/api/server.js';
 
 const TP = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
 
 describe('integration: event traceparent propagation', () => {
-	let server: ReturnType<typeof createASBRServer>;
-	let base: any;
+        let server: ReturnType<typeof createASBRServer>;
+        let base: SuperTest<Test>;
 	beforeAll(async () => {
 		server = createASBRServer({ port: 0 });
 		await server.start();
-		const address = (server.server as any).address();
-		base = request(`http://127.0.0.1:${address.port}`);
+                const address = server.server?.address();
+                if (!address || typeof address === 'string') {
+                        throw new Error('ASBR server address unavailable for tests');
+                }
+                const { port } = address as AddressInfo;
+                base = request(`http://127.0.0.1:${port}`);
 	});
 	afterAll(async () => {
 		await server.stop();

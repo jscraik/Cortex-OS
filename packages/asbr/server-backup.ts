@@ -60,7 +60,7 @@ export function createASBRServer(options: ASBRServerOptions = {}): ASBRServer {
  * ASBR API Server
  */
 class ASBRServerClass {
-	private app: express.Application;
+        private app: express.Application;
 	private server?: Server;
 	private io?: IOServer;
 	private port: number;
@@ -495,23 +495,43 @@ class ASBRServerClass {
 		res.send(content);
 	}
 
-	private async getServiceMap(_req: Request, res: Response): Promise<void> {
-		const stack: any[] = ((this.app as unknown as any).router?.stack ?? []) as any[];
-		const routes = stack
-			.filter((layer: any) => layer.route && typeof layer.route.path === 'string')
-			.filter((layer: any) => layer.route.path.startsWith('/v1'))
-			.map((layer: any) => ({
-				path: layer.route.path,
-				methods: Object.keys(layer.route.methods).map((m) => m.toUpperCase()),
-				version: (() => {
-					const match = layer.route.path.match(/^\/(v\d+)\b/);
-					return match ? match[1] : '';
-				})(),
-			}));
+        private async getServiceMap(_req: Request, res: Response): Promise<void> {
+                type ExpressRouteLayer = {
+                        route?: {
+                                path?: string;
+                                methods?: Record<string, unknown>;
+                        };
+                };
 
-		const serviceMap: ServiceMap = ServiceMapSchema.parse({ routes });
-		res.json(serviceMap);
-	}
+                const appWithRouter = this.app as express.Application & {
+                        router?: { stack?: ExpressRouteLayer[] };
+                };
+                const stack = appWithRouter.router?.stack ?? [];
+                const routes = stack
+                        .filter(
+                                (layer): layer is Required<ExpressRouteLayer> & {
+                                        route: { path: string; methods: Record<string, unknown> };
+                                } =>
+                                        Boolean(
+                                                layer.route &&
+                                                        typeof layer.route.path === 'string' &&
+                                                        typeof layer.route.methods === 'object' &&
+                                                        layer.route.methods !== null,
+                                        ),
+                        )
+                        .filter((layer) => layer.route.path.startsWith('/v1'))
+                        .map((layer) => ({
+                                path: layer.route.path,
+                                methods: Object.keys(layer.route.methods).map((m) => m.toUpperCase()),
+                                version: (() => {
+                                        const match = layer.route.path.match(/^\/(v\d+)\b/);
+                                        return match ? match[1] : '';
+                                })(),
+                        }));
+
+                const serviceMap: ServiceMap = ServiceMapSchema.parse({ routes });
+                res.json(serviceMap);
+        }
 
 	private async getConnectorServiceMap(_req: Request, res: Response): Promise<void> {
 		res.json({});
