@@ -40,6 +40,8 @@ alwaysApply: true
 - [ ] **[BLOCKER] Named exports only;** no `export default`.
 - [ ] **[BLOCKER] No `any` in production** (allowed only in tests/justified compat shims).
 - [ ] **Reality Filter:** Generated/inferred content labeled `[Inference]/[Speculation]/[Unverified]` where applicable.
+- [ ] **[BLOCKER] Wikidata workflow compliance:** Fact-finding changes use `executeWikidataWorkflow` and approved MCP
+      vector/claims/SPARQL tooling with provenance metadata recorded per the Wikidata integration guide.
 
 ## 3. Functionality & Logic
 

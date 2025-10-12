@@ -87,6 +87,17 @@ be stored in `~/tasks/[feature]/`, organized into subfolders and files named for
   - Vibe-check logs, coverage/mutation reports, **Code Review Checklist** (see §4), **models:health/smoke** logs,
   - Accessibility reports (WCAG 2.2 AA), security scans, **branding** spot checks.
 
+### 2.1 Wikidata Fact-Finding Workflow
+
+- **When to invoke:** Any task that gathers, validates, or enriches factual knowledge (product facts, entity metadata,
+  relationship graphs, compliance evidence) must follow the documented Wikidata workflow.
+- **Canonical playbook:** Reference [`packages/rag/docs/wikidata-integration-usage.md`](../../packages/rag/docs/wikidata-integration-usage.md)
+  for required steps, tool invocations, and evidence capture.
+- **Evidence expectations:** Plans must enumerate how `executeWikidataWorkflow` and associated MCP vector/claims/SPARQL calls
+  will run, how provenance metadata is captured, and where logs/artifacts will live in the task folder.
+- **Escalation:** If Wikidata surfaces are unavailable, mark the task **blocked**, record the incident in the task folder, and
+  escalate per the Constitution instead of bypassing the workflow.
+
 ---
 
 ## 3. Implementation
