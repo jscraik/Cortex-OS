@@ -15,14 +15,14 @@ export interface ContextChunk {
 }
 
 export interface AssembledContext {
-	nodes: Array<{
-		id: string;
-		type: GraphNodeType;
-		key: string;
-		label: string;
-		meta: unknown;
-	}>;
-	chunks: ContextChunk[];
+        nodes: Array<{
+                id: string;
+                type: GraphNodeType;
+                key: string;
+                label: string;
+                meta: unknown | null;
+        }>;
+        chunks: ContextChunk[];
 }
 
 const NODE_PRIORITY: Record<GraphNodeType, number> = {
@@ -48,11 +48,11 @@ export async function assembleContext(
 		return { nodes: [], chunks: [] };
 	}
 
-	const [nodes, chunkRefs] = await Promise.all([
-		prisma.graphNode.findMany({ where: { id: { in: nodeIds } } }),
-		prisma.chunkRef.findMany({
-			where: { nodeId: { in: nodeIds } },
-			include: { node: true },
+        const [rawNodes, chunkRefs] = await Promise.all([
+                prisma.graphNode.findMany({ where: { id: { in: nodeIds } } }),
+                prisma.chunkRef.findMany({
+                        where: { nodeId: { in: nodeIds } },
+                        include: { node: true },
 			orderBy: { createdAt: 'desc' },
 			take: maxChunks * 3,
 		}),
@@ -101,5 +101,13 @@ export async function assembleContext(
 		});
 	}
 
-	return { nodes, chunks };
+        const nodes = rawNodes.map((node) => ({
+                id: node.id,
+                type: node.type,
+                key: node.key,
+                label: node.label,
+                meta: node.meta ?? null,
+        }));
+
+        return { nodes, chunks };
 }

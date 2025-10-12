@@ -160,14 +160,15 @@ export class ContextSliceService {
 			}
 
 			// Perform GraphRAG query
-			const graphRAGResult = await this.graphRAGService.query({
-				question: effectiveRecipe.query,
-				k: effectiveRecipe.maxNodes,
-				maxHops: effectiveRecipe.maxDepth,
-				maxChunks: effectiveRecipe.maxNodes,
-				includeCitations: true,
-				filters: effectiveRecipe.filters,
-			});
+                        const graphRAGResult = await this.graphRAGService.query({
+                                question: effectiveRecipe.query,
+                                k: effectiveRecipe.maxNodes,
+                                maxHops: effectiveRecipe.maxDepth,
+                                maxChunks: effectiveRecipe.maxNodes,
+                                includeVectors: false,
+                                includeCitations: true,
+                                filters: effectiveRecipe.filters,
+                        });
 
 			// Build subgraph from GraphRAG results
 			const subgraph = await this.buildSubgraph(graphRAGResult, effectiveRecipe);

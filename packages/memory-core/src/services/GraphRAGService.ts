@@ -16,10 +16,13 @@ import { prisma, shutdownPrisma } from '../db/prismaClient.js';
 import { assembleContext } from '../retrieval/contextAssembler.js';
 import { expandNeighbors } from '../retrieval/expandGraph.js';
 import {
-	type GraphRAGSearchResult,
-	QdrantConfigSchema,
-	QdrantHybridSearch,
+        type GraphRAGSearchResult,
+        QdrantConfigSchema,
+        QdrantHybridSearch,
 } from '../retrieval/QdrantHybrid.js';
+
+type NodeGroupStat = { type: GraphNodeType; _count: { type: number } };
+type EdgeGroupStat = { type: GraphEdgeType; _count: { type: number } };
 
 const DEFAULT_QDRANT_CONFIG = {
 	url: process.env.QDRANT_URL ?? 'http://localhost:6333',
@@ -291,20 +294,23 @@ export class GraphRAGService {
 		edgeTypeDistribution: Record<string, number>;
 		brainwavSource: string;
 	}> {
-		const [nodeStats, edgeStats, chunkCount] = await Promise.all([
-			prisma.graphNode.groupBy({ by: ['type'], _count: { type: true } }),
-			prisma.graphEdge.groupBy({ by: ['type'], _count: { type: true } }),
-			prisma.chunkRef.count(),
-		]);
+                const nodeStatsPromise = prisma.graphNode.groupBy({ by: ['type'], _count: { type: true } });
+                const edgeStatsPromise = prisma.graphEdge.groupBy({ by: ['type'], _count: { type: true } });
+                const chunkCountPromise = prisma.chunkRef.count();
+                const [nodeStats, edgeStats, chunkCount] = await Promise.all([
+                        nodeStatsPromise,
+                        edgeStatsPromise,
+                        chunkCountPromise,
+                ]);
 
-		const nodeTypeDistribution = Object.fromEntries(
-			nodeStats.map((stat) => [stat.type, stat._count.type]),
-		);
-		const edgeTypeDistribution = Object.fromEntries(
-			edgeStats.map((stat) => [stat.type, stat._count.type]),
-		);
-		const totalNodes = nodeStats.reduce((sum, stat) => sum + stat._count.type, 0);
-		const totalEdges = edgeStats.reduce((sum, stat) => sum + stat._count.type, 0);
+                const nodeTypeDistribution = Object.fromEntries(
+                        nodeStats.map((stat) => [stat.type, stat._count.type]),
+                );
+                const edgeTypeDistribution = Object.fromEntries(
+                        edgeStats.map((stat) => [stat.type, stat._count.type]),
+                );
+                const totalNodes = nodeStats.reduce((sum: number, stat) => sum + stat._count.type, 0);
+                const totalEdges = edgeStats.reduce((sum: number, stat) => sum + stat._count.type, 0);
 
 		return {
 			totalNodes,
@@ -391,23 +397,27 @@ export class GraphRAGService {
 		};
 	}
 
-	private formatCitations(chunks: GraphRAGContext['chunks']): GraphRAGResult['citations'] {
-		return chunks.map((chunk) => ({
-			path: chunk.path,
-			lines:
-				chunk.lineStart !== undefined && chunk.lineEnd !== undefined
-					? `${chunk.lineStart}-${chunk.lineEnd}`
-					: undefined,
+        private formatCitations(
+                chunks: GraphRAGContext['chunks'],
+        ): NonNullable<GraphRAGResult['citations']> {
+                return chunks.map((chunk) => ({
+                        path: chunk.path,
+                        lines:
+                                chunk.lineStart !== undefined && chunk.lineEnd !== undefined
+                                        ? `${chunk.lineStart}-${chunk.lineEnd}`
+                                        : undefined,
 			nodeType: chunk.nodeType,
 			relevanceScore: chunk.score,
 			brainwavIndexed: this.config.branding.enabled,
 		}));
 	}
 
-	private async fetchExternalCitations(nodeIds: string[]): Promise<GraphRAGResult['citations']> {
-		if (!this.externalKg) return [];
+        private async fetchExternalCitations(
+                nodeIds: string[],
+        ): Promise<NonNullable<GraphRAGResult['citations']>> {
+                if (!this.externalKg) return [];
 
-		const citations: GraphRAGResult['citations'] = [];
+                const citations: NonNullable<GraphRAGResult['citations']> = [];
 		const seenPaths = new Set<string>();
 
 		for (const nodeId of nodeIds) {

@@ -53,6 +53,12 @@
       "@cortex-os/hooks/*": [
         "packages/hooks/src/*"
       ],
+      "@cortex-os/contracts": [
+        "libs/typescript/contracts/src/index.ts"
+      ],
+      "@cortex-os/contracts/*": [
+        "libs/typescript/contracts/src/*"
+      ],
       "@cortex-os/kernel": [
         "packages/kernel/src/index.ts"
       ],
@@ -78,6 +84,12 @@
       ],
       "@cortex-os/prompts/*": [
         "packages/prompts/src/*"
+      ],
+      "@cortex-os/tool-spec": [
+        "packages/tool-spec/src/index.ts"
+      ],
+      "@cortex-os/tool-spec/*": [
+        "packages/tool-spec/src/*"
       ],
       "@cortex-os/proof-artifacts": [
         "packages/proof-artifacts/src/index.ts"

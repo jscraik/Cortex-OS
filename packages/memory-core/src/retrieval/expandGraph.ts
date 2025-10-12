@@ -50,12 +50,12 @@ export async function expandNeighbors(
 
 	return {
 		neighborIds: [...neighborIds],
-		edges: edges.map((edge) => ({
-			id: edge.id,
-			type: edge.type,
-			srcId: edge.srcId,
-			dstId: edge.dstId,
-			weight: edge.weight,
-		})),
-	};
+                edges: edges.map((edge) => ({
+                        id: edge.id,
+                        type: edge.type,
+                        srcId: edge.srcId,
+                        dstId: edge.dstId,
+                        weight: edge.weight ?? null,
+                })),
+        };
 }
