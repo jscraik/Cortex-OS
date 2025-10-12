@@ -158,7 +158,7 @@ export class ContextPackService {
 		}
 	}
 
-        validatePackOptions(options: PackOptions): PackValidationResult {
+        async validatePackOptions(options: PackOptions): Promise<PackValidationResult> {
                 const errors: string[] = [];
                 const warnings: string[] = [];
 
