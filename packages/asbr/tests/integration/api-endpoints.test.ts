@@ -31,7 +31,7 @@ describe('ASBR API Integration Tests', () => {
 
 	beforeAll(async () => {
 		process.env.CONNECTORS_SIGNATURE_KEY =
-			process.env.CONNECTORS_SIGNATURE_KEY ?? 'integration-secret';
+			process.env.CONNECTORS_SIGNATURE_KEY ?? connectorsSignatureKey;
 		if (process.env.ASBR_TEST_SHARED_SERVER) {
 			const { server: shared, authToken: token } = await getSharedServer();
 			server = shared;
