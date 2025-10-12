@@ -214,7 +214,7 @@ describe('GraphRAGService MCP Integration', () => {
 				path: 'arxiv:2301.00001',
 				nodeType: 'DOC',
 				relevanceScore: 0,
-				brainwavIndexed: false,
+				brAInwavIndexed: false,
 			});
 		});
 
