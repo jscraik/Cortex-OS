@@ -15,14 +15,14 @@ export interface ContextChunk {
 }
 
 export interface AssembledContext {
-	nodes: Array<{
-		id: string;
-		type: GraphNodeType;
-		key: string;
-		label: string;
-		meta: unknown;
-	}>;
-	chunks: ContextChunk[];
+        nodes: Array<{
+                id: string;
+                type: GraphNodeType;
+                key: string;
+                label: string;
+                meta: unknown | null;
+        }>;
+        chunks: ContextChunk[];
 }
 
 const NODE_PRIORITY: Record<GraphNodeType, number> = {
@@ -53,39 +53,11 @@ export async function assembleContext(
 		return { nodes: [], chunks: [] };
 	}
 
-	// Check cache first
-	const cacheKey = Buffer.from([...nodeIds.sort(), maxChunks.toString()].join('|')).toString('base64');
-	const cached = contextCache.get(cacheKey);
-	if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
-		console.log('brAInwav GraphRAG context cache hit', {
-			component: 'memory-core',
-			brand: 'brAInwav',
-			cacheKey,
-			age: Date.now() - cached.timestamp,
-		});
-		return cached.context;
-	}
-
-	const startTime = Date.now();
-
-	// Optimized database queries with specific field selection
-	const [nodes, chunkRefs] = await Promise.all([
-		prisma.graphNode.findMany({
-			where: { id: { in: nodeIds } },
-			select: { id: true, type: true, key: true, label: true, meta: true },
-		}),
-		prisma.chunkRef.findMany({
-			where: { nodeId: { in: nodeIds } },
-			select: {
-				id: true,
-				nodeId: true,
-				qdrantId: true,
-				path: true,
-				lineStart: true,
-				lineEnd: true,
-				meta: true,
-				node: { select: { type: true, key: true } },
-			},
+        const [rawNodes, chunkRefs] = await Promise.all([
+                prisma.graphNode.findMany({ where: { id: { in: nodeIds } } }),
+                prisma.chunkRef.findMany({
+                        where: { nodeId: { in: nodeIds } },
+                        include: { node: true },
 			orderBy: { createdAt: 'desc' },
 			take: maxChunks * 2, // Reduced from 3 to 2 for better performance
 		}),
@@ -142,44 +114,13 @@ export async function assembleContext(
 		});
 	}
 
-	const result = { nodes, chunks };
+        const nodes = rawNodes.map((node) => ({
+                id: node.id,
+                type: node.type,
+                key: node.key,
+                label: node.label,
+                meta: node.meta ?? null,
+        }));
 
-	// Cache results
-	if (contextCache.size < MAX_CACHE_SIZE) {
-		contextCache.set(cacheKey, {
-			context: result,
-			timestamp: Date.now(),
-		});
-	} else {
-		// Evict oldest entry
-		const oldestKey = contextCache.keys().next().value;
-		contextCache.delete(oldestKey);
-		contextCache.set(cacheKey, {
-			context: result,
-			timestamp: Date.now(),
-		});
-	}
-
-	console.log('brAInwav GraphRAG context assembly completed', {
-		component: 'memory-core',
-		brand: 'brAInwav',
-		nodeCount: nodes.length,
-		chunkCount: chunks.length,
-		durationMs: Date.now() - startTime,
-		cacheSize: contextCache.size,
-	});
-
-	return result;
-}
-
-/**
- * Clean up expired cache entries
- */
-export function cleanupContextCache(): void {
-	const now = Date.now();
-	for (const [key, value] of contextCache.entries()) {
-		if (now - value.timestamp > CACHE_TTL) {
-			contextCache.delete(key);
-		}
-	}
+        return { nodes, chunks };
 }

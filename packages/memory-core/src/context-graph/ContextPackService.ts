@@ -93,10 +93,10 @@ export class ContextPackService {
 
 		try {
 			// Validate options
-			const validation = this.validatePackOptions(options);
-			if (!validation.valid) {
-				return this.createErrorResult(subgraph, validation.errors[0], startTime);
-			}
+                        const validation = this.validatePackOptions(options);
+                        if (!validation.valid) {
+                                return this.createErrorResult(subgraph, validation.errors[0], startTime);
+                        }
 
 			// Apply privacy mode filtering if enabled
 			let filteredSubgraph = subgraph;
@@ -112,7 +112,7 @@ export class ContextPackService {
 			const packedContext = this.generatePackedContext(tokenLimitedSubgraph, options);
 
 			// Generate citations if requested
-			let citations;
+                        let citations;
 			if (options.includeCitations) {
 				citations = this.generateCitations(tokenLimitedSubgraph.nodes, options.citationFormat);
 			}
@@ -158,9 +158,9 @@ export class ContextPackService {
 		}
 	}
 
-	async validatePackOptions(options: PackOptions): Promise<PackValidationResult> {
-		const errors: string[] = [];
-		const warnings: string[] = [];
+        async validatePackOptions(options: PackOptions): Promise<PackValidationResult> {
+                const errors: string[] = [];
+                const warnings: string[] = [];
 
 		// Validate includeCitations
 		if (typeof options.includeCitations !== 'boolean') {
@@ -194,12 +194,12 @@ export class ContextPackService {
 			errors.push('privacyMode must be a boolean');
 		}
 
-		return {
-			valid: errors.length === 0,
-			errors,
-			warnings,
-		};
-	}
+                return {
+                        valid: errors.length === 0,
+                        errors,
+                        warnings,
+                };
+        }
 
 	private async applyPrivacyMode(
 		subgraph: ContextSubgraph,

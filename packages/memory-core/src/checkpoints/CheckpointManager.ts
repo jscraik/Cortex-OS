@@ -160,10 +160,10 @@ export class CheckpointManager {
 
 		const records = slice.map(toCheckpointRecord);
 
-		return {
-			items: records,
-			nextCursor: hasMore && rows[limit] ? rows[limit].created_at : undefined,
-		};
+                return {
+                        items: records,
+                        nextCursor: hasMore && rows[limit] ? rows[limit].createdAt : undefined,
+                };
 	}
 
 	async remove(id: CheckpointId): Promise<boolean> {

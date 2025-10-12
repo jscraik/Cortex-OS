@@ -86,52 +86,12 @@ export async function expandNeighbors(
 
 	const result = {
 		neighborIds: [...neighborIds],
-		edges: edges.map((edge) => ({
-			id: edge.id,
-			type: edge.type,
-			srcId: edge.srcId,
-			dstId: edge.dstId,
-			weight: edge.weight,
-		})),
-	};
-
-	// Cache results
-	if (expansionCache.size < MAX_CACHE_SIZE) {
-		expansionCache.set(cacheKey, {
-			expansion: result,
-			timestamp: Date.now(),
-		});
-	} else {
-		// Evict oldest entry
-		const oldestKey = expansionCache.keys().next().value;
-		expansionCache.delete(oldestKey);
-		expansionCache.set(cacheKey, {
-			expansion: result,
-			timestamp: Date.now(),
-		});
-	}
-
-	console.log('brAInwav GraphRAG graph expansion completed', {
-		component: 'memory-core',
-		brand: 'brAInwav',
-		inputNodes: nodeIds.length,
-		neighborsFound: neighborIds.size,
-		edgesTraversed: edges.length,
-		durationMs: Date.now() - startTime,
-		cacheSize: expansionCache.size,
-	});
-
-	return result;
-}
-
-/**
- * Clean up expired cache entries
- */
-export function cleanupExpansionCache(): void {
-	const now = Date.now();
-	for (const [key, value] of expansionCache.entries()) {
-		if (now - value.timestamp > CACHE_TTL) {
-			expansionCache.delete(key);
-		}
-	}
+                edges: edges.map((edge) => ({
+                        id: edge.id,
+                        type: edge.type,
+                        srcId: edge.srcId,
+                        dstId: edge.dstId,
+                        weight: edge.weight ?? null,
+                })),
+        };
 }

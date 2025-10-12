@@ -303,18 +303,16 @@ export class QdrantHybridSearch {
 	): Promise<void> {
 		if (!this.client) throw new Error('Qdrant client not initialized');
 
-		const points = chunks.map((chunk) => ({
-			id: chunk.id,
-			vectors: {
-				dense: chunk.vector,
-				sparse: {
-					indices: chunk.sparseVector.indices,
-					values: chunk.sparseVector.values,
-				},
-			},
-			payload: {
-				node_id: chunk.nodeId,
-				chunk_content: chunk.content,
+                const points = chunks.map((chunk) => ({
+                        id: chunk.id,
+                        vector: chunk.vector,
+                        sparse_vector: {
+                                indices: chunk.sparseVector.indices,
+                                values: chunk.sparseVector.values,
+                        },
+                        payload: {
+                                node_id: chunk.nodeId,
+                                chunk_content: chunk.content,
 				path: chunk.metadata.path,
 				node_type: chunk.metadata.nodeType,
 				node_key: chunk.metadata.nodeKey,
