@@ -1,7 +1,7 @@
 import type {
-	ConnectorManifestEntry,
-	ConnectorsManifest,
-} from '@cortex-os/asbr/src/types/connectors.js';
+        ConnectorManifestEntry,
+        ConnectorsManifest,
+} from '@cortex-os/asbr/types';
 import { type RemoteTool, RemoteToolProxy } from '@cortex-os/mcp-bridge/runtime/remote-proxy';
 import { setConnectorProxyStatus } from '@cortex-os/mcp-bridge/runtime/telemetry/metrics';
 import type { FastMCP } from 'fastmcp';

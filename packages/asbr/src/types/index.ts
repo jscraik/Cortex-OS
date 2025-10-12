@@ -2,6 +2,18 @@ import type { Event, Task, TaskStatus } from '@cortex-os/asbr-schemas';
 import { z } from 'zod';
 
 export * from '@cortex-os/asbr-schemas';
+export {
+        connectorAuthSchema,
+        connectorManifestEntrySchema,
+        connectorMetadataSchema,
+        connectorQuotaSchema,
+        connectorRuntimeAvailabilitySchema,
+        connectorServiceEntrySchema,
+        connectorTagsSchema,
+        connectorsManifestSchema,
+        connectorsServiceMapSchema,
+        ulidSchema,
+} from './connectors.js';
 
 export interface TaskRef {
 	id: string;
