@@ -114,7 +114,7 @@ export class MLXMemoryManager {
 			const status = await this.checkMemory();
 			if (status.status !== 'healthy') {
 				console.warn(
-					`Memory status: ${status.status} (${(status.percentage * 100).toFixed(1)}%) - ${status.action}`,
+					`brAInwav MLX memory manager: Memory status ${status.status} (${(status.percentage * 100).toFixed(1)}%) - ${status.action}`,
 				);
 			}
 		}, intervalMs);
@@ -169,7 +169,10 @@ export class MLXMemoryManager {
 			return this.parseVmStatOutput(result);
 		} catch (error) {
 			// Fallback to Node.js memory stats
-			console.warn('Failed to get macOS memory stats, using Node.js fallback:', error);
+			console.warn(
+				'brAInwav MLX memory manager: Failed to get macOS memory stats, using Node.js fallback:',
+				error,
+			);
 			return this.getNodeMemoryFallback();
 		}
 	}
@@ -255,7 +258,7 @@ export class MLXMemoryManager {
 	 * Perform emergency cleanup when memory is critically low
 	 */
 	private async emergencyCleanup(): Promise<void> {
-		console.warn('Performing emergency memory cleanup');
+		console.warn('brAInwav MLX memory manager: Performing emergency memory cleanup');
 
 		// Execute all registered cleanup callbacks
 		await Promise.allSettled(this.cleanupCallbacks.map((callback) => callback()));
@@ -273,7 +276,7 @@ export class MLXMemoryManager {
 	 * Release non-essential memory when usage is high
 	 */
 	private async releaseNonEssentialMemory(): Promise<void> {
-		console.info('Releasing non-essential memory');
+		console.info('brAInwav MLX memory manager: Releasing non-essential memory');
 
 		// Execute cleanup callbacks (first half)
 		const halfPoint = Math.ceil(this.cleanupCallbacks.length / 2);
@@ -291,7 +294,7 @@ export class MLXMemoryManager {
 	 * Perform regular maintenance cleanup
 	 */
 	private async performMaintenanceCleanup(): Promise<void> {
-		console.debug('Performing maintenance memory cleanup');
+		console.debug('brAInwav MLX memory manager: Performing maintenance memory cleanup');
 
 		// Light cleanup - only execute a few callbacks
 		const maxCallbacks = Math.min(3, this.cleanupCallbacks.length);
@@ -306,7 +309,7 @@ export class MLXMemoryManager {
 	private async forceClearCaches(): Promise<void> {
 		// This would typically clear embedding caches, model caches, etc.
 		// Implementation depends on what caching systems are in use
-		console.warn('Force clearing all caches');
+		console.warn('brAInwav MLX memory manager: Force clearing all caches');
 	}
 
 	/**

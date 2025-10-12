@@ -233,3 +233,107 @@ class HTTPMCPClient implements AgentMCPClient {
 export function createAgentMCPClient(config: MCPIntegrationConfig): AgentMCPClient {
 	return new HTTPMCPClient(config);
 }
+
+//
+// Phase C.1: Agents Shim Routing Implementation
+//
+
+import type { ConnectorEntry } from '@cortex-os/protocol';
+
+export interface FactQueryOptions {
+	scope?: 'facts' | 'properties';
+	matryoshkaDimension?: number;
+	embedderHint?: string;
+}
+
+export interface FactQueryResult {
+	connectorId: string;
+	toolName: string;
+	parameters: Record<string, unknown>;
+}
+
+/**
+ * Route fact queries to appropriate wikidata tools with scope filtering and Matryoshka hints.
+ *
+ * Phase C.1: Agents Shim Routing - routes fact queries to wikidata.vector_search_items
+ * or wikidata.vector_search_properties based on scope, with brAInwav branding.
+ *
+ * @param query - The fact query to route
+ * @param connector - The connector entry with remoteTools
+ * @param options - Routing options including scope and dimension hints
+ * @returns Promise resolving to routing result with connectorId, toolName, and parameters
+ */
+export async function routeFactQuery(
+	query: string,
+	connector: ConnectorEntry,
+	options?: FactQueryOptions,
+): Promise<FactQueryResult> {
+	// Extract options with defaults
+	const scope = options?.scope ?? 'facts';
+	const matryoshkaDimension = options?.matryoshkaDimension;
+	const embedderHint = options?.embedderHint;
+
+	// Check if connector has remoteTools
+	if (!connector.remoteTools || connector.remoteTools.length === 0) {
+		return {
+			connectorId: connector.id,
+			toolName: 'inspect_connector_capabilities',
+			parameters: {
+				query,
+				brand: 'brAInwav',
+				fallbackReason: 'no_remote_tools',
+			},
+		};
+	}
+
+	// Determine tool based on scope
+	const toolName = scope === 'properties' ? 'vector_search_properties' : 'vector_search_items';
+
+	// Find the specific tool in remoteTools
+	const targetTool = connector.remoteTools.find((tool) => tool.name === toolName);
+	if (!targetTool) {
+		// Fallback if specific tool not found
+		return {
+			connectorId: connector.id,
+			toolName: 'inspect_connector_capabilities',
+			parameters: {
+				query,
+				brand: 'brAInwav',
+				fallbackReason: 'tool_not_found',
+				requestedTool: toolName,
+			},
+		};
+	}
+
+	// Build parameters with brAInwav branding
+	const parameters: Record<string, unknown> = {
+		query,
+		scope,
+		brand: 'brAInwav',
+	};
+
+	// Add Matryoshka dimension hints if available
+	if (matryoshkaDimension) {
+		parameters.matryoshkaDimension = matryoshkaDimension;
+	}
+
+	if (embedderHint) {
+		parameters.embedderHint = embedderHint;
+	}
+
+	// Extract connector metadata for additional hints
+	const metadata = connector.metadata as Record<string, unknown> | undefined;
+	if (metadata?.supportsMatryoshka) {
+		parameters.supportsMatryoshka = metadata.supportsMatryoshka;
+	}
+
+	if (metadata?.embeddingDimensions) {
+		parameters.maxDimensions = metadata.embeddingDimensions;
+	}
+
+	return {
+		connectorId: connector.id,
+		toolName,
+		parameters,
+	};
+}
