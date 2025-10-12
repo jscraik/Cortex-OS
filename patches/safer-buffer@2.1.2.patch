@@ -1,0 +1,70 @@
+diff --git a/tests.js b/tests.js
+index 7ed2777c92a7991807c516027d5f73d0b47e781b..7e92fa6c4f5bc15c8a32e943fc13e2eccd80cc37 100644
+--- a/tests.js
++++ b/tests.js
+@@ -10,6 +10,9 @@ var index = require('./')
+ var safer = require('./safer')
+ var dangerous = require('./dangerous')
+ 
++var SAMPLE_UTF8 = 'onetwothree'
++var SAMPLE_BASE64 = buffer.Buffer.from(SAMPLE_UTF8).toString('base64')
++
+ /* Inheritance tests */
+ 
+ test('Default is Safer', function (t) {
+@@ -157,7 +160,7 @@ test('Methods return Buffers', function (t) {
+     t.ok(buffer.Buffer.isBuffer(impl.Buffer.from('')))
+     t.ok(buffer.Buffer.isBuffer(impl.Buffer.from('string')))
+     t.ok(buffer.Buffer.isBuffer(impl.Buffer.from('string', 'utf-8')))
+-    t.ok(buffer.Buffer.isBuffer(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64')))
++    t.ok(buffer.Buffer.isBuffer(impl.Buffer.from(SAMPLE_BASE64, 'base64')))
+     t.ok(buffer.Buffer.isBuffer(impl.Buffer.from([0, 42, 3])))
+     t.ok(buffer.Buffer.isBuffer(impl.Buffer.from(new Uint8Array([0, 42, 3]))))
+     t.ok(buffer.Buffer.isBuffer(impl.Buffer.from([])))
+@@ -180,7 +183,7 @@ test('Constructor is buffer.Buffer', function (t) {
+     t.equal(impl.Buffer.from('').constructor, buffer.Buffer)
+     t.equal(impl.Buffer.from('string').constructor, buffer.Buffer)
+     t.equal(impl.Buffer.from('string', 'utf-8').constructor, buffer.Buffer)
+-    t.equal(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64').constructor, buffer.Buffer)
++    t.equal(impl.Buffer.from(SAMPLE_BASE64, 'base64').constructor, buffer.Buffer)
+     t.equal(impl.Buffer.from([0, 42, 3]).constructor, buffer.Buffer)
+     t.equal(impl.Buffer.from(new Uint8Array([0, 42, 3])).constructor, buffer.Buffer)
+     t.equal(impl.Buffer.from([]).constructor, buffer.Buffer)
+@@ -210,7 +213,7 @@ test('Invalid calls throw', function (t) {
+     t.throws(function () { impl.Buffer.alloc('') })
+     t.throws(function () { impl.Buffer.alloc('string') })
+     t.throws(function () { impl.Buffer.alloc('string', 'utf-8') })
+-    t.throws(function () { impl.Buffer.alloc('b25ldHdvdGhyZWU=', 'base64') })
++    t.throws(function () { impl.Buffer.alloc(SAMPLE_BASE64, 'base64') })
+     t.throws(function () { impl.Buffer.alloc(-10) })
+     t.throws(function () { impl.Buffer.alloc(1e90) })
+     t.throws(function () { impl.Buffer.alloc(2 * (1 << 30)) })
+@@ -253,7 +256,7 @@ test('Buffers have appropriate lengths', function (t) {
+     t.equal(impl.Buffer.from('').length, 0)
+     t.equal(impl.Buffer.from('string').length, 6)
+     t.equal(impl.Buffer.from('string', 'utf-8').length, 6)
+-    t.equal(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64').length, 11)
++    t.equal(impl.Buffer.from(SAMPLE_BASE64, 'base64').length, 11)
+     t.equal(impl.Buffer.from([0, 42, 3]).length, 3)
+     t.equal(impl.Buffer.from(new Uint8Array([0, 42, 3])).length, 3)
+     t.equal(impl.Buffer.from([]).length, 0)
+@@ -383,7 +386,7 @@ test('safer.Buffer.from returns results same as Buffer constructor', function (t
+     t.deepEqual(impl.Buffer.from(''), new buffer.Buffer(''))
+     t.deepEqual(impl.Buffer.from('string'), new buffer.Buffer('string'))
+     t.deepEqual(impl.Buffer.from('string', 'utf-8'), new buffer.Buffer('string', 'utf-8'))
+-    t.deepEqual(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64'), new buffer.Buffer('b25ldHdvdGhyZWU=', 'base64'))
++    t.deepEqual(impl.Buffer.from(SAMPLE_BASE64, 'base64'), new buffer.Buffer(SAMPLE_BASE64, 'base64'))
+     t.deepEqual(impl.Buffer.from([0, 42, 3]), new buffer.Buffer([0, 42, 3]))
+     t.deepEqual(impl.Buffer.from(new Uint8Array([0, 42, 3])), new buffer.Buffer(new Uint8Array([0, 42, 3])))
+     t.deepEqual(impl.Buffer.from([]), new buffer.Buffer([]))
+@@ -399,8 +402,8 @@ test('safer.Buffer.from returns consistent results', function (t) {
+     t.deepEqual(impl.Buffer.from('string', 'utf-8'), impl.Buffer.from('string'))
+     t.deepEqual(impl.Buffer.from('string'), impl.Buffer.from([115, 116, 114, 105, 110, 103]))
+     t.deepEqual(impl.Buffer.from('string'), impl.Buffer.from(impl.Buffer.from('string')))
+-    t.deepEqual(impl.Buffer.from('b25ldHdvdGhyZWU=', 'base64'), impl.Buffer.from('onetwothree'))
+-    t.notDeepEqual(impl.Buffer.from('b25ldHdvdGhyZWU='), impl.Buffer.from('onetwothree'))
++    t.deepEqual(impl.Buffer.from(SAMPLE_BASE64, 'base64'), impl.Buffer.from('onetwothree'))
++    t.notDeepEqual(impl.Buffer.from(SAMPLE_BASE64), impl.Buffer.from('onetwothree'))
+   })
+   t.end()
+ })

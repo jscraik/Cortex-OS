@@ -36,6 +36,20 @@
         "file-structure-mapping",
         "dependency-analysis"
       ]
+    },
+    "GitKraken": {
+      "command": "gk",
+      "args": ["mcp"],
+      "description": "GitKraken CLI MCP server for GitKraken, GitHub, GitLab, and Jira integration",
+      "capabilities": [
+        "git-repository-management",
+        "github-integration",
+        "gitlab-integration",
+        "jira-integration",
+        "issue-tracking",
+        "pull-request-management",
+        "code-review-workflows"
+      ]
     }
   }
 }

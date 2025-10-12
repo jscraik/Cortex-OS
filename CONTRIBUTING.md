@@ -57,6 +57,213 @@ pnpm dev
 
 **MANDATORY COMPLIANCE** with [CODESTYLE.md](../CODESTYLE.md) requirements:
 
+### ⚡ Performance Development Guidelines
+
+When working on performance-related features or optimizations, follow these additional guidelines:
+
+#### Performance Component Development
+
+```typescript
+// ✅ Good: Performance component with proper error handling
+export const createPerformanceOptimizer = (
+  config: PerformanceConfig
+): PerformanceOptimizer => {
+  const optimizer = new PerformanceOptimizer(config);
+
+  // Validate configuration
+  validatePerformanceConfig(config);
+
+  return optimizer;
+};
+
+// ✅ Good: Metrics collection with proper typing
+export const collectPerformanceMetrics = async (
+  component: string
+): Promise<PerformanceMetrics> => {
+  const startTime = performance.now();
+
+  try {
+    const metrics = await measureComponentPerformance(component);
+    const endTime = performance.now();
+
+    return {
+      ...metrics,
+      measurementDuration: endTime - startTime,
+      timestamp: Date.now()
+    };
+  } catch (error) {
+    throw new PerformanceError(
+      `Failed to collect metrics for ${component}`,
+      { cause: error }
+    );
+  }
+};
+```
+
+#### Performance Testing Requirements
+
+```typescript
+// Performance tests are mandatory for all performance components
+describe('AutoScaling Performance', () => {
+  it('should scale up within performance thresholds', async () => {
+    const scaler = new AdvancedAutoScaler(testConfig);
+    await scaler.initialize();
+
+    const startTime = performance.now();
+    await scaler.scaleUp(5);
+    const endTime = performance.now();
+
+    // Scaling should complete within 1 second
+    expect(endTime - startTime).toBeLessThan(1000);
+
+    // Verify scaling effectiveness
+    const metrics = scaler.getPerformanceMetrics();
+    expect(metrics.currentInstances).toBe(5);
+  });
+
+  it('should handle high load without performance degradation', async () => {
+    const scaler = new AdvancedAutoScaler(testConfig);
+    await scaler.initialize();
+
+    // Simulate high load
+    const loadPromises = Array.from({ length: 100 }, () =>
+      scaler.processLoadEvent(generateLoadEvent())
+    );
+
+    const results = await Promise.allSettled(loadPromises);
+
+    // All operations should succeed
+    expect(results.every(r => r.status === 'fulfilled')).toBe(true);
+
+    // Performance should not degrade
+    const metrics = scaler.getPerformanceMetrics();
+    expect(metrics.averageResponseTime).toBeLessThan(100);
+  });
+});
+```
+
+#### Performance Configuration Standards
+
+```typescript
+// All performance components must support environment configuration
+export const loadPerformanceConfig = (): PerformanceConfig => {
+  return {
+    // Auto-scaling thresholds
+    cpuThreshold: parseFloat(process.env.PERF_CPU_THRESHOLD || '80'),
+    memoryThreshold: parseFloat(process.env.PERF_MEMORY_THRESHOLD || '85'),
+    latencyThreshold: parseFloat(process.env.PERF_LATENCY_THRESHOLD || '5000'),
+
+    // Resource limits
+    maxInstances: parseInt(process.env.PERF_MAX_INSTANCES || '20'),
+    minInstances: parseInt(process.env.PERF_MIN_INSTANCES || '1'),
+
+    // Feature flags
+    enableMLScaling: process.env.PERF_ENABLE_ML === 'true',
+    enableGPUScheduling: process.env.PERF_ENABLE_GPU === 'true',
+    enableDistributedCache: process.env.PERF_ENABLE_CACHE === 'true'
+  };
+};
+```
+
+#### Memory and Resource Management
+
+```typescript
+// ✅ Good: Proper resource cleanup
+export const createResourceManager = (): ResourceManager => {
+  const resources = new Map<string, Resource>();
+  const cleanupTasks = new Set<() => Promise<void>>();
+
+  const acquireResource = async (id: string): Promise<Resource> => {
+    const resource = await allocateResource(id);
+    resources.set(id, resource);
+
+    // Register cleanup task
+    cleanupTasks.add(() => releaseResource(id));
+
+    return resource;
+  };
+
+  const cleanup = async (): Promise<void> => {
+    // Run all cleanup tasks concurrently
+    await Promise.allSettled(
+      Array.from(cleanupTasks).map(task => task())
+    );
+
+    resources.clear();
+    cleanupTasks.clear();
+  };
+
+  return {
+    acquireResource,
+    cleanup,
+    getActiveResources: () => resources.size
+  };
+};
+
+// ✅ Good: Memory-efficient processing
+export const processBatchOptimized = async <T, R>(
+  items: T[],
+  processor: (item: T) => Promise<R>,
+  batchSize: number = 100
+): Promise<R[]> => {
+  const results: R[] = [];
+
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map(item => processor(item))
+    );
+
+    results.push(...batchResults);
+
+    // Allow garbage collection between batches
+    if (i + batchSize < items.length) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+  }
+
+  return results;
+};
+```
+
+### Performance Monitoring Integration
+
+All performance components must integrate with the monitoring system:
+
+```typescript
+export const createMonitoredComponent = <T>(
+  name: string,
+  factory: () => T
+): T & { getMetrics: () => ComponentMetrics } => {
+  const component = factory();
+  const metrics = new ComponentMetrics(name);
+
+  return new Proxy(component, {
+    get(target, prop) {
+      const value = target[prop as keyof T];
+
+      if (typeof value === 'function') {
+        return async (...args: any[]) => {
+          const startTime = performance.now();
+          metrics.incrementOperationCount(String(prop));
+
+          try {
+            const result = await value.apply(target, args);
+            metrics.recordSuccess(String(prop), performance.now() - startTime);
+            return result;
+          } catch (error) {
+            metrics.recordFailure(String(prop), performance.now() - startTime);
+            throw error;
+          }
+        };
+      }
+
+      return value;
+    }
+  }) as T & { getMetrics: () => ComponentMetrics };
+};
+```
+
 ### Function Length Limits
 
 - **Maximum 40 lines per function** - Split immediately if readability suffers

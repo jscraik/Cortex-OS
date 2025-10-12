@@ -1,0 +1,50 @@
+[
+  {
+    "file": "packages/mcp/src/connectors/normalization.ts",
+    "line": 19,
+    "end_line": 44,
+    "severity": "low",
+    "category": "brainwav-branding",
+    "description": "Normalization function does not include brAInwav branding in returned metadata. While this is a library function, adding brand field to NormalizedTool would ensure consistency with brAInwav production standards.",
+    "evidence": "export function normalizeWikidataToolName(...): NormalizedTool {\n  return { originalName, normalizedName, tags, scopes }; // no brand field\n}",
+    "fix": "Add optional brand field to NormalizedTool interface and include brand: 'brAInwav' in return object when connectorId === 'wikidata'",
+    "tests_to_add": "Add test verifying brand field is present in NormalizedTool for wikidata connector",
+    "rule": "brainwav.branding.missing-in-metadata",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#branding"
+    ]
+  },
+  {
+    "file": "packages/agents/src/connectors/registry.ts",
+    "line": 56,
+    "end_line": 61,
+    "severity": "low",
+    "category": "null-handling",
+    "description": "Tool mapping in extractServiceMapTools assumes tool.name exists without explicit validation. Could fail silently if upstream connector provides malformed tool structure.",
+    "evidence": "return entry.remoteTools.map((tool) => ({\n  name: tool.name,\n  description: tool.description ?? '',\n  // assumes tool.name exists\n}));",
+    "fix": "Add validation: if (!tool.name || typeof tool.name !== 'string') { continue; } before mapping",
+    "tests_to_add": "Add test with malformed remoteTools (missing name field) and verify it's handled gracefully",
+    "rule": null,
+    "standards": [
+      "codestyle:3-javascript-typescript",
+      "codestyle:errors"
+    ]
+  },
+  {
+    "file": "packages/agents/src/connectors/registry.ts",
+    "line": 160,
+    "end_line": 160,
+    "severity": "low",
+    "category": "observability",
+    "description": "No structured logging when resolveRemoteTools performs synthesis fallback. This makes debugging tool precedence issues difficult.",
+    "evidence": "// Synthesis fallback\nreturn [...synthesizeWikidataTools(entry), ...synthesizeFactsTools(entry)];",
+    "fix": "Add structured log when synthesis occurs: logger?.debug?.({ connectorId: entry.id, synthesisType: 'fallback', toolCount: result.length, brand: 'brAInwav' }, '[brAInwav] Synthesizing fallback tools')",
+    "tests_to_add": "Add test that captures log output when synthesis occurs and verifies brAInwav branding present",
+    "rule": null,
+    "standards": [
+      "codestyle:12-logging-telemetry",
+      "governance:observability"
+    ]
+  }
+]

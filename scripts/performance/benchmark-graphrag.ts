@@ -71,7 +71,11 @@ class GraphRAGBenchmark {
 		const embedDense = async (text: string): Promise<number[]> => {
 			// Simulate embedding generation latency
 			await new Promise(resolve => setTimeout(resolve, 50));
-			return Array.from({ length: 1536 }, () => Math.random() - 0.5);
+			// Environment-configurable test vectors or zeros for testing
+			const useTestVectors = process.env.PERF_USE_TEST_VECTORS === 'true';
+			return useTestVectors 
+				? Array.from({ length: 1536 }, (_, i) => (i % 2 === 0 ? 0.1 : -0.1)) // Deterministic test pattern
+				: Array.from({ length: 1536 }, () => 0); // Zero vectors for testing
 		};
 
 		const embedSparse = async (text: string): Promise<{ indices: number[]; values: number[] }> => {
@@ -79,7 +83,11 @@ class GraphRAGBenchmark {
 			await new Promise(resolve => setTimeout(resolve, 20));
 			const words = text.toLowerCase().split(/\s+/);
 			const indices = words.map((_, i) => i).slice(0, 10);
-			const values = Array.from({ length: indices.length }, () => Math.random());
+			// Environment-configurable test values or ones for testing
+			const useTestValues = process.env.PERF_USE_TEST_VALUES === 'true';
+			const values = useTestValues
+				? Array.from({ length: indices.length }, (_, i) => 0.5 + (i % 10) * 0.1) // Deterministic test pattern
+				: Array.from({ length: indices.length }, () => 1.0); // Fixed values for testing
 			return { indices, values };
 		};
 

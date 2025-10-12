@@ -203,12 +203,46 @@ Include brAInwav branding in a11y announcements where appropriate.
 
 **Coverage & mutation**:
 - **≥ 90% global coverage**
-- **≥ 95% changed lines**  
+- **≥ 95% changed lines**
 - **≥ 90% mutation** (where enabled)
 
 **Tests**: TDD (Red-Green-Refactor); co-locate tests; property-based for critical paths.
 
 **Performance**: Bundle budgets, latency thresholds enforced in CI.
+
+## ⚡ Performance Standards (constitutional)
+
+**Performance components must meet these non-negotiable standards**:
+
+### Rule 1 — Performance Component Standards
+- **No performance regressions**: All performance components must improve or maintain existing performance metrics
+- **Real metrics only**: No fake or simulated performance data in production code
+- **Comprehensive monitoring**: Every performance component must include structured metrics and health checks
+- **Graceful degradation**: Performance failures must not crash the system
+
+### Rule 2 — Auto-Scaling Standards
+- **ML model validation**: Auto-scaling ML models must be trained on real data with proven accuracy (>80%)
+- **Cost optimization**: Scaling decisions must consider cost implications and optimize for efficiency
+- **Emergency handling**: Auto-scaling must include emergency response protocols for critical load conditions
+- **Predictive accuracy**: Load forecasting must achieve minimum accuracy thresholds
+
+### Rule 3 — Resource Management Standards
+- **Memory efficiency**: GPU and memory management must minimize waste and prevent leaks
+- **Fair scheduling**: Resource allocation must be fair and prevent starvation
+- **Capacity planning**: Resource management must include forward-looking capacity analysis
+- **Resource isolation**: Performance components must not impact core system functionality
+
+### Rule 4 — Monitoring Standards
+- **Real-time metrics**: All performance components must emit real-time metrics
+- **Alert thresholds**: Performance alerts must have meaningful thresholds with clear escalation paths
+- **Performance baselines**: Every component must establish and maintain performance baselines
+- **Anomaly detection**: Performance monitoring must include automated anomaly detection
+
+### Rule 5 — Integration Standards
+- **Event-driven communication**: Performance components must use A2A events for inter-component communication
+- **Circuit breaker patterns**: All external dependencies must include circuit breaker protection
+- **Backward compatibility**: Performance improvements must not break existing integrations
+- **Configuration-driven**: Performance behavior must be configurable without code changes
 
 ---
 
