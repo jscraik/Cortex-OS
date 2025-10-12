@@ -25,7 +25,7 @@ import { HybridRoutingEngine } from '../../../packages/model-gateway/src/hybrid-
 
 // Mock dependencies for security testing
 vi.mock('@cortex-os/memory-core/src/services/GraphRAGService.js');
-vi.mock('@cortex-os/memory-core/src/context-graph/thermal/ThermalMonitor.js');
+vi.mock('@cortex-os/memory-core/src/thermal/ThermalMonitor.js');
 
 describe('OWASP LLM Top-10 Security Tests', () => {
 	let contextSliceService: ContextSliceService;

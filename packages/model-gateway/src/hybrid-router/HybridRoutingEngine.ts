@@ -15,7 +15,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type { EvidenceGate } from '@cortex-os/memory-core/src/context-graph/evidence/EvidenceGate.js';
-import type { ThermalMonitor } from '@cortex-os/memory-core/src/context-graph/thermal/ThermalMonitor.js';
+import type { ThermalMonitor } from '@cortex-os/memory-core/src/thermal/ThermalMonitor.js';
 import { z } from 'zod';
 import type { PrivacyModeEnforcer } from './PrivacyModeEnforcer.js';
 
