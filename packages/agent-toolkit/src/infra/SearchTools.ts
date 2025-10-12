@@ -21,11 +21,15 @@ abstract class BaseSearchTool implements SearchTool {
 	}
 
 	async search(input: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
-		const validatedInput = this.validateInput(input);
+                const validatedInput = this.validateInput(input);
+                const { pattern, path } = validatedInput;
+                if (!pattern || !path) {
+                        throw new Error('Invalid search input');
+                }
 
-		await this.adapter.validateScript();
+                await this.adapter.validateScript();
 
-		const result = await this.adapter.executeScript([validatedInput.pattern, validatedInput.path]);
+                const result = await this.adapter.executeScript([pattern, path]);
 
 		const enrichedResult = {
 			...(result as object),

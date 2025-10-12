@@ -30,8 +30,8 @@ export class CodemapAdapter implements CodemapTool {
 		const cwd = this.options.workingDirectory ?? process.cwd();
 		const scriptPath = await this.resolveScriptPath(cwd);
 		const pythonExecutable = this.options.pythonExecutable ?? 'python3';
-		const normalizedInputs = this.normalizeInputs(inputs, cwd);
-		const outputPaths = await this.prepareOutputPaths(inputs, cwd);
+                const normalizedInputs = this.normalizeInputs(inputs, cwd);
+                const outputPaths = await this.prepareOutputPaths(normalizedInputs, cwd);
 
 		await this.ensureDependencies({ pythonExecutable, scriptPath, cwd });
 
@@ -66,10 +66,10 @@ export class CodemapAdapter implements CodemapTool {
 		return this.defaultScriptPathPromise;
 	}
 
-	private normalizeInputs(inputs: AgentToolkitCodemapInput, cwd: string): AgentToolkitCodemapInput {
-		return {
-			scope: inputs.scope ?? 'repo',
-			repoPath: resolve(cwd, inputs.repoPath ?? '.'),
+        private normalizeInputs(inputs: AgentToolkitCodemapInput, cwd: string): NormalizedCodemapInput {
+                return {
+                        scope: inputs.scope ?? 'repo',
+                        repoPath: resolve(cwd, inputs.repoPath ?? '.'),
 			sinceDays: inputs.sinceDays,
 			sections: inputs.sections,
 			tools: inputs.tools,
@@ -78,10 +78,10 @@ export class CodemapAdapter implements CodemapTool {
 		};
 	}
 
-	private async prepareOutputPaths(
-		inputs: AgentToolkitCodemapInput,
-		cwd: string,
-	): Promise<{ jsonPath: string; markdownPath: string }> {
+        private async prepareOutputPaths(
+                inputs: NormalizedCodemapInput,
+                cwd: string,
+        ): Promise<{ jsonPath: string; markdownPath: string }> {
 		if (inputs.jsonOut && inputs.markdownOut) {
 			const jsonPath = resolve(cwd, inputs.jsonOut);
 			const markdownPath = resolve(cwd, inputs.markdownOut);
@@ -98,10 +98,10 @@ export class CodemapAdapter implements CodemapTool {
 		return { jsonPath, markdownPath };
 	}
 
-	private buildArguments(
-		inputs: AgentToolkitCodemapInput,
-		outputs: { jsonPath: string; markdownPath: string },
-		scriptPath: string,
+        private buildArguments(
+                inputs: NormalizedCodemapInput,
+                outputs: { jsonPath: string; markdownPath: string },
+                scriptPath: string,
 	): string[] {
 		const args = [
 			scriptPath,
@@ -194,3 +194,7 @@ export class CodemapAdapter implements CodemapTool {
 		);
 	}
 }
+type NormalizedCodemapInput = AgentToolkitCodemapInput & {
+        repoPath: string;
+        scope: string;
+};

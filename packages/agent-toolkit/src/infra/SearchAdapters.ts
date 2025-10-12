@@ -45,14 +45,18 @@ export class RipgrepAdapter extends BaseSearchAdapter {
 		super(toolsPath, 'rg_search.sh');
 	}
 
-	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
-		try {
-			const scriptPath = await this.getScriptPath();
-			// CodeQL Fix #205: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
-			const { stdout } = await safeExecFileWithRetry(scriptPath, [inputs.pattern, inputs.path], {
-				timeout: 30_000,
-				retries: 1,
-				backoffMs: 200,
+        async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
+                try {
+                        const { pattern, path } = inputs;
+                        if (!pattern || !path) {
+                                throw new Error('Invalid search input');
+                        }
+                        const scriptPath = await this.getScriptPath();
+                        // CodeQL Fix #205: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
+                        const { stdout } = await safeExecFileWithRetry(scriptPath, [pattern, path], {
+                                timeout: 30_000,
+                                retries: 1,
+                                backoffMs: 200,
 			});
 			const parsed = JSON.parse(stdout) as AgentToolkitSearchResult;
 			if (parsed.tool !== 'ripgrep') throw new Error('Unexpected tool result format');
@@ -71,14 +75,18 @@ export class SemgrepAdapter extends BaseSearchAdapter {
 		super(toolsPath, 'semgrep_search.sh');
 	}
 
-	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
-		try {
-			const scriptPath = await this.getScriptPath();
-			// CodeQL Fix #206: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
-			const { stdout } = await safeExecFileWithRetry(scriptPath, [inputs.pattern, inputs.path], {
-				timeout: 40_000,
-				retries: 1,
-				backoffMs: 250,
+        async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
+                try {
+                        const { pattern, path } = inputs;
+                        if (!pattern || !path) {
+                                throw new Error('Invalid search input');
+                        }
+                        const scriptPath = await this.getScriptPath();
+                        // CodeQL Fix #206: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
+                        const { stdout } = await safeExecFileWithRetry(scriptPath, [pattern, path], {
+                                timeout: 40_000,
+                                retries: 1,
+                                backoffMs: 250,
 			});
 			const parsed = JSON.parse(stdout) as AgentToolkitSearchResult;
 			if (parsed.tool !== 'semgrep') throw new Error('Unexpected tool result format');
@@ -97,14 +105,18 @@ export class AstGrepAdapter extends BaseSearchAdapter {
 		super(toolsPath, 'astgrep_search.sh');
 	}
 
-	async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
-		try {
-			const scriptPath = await this.getScriptPath();
-			// CodeQL Fix #207: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
-			const { stdout } = await safeExecFileWithRetry(scriptPath, [inputs.pattern, inputs.path], {
-				timeout: 40_000,
-				retries: 1,
-				backoffMs: 250,
+        async search(inputs: AgentToolkitSearchInput): Promise<AgentToolkitSearchResult> {
+                try {
+                        const { pattern, path } = inputs;
+                        if (!pattern || !path) {
+                                throw new Error('Invalid search input');
+                        }
+                        const scriptPath = await this.getScriptPath();
+                        // CodeQL Fix #207: Use safeExecFileWithRetry instead of execWithRetry to prevent shell injection
+                        const { stdout } = await safeExecFileWithRetry(scriptPath, [pattern, path], {
+                                timeout: 40_000,
+                                retries: 1,
+                                backoffMs: 250,
 			});
 			const parsed = JSON.parse(stdout) as AgentToolkitSearchResult;
 			if (parsed.tool !== 'ast-grep') throw new Error('Unexpected tool result format');

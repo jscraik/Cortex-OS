@@ -17,11 +17,15 @@ export class CombyAdapter implements CodemodTool {
 		);
 	}
 
-	async rewrite(inputs: AgentToolkitCodemodInput): Promise<AgentToolkitCodemodResult> {
-		try {
-			const scriptPath = await this.scriptPathPromise;
-			// CodeQL Fix #204: Use safeExecFile instead of exec to prevent shell injection
-			const { stdout } = await safeExecFile(scriptPath, [inputs.find, inputs.replace, inputs.path]);
+        async rewrite(inputs: AgentToolkitCodemodInput): Promise<AgentToolkitCodemodResult> {
+                try {
+                        const scriptPath = await this.scriptPathPromise;
+                        const { find, replace, path } = inputs;
+                        if (!find || !replace || !path) {
+                                throw new Error('Invalid codemod input');
+                        }
+                        // CodeQL Fix #204: Use safeExecFile instead of exec to prevent shell injection
+                        const { stdout } = await safeExecFile(scriptPath, [find, replace, path]);
 			const result = JSON.parse(stdout) as AgentToolkitCodemodResult;
 
 			// Validate the result matches our schema

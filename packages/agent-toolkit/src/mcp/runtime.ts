@@ -165,12 +165,12 @@ export class AgentToolkitMcpRuntime {
 		this.history.clear();
 	}
 
-	public getStats(): {
-		totalExecutions: number;
-		successfulExecutions: number;
-		failedExecutions: number;
-		ools: Array<{ name: string; executions: number; successRate: number }>;
-	} {
+        public getStats(): {
+                totalExecutions: number;
+                successfulExecutions: number;
+                failedExecutions: number;
+                tools: Array<{ name: string; executions: number; successRate: number }>;
+        } {
 		const byTool = new Map<string, { executions: number; successes: number }>();
 		for (const record of this.history.values()) {
 			const stats = byTool.get(record.tool) ?? { executions: 0, successes: 0 };

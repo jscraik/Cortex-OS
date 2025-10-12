@@ -6,6 +6,9 @@ node_modules/.pnpm/
 # Build artifacts
 .nx/
 dist/
+!packages/security/dist/
+packages/security/dist/*
+!packages/security/dist/index.d.ts
 target/
 *.tsbuildinfo
 *.d.ts.map

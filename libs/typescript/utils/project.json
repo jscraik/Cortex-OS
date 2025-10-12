@@ -11,6 +11,16 @@
                     "libs/typescript/utils/src/**/*.ts"
                 ]
             }
+        },
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": [
+                "{projectRoot}/dist"
+            ],
+            "options": {
+                "tsConfig": "libs/typescript/utils/tsconfig.json",
+                "outputPath": "libs/typescript/utils/dist"
+            }
         }
     }
 }
