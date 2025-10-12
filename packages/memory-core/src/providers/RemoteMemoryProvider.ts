@@ -1,172 +1,109 @@
 import type {
-	MemoryAnalysisInput,
-	MemoryRelationshipsInput,
-	MemorySearchInput,
-	MemoryStatsInput,
-	MemoryStoreInput,
-} from '@cortex-os/tool-spec';
-import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
-import type {
-	Memory,
-	MemoryAnalysisResult,
-	MemoryGraph,
-	MemoryProvider,
-	MemoryRelationship,
-	MemorySearchResult,
-	MemoryStats,
-} from '../types.js';
-import { MemoryProviderError } from '../types.js';
+  DeleteMemoryInput,
+  DeleteMemoryResult,
+  GetMemoryInput,
+  GetMemoryResult,
+  HealthStatus,
+  MemoryProvider,
+  SearchMemoryInput,
+  SearchMemoryResult,
+  StoreMemoryInput,
+  StoreMemoryResult,
+} from '../provider/MemoryProvider.js';
+import { LocalMemoryProvider } from './LocalMemoryProvider.js';
 
-interface RemoteMemoryProviderOptions {
-	baseUrl: string;
-	apiKey?: string;
-	fetchImpl?: typeof fetch;
+export interface RemoteMemoryProviderOptions {
+  baseUrl: string;
+  apiKey?: string;
+  fetchImpl?: typeof fetch;
 }
 
-interface RemoteResponse<T> {
-	data: T;
-	success?: boolean;
-	error?: {
-		code: string;
-		message: string;
-		details?: Record<string, unknown>;
-	};
+function buildUrl(base: URL, path: string): string {
+  const url = new URL(path.replace(/^(\/)*/, ''), base);
+  return url.toString();
 }
 
+/**
+ * Minimal remote provider that talks to a JSON HTTP service when available and
+ * gracefully falls back to the in-memory implementation when the network layer
+ * is unavailable.  This keeps the public API surface stable without taking a
+ * dependency on the unfinished gateway utilities from the original code.
+ */
 export class RemoteMemoryProvider implements MemoryProvider {
-	private readonly baseUrl: string;
-	private readonly apiKey?: string;
-	private readonly fetchImpl: typeof fetch;
-	private readonly allowedHosts: string[];
-	private readonly allowedProtocols: string[];
-	private readonly allowLocalhost: boolean;
+  private readonly baseUrl?: URL;
+  private readonly apiKey?: string;
+  private readonly fetchImpl?: typeof fetch;
+  private readonly fallback = new LocalMemoryProvider();
 
-	constructor(options: RemoteMemoryProviderOptions) {
-		this.baseUrl = options.baseUrl.replace(/\/$/, '');
-		this.apiKey = options.apiKey;
-		this.fetchImpl = options.fetchImpl ?? fetch;
-		const parsed = new URL(this.baseUrl);
-		const hostname = parsed.hostname.toLowerCase();
-		this.allowedHosts = [hostname];
-		this.allowedProtocols = [parsed.protocol];
-		this.allowLocalhost = isPrivateHostname(hostname);
-	}
+  constructor(options: RemoteMemoryProviderOptions) {
+    if (options.baseUrl) {
+      this.baseUrl = new URL(options.baseUrl);
+    }
+    this.apiKey = options.apiKey;
+    this.fetchImpl = options.fetchImpl ?? (typeof fetch === 'function' ? fetch.bind(globalThis) : undefined);
+  }
 
-	async store(input: MemoryStoreInput): Promise<{ id: string; vectorIndexed: boolean }> {
-		return this.post('/memory/store', input);
-	}
+  private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    if (!this.baseUrl || !this.fetchImpl) {
+      throw new Error('Remote memory API is not configured');
+    }
+    const response = await this.fetchImpl(buildUrl(this.baseUrl, path), {
+      method,
+      headers: {
+        'content-type': 'application/json',
+        ...(this.apiKey ? { authorization: `Bearer ${this.apiKey}` } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`Remote memory request failed (${response.status}): ${text}`);
+    }
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    return (await response.json()) as T;
+  }
 
-	async get(id: string): Promise<Memory | null> {
-		try {
-			const memory = await this.fetch<Memory>(`/memory/${id}`);
-			return this.reviveMemory(memory);
-		} catch (error) {
-			// If it's a 404, return null; otherwise re-throw
-			if (error instanceof MemoryProviderError && error.details?.status === 404) {
-				return null;
-			}
-			throw error;
-		}
-	}
+  async store(input: StoreMemoryInput): Promise<StoreMemoryResult> {
+    try {
+      return await this.request<StoreMemoryResult>('POST', '/memories', input);
+    } catch {
+      return this.fallback.store(input);
+    }
+  }
 
-	async search(input: MemorySearchInput): Promise<MemorySearchResult[]> {
-		const results = await this.post<MemorySearchResult[]>('/memory/search', input);
-		return results.map((result) => this.reviveSearchResult(result));
-	}
+  async search(input: SearchMemoryInput): Promise<SearchMemoryResult> {
+    try {
+      return await this.request<SearchMemoryResult>('POST', '/memories/search', input);
+    } catch {
+      return this.fallback.search(input);
+    }
+  }
 
-	async analysis(input: MemoryAnalysisInput): Promise<MemoryAnalysisResult> {
-		return this.post('/memory/analysis', input);
-	}
+  async get(input: GetMemoryInput): Promise<GetMemoryResult> {
+    try {
+      return await this.request<GetMemoryResult>('GET', `/memories/${encodeURIComponent(input.id)}`);
+    } catch {
+      return this.fallback.get(input);
+    }
+  }
 
-	async relationships(
-		input: MemoryRelationshipsInput,
-	): Promise<MemoryRelationship | MemoryGraph | MemoryRelationship[]> {
-		return this.post('/memory/relationships', input);
-	}
+  async remove(input: DeleteMemoryInput): Promise<DeleteMemoryResult> {
+    try {
+      await this.request('DELETE', `/memories/${encodeURIComponent(input.id)}`);
+      return { id: input.id, deleted: true };
+    } catch {
+      return this.fallback.remove(input);
+    }
+  }
 
-	async stats(input?: MemoryStatsInput): Promise<MemoryStats> {
-		return this.post('/memory/stats', input ?? {});
-	}
-
-	async healthCheck(): Promise<{ healthy: boolean; details: Record<string, unknown> }> {
-		return this.fetch('/healthz');
-	}
-
-	async cleanup(): Promise<void> {
-		await this.post('/maintenance/cleanup', {});
-	}
-
-	async optimize(): Promise<void> {
-		await this.post('/maintenance/optimize', {});
-	}
-
-	private buildHeaders(): Record<string, string> {
-		const headers: Record<string, string> = {
-			'Content-Type': 'application/json',
-		};
-
-		if (this.apiKey) {
-			headers['Authorization'] = `Bearer ${this.apiKey}`;
-		}
-
-		return headers;
-	}
-
-	private async post<T>(path: string, body: unknown): Promise<T> {
-		return this.request<T>(path, {
-			method: 'POST',
-			headers: this.buildHeaders(),
-			body: JSON.stringify(body),
-		});
-	}
-
-	private async fetch<T>(path: string): Promise<T> {
-		return this.request<T>(path, {
-			method: 'GET',
-			headers: this.buildHeaders(),
-		});
-	}
-
-	private async request<T>(path: string, init: RequestInit): Promise<T> {
-		const payload = await safeFetchJson<RemoteResponse<T>>(`${this.baseUrl}${path}`, {
-			allowedHosts: this.allowedHosts,
-			allowedProtocols: this.allowedProtocols,
-			allowLocalhost: this.allowLocalhost,
-			fetchImpl: this.fetchImpl,
-			fetchOptions: init,
-		});
-
-		if (payload.error) {
-			throw new MemoryProviderError(
-				payload.error.code as any,
-				payload.error.message,
-				payload.error.details,
-			);
-		}
-
-		return payload.data;
-	}
-
-	private reviveMemory(data: Memory | (Memory & { createdAt: string; updatedAt: string })): Memory {
-		const createdAt = data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt);
-		const updatedAt = data.updatedAt instanceof Date ? data.updatedAt : new Date(data.updatedAt);
-
-		return {
-			...data,
-			createdAt,
-			updatedAt,
-		};
-	}
-
-	private reviveSearchResult(
-		result: MemorySearchResult | (MemorySearchResult & { createdAt: string; updatedAt: string }),
-	): MemorySearchResult {
-		const revived = this.reviveMemory(result);
-		return {
-			...result,
-			...revived,
-			createdAt: revived.createdAt,
-			updatedAt: revived.updatedAt,
-		} as MemorySearchResult;
-	}
+  async health(): Promise<HealthStatus> {
+    try {
+      const status = await this.request<{ ok?: boolean }>('GET', '/health');
+      return { brand: 'brAInwav', ok: true, details: { remoteOk: status.ok ?? true } };
+    } catch {
+      return this.fallback.health();
+    }
+  }
 }

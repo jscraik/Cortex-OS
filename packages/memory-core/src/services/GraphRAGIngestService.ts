@@ -333,20 +333,23 @@ export class GraphRAGIngestService {
 		nodeId: string,
 		nodeKey: string,
 		drafts: ChunkDraft[],
-	): Promise<{
-		qdrantPayloads: QdrantChunkPayload[];
-		chunkRefs: GraphChunkRefInput[];
-		label: string;
-	}> {
-		const qdrantPayloads: QdrantChunkPayload[] = [];
-		const chunkRefs: GraphChunkRefInput[] = [];
-		let label = nodeKey;
-		for (const draft of drafts) {
-			const id = this.deps.idFactory();
-			const [vector, sparse] = await Promise.all([
-				this.embedDense?.(draft.content),
-				this.embedSparse?.(draft.content),
-			]);
+        ): Promise<{
+                qdrantPayloads: QdrantChunkPayload[];
+                chunkRefs: GraphChunkRefInput[];
+                label: string;
+        }> {
+                this.assertInitialized();
+                const embedDense = this.embedDense!;
+                const embedSparse = this.embedSparse!;
+                const qdrantPayloads: QdrantChunkPayload[] = [];
+                const chunkRefs: GraphChunkRefInput[] = [];
+                let label = nodeKey;
+                for (const draft of drafts) {
+                        const id = this.deps.idFactory();
+                        const [vector, sparse] = await Promise.all([
+                                embedDense(draft.content),
+                                embedSparse(draft.content),
+                        ]);
 			const metadata = {
 				path: draft.path,
 				nodeType: GraphNodeType.DOC,

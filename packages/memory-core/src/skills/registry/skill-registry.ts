@@ -404,14 +404,14 @@ export class SkillRegistry {
 		}
 
 		// Apply tag filter (OR logic)
-		if (query.tags && query.tags.length > 0) {
-			const tagsLower = query.tags.map((t) => t.toLowerCase());
-			candidates = candidates.filter((skill) =>
-				skill.metadata.tags.some((tag) =>
-					tagsLower.includes(tag.toLowerCase()),
-				),
-			);
-		}
+                if (query.tags && query.tags.length > 0) {
+                        const tagsLower = query.tags.map((t) => t.toLowerCase());
+                        candidates = candidates.filter((skill) =>
+                                skill.metadata.tags.some((tag: string) =>
+                                        tagsLower.includes(tag.toLowerCase()),
+                                ),
+                        );
+                }
 
 		// Score and rank by keywords
 		const results: SearchResult[] = [];

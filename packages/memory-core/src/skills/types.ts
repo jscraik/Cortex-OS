@@ -20,13 +20,16 @@ import type {
 // ============================================================================
 
 export type {
-	Skill,
-	SkillFrontmatter,
-	SkillMetadata,
-	SkillPersuasiveFraming,
-	SkillSearchQuery,
-	SkillSearchResult,
+        Skill,
+        SkillFrontmatter,
+        SkillMetadata,
+        SkillPersuasiveFraming,
+        SkillSearchQuery,
+        SkillSearchResult,
 };
+
+export type SkillCategory = SkillMetadata['category'];
+export type SkillDifficulty = SkillMetadata['difficulty'];
 
 // ============================================================================
 // Skill File Processing Types
@@ -47,12 +50,14 @@ export interface SkillFileRaw {
  * Parsed skill file with separated frontmatter and content
  */
 export interface SkillFileParsed {
-	filePath: string;
-	fileName: string;
-	frontmatter: SkillFrontmatter;
-	content: string;
-	rawYaml: string;
-	parseTime: number;
+        filePath: string;
+        fileName: string;
+        frontmatter: SkillFrontmatter;
+        content: string;
+        rawYaml: string;
+        parseTime: number;
+        skill?: Skill;
+        errors?: string[];
 }
 
 /**

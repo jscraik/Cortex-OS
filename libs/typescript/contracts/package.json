@@ -10,6 +10,10 @@
       "import": "./dist/src/index.js",
       "types": "./dist/src/index.d.ts"
     },
+    "./skill-events": {
+      "import": "./src/skill-events.ts",
+      "types": "./src/skill-events.ts"
+    },
     "./src/skill-events.js": {
       "import": "./src/skill-events.js",
       "types": "./src/skill-events.ts"

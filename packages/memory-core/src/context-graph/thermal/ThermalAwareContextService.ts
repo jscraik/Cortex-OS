@@ -16,23 +16,25 @@
 import { randomUUID } from 'node:crypto';
 import type { ContextPackService, PackedContext, PackOptions } from '../ContextPackService.js';
 import type {
-	ContextSliceRecipe,
-	ContextSliceResult,
-	ContextSliceService,
+        ContextSliceRecipe,
+        ContextSliceResult,
+        ContextSliceService,
 } from '../ContextSliceService.js';
 import type { ThermalMonitor, ThermalState } from './ThermalMonitor.js';
 
-export interface ThermalContextSliceRecipe extends ContextSliceRecipe {
-	thermalConstraints?: boolean;
-}
+export type ThermalContextSliceRecipe = Omit<ContextSliceRecipe, 'thermalConstraints'> & {
+        thermalConstraints?: boolean;
+};
 
-export interface ThermalContextSliceResult extends ContextSliceResult {
-	thermalStatus: {
-		currentTemp: number;
-		trend: string;
-		zone: string;
-		critical: boolean;
-		throttlingActive: boolean;
+export type ThermalContextSliceResult = ContextSliceResult & {
+        rejected?: boolean;
+        reason?: string;
+        thermalStatus: {
+                currentTemp: number;
+                trend: string;
+                zone: string;
+                critical: boolean;
+                throttlingActive: boolean;
 		throttlingLevel?: string;
 		monitored: boolean;
 		temperatureReadings?: Array<{
@@ -54,32 +56,46 @@ export interface ThermalContextSliceResult extends ContextSliceResult {
 		operationTempEnd: number;
 		tempDelta: number;
 		thermalEfficiency: number;
-		brainwavThermalMetrics: boolean;
-	};
-	thermalRecommendations?: string[];
-}
+                brainwavThermalMetrics: boolean;
+        };
+        thermalRecommendations?: string[];
+        metadata: ContextSliceResult['metadata'] & {
+                thermalConstrained?: boolean;
+                depthReduced?: boolean;
+                nodesReduced?: boolean;
+                emergencyThrottling?: boolean;
+                proactiveThrottling?: boolean;
+                brainwavThermalManaged: boolean;
+                thermalShutdown?: boolean;
+        };
+};
 
 export interface ThermalContextPackOptions extends PackOptions {
-	thermalConstraints?: boolean;
+        thermalConstraints?: boolean;
 }
 
-export interface ThermalContextPackResult extends PackedContext {
-	thermalStatus: {
-		currentTemp: number;
-		trend: string;
-		zone: string;
-		critical: boolean;
-		throttlingActive: boolean;
-		monitored: boolean;
-	};
-	thermalAnalytics?: {
-		operationTempStart: number;
-		operationTempEnd: number;
-		tempDelta: number;
-		thermalEfficiency: number;
-		brainwavThermalMetrics: boolean;
-	};
-}
+export type ThermalContextPackResult = PackedContext & {
+        thermalStatus: {
+                currentTemp: number;
+                trend: string;
+                zone: string;
+                critical: boolean;
+                throttlingActive: boolean;
+                monitored: boolean;
+        };
+        thermalAnalytics?: {
+                operationTempStart: number;
+                operationTempEnd: number;
+                tempDelta: number;
+                thermalEfficiency: number;
+                brainwavThermalMetrics: boolean;
+        };
+        metadata: PackedContext['metadata'] & {
+                brainwavThermalManaged?: boolean;
+                thermalShutdown?: boolean;
+                thermalEmergency?: boolean;
+        };
+};
 
 export class ThermalAwareContextService {
 	private readonly thermalMonitor: ThermalMonitor;
@@ -138,20 +154,25 @@ export class ThermalAwareContextService {
 			}
 
 			// Apply thermal constraints if enabled
-			let effectiveRecipe = recipe;
-			if (recipe.thermalConstraints !== false) {
-				const thermalLimits = await this.thermalMonitor.getConstraints();
-				if (thermalLimits.throttlingActive) {
-					effectiveRecipe = {
-						...recipe,
-						maxDepth: Math.min(recipe.maxDepth, thermalLimits.maxDepth),
-						maxNodes: Math.min(recipe.maxNodes, thermalLimits.maxNodes),
-					};
-				}
-			}
+                        let effectiveRecipe = recipe;
+                        let thermalLimits: Awaited<ReturnType<ThermalMonitor['getConstraints']>> | undefined;
+                        if (recipe.thermalConstraints !== false) {
+                                thermalLimits = await this.thermalMonitor.getConstraints();
+                                if (thermalLimits.throttlingActive) {
+                                        effectiveRecipe = {
+                                                ...recipe,
+                                                maxDepth: Math.min(recipe.maxDepth, thermalLimits.maxDepth),
+                                                maxNodes: Math.min(recipe.maxNodes, thermalLimits.maxNodes),
+                                        };
+                                }
+                        }
 
 			// Perform context slice with thermal constraints
-			const sliceResult = await this.contextSliceService.slice(effectiveRecipe);
+                        const sliceInput: ContextSliceRecipe = {
+                                ...effectiveRecipe,
+                                thermalConstraints: effectiveRecipe.thermalConstraints !== false,
+                        };
+                        const sliceResult = await this.contextSliceService.slice(sliceInput);
 
 			// Stop thermal monitoring
 			this.stopThermalMonitoring();
@@ -171,12 +192,12 @@ export class ThermalAwareContextService {
 			// Check for cooldown requirements
 			const cooldownRequired = finalThermalState.cooldownRequired || false;
 
-			const thermalStatus = this.createThermalStatus(finalThermalState, false, {
-				rapidIncreaseDetected: rapidIncrease.detected,
-				temperatureIncrease: rapidIncrease.increase,
-				emergencyTriggered: finalThermalState.emergencyMode || false,
-				thermalEmergency: finalThermalState.zone === 'critical',
-				operationAborted: false,
+                        const thermalStatus = this.createThermalStatus(finalThermalState, false, {
+                                rapidIncreaseDetected: rapidIncrease.detected,
+                                temperatureIncrease: rapidIncrease.increase,
+                                emergencyTriggered: finalThermalState.emergencyMode || false,
+                                thermalEmergency: finalThermalState.zone === 'critical',
+                                operationAborted: false,
 				recoveryMode: finalThermalState.recoveryMode || false,
 				cooldownRequired,
 				cooldownDuration: finalThermalState.cooldownDuration,
@@ -187,16 +208,19 @@ export class ThermalAwareContextService {
 				thermalStatus,
 				thermalAnalytics,
 				thermalRecommendations,
-				metadata: {
-					...sliceResult.metadata,
-					thermalConstrained: recipe.thermalConstraints !== false && thermalLimits.throttlingActive,
-					depthReduced: effectiveRecipe.maxDepth < recipe.maxDepth,
-					nodesReduced: effectiveRecipe.maxNodes < recipe.maxNodes,
-					emergencyThrottling: finalThermalState.emergencyMode || false,
-					proactiveThrottling: thermalLimits.throttlingLevel === 'proactive',
-					brainwavThermalManaged: true,
-				},
-			};
+                                metadata: {
+                                        ...sliceResult.metadata,
+                                        thermalConstrained:
+                                                recipe.thermalConstraints !== false &&
+                                                Boolean(thermalLimits?.throttlingActive),
+                                        thermalShutdown: finalThermalState.zone === 'shutdown',
+                                        depthReduced: effectiveRecipe.maxDepth < recipe.maxDepth,
+                                        nodesReduced: effectiveRecipe.maxNodes < recipe.maxNodes,
+                                        emergencyThrottling: finalThermalState.emergencyMode || false,
+                                        proactiveThrottling: thermalLimits?.throttlingLevel === 'proactive',
+                                        brainwavThermalManaged: true,
+                                },
+                        };
 		} catch (error) {
 			this.stopThermalMonitoring();
 			const thermalState = await this.thermalMonitor.getCurrentTemperature();
@@ -263,18 +287,19 @@ export class ThermalAwareContextService {
 			return {
 				subgraph: { nodes: [], edges: [] },
 				packedContext: '',
-				metadata: {
-					totalNodes: 0,
-					totalEdges: 0,
-					totalTokens: 0,
-					packDuration: Date.now() - startTime,
-					brainwavBranded: true,
-					error: `Thermal-aware pack error: ${error instanceof Error ? error.message : String(error)}`,
-				},
-				thermalStatus: this.createThermalStatus(thermalState, false),
-			};
-		}
-	}
+                                metadata: {
+                                        totalNodes: 0,
+                                        totalEdges: 0,
+                                        totalTokens: 0,
+                                        packDuration: Date.now() - startTime,
+                                        brainwavBranded: true,
+                                        error: `Thermal-aware pack error: ${error instanceof Error ? error.message : String(error)}`,
+                                        brainwavThermalManaged: false,
+                                },
+                                thermalStatus: this.createThermalStatus(thermalState, false),
+                        };
+                }
+        }
 
 	private startThermalMonitoring(): void {
 		this.isMonitoring = true;
@@ -389,29 +414,30 @@ export class ThermalAwareContextService {
 		startTime: number,
 		thermalState: ThermalState,
 	): Omit<ThermalContextSliceResult, 'thermalStatus'> {
-		return {
-			subgraph: {
-				nodes: [],
-				edges: [],
-				metadata: {
-					focusNodes: 0,
-					expandedNodes: 0,
-					totalChunks: 0,
-					edgesTraversed: 0,
-					depthUsed: 0,
-					nodesExplored: 0,
-					sliceDuration: 0,
-					brainwavGenerated: false,
-					brainwavBranded: true,
-				},
-			},
-			metadata: {
-				sliceDuration: Date.now() - startTime,
-				brainwavBranded: true,
-				brainwavOperationId: operationId,
-				error,
-				thermalShutdown: thermalState.zone === 'shutdown',
-			},
-		};
-	}
+                return {
+                        subgraph: {
+                                nodes: [],
+                                edges: [],
+                                metadata: {
+                                        focusNodes: 0,
+                                        expandedNodes: 0,
+                                        totalChunks: 0,
+                                        edgesTraversed: 0,
+                                        depthUsed: 0,
+                                        nodesExplored: 0,
+                                        sliceDuration: 0,
+                                        brainwavGenerated: false,
+                                        brainwavBranded: true,
+                                },
+                        },
+                        metadata: {
+                                sliceDuration: Date.now() - startTime,
+                                brainwavBranded: true,
+                                brainwavOperationId: operationId,
+                                error,
+                                thermalShutdown: thermalState.zone === 'shutdown',
+                                brainwavThermalManaged: false,
+                        },
+                };
+        }
 }

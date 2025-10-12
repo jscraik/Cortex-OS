@@ -7,7 +7,7 @@
  */
 
 import { load as parseYaml } from 'js-yaml';
-import { skillFrontmatterSchema } from '@cortex-os/contracts/src/skill-events.js';
+import { skillFrontmatterSchema } from '@cortex-os/contracts/skill-events';
 import type { SkillFileParsed, SkillFileRaw } from '../types.js';
 
 // ============================================================================
