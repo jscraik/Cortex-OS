@@ -66,9 +66,17 @@ export class LocalMemoryProvider implements MemoryProvider {
     };
 
     if (this.records.size >= this.maxRecords) {
-      const oldestKey = this.records.keys().next();
-      if (!oldestKey.done) {
-        this.records.delete(oldestKey.value);
+      // Find the key of the record with the oldest createdAt timestamp
+      let oldestKey: string | undefined;
+      let oldestDate: string | undefined;
+      for (const [key, rec] of this.records.entries()) {
+        if (!oldestDate || rec.createdAt < oldestDate) {
+          oldestDate = rec.createdAt;
+          oldestKey = key;
+        }
+      }
+      if (oldestKey !== undefined) {
+        this.records.delete(oldestKey);
       }
     }
 
