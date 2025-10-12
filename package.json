@@ -366,7 +366,13 @@
     "performance:database": "tsx scripts/performance/optimize-database.ts",
     "performance:cache": "tsx scripts/performance/tune-caching.ts",
     "performance:monitor": "tsx scripts/performance/monitoring-dashboard.ts",
-    "performance:report": "tsx scripts/performance/monitoring-dashboard.ts --report-only"
+    "performance:report": "tsx scripts/performance/monitoring-dashboard.ts --report-only",
+    "performance:scaling": "tsx scripts/performance/advanced-scaling.ts",
+    "performance:redis": "tsx scripts/performance/redis-cluster.ts",
+    "performance:analytics": "tsx scripts/performance/analytics-engine.ts",
+    "performance:router": "tsx scripts/performance/intelligent-router.ts",
+    "performance:gpu": "tsx scripts/performance/gpu-manager.ts",
+    "performance:alerts": "tsx scripts/performance/alerting-system.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",
@@ -533,6 +539,9 @@
       "vite": ">=5.4.20",
       "pino": ">=10.0.0",
       "fast-redact": "npm:slow-redact@latest"
+    },
+    "patchedDependencies": {
+      "safer-buffer@2.1.2": "patches/safer-buffer@2.1.2.patch"
     }
   },
   "lint-staged": {

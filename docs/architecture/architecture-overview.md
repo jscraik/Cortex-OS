@@ -63,6 +63,7 @@ For the full detailed diagram and extended explanation see
 | Security      | Semgrep scans, secret management, mTLS roadmap      |
 | Testing       | Multi-layer (unit, integration, simulation, E2E)    |
 | Performance   | Turborepo + task caching + dependency graph pruning |
+| **Performance Optimization** | Advanced auto-scaling, intelligent routing, GPU management, distributed caching |
 
 ## Governance & Enforcement
 

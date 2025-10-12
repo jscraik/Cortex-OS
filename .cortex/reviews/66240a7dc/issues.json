@@ -1,0 +1,82 @@
+[
+  {
+    "file": "packages/rag/src/lib/mlx/index.ts",
+    "line": 379,
+    "end_line": 381,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "CRITICAL: Function throws error with message about 'not implemented' in production code path. This violates brAInwav production standards which prohibit any 'not implemented' patterns in runtime paths.",
+    "evidence": "throw new Error('[brAInwav] MLX embeddings not implemented - use production embedding service', {\n      cause: new Error('MLX adapter requires proper implementation')\n    });",
+    "fix": "Replace throw with proper error handling or implement the functionality. Remove 'not implemented' language and provide actionable error messaging.",
+    "tests_to_add": "Add test verifying error is properly handled and does not contain 'not implemented' language in production builds",
+    "rule": "brainwav.not-implemented-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#production-prohibition",
+      "codestyle:errors"
+    ]
+  },
+  {
+    "file": "packages/mcp/src/handlers/toolsCall.ts",
+    "line": 47,
+    "end_line": 47,
+    "severity": "medium",
+    "category": "types",
+    "description": "Use of 'any' type for registry parameter in constructor. This weakens type safety in production code and should use proper interface.",
+    "evidence": "constructor(server: Server, registry: any, versioningEnabled = false) {",
+    "fix": "Define proper interface for registry parameter: VersionedToolRegistry or create specific interface",
+    "tests_to_add": "Add test ensuring registry parameter conforms to expected interface contract",
+    "rule": null,
+    "standards": [
+      "codestyle:3-javascript-typescript",
+      "codestyle:types-boundaries"
+    ]
+  },
+  {
+    "file": "packages/mcp/src/handlers/toolsCall.ts",
+    "line": 300,
+    "end_line": 302,
+    "severity": "low",
+    "category": "observability",
+    "description": "Direct console.log usage instead of structured logger. Should use the logger instance for consistency with observability standards.",
+    "evidence": "console.log(JSON.stringify(logEntry));",
+    "fix": "Use this.logger instead of console.log if available, or pass logger to logStructured method",
+    "tests_to_add": "Add test verifying structured logging goes through proper logger interface",
+    "rule": null,
+    "standards": [
+      "codestyle:12-logging-telemetry",
+      "governance:observability"
+    ]
+  },
+  {
+    "file": "packages/rag/src/agent/dispatcher.ts",
+    "line": 39,
+    "end_line": 41,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "CRITICAL: Fixed Math.random() usage has been replaced with seeded PRNG, but the implementation is incomplete. The createSeededRNG method is not implemented in the visible code.",
+    "evidence": "const seed = options?.seed ?? 42;\n    this.rng = this.createSeededRNG(seed);",
+    "fix": "Implement createSeededRNG method or import from crypto utils. Ensure reproducible randomness for agent behavior.",
+    "tests_to_add": "Add test verifying seeded RNG produces consistent results across multiple runs with same seed",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#production-prohibition",
+      "codestyle:deterministic-behavior"
+    ]
+  },
+  {
+    "file": "packages/agents/src/langgraph/nodes.ts",
+    "line": 11,
+    "end_line": 11,
+    "severity": "medium",
+    "category": "brainwav-branding",
+    "description": "Missing brAInwav branding in security node implementation. Security validation should include brAInwav context in logs and error messages.",
+    "evidence": "import { createPrefixedId } from '../lib/secure-random.js';",
+    "fix": "Add brAInwav branding to security validation error messages and logs within the security node implementation",
+    "tests_to_add": "Add test verifying security validation includes brAInwav branding in output messages",
+    "rule": "brainwav.branding.missing-in-logs",
+    "standards": [
+      "policy:RULES_OF_AI#branding",
+      "codestyle:0-brainwav-production-standards"
+    ]
+  }
+]

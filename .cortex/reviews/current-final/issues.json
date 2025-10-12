@@ -1,0 +1,98 @@
+[
+  {
+    "file": "packages/mcp/src/tools/refresh.ts",
+    "line": 5,
+    "end_line": 5,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Math.random() used for ID generation in production code. This violates brAInwav constitutional standards for deterministic, auditable systems.",
+    "evidence": "return `refresh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;",
+    "fix": "Replace with crypto.randomUUID(): return `refresh_${Date.now()}_${randomUUID().substring(0, 8)}`;",
+    "tests_to_add": "Add test verifying IDs are deterministic length and format without Math.random dependency",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#constitutional-violations",
+      "governance:agentic-coding-workflow#production-standards"
+    ]
+  },
+  {
+    "file": "packages/mcp/src/handlers/toolsCall.ts",
+    "line": 12,
+    "end_line": 12,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Math.random() used for tool call ID generation in production MCP handler. Violates brAInwav deterministic system requirements.",
+    "evidence": "return `tool_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;",
+    "fix": "Replace with crypto.randomUUID(): return `tool_${Date.now()}_${randomUUID().substring(0, 8)}`;",
+    "tests_to_add": "Add test verifying tool call IDs are cryptographically secure and deterministic format",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#constitutional-violations",
+      "governance:agentic-coding-workflow#production-standards"
+    ]
+  },
+  {
+    "file": "packages/rag/src/lib/mlx/index.ts",
+    "line": 45,
+    "end_line": 45,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Math.random() used to generate fake embedding vectors in production MLX adapter. Creates non-deterministic, unauditable AI outputs violating brAInwav standards.",
+    "evidence": "return texts.map(() => Array.from({ length: 384 }, () => Math.random()));",
+    "fix": "Replace with deterministic test data or throw NotImplementedError: throw new Error('[brAInwav] MLX embeddings not implemented - use production embedding service');",
+    "tests_to_add": "Add test verifying MLX adapter throws appropriate error rather than returning fake data",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#constitutional-violations",
+      "policy:RULES_OF_AI#production-ready-claims"
+    ]
+  },
+  {
+    "file": "packages/rag/src/lib/mlx/index.ts",
+    "line": 52,
+    "end_line": 52,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Math.random() used to generate fake similarity scores in production search. Creates non-deterministic ranking violating brAInwav audit requirements.",
+    "evidence": "score: text.toLowerCase().includes(query.toLowerCase()) ? 0.9 : Math.random() * 0.5,",
+    "fix": "Replace with deterministic scoring or throw NotImplementedError: Use proper semantic scoring algorithm or throw error for unimplemented features",
+    "tests_to_add": "Add test verifying search adapter uses deterministic scoring or throws appropriate error",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#constitutional-violations",
+      "policy:RULES_OF_AI#production-ready-claims"
+    ]
+  },
+  {
+    "file": "packages/agents/src/langgraph/nodes.ts",
+    "line": 25,
+    "end_line": 25,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Mock response comment in production agent code path. Violates brAInwav prohibition against mock responses in production.",
+    "evidence": "// Mock response for other tools",
+    "fix": "Replace with proper implementation or throw NotImplementedError with brAInwav branding",
+    "tests_to_add": "Add test verifying proper tool implementation without mock responses",
+    "rule": "brainwav.mock-response-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#constitutional-violations",
+      "governance:agentic-coding-workflow#production-standards"
+    ]
+  },
+  {
+    "file": "packages/rag/src/agent/dispatcher.ts",
+    "line": 67,
+    "end_line": 68,
+    "severity": "medium",
+    "category": "brainwav-prohibition",
+    "description": "Math.random() used in agent strategy selection. While this appears algorithmic (epsilon-greedy), it should use seeded random for reproducibility in brAInwav systems.",
+    "evidence": "if (Math.random() < this.eps) return this.randomStrategy();\nconst i = Math.floor(Math.random() * Math.max(1, this.strategies.length));",
+    "fix": "Use seeded PRNG: Replace Math.random() with this.rng() where rng is a seeded pseudorandom generator for reproducible agent behavior",
+    "tests_to_add": "Add test verifying agent strategy selection is reproducible with same seed",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#reproducible-systems",
+      "governance:agentic-coding-workflow#deterministic-behavior"
+    ]
+  }
+]

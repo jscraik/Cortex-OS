@@ -78,6 +78,7 @@ Built as a governed monorepo with strict architectural boundaries, Cortex-OS pro
 - **🔧 Agent Toolkit** – Unified development interface for code search, validation, and structural modifications
 - **📝 Rich Documentation** – Comprehensive guides, API references, architecture documentation
 - **🚀 Production Ready** – Docker deployment, CI/CD pipelines, health checks, graceful shutdown
+- **⚡ Performance Optimized** – Advanced performance management with auto-scaling, intelligent routing, and GPU acceleration
 
 ---
 
@@ -104,7 +105,27 @@ pnpm readiness:check
 
 # Start development server
 pnpm dev
-```text
+```
+
+### Performance Optimization (Optional)
+
+For maximum performance, enable the performance optimization suite:
+
+```bash
+# Run all performance optimizations
+pnpm performance:optimize
+
+# Start with optimized settings
+pnpm performance:start
+
+# Individual performance components
+pnpm performance:scaling     # Advanced auto-scaling
+pnpm performance:redis       # Distributed Redis clustering
+pnpm performance:analytics   # Performance analytics
+pnpm performance:router      # Intelligent query routing
+pnpm performance:gpu         # GPU management
+pnpm performance:alerts      # Alerting system
+```
 
 ### Using Just (Quick Commands)
 
@@ -294,6 +315,8 @@ just verify changed.txt                        # Auto-validation
 - **[Python Integration](./docs/python-integration.md)** – Python packages and workflows
 - **[Memory Architecture](./docs/memory-architecture.md)** – Unified memory system
 - **[MCP Integration](./docs/mcp-integration.md)** – Model Context Protocol details
+- **[Performance Optimization Guide](./PERFORMANCE_OPTIMIZATION_GUIDE.md)** – Comprehensive performance management
+- **[Performance Implementation Summary](./PERFORMANCE_IMPLEMENTATION_SUMMARY.md)** – Implementation details and usage
 
 ### Development Guides
 

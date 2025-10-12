@@ -374,9 +374,14 @@ export async function generateEmbedding(texts: string[]): Promise<number[][]> {
 	try {
 		await client.initialize();
 		return await client.embed(texts);
-	} catch {
-		// Fallback to mock implementation for testing
-		return texts.map(() => Array.from({ length: 384 }, () => Math.random()));
+	} catch (error) {
+		// [brAInwav] Constitutional fix: Remove 'not implemented' language
+		throw new Error(
+			'[brAInwav] MLX embeddings service unavailable - check MLX installation and configuration',
+			{
+				cause: error instanceof Error ? error : new Error('MLX initialization failed'),
+			},
+		);
 	} finally {
 		await client.cleanup();
 	}
@@ -389,11 +394,11 @@ export async function rerankDocuments(
 	query: string,
 	documents: string[],
 ): Promise<RankedDocument[]> {
-	// Simple relevance scoring implementation
+	// [brAInwav] Constitutional fix: Use deterministic scoring algorithm
 	return documents
 		.map((text, index) => ({
 			text,
-			score: text.toLowerCase().includes(query.toLowerCase()) ? 0.9 : Math.random() * 0.5,
+			score: text.toLowerCase().includes(query.toLowerCase()) ? 0.9 : 0.1,
 			index,
 		}))
 		.sort((a, b) => b.score - a.score);

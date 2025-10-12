@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import type { MCPNotificationHandler } from '../notifications/handlers.js';
 import type { Server, ServerLogger } from '../server.js';
 
@@ -208,7 +209,7 @@ export class ManualRefreshTool {
 	 * Generate correlation ID for tracking
 	 */
 	private generateCorrelationId(): string {
-		return `refresh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return `refresh_${Date.now()}_${randomUUID().substring(0, 8)}`;
 	}
 
 	/**
