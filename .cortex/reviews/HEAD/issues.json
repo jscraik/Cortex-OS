@@ -1,0 +1,126 @@
+{
+  "scanDate": "2025-01-12T10:00:00Z",
+  "branch": "feat/wikidata-semantic-layer",
+  "commit": "HEAD",
+  "summary": {
+    "totalIssues": 4,
+    "criticalIssues": 1,
+    "highIssues": 2,
+    "mediumIssues": 1,
+    "lowIssues": 0,
+    "filesScanned": 6,
+    "gateStatus": "go"
+  },
+  "issues": [
+    {
+      "id": "CRIT-001",
+      "severity": "critical",
+      "category": "brAInwav Policy Violation",
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+      "line": 244,
+      "rule": "brAInwav.any-types-prohibited",
+      "title": "TypeScript any types in production code",
+      "description": "Production code contains TypeScript 'any' types which are prohibited by brAInwav policy",
+      "code": "const embedding = Array.isArray((data as any)?.data)",
+      "evidence": {
+        "lines": [244, 245, 246],
+        "context": "Ollama embedding response parsing using 'any' types"
+      },
+      "fix": {
+        "type": "code",
+        "description": "Replace 'any' types with proper type interfaces for Ollama response parsing",
+        "code": "interface OllamaEmbeddingResponse { data?: Array<{ embedding?: number[] }>; embedding?: number[]; } const embedding = Array.isArray((data as OllamaEmbeddingResponse)?.data)"
+      },
+      "test": "Add type-safe tests for Ollama embedding response parsing"
+    },
+    {
+      "id": "HIGH-001",
+      "severity": "high",
+      "category": "brAInwav Policy Violation",
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/memory-core/src/acceleration/GPUAcceleration.ts",
+      "line": 302,
+      "rule": "brAInwav.math-random-prohibited",
+      "title": "Math.random() used for batch ID generation",
+      "description": "Math.random() is prohibited in brAInwav production code for any purpose including ID generation",
+      "code": "const batchId = options.batchId || `batch_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;",
+      "evidence": {
+        "lines": [302],
+        "context": "GPU batch ID generation using Math.random()"
+      },
+      "fix": {
+        "type": "code",
+        "description": "Replace Math.random() with crypto.randomUUID() for secure ID generation",
+        "code": "import { randomUUID } from 'node:crypto'; const batchId = options.batchId || `batch_${Date.now()}_${randomUUID().substring(0, 8)}`;"
+      },
+      "test": "Test batch ID uniqueness and format"
+    },
+    {
+      "id": "HIGH-002",
+      "severity": "high",
+      "category": "brAInwav Policy Violation",
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/connectors/registry.ts",
+      "line": 162,
+      "rule": "brAInwav.math-random-prohibited",
+      "title": "Math.random() used for correlation ID generation",
+      "description": "Math.random() is prohibited in brAInwav production code for correlation ID generation",
+      "code": "const correlationId = `cortex_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;",
+      "evidence": {
+        "lines": [162, 238],
+        "context": "Two instances of Math.random() for correlation ID generation"
+      },
+      "fix": {
+        "type": "code",
+        "description": "Replace Math.random() with crypto.randomUUID() for correlation IDs",
+        "code": "import { randomUUID } from 'node:crypto'; const correlationId = `cortex_${Date.now()}_${randomUUID().substring(0, 8)}`;"
+      },
+      "test": "Test correlation ID uniqueness and structured logging format"
+    },
+    {
+      "id": "MED-001",
+      "severity": "medium",
+      "category": "Security Best Practices",
+      "file": "/Users/jamiecraik/.Cortex-OS/packages/mcp-registry/src/providers/mcpmarket.ts",
+      "line": 52,
+      "rule": "security.hardcoded-email",
+      "title": "Hardcoded email address in configuration",
+      "description": "Email address is hardcoded in fallback configuration instead of using environment variables",
+      "code": "ARXIV_EMAIL: 'jscraik@brainwav.io'",
+      "evidence": {
+        "lines": [52],
+        "context": "arXiv MCP server fallback configuration"
+      },
+      "fix": {
+        "type": "code",
+        "description": "Use environment variable for email configuration",
+        "code": "ARXIV_EMAIL: process.env.ARXIV_EMAIL || 'arxiv-mcp@example.com'"
+      },
+      "test": "Test arXiv email configuration from environment variables"
+    }
+  ],
+  "compliance": {
+    "brAInwavPolicy": {
+      "status": "violated",
+      "violations": 3,
+      "categories": ["any-types", "math-random", "hardcoded-values"]
+    },
+    "codeStyle": {
+      "status": "compliant",
+      "issues": 0
+    },
+    "security": {
+      "status": "compliant",
+      "issues": 1
+    },
+    "structuredLogging": {
+      "status": "compliant",
+      "brandingPresent": true
+    }
+  },
+  "recommendations": [
+    "Replace all Math.random() usage with crypto.randomUUID() throughout the codebase",
+    "Define proper TypeScript interfaces for external API responses instead of using 'any'",
+    "Move hardcoded configuration values to environment variables",
+    "Add comprehensive tests for ID generation and API response parsing",
+    "Implement centralized correlation ID management for better tracing"
+  ]
+}

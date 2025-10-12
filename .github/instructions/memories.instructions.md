@@ -1,4 +1,18 @@
 # Cortex Memory Decision Log
+## 2025-01-12 Wikidata Task Code Review - Security Fixes Applied & Assessment Complete
+- Decision: Conducted comprehensive code review following `.github/prompts/code-review-agent.prompt.md`. Fixed 2 critical security violations (Math.random() usage and missing brAInwav branding). Applied surgical fixes without breaking existing functionality. Assessment: Core Wikidata implementation is architecturally excellent and ready for production after security fixes.
+- Impacted Surfaces: packages/memory-rest-api (security fixes), .cortex/reviews/9de63038d (review artifacts), tasks/wikidata-semantic-layer-integration (assessment docs)
+- Evidence: Security violations fixed (Math.random()→randomUUID(), added brAInwav branding), comprehensive review of 15+ files, 5 issues documented with fixes applied, final assessment shows CONDITIONAL-GO after critical fixes
+- LocalMemoryEntryId: mem-2025-01-12-code-review-security-fixes-1736719800
+- RESTReference: http://localhost:3028/api/v1/memories/mem-2025-01-12-code-review-security-fixes-1736719800
+
+## 2025-01-12 Wikidata Task Code Review - Documentation Reality Assessment Complete
+- Decision: Conducted comprehensive code review following `.github/prompts/code-review-agent.prompt.md`. Fixed 4 technical issues (security, branding, environment config). Corrected false production claims in documentation. Assessment: PLANNING COMPLETE, implementation required for production readiness.
+- Impacted Surfaces: packages/mcp-registry (security fix), packages/memory-core (branding), .env.example (config), tasks/wikidata-semantic-layer-integration (honest status), .cortex/reviews/69aec5e03 (review artifacts)
+- Evidence: Security fix applied (hardcoded paths→env vars), branding standardized (brAInwav), documentation corrected (54%→0% implementation), 5 issues documented in issues.json, review.md with NO-GO→CONDITIONAL-GO after fixes
+- LocalMemoryEntryId: mem-2025-01-12-code-review-wikidata-1736719800
+- RESTReference: http://localhost:3028/api/v1/memories/mem-2025-01-12-code-review-wikidata-1736719800
+
 ## 2025-10-11 Local Memory enforcement automation (CI + workflow)
 - Decision: Added automated enforcement for the standardized Local Memory section across all `AGENTS.md` files, including a pnpm script, CI wiring, and governance checklist updates that require `brAInwav-vibe-check` evidence.
 - Impacted Surfaces: AGENTS.md, package.json, scripts/vibe-check/enforce-local-memory.sh, scripts/vibe-check/README.md, .cortex/rules/CHECKLIST.cortex-os.md, .cortex/rules/code-review-checklist.md

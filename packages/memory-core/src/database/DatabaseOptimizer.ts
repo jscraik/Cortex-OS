@@ -488,11 +488,11 @@ export class DatabaseOptimizer {
 
 	private async getExistingIndexes(tableName: string): Promise<string[]> {
 		try {
-			const indexes = await prisma.$queryRaw`
+			const indexes = await prisma.$queryRaw<{ indexname: string }[]>`
 				SELECT indexname
 				FROM pg_indexes
-				WHERE tablename = $1 AND schemaname NOT IN ('pg_catalog', 'information_schema')
-			` as any[], [tableName]);
+				WHERE tablename = ${tableName} AND schemaname NOT IN ('pg_catalog', 'information_schema')
+			`;
 
 			return indexes.map(row => row.indexname);
 		} catch (error) {
@@ -508,11 +508,11 @@ export class DatabaseOptimizer {
 
 	private async fieldExistsInTable(field: string, table: string): Promise<boolean> {
 		try {
-			const columns = await prisma.$queryRaw`
+			const columns = await prisma.$queryRaw<{ column_name: string }[]>`
 				SELECT column_name
 				FROM information_schema.columns
-				WHERE table_name = $1 AND column_name = $2
-			` as any[], [table, field]);
+				WHERE table_name = ${table} AND column_name = ${field}
+			`;
 
 			return columns.length > 0;
 		} catch {

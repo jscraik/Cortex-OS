@@ -1,15 +1,15 @@
 # Agentic Phase Policy (R→G→F→REVIEW)
 
-**Goal:** Agents must auto-progress through phases without stopping for HITL, and request HITL **only** at **REVIEW**.
+**Goal:** Agents auto-progress through phases without stopping for HITL, and request HITL **only** at **REVIEW**.
 
 ---
 
 ## Phases & Gates
 
 - **R (Red)** — write failing tests; plan minimal pass.
-  - **Allowed:** planning, write tests, minimal code-gen, `vibe_check`, Local Memory ops.
+  - **Allowed:** planning, write tests, minimal code-gen, `vibe_check`, Local Memory ops, **time-freshness check**.
   - **Forbidden:** `human_input`, production deploy, merge.
-  - **Auto-advance → G when:** CI shows new tests **fail first**, then **pass** on the next commit (recorded by phase logs).
+  - **Auto-advance → G when:** CI shows new tests **fail first**, then **pass** on the next commit, and **TIME_FRESHNESS:OK** is present.
 
 - **G (Green)** — implement to pass.
   - **Allowed:** code, fix tests, `pnpm models:health/smoke` (**live only**), security scans.
@@ -26,12 +26,12 @@
     - axe/jest-axe **a11y reports attached**,  
     - SBOM + scanners **pass** (Semgrep ERROR=block, gitleaks ANY=block, OSV clean),  
     - `pnpm structure:validate` **passes**,  
-    - `pnpm models:health && pnpm models:smoke` logs attached (live engines only: **MLX/Ollama/Frontier** with model IDs, dims/norms, latency),  
+    - `pnpm models:health && pnpm models:smoke` logs attached (**live** MLX/Ollama/Frontier; model IDs, dims/norms, latency),  
     - **Local Memory parity** entry recorded for decisions/refactors (MCP & REST).
 
 - **REVIEW**
   - **Allowed:** `human_input` (HITL), Code Review Checklist completion, approvals/waivers per Constitution.
-  - **Merge only if:** **all BLOCKERs** in `/.cortex/rules/code-review-checklist.md` are **PASS** and required evidence tokens are present.
+  - **Merge only if:** **all BLOCKERs** in `/.cortex/rules/code-review-checklist.md` are **PASS** and all evidence tokens are present.
 
 ---
 
@@ -49,6 +49,7 @@
 - `AGENTS_MD_SHA:<sha>`
 - `PHASE_TRANSITION:<from>-><to>`
 - `brAInwav-vibe-check`
+- `TIME_FRESHNESS:OK tz=<iana_tz> today=<yyyy-mm-dd>`
 - `MODELS:LIVE:OK engine=<mlx|ollama|frontier> model=<id> dims=<n> norm≈<v> latency_ms=<n>`
 - `A11Y_REPORT:OK`
 - `STRUCTURE_GUARD:OK`

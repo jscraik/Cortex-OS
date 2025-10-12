@@ -10,9 +10,9 @@
  */
 
 import { SecureNeo4j } from '@cortex-os/utils';
+import { randomUUID } from 'node:crypto';
 import { GraphEdgeType, GraphNodeType } from '../db/prismaEnums.js';
 import { z } from 'zod';
-import { createPrefixedId } from '../../../agents/src/lib/secure-random.js';
 import { prisma, shutdownPrisma } from '../db/prismaClient.js';
 import { assembleContext } from '../retrieval/contextAssembler.js';
 import { expandNeighbors } from '../retrieval/expandGraph.js';
@@ -35,13 +35,18 @@ import { getAutoScalingManager, type AutoScalingConfig } from '../scaling/AutoSc
 import { getMLOptimizationManager, type MLOptimizationConfig } from '../ml/MLOptimizationManager.js';
 import { getCDNCacheManager, type CDNConfig } from '../cdn/CDNCacheManager.js';
 
+const createPrefixedId = (prefix: string): string => {
+	const core = randomUUID().replace(/-/g, '');
+	return `${prefix}-${core}`;
+};
+
 const DEFAULT_QDRANT_CONFIG = {
 	url: process.env.QDRANT_URL ?? 'http://localhost:6333',
 	apiKey: process.env.QDRANT_API_KEY,
 	collection: process.env.QDRANT_COLLECTION ?? 'local_memory_v1',
 	timeout: 30000,
 	maxRetries: 3,
-	brainwavBranding: true,
+	brAInwavBranding: true,
 };
 
 export const GraphRAGServiceConfigSchema = z.object({
