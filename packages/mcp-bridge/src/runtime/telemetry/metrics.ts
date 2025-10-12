@@ -24,16 +24,28 @@ const hybridSearchBreakdown = new Counter({
 });
 
 const piecesProxyAvailability = new Gauge({
-	name: 'brainwav_mcp_pieces_proxy_up',
-	help: 'Pieces MCP proxy availability (1 = connected, 0 = disconnected)',
-	registers: [registry],
+        name: 'brainwav_mcp_pieces_proxy_up',
+        help: 'Pieces MCP proxy availability (1 = connected, 0 = disconnected)',
+        registers: [registry],
+});
+
+const piecesDriveProxyAvailability = new Gauge({
+        name: 'brainwav_mcp_pieces_drive_proxy_up',
+        help: 'Pieces Drive proxy availability (1 = connected, 0 = disconnected)',
+        registers: [registry],
+});
+
+const piecesCopilotProxyAvailability = new Gauge({
+        name: 'brainwav_mcp_pieces_copilot_proxy_up',
+        help: 'Pieces Copilot proxy availability (1 = connected, 0 = disconnected)',
+        registers: [registry],
 });
 
 const connectorProxyAvailability = new Gauge({
-	name: 'brainwav_mcp_connector_proxy_up',
-	help: 'Connector MCP proxy availability (1 = connected, 0 = disconnected)',
-	labelNames: ['connector'] as const,
-	registers: [registry],
+        name: 'brainwav_mcp_connector_proxy_up',
+        help: 'Connector MCP proxy availability (1 = connected, 0 = disconnected)',
+        labelNames: ['connector'] as const,
+        registers: [registry],
 });
 
 let metricsInitialized = false;
@@ -71,9 +83,17 @@ export const observeHybridSearch = (
 export const getMetricsRegistry = () => registry;
 
 export const setPiecesProxyStatus = (up: boolean) => {
-	piecesProxyAvailability.set(up ? 1 : 0);
+        piecesProxyAvailability.set(up ? 1 : 0);
+};
+
+export const setPiecesDriveProxyStatus = (up: boolean) => {
+        piecesDriveProxyAvailability.set(up ? 1 : 0);
+};
+
+export const setPiecesCopilotProxyStatus = (up: boolean) => {
+        piecesCopilotProxyAvailability.set(up ? 1 : 0);
 };
 
 export const setConnectorProxyStatus = (connector: string, up: boolean) => {
-	connectorProxyAvailability.labels({ connector }).set(up ? 1 : 0);
+        connectorProxyAvailability.labels({ connector }).set(up ? 1 : 0);
 };
