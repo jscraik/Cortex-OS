@@ -20,15 +20,10 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
         system: ['context_slice'],
 };
 
-const CLEARANCE_LEVELS: Record<string, number> = {
-        low: 1,
-        medium: 2,
-        high: 3,
-        critical: 4,
-        confidential: 3,
-        secret: 4,
-        top_secret: 5,
-};
+// Clearance levels are now externalized to configuration for maintainability.
+// If equivalence between levels is intentional, document in the config file.
+import clearanceLevels from '../config/clearance-levels.json';
+const CLEARANCE_LEVELS: Record<string, number> = clearanceLevels;
 
 const DEFAULT_COMPLIANCE: Record<string, { riskLevel: RiskLevel; mitigations: string[] }> = {
         llm01: { riskLevel: 'medium', mitigations: ['input-sanitization'] },
