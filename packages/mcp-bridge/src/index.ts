@@ -25,11 +25,13 @@ export {
 	type RemoteToolProxyOptions,
 } from './runtime/remote-proxy.js';
 export {
-	getMetricsRegistry,
-	initializeMetrics,
-	observeHybridSearch,
-	recordAuthOutcome,
-	setPiecesProxyStatus,
+        getMetricsRegistry,
+        initializeMetrics,
+        observeHybridSearch,
+        recordAuthOutcome,
+        setPiecesCopilotProxyStatus,
+        setPiecesDriveProxyStatus,
+        setPiecesProxyStatus,
 } from './runtime/telemetry/metrics.js';
 export {
 	type MetricsServerHandle,
