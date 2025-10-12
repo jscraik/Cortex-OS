@@ -11,7 +11,7 @@ After extensive testing and debugging, we've identified **why ChatGPT cannot con
 
 ### Root Cause: Accept Header Requirements
 
-Your FastMCP v3.18.0 server **requires both Accept headers**:
+Your FastMCP v3.19.1 server **requires both Accept headers**:
 ```
 Accept: application/json, text/event-stream
 ```
@@ -91,7 +91,7 @@ await server.start({
 |----------|--------|-------|
 | `https://cortex-mcp.brainwav.io/health` | ✅ Working | Returns "brAInwav Cortex Memory Server - Operational" |
 | `https://cortex-mcp.brainwav.io/mcp` | ⚠️ Requires Headers | Works with proper Accept headers |
-| `https://cortex-mcp.brainwav.io/sse` | ❌ Not Available | FastMCP 3.18.0 doesn't provide this endpoint |
+| `https://cortex-mcp.brainwav.io/sse` | ❌ Not Available | FastMCP 3.19.x doesn't provide this endpoint |
 
 ### Server Configuration
 
@@ -101,7 +101,7 @@ Port: 3024 (localhost)
 Public URL: https://cortex-mcp.brainwav.io
 Cloudflare Tunnel: Active ✅
 Node Version: v22.19.0
-FastMCP Version: 3.18.0
+FastMCP Version: 3.19.1
 ```
 
 ---
@@ -115,7 +115,7 @@ ChatGPT Desktop's MCP connector appears to be designed for:
 1. **SSE-only servers** (Server-Sent Events at `/sse` endpoint)
 2. **Pure JSON servers** (without SSE requirement)
 
-But FastMCP v3.18.0 uses a **hybrid approach**:
+But FastMCP v3.19.1 uses a **hybrid approach**:
 - Serves at `/mcp` endpoint (not `/sse`)
 - Requires BOTH `application/json` AND `text/event-stream` in Accept header
 - This is incompatible with ChatGPT's current MCP client implementation
@@ -183,13 +183,13 @@ OpenAI may update their MCP connector to support FastMCP's hybrid transport mode
 ### ❌ Not Working
 
 1. **ChatGPT Desktop** - Due to Accept header incompatibility
-2. **Direct `/sse` endpoint** - Not provided by FastMCP 3.18.0
+2. **Direct `/sse` endpoint** - Not provided by FastMCP 3.19.x
 
 ---
 
 ## 🎓 Lessons Learned
 
-1. **FastMCP v3.18.0 uses hybrid HTTP/SSE transport**
+1. **FastMCP v3.19.1 uses hybrid HTTP/SSE transport**
    - Not pure SSE like some MCP documentation suggests
    - Requires both Accept headers simultaneously
 
@@ -252,7 +252,7 @@ curl -X POST https://cortex-mcp.brainwav.io/mcp \
 
 ---
 
-**Status:** Your MCP server works perfectly with Claude Desktop and properly configured MCP clients. ChatGPT Desktop requires a different server architecture that FastMCP v3.18.0 doesn't provide.
+**Status:** Your MCP server works perfectly with Claude Desktop and properly configured MCP clients. ChatGPT Desktop requires a different server architecture that FastMCP v3.19.x doesn't provide.
 
 **Maintained by: brAInwav Development Team**  
 **Co-authored-by: brAInwav Development Team**

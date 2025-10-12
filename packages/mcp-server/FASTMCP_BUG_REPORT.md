@@ -1,6 +1,6 @@
 # FastMCP tools/list Bug Report
 
-**Version:** FastMCP 3.18.0 and 3.19.1  
+**Affected Version:** FastMCP 3.18.0
 **Transport:** STDIO  
 **Error:** `Cannot read properties of undefined (reading 'vendor')`
 
@@ -31,7 +31,7 @@ Should return list of registered tools.
 
 ## Actual Behavior
 
-Returns error trying to access `clientInfo.vendor` which is not part of the MCP protocol specification.
+Returns error trying to access `clientInfo.vendor` which is not part of the MCP protocol specification. FastMCP 3.19.1 resolves this regression by guarding against missing vendor metadata.
 
 ## Impact
 
@@ -41,7 +41,7 @@ Returns error trying to access `clientInfo.vendor` which is not part of the MCP 
 
 ## Workaround
 
-None found. Switching to @modelcontextprotocol/sdk may be necessary.
+Upgrade to FastMCP 3.19.1 or later. Switching to @modelcontextprotocol/sdk may be necessary only if upgrade is not possible.
 
 ---
 

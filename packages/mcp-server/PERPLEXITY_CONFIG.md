@@ -246,7 +246,7 @@ Local Port: 3024
 Public URL: https://cortex-mcp.brainwav.io
 Cloudflare Tunnel: Active ✅
 Node Version: v22.19.0
-FastMCP Version: 3.18.0
+FastMCP Version: 3.19.1
 ```
 
 ---

@@ -21,7 +21,7 @@ export type ServerRuntime = {
 };
 
 const SERVER_NAME = 'brainwav-cortex-memory';
-const SERVER_VERSION = '3.18.0';
+const SERVER_VERSION = '3.19.1';
 const DEFAULT_PING_INTERVAL = 20_000;
 
 function resolveIncomingMessage(request: unknown): IncomingMessage | undefined {
