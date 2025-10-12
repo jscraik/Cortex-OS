@@ -360,7 +360,13 @@
     "baseline:prepare": "ts-node --transpile-only scripts/ci/prepare-baseline.ts",
     "baseline:refresh": "node scripts/ci/run-smart-or-vitest.mjs && pnpm baseline:collect",
     "proofs:verify": "pnpm --filter @cortex-os/proof-artifacts run verify",
-    "proofs:sign": "pnpm --filter @cortex-os/proof-artifacts run sign"
+    "proofs:sign": "pnpm --filter @cortex-os/proof-artifacts run sign",
+    "performance:optimize": "./scripts/performance/optimize-all.sh",
+    "performance:start": "./scripts/performance/start-optimized.sh",
+    "performance:database": "tsx scripts/performance/optimize-database.ts",
+    "performance:cache": "tsx scripts/performance/tune-caching.ts",
+    "performance:monitor": "tsx scripts/performance/monitoring-dashboard.ts",
+    "performance:report": "tsx scripts/performance/monitoring-dashboard.ts --report-only"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",

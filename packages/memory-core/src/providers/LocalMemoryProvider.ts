@@ -1807,30 +1807,31 @@ export class LocalMemoryProvider implements MemoryProvider {
 		}
 
 		const candidate = payload as Record<string, unknown>;
-		const nextMetadata: Record<string, unknown> = { ...(memory.metadata ?? {}) };
-		let mutated = false;
+		const updates: Record<string, unknown> = {};
 
 		const layer = candidate.memory_layer;
 		if (typeof layer === 'string' && layer.length > 0) {
-			nextMetadata.memory_layer = layer;
-			mutated = true;
+			updates.memory_layer = layer;
 		}
 
 		const layerVersion = candidate.memory_layer_version;
 		if (typeof layerVersion === 'string' && layerVersion.length > 0) {
-			nextMetadata.memory_layer_version = layerVersion;
-			mutated = true;
+			updates.memory_layer_version = layerVersion;
 		}
 
 		const updatedAt = candidate.memory_layer_updated_at;
 		if (typeof updatedAt === 'string' && updatedAt.length > 0) {
-			nextMetadata.memory_layer_updated_at = updatedAt;
-			mutated = true;
+			updates.memory_layer_updated_at = updatedAt;
 		}
 
-		if (mutated) {
-			memory.metadata = nextMetadata as MemoryMetadata;
+		if (Object.keys(updates).length === 0) {
+			return;
 		}
+
+		memory.metadata = {
+			...(memory.metadata ?? {}),
+			...updates,
+		} as MemoryMetadata;
 	}
 
 	private async applyHybridIfNeeded(

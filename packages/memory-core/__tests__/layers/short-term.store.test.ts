@@ -336,12 +336,15 @@ describe('LocalMemoryProvider short-term promotion', () => {
 				tenant: 'memory-layer-e2e',
 			});
 
-			expect(results).toHaveLength(1);
-			expect(results[0].metadata).toMatchObject({
-				memory_layer: 'semantic',
-				memory_layer_version: '2025.10',
-				memory_layer_updated_at: '2025-10-12T12:00:05.000Z',
-			});
+				expect(results).toHaveLength(1);
+				expect(search).toHaveBeenCalled();
+				expect(results[0].metadata).toMatchObject({
+					tenant: 'memory-layer-e2e',
+					labels: ['regression'],
+					memory_layer: 'semantic',
+					memory_layer_version: '2025.10',
+					memory_layer_updated_at: '2025-10-12T12:00:05.000Z',
+				});
 		} finally {
 			vi.useRealTimers();
 		}
