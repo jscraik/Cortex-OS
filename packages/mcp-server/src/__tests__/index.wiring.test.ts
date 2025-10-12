@@ -26,7 +26,7 @@ vi.mock('../config/connectors.js', () => ({
 	}),
 }));
 
-vi.mock('@cortex-os/asbr/src/types/connectors.js', () => ({
+vi.mock('@cortex-os/asbr/types', () => ({
 	connectorsManifestSchema: {
 		parse: (value: unknown) => value,
 	},
