@@ -1,16 +1,17 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
+import type { TaskInput } from '../../src/types/index.js';
 import { createIdempotencyKey } from '../../src/sdk/index.js';
 
-function makeInput(overrides: Partial<any> = {}): any {
-	return {
-		title: 'Test Task',
-		brief: 'A test task',
-		inputs: [],
-		scopes: ['test'],
-		schema: 'cortex.task.input@1',
-		...overrides,
-	};
+function makeInput(overrides: Partial<TaskInput> = {}): TaskInput {
+        return {
+                title: 'Test Task',
+                brief: 'A test task',
+                inputs: [],
+                scopes: ['test'],
+                schema: 'cortex.task.input@1',
+                ...overrides,
+        };
 }
 
 describe('createIdempotencyKey', () => {

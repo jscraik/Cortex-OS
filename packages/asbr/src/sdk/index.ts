@@ -8,7 +8,6 @@ import type {
         ArtifactRef,
         Event as AsbrEvent,
         EventType as AsbrEventType,
-        ConnectorServiceMap,
         CreateProfileRequest,
         CreateProfileResponse,
         CreateTaskRequest,

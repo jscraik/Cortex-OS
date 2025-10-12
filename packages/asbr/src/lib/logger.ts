@@ -7,8 +7,7 @@ function log(level: 'info' | 'warn' | 'error', message: string, meta?: LogMeta):
 		message,
 		...meta,
 	};
-	// eslint-disable-next-line no-console
-	console[level === 'info' ? 'log' : level](JSON.stringify(entry));
+        console[level === 'info' ? 'log' : level](JSON.stringify(entry));
 }
 
 export function logInfo(message: string, meta?: LogMeta): void {

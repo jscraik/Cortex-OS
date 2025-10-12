@@ -15,7 +15,7 @@ export default {
 	format: {
 		json: () => ({}),
 		simple: () => ({}),
-		combine: (..._args: any[]) => ({}),
+                combine: (..._args: unknown[]) => ({}),
 		timestamp: () => ({}),
 	},
 	transports: {

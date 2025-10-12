@@ -3,9 +3,11 @@
  * Types for planning, simulation, critique, and teaching
  */
 
+import type { SimulationResult } from './simulator.js';
+
 export interface PlanningContext {
-	intent: string;
-	inputs?: any[];
+        intent: string;
+        inputs?: unknown[];
 	constraints?: string[];
 	preferences?: {
 		risk?: 'low' | 'balanced' | 'high';
@@ -38,8 +40,8 @@ export interface Plan {
 	status: 'planning' | 'simulating' | 'approved' | 'executing' | 'completed' | 'failed';
 	createdAt: string;
 	updatedAt: string;
-	simulationResult?: any;
-	evidenceIds?: string[];
+        simulationResult?: SimulationResult;
+        evidenceIds?: string[];
 }
 
 export type PlanStatus = Plan['status'];

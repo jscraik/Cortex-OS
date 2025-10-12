@@ -1,4 +1,5 @@
-import request from 'supertest';
+import type { AddressInfo } from 'node:net';
+import request, { type SuperTest, type Test } from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createASBRServer } from '../../src/api/server.js';
 
@@ -8,8 +9,8 @@ import { createASBRServer } from '../../src/api/server.js';
 const originalNodeEnv = process.env.NODE_ENV;
 
 describe('integration: rate limiting', () => {
-	let server: ReturnType<typeof createASBRServer>;
-	let base: any; // supertest instance (loose typing to avoid module resolution type mismatch)
+        let server: ReturnType<typeof createASBRServer>;
+        let base: SuperTest<Test>;
 
 	beforeAll(async () => {
 		process.env.NODE_ENV = 'production';
@@ -18,9 +19,12 @@ describe('integration: rate limiting', () => {
 			rateLimit: { enabled: true, capacity: 3, refillRatePerSec: 0 },
 		});
 		await server.start();
-		const address = (server.server as any).address();
-		const url = `http://127.0.0.1:${address.port}`;
-		base = request(url);
+                const address = server.server?.address();
+                if (!address || typeof address === 'string') {
+                        throw new Error('ASBR server address unavailable for tests');
+                }
+                const { port } = address as AddressInfo;
+                base = request(`http://127.0.0.1:${port}`);
 	});
 
 	afterAll(async () => {

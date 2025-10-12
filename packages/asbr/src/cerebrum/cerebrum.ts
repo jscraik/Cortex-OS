@@ -5,9 +5,9 @@
 
 import { createSecureId } from '../lib/secure-random.js';
 import type { Config } from '../types/index.js';
-import { CritiqueEngine } from './critique.js';
-import { type SimulationResult, Simulator } from './simulator.js';
-import { Teacher } from './teacher.js';
+import { CritiqueEngine, type CritiqueResult, type CritiqueOptions } from './critique.js';
+import { type SimulationResult, type SimulationOptions, Simulator } from './simulator.js';
+import { Teacher, type TeachingOptions, type TeachingSession } from './teacher.js';
 import type { Plan, PlanningContext, PlanOptions } from './types.js';
 
 export interface CerebrumOptions {
@@ -87,28 +87,28 @@ export class Cerebrum {
 	/**
 	 * Critique a plan or result
 	 */
-	async critique(input: string, options?: any): Promise<any> {
-		return await this.critiqueEngine.analyze(input, options);
-	}
+        async critique(input: string, options?: CritiqueOptions): Promise<CritiqueResult> {
+                return await this.critiqueEngine.analyze(input, options);
+        }
 
 	/**
 	 * Simulate a plan to validate feasibility
 	 */
-	async simulate(plan: Plan, options?: any): Promise<SimulationResult> {
-		return await this.simulator.run(plan, options);
-	}
+        async simulate(plan: Plan, options?: SimulationOptions): Promise<SimulationResult> {
+                return await this.simulator.run(plan, options);
+        }
 
 	/**
 	 * Teach based on a plan or result
 	 */
-	async teach(content: string, options?: any): Promise<any> {
-		return await this.teacher.instruct(content, options);
-	}
+        async teach(content: string, options?: TeachingOptions): Promise<TeachingSession> {
+                return await this.teacher.instruct(content, options);
+        }
 
 	/**
 	 * Replay a previous plan with modifications
 	 */
-	async replay(planId: string, _modifications?: any): Promise<Plan> {
+        async replay(planId: string, _modifications?: Partial<Plan>): Promise<Plan> {
 		// In a full implementation, this would:
 		// 1. Retrieve the plan by ID
 		// 2. Apply modifications
