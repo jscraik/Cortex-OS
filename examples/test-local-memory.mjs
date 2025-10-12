@@ -7,6 +7,17 @@
  */
 
 const BASE_URL = 'http://localhost:3028/api/v1';
+const parsedBaseUrl = new URL(BASE_URL);
+if (!['localhost', '127.0.0.1'].includes(parsedBaseUrl.hostname)) {
+        throw new Error('BASE_URL must remain bound to localhost for safety.');
+}
+const buildUrl = (path) => {
+        const target = new URL(path, parsedBaseUrl);
+        if (target.origin !== parsedBaseUrl.origin) {
+                throw new Error('Local memory tests only allow localhost endpoints.');
+        }
+        return target;
+};
 
 async function testRestAPI() {
 	console.log('🧪 Testing Local Memory REST API...\n');
@@ -14,7 +25,8 @@ async function testRestAPI() {
 	try {
 		// Test 1: Health Check
 		console.log('1️⃣ Health Check');
-		const healthResponse = await fetch(`${BASE_URL}/health`);
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const healthResponse = await fetch(buildUrl('/health'));
 		const health = await healthResponse.json();
 		console.log('✅ Health:', health.data.status);
 		console.log('   Session:', health.data.session);
@@ -29,7 +41,8 @@ async function testRestAPI() {
 			importance: 6,
 		};
 
-		const storeResponse = await fetch(`${BASE_URL}/memories`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const storeResponse = await fetch(buildUrl('/memories'), {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(memoryData),
@@ -47,7 +60,10 @@ async function testRestAPI() {
 			limit: '3',
 		});
 
-		const searchResponse = await fetch(`${BASE_URL}/memories/search?${searchParams}`);
+                const searchUrl = buildUrl('/memories/search');
+                searchUrl.search = searchParams.toString();
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const searchResponse = await fetch(searchUrl);
 		const search = await searchResponse.json();
 		console.log(`✅ Found ${search.total_results} memories`);
 
@@ -59,7 +75,8 @@ async function testRestAPI() {
 
 		// Test 4: AI Analysis
 		console.log('4️⃣ AI Analysis');
-		const analysisResponse = await fetch(`${BASE_URL}/analyze`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const analysisResponse = await fetch(buildUrl('/analyze'), {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -75,7 +92,8 @@ async function testRestAPI() {
 
 		// Test 5: List API Endpoints
 		console.log('5️⃣ Available Endpoints');
-		const apiResponse = await fetch(`${BASE_URL}/`);
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const apiResponse = await fetch(buildUrl('/'));
 		const api = await apiResponse.json();
 		console.log(`✅ Total endpoints: ${api.data.total_count}`);
 		console.log('   Categories:', api.data.categories.map((c) => c.name).join(', '));

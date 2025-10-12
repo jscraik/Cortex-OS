@@ -6,6 +6,7 @@ import json
 import re
 import subprocess
 import sys
+from typing import Sequence
 
 
 REPO = "openai/codex"
@@ -95,7 +96,9 @@ def run_gh_api(endpoint: str, *, method: str = "GET", payload: dict | None = Non
         json_payload = json.dumps(payload)
         print(f"Payload: {json_payload}")
         command.extend(["-H", "Content-Type: application/json", "--input", "-"])
-    result = subprocess.run(command, text=True, capture_output=True, input=json_payload)
+    result = _run_allowlisted_command(
+        command, text=True, capture_output=True, input=json_payload
+    )
     if result.returncode != 0:
         message = result.stderr.strip() or result.stdout.strip() or "gh api call failed"
         raise ReleaseError(message)
@@ -294,3 +297,23 @@ def format_version(major: int, minor: int, patch: int) -> str:
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))
+def _run_allowlisted_command(command: Sequence[str], **kwargs) -> subprocess.CompletedProcess:
+    """Execute a GitHub CLI command with validation."""
+
+    if not command:
+        raise ReleaseError("Empty command is not allowed")
+
+    sanitized: list[str] = []
+    for part in command:
+        if not isinstance(part, str):
+            raise ReleaseError("Command parts must be strings")
+        if any(token in part for token in ("|", "&", ";", "$", "`")):
+            raise ReleaseError("Unsafe token in command part")
+        sanitized.append(part)
+
+    # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - command arguments validated for gh CLI usage
+    return subprocess.run(
+        sanitized,
+        shell=False,
+        **kwargs,
+    )

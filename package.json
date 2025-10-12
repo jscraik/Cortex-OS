@@ -430,7 +430,6 @@
     "@cortex-os/tdd-coach": "workspace:*",
     "@cspell/dict-typescript": "^3.2.3",
     "@cyclonedx/bom": "^4.1.2",
-    "@esbuild/darwin-arm64": "^0.25.10",
     "@eslint/js": "^9.37.0",
     "@langchain/langgraph": "0.4.9",
     "@microsoft/eslint-formatter-sarif": "^3.1.0",
@@ -555,6 +554,8 @@
     ]
   },
   "optionalDependencies": {
+    "@esbuild/darwin-arm64": "^0.25.10",
+    "@esbuild/linux-x64": "^0.25.10",
     "pg": "^8.16.3"
   }
 }

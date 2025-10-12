@@ -11,6 +11,17 @@ import { createApp } from './src/server/index.js';
 const app = createApp();
 const port = 3001;
 const baseUrl = `http://localhost:${port}`;
+const parsedBase = new URL(baseUrl);
+if (!['localhost', '127.0.0.1'].includes(parsedBase.hostname)) {
+        throw new Error('Test endpoint must run against localhost.');
+}
+const buildUrl = (path) => {
+        const target = new URL(path, parsedBase);
+        if (target.origin !== parsedBase.origin) {
+                throw new Error('Agent endpoint tests must stay on localhost.');
+        }
+        return target;
+};
 
 async function testAgentExecution() {
 	console.log('🚀 Starting agent execution endpoint test...\n');
@@ -23,7 +34,8 @@ async function testAgentExecution() {
 	try {
 		// Test 1: Health check
 		console.log('📋 Test 1: Health check');
-		const healthResponse = await fetch(`${baseUrl}/health`);
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const healthResponse = await fetch(buildUrl('/health'));
 		const healthData = await healthResponse.json();
 		console.log(`   Status: ${healthResponse.status}`);
 		console.log(`   Body:`, JSON.stringify(healthData, null, 2));
@@ -38,7 +50,8 @@ async function testAgentExecution() {
 			options: { timeout: 30000 },
 		};
 
-		const agentResponse = await fetch(`${baseUrl}/agents/execute`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const agentResponse = await fetch(buildUrl('/agents/execute'), {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -66,7 +79,8 @@ async function testAgentExecution() {
 
 		// Test 3: Invalid request (missing required fields)
 		console.log('❌ Test 3: Invalid request');
-		const invalidResponse = await fetch(`${baseUrl}/agents/execute`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const invalidResponse = await fetch(buildUrl('/agents/execute'), {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -82,7 +96,8 @@ async function testAgentExecution() {
 
 		// Test 4: Wrong HTTP method
 		console.log('🚫 Test 4: Wrong HTTP method');
-		const methodResponse = await fetch(`${baseUrl}/agents/execute`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const methodResponse = await fetch(buildUrl('/agents/execute'), {
 			method: 'GET',
 			headers: {
 				Authorization: 'Bearer test-api-key',

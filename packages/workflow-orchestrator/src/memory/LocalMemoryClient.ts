@@ -52,12 +52,28 @@ interface PendingInsight {
 }
 
 export class LocalMemoryClient {
-	private baseUrl: string;
-	private pendingQueue: PendingInsight[] = [];
+        private readonly base: URL;
+        private readonly baseUrl: string;
+        private pendingQueue: PendingInsight[] = [];
 
-	constructor(config: LocalMemoryConfig) {
-		this.baseUrl = config.baseUrl;
-	}
+        constructor(config: LocalMemoryConfig) {
+                const parsed = new URL(config.baseUrl);
+
+                if (!['http:', 'https:'].includes(parsed.protocol)) {
+                        throw new Error('LocalMemoryClient requires an HTTP(S) base URL.');
+                }
+
+                if (!this.isLocalHostname(parsed.hostname)) {
+                        throw new Error('LocalMemoryClient only allows localhost endpoints to avoid SSRF.');
+                }
+
+                const normalizedPath = parsed.pathname.endsWith('/')
+                        ? parsed.pathname.slice(0, -1)
+                        : parsed.pathname;
+
+                this.baseUrl = `${parsed.origin}${normalizedPath}`;
+                this.base = new URL(`${this.baseUrl}/`);
+        }
 
 	/**
 	 * Store workflow completion/status insight
@@ -83,8 +99,9 @@ export class LocalMemoryClient {
 			},
 		};
 
-		try {
-			const response = await fetch(`${this.baseUrl}/memories`, {
+                try {
+                        // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts calls to localhost origin.
+                        const response = await fetch(this.buildUrl('/memories'), {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload),
@@ -126,8 +143,9 @@ export class LocalMemoryClient {
 			},
 		};
 
-		try {
-			const response = await fetch(`${this.baseUrl}/memories`, {
+                try {
+                        // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts calls to localhost origin.
+                        const response = await fetch(this.buildUrl('/memories'), {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload),
@@ -150,10 +168,14 @@ export class LocalMemoryClient {
 	 * Query related workflows by feature name or pattern
 	 */
 	async queryRelatedWorkflows(query: string): Promise<MemorySearchResult[]> {
-		try {
-			const response = await fetch(
-				`${this.baseUrl}/memories/search?q=${encodeURIComponent(query)}&domain=workflow`,
-			);
+                try {
+                        // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts calls to localhost origin.
+                        const response = await fetch(
+                                this.buildUrl('/memories/search', {
+                                        q: query,
+                                        domain: 'workflow',
+                                }),
+                        );
 
 			if (!response.ok) {
 				const statusText = response.statusText || 'Unknown error';
@@ -248,8 +270,38 @@ export class LocalMemoryClient {
 		return content;
 	}
 
-	private handleStorageError(error: unknown, pending: PendingInsight): void {
-		console.warn('[brAInwav] Local memory unavailable, queueing for retry:', error);
-		this.pendingQueue.push(pending);
-	}
+        private handleStorageError(error: unknown, pending: PendingInsight): void {
+                console.warn('[brAInwav] Local memory unavailable, queueing for retry:', error);
+                this.pendingQueue.push(pending);
+        }
+
+        private buildUrl(path: string, query?: Record<string, string | undefined>): string {
+                const sanitizedPath = path.startsWith('/') ? path : `/${path}`;
+                const target = new URL(sanitizedPath, this.base);
+
+                if (target.origin !== this.base.origin) {
+                        throw new Error(
+                                `LocalMemoryClient refused to call non-local origin (expected ${this.baseUrl}).`,
+                        );
+                }
+
+                if (query) {
+                        const params = new URLSearchParams();
+                        Object.entries(query).forEach(([key, value]) => {
+                                if (value !== undefined) {
+                                        params.set(key, value);
+                                }
+                        });
+                        const search = params.toString();
+                        if (search) {
+                                target.search = search;
+                        }
+                }
+
+                return target.toString();
+        }
+
+        private isLocalHostname(hostname: string): boolean {
+                return ['localhost', '127.0.0.1', '::1'].includes(hostname);
+        }
 }

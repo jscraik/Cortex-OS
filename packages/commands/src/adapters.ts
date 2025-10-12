@@ -1,8 +1,7 @@
-import { exec as _exec, execFile as _execFile } from 'node:child_process';
+import { execFile as _execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { AgentInfo, BuiltinsApi, CreateAgentSpec, ModelStore } from './types.js';
 
-const exec = promisify(_exec);
 const execFile = promisify(_execFile);
 
 export function createDefaultAdapters(sessionId = 'default', modelStore?: ModelStore): BuiltinsApi {
@@ -76,11 +75,13 @@ export function createDefaultAdapters(sessionId = 'default', modelStore?: ModelS
 				return { cwd: process.cwd(), model: sessionStore.getModel(sessionId) };
 			}
 		},
-		runTests: async (opts?: { pattern?: string }) => {
-			// Minimal: call workspace test smart script with pattern suggestion
-			const cmd = opts?.pattern ? `pnpm -w test:smart -- ${opts.pattern}` : 'pnpm -w test:smart';
-			try {
-				const { stdout } = await exec(cmd);
+                runTests: async (opts?: { pattern?: string }) => {
+                        const args = ['-w', 'test:smart'];
+                        if (opts?.pattern) {
+                                args.push('--', opts.pattern);
+                        }
+                        try {
+                                const { stdout } = await execFile('pnpm', args);
 				// naive parse of vitest summary lines
 				const re = /Tests\s+(\d+) failed \| (\d+) passed/;
 				const m = re.exec(stdout);
@@ -101,12 +102,15 @@ export function createDefaultAdapters(sessionId = 'default', modelStore?: ModelS
 				};
 			}
 		},
-		runFormat: async (opts?: { changedOnly?: boolean }) => {
-			const cmd = opts?.changedOnly ? 'pnpm biome:changed' : 'pnpm format:check';
-			try {
-				const { stdout } = await exec(cmd);
-				return { success: true, output: stdout.slice(-2000) };
-			} catch (e) {
+                runFormat: async (opts?: { changedOnly?: boolean }) => {
+                        try {
+                                if (opts?.changedOnly) {
+                                        const { stdout: changed } = await execFile('pnpm', ['biome:changed']);
+                                        return { success: true, output: changed.slice(-2000) };
+                                }
+                                const { stdout } = await execFile('pnpm', ['format:check']);
+                                return { success: true, output: stdout.slice(-2000) };
+                        } catch (e) {
 				const err = e as { stdout?: string; message?: string };
 				return {
 					success: false,
@@ -114,12 +118,19 @@ export function createDefaultAdapters(sessionId = 'default', modelStore?: ModelS
 				};
 			}
 		},
-		runLint: async (opts?: { changedOnly?: boolean }) => {
-			const cmd = opts?.changedOnly ? 'pnpm biome:changed && pnpm lint:source' : 'pnpm lint';
-			try {
-				const { stdout } = await exec(cmd);
-				return { success: true, output: stdout.slice(-2000) };
-			} catch (e) {
+                runLint: async (opts?: { changedOnly?: boolean }) => {
+                        try {
+                                if (opts?.changedOnly) {
+                                        const { stdout: changed } = await execFile('pnpm', ['biome:changed']);
+                                        const { stdout: lintSource } = await execFile('pnpm', ['lint:source']);
+                                        return {
+                                                success: true,
+                                                output: `${changed}\n${lintSource}`.slice(-2000),
+                                        };
+                                }
+                                const { stdout } = await execFile('pnpm', ['lint']);
+                                return { success: true, output: stdout.slice(-2000) };
+                        } catch (e) {
 				const err = e as { stdout?: string; message?: string };
 				return {
 					success: false,
