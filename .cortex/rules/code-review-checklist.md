@@ -89,6 +89,7 @@ alwaysApply: true
 
 - [ ] **Security vulnerabilities:** Check for injection flaws, insecure dependencies, and proper use of cryptography.
 - [ ] **Authentication & authorization:** Confirm access controls.
+- [ ] **MCP OAuth scopes:** When Auth0 is used, ensure `search.read`, `docs.write`, `memory.read`, `memory.write`, `memory.delete` are granted, advertised in metadata, and RBAC + Add Permissions in Access Token remain enabled.
 - [ ] **Input validation:** Inputs are validated and sanitized.
 - [ ] **Sensitive data handling:** Credentials and personal data are encrypted and protected.
 - [ ] **Third‑party code scanning:** Automated security scans (e.g., Snyk, Dependabot) pass before merge.

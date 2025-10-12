@@ -44,7 +44,7 @@ export class PytestReporter extends BaseTestReporter {
 
 			return [];
 		} catch (error) {
-			console.error('Pytest execution failed:', error);
+			console.error('brAInwav TDD coach: Pytest execution failed:', error);
 			return [];
 		}
 	}
@@ -71,7 +71,7 @@ export class PytestReporter extends BaseTestReporter {
 				}
 			}
 		} catch (error) {
-			console.warn('Failed to parse pytest output:', error);
+			console.warn('brAInwav TDD coach: Failed to parse pytest output:', error);
 		}
 
 		return results;
@@ -124,7 +124,7 @@ export class RustTestReporter extends BaseTestReporter {
 			const { stdout } = await this.executeCommand('cargo', args);
 			return this.parseRustTestOutput(stdout);
 		} catch (error) {
-			console.error('Rust test execution failed:', error);
+			console.error('brAInwav TDD coach: Rust test execution failed:', error);
 			return [];
 		}
 	}
@@ -183,7 +183,7 @@ export class RustTestReporter extends BaseTestReporter {
 				}
 			}
 		} catch (error) {
-			console.warn('Failed to parse Rust test output:', error);
+			console.warn('brAInwav TDD coach: Failed to parse Rust test output:', error);
 		}
 
 		return results;
@@ -221,7 +221,7 @@ export class JestReporter extends BaseTestReporter {
 			const { stdout } = await this.executeCommand('npm', ['run', ...args]);
 			return this.parseJestOutput(stdout);
 		} catch (error) {
-			console.error('Jest execution failed:', error);
+			console.error('brAInwav TDD coach: Jest execution failed:', error);
 			return [];
 		}
 	}
@@ -269,7 +269,7 @@ export class JestReporter extends BaseTestReporter {
 				}
 			}
 		} catch (error) {
-			console.warn('Failed to parse Jest output:', error);
+			console.warn('brAInwav TDD coach: Failed to parse Jest output:', error);
 		}
 
 		return results;
@@ -305,7 +305,7 @@ export class GoTestReporter extends BaseTestReporter {
 			const { stdout } = await this.executeCommand('go', args);
 			return this.parseGoTestOutput(stdout);
 		} catch (error) {
-			console.error('Go test execution failed:', error);
+			console.error('brAInwav TDD coach: Go test execution failed:', error);
 			return [];
 		}
 	}
@@ -352,7 +352,7 @@ export class GoTestReporter extends BaseTestReporter {
 				}
 			}
 		} catch (error) {
-			console.warn('Failed to parse Go test output:', error);
+			console.warn('brAInwav TDD coach: Failed to parse Go test output:', error);
 		}
 
 		return results;

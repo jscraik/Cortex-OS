@@ -36,6 +36,7 @@ alwaysApply: true
 
 - [ ] FastMCP v3 HTTP/SSE operational: `/mcp`, `/sse`, `/health`, `/metrics`.
 - [ ] API-key auth enforced (dev mode may allow `NO_AUTH=true`).
+- [ ] OAuth2 mode documents Auth0 scopes (`search.read`, `docs.write`, `memory.read`, `memory.write`, `memory.delete`) in `REQUIRED_SCOPES` and protected-resource metadata when enabled.
 - [ ] Loads `mcp-registry` on boot; tools/resources/prompts are discoverable.
 - [ ] Cloudflare Tunnel egress tested; external probe can reach `/health`.
 **Tests**

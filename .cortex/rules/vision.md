@@ -132,7 +132,7 @@ Cortex-OS is a self-contained, local-first **Agentic Second Brain Runtime (ASBR)
 ### 4.9 `packages/connectors`
 
 **Vision:** Adapters for ChatGPT Connectors/Apps SDK, Perplexity SSE, frontier APIs.  
-**Done means:** Sample ChatGPT app config; SSE demo; rate-limit & auth guards; 403 triage doc.
+**Done means:** Sample ChatGPT app config; SSE demo; rate-limit & auth guards; 403 triage doc; Auth0 scopes (`search.read`, `docs.write`, `memory.read`, `memory.write`, `memory.delete`) published in protected-resource metadata.
 
 ### 4.10 `apps/dashboard`
 

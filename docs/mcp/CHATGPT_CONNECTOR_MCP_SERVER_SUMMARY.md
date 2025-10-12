@@ -10,7 +10,7 @@ This document summarizes the implementation of the ChatGPT Connector MCP Server 
 
 1. ✅ **UPDATED**: Created ChatGPT Connector MCP Server using FastMCP framework following OpenAI's MCP specification
 2. ✅ **NEW**: Implemented proper `search` and `fetch` tools that return content arrays with JSON-encoded text
-3. ✅ **VERIFIED**: Server runs on <http://localhost:3000/sse/> with proper SSE transport
+3. ✅ **VERIFIED**: FastMCP HTTP/SSE transport runs on <http://localhost:3024/sse> with proper SSE streaming
 4. ✅ **COMPLIANT**: Follows OpenAI's MCP requirements for ChatGPT chat and deep research connectors
 5. ✅ Created comprehensive test suite and validation scripts
 6. ✅ Integrated with existing MCP protocol definitions
@@ -40,7 +40,14 @@ This document summarizes the implementation of the ChatGPT Connector MCP Server 
 
 ## Current Status: **WORKING** ✅
 
-The ChatGPT connector now **WORKS** and is compliant with OpenAI's MCP specification!
+The ChatGPT connector now **WORKS** and is compliant with OpenAI's MCP specification, and the FastMCP HTTP/SSE bridge is validated through the Cloudflare tunnel that fronts `http://localhost:3024`.
+
+### 2025-10-11 Cloudflare Tunnel Validation
+
+- 🚇 **Public access** – The Cloudflare tunnel defined in `config/cloudflared/mcp-tunnel.yml` exposes `https://cortex-mcp.brainwav.io/mcp` and `/sse`, enabling the ChatGPT connector to reach the FastMCP server.
+- 🤖 **Connector confirmation** – ChatGPT Pro sessions successfully execute `memory.search` and `codebase.search` across the tunnel; logs emit `brAInwav MCP client connected` when authentication succeeds.
+- 🧾 **Evidence checklist** – Capture and attach the Cloudflare tunnel output, ChatGPT transcript, and Cortex MCP log excerpts to the feature/TDD checklist after every validation run.
+- 🛡️ **Oversight & governance** – Log the oversight ID from the latest `vibe_check` invocation and cite it in PR descriptions that modify MCP connectivity.
 
 ## Files Created
 
@@ -107,11 +114,29 @@ export QDRANT_PORT=6333
 # Or Qdrant Cloud:
 # export QDRANT_URL="https://YOUR-CLUSTER-region.aws.cloud.qdrant.io"
 # export QDRANT_API_KEY="your-api-key"
+
+# Auth0 (OAuth2 mode)
+export AUTH_MODE=oauth2
+export AUTH0_DOMAIN="brainwav.uk.auth0.com"
+export AUTH0_AUDIENCE="https://cortex-mcp.brainwav.io/mcp"
+export MCP_RESOURCE_URL="https://cortex-mcp.brainwav.io/mcp"
+export REQUIRED_SCOPES="search.read docs.write memory.read memory.write memory.delete"
+export REQUIRED_SCOPES_ENFORCE="true"
 ```
+
+> Enable RBAC and “Add Permissions in the Access Token” on the Auth0 API so these scopes appear in issued tokens and `/.well-known/oauth-protected-resource` mirrors the same values.
 
 ## Usage
 
-Start the server:
+Preferred FastMCP runtime (TypeScript):
+
+```bash
+pnpm --filter @cortex-os/mcp-server start:http
+```
+
+This exposes HTTP and SSE transports on `http://0.0.0.0:3024` matching the Cloudflare tunnel configuration.
+
+Legacy Python server (still available for compatibility):
 
 ```bash
 python -m mcp.mcp_servers.chatgpt_connector.server
@@ -123,7 +148,7 @@ Or using the CLI:
 mcp-chatgpt-connector
 ```
 
-The server will start on `http://localhost:8005`.
+The legacy server listens on `http://localhost:8005`; adjust only if the Node runtime is unavailable.
 
 ## Testing
 
@@ -156,14 +181,13 @@ This server fully integrates with the existing Cortex-OS infrastructure:
 - Follows Cortex-OS memory management patterns
 - Maintains 90%+ test coverage standard
 
-## Next Steps
+## Next Steps (2025-10-11 refresh)
 
-1. **Dependency Resolution** - Install required Python packages and resolve import issues
-2. **Integration Testing** - Test with the existing MCP infrastructure
-3. **Vector Store Integration** - Implement actual search/fetch functionality with real data sources
-4. **Security Implementation** - Add authentication and authorization features
-5. **Performance Optimization** - Optimize for production use
-6. **Documentation Completion** - Finalize all documentation
+1. **Cloudflare + ChatGPT evidence** – Follow the post-deployment validation steps in `docs/operators/chatgpt-connector-bridge.md` and archive the tunnel logs, ChatGPT transcript, and Cortex MCP log excerpts.
+2. **Automation gates** – Run `pnpm test:smart`, `pnpm lint:smart`, `pnpm typecheck:smart`, and `pnpm security:scan` after every connector validation and record the exit codes in the TDD checklist.
+3. **Test coverage improvements** – Add unit tests for the new `get()` implementations and an integration test that exercises `tools/call` through the tunneled `/mcp` endpoint.
+4. **Performance benchmarking** – Compare the direct `get()` lookup against the former hybrid search to confirm the documented 10–100× speed-up and attach metrics to the implementation log.
+5. **Documentation sync** – Update any dependent specs or runbooks the same day changes ship, citing the oversight ID from the latest `vibe_check` run.
 
 ## Benefits
 

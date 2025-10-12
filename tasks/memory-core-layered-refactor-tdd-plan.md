@@ -232,6 +232,8 @@ export MEMORY_DB_PATH="./data/unified-memories.db"
 - **Qdrant layering strategy**: Reuse the existing `local_memory_v1` collection and tag each point with a `memory_layer` payload attribute (`short_term`, `episodic`, `semantic`, `long_term`). Filtering by that property keeps compatibility with current deployments while enabling layer-aware queries; migration hooks ensure the tag is backfilled before enabling the new orchestrator.
 - **Procedural ingestion consent**: Procedural playbooks must declare `memory_consent: true` in YAML front matter. The ingest registry will reject files lacking explicit consent unless they live inside the allowlisted `docs/playbooks/` tree that already underwent governance review, emitting branded log warnings for any skipped assets.
 - **Checklist retention**: Checklist entries become immutable once persisted to the episodic layer; the working store automatically expires items 24 hours after persistence (configurable TTL) and emits provenance audit events so revocation requests remove both short-term and episodic copies.
+- **memory_layer tagging**: All new Qdrant upserts label payloads with `memory_layer` (`semantic` by default, `long_term` for importance ≥ 8) and append version/timestamp metadata; a backfill helper (`LocalMemoryProvider.backfillQdrantMemoryLayers`) migrates existing points lacking the tag using paged scroll + setPayload operations.
+- **Short-term promotion gates**: Importance ≥ 8 triggers immediate promotion via `storeShortTerm`, and TTL expirations route through `flushShortTermExpired()` which now hands sessions to the episodic pipeline before eviction.
 
 ## Open Questions
 

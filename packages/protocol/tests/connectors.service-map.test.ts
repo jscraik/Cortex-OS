@@ -76,4 +76,57 @@ describe('connectors service map schema', () => {
 
 		expect(verifyServiceMapSignature(parsed, parsed.signature, signatureKey)).toBe(true);
 	});
+
+	it('should parse remoteTools from service-map connector entries', () => {
+		const payload = {
+			id: '01HZ7ZWJ5XJ8W4T7N6MZ2V1PQB',
+			brand: 'brAInwav' as const,
+			generatedAt: new Date('2025-10-12T12:00:00.000Z').toISOString(),
+			ttlSeconds: 120,
+			connectors: [
+				{
+					id: 'wikidata',
+					version: '2024.09.18',
+					displayName: 'Wikidata',
+					endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+					auth: { type: 'none' },
+					scopes: ['wikidata:vector-search'],
+					enabled: true,
+					tags: ['knowledge'],
+					timeouts: {},
+					ttlSeconds: 1800,
+					expiresAt: '2025-10-12T12:30:00.000Z',
+					availability: { status: 'unknown' as const },
+					status: 'online' as const,
+					remoteTools: [
+						{
+							name: 'vector_search_items',
+							description: 'Semantic vector search',
+							tags: ['vector', 'search'],
+							scopes: ['wikidata:vector-search'],
+						},
+					],
+				},
+			],
+		};
+
+		const result = serviceMapResponseSchema.safeParse(payload);
+
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.connectors[0].remoteTools).toHaveLength(1);
+			expect(result.data.connectors[0].remoteTools?.[0].name).toBe('vector_search_items');
+		}
+	});
+
+	it('should handle missing remoteTools gracefully', () => {
+		const payload = createSamplePayload();
+
+		const result = serviceMapResponseSchema.safeParse(payload);
+
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.connectors[0].remoteTools).toBeUndefined();
+		}
+	});
 });

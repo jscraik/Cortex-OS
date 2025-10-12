@@ -89,6 +89,11 @@ export function createMemoryProviderFromEnv(): LocalMemoryProvider | RemoteMemor
 		embedDim: parseInt(process.env.EMBED_DIM || '384', 10),
 	};
 
+	config.shortTerm = {
+		ttlMs: parseInt(process.env.MEMORY_SHORT_TERM_TTL_MS || String(5 * 60 * 1000), 10),
+		promotionImportance: parseInt(process.env.MEMORY_SHORT_TERM_PROMOTION_IMPORTANCE || '8', 10),
+	};
+
 	// Add Qdrant config if available
 	if (process.env.QDRANT_URL) {
 		config.qdrant = {

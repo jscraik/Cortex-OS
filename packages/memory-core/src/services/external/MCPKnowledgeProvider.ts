@@ -11,8 +11,8 @@ import type {
 	ExternalCitationProvider,
 	ExternalProviderConfig,
 	McpProviderSettingsSchema,
-} from './ExternalKnowledge';
-import { normalizeCitation } from './ExternalKnowledge';
+} from './ExternalKnowledge.js';
+import { normalizeCitation } from './ExternalKnowledge.js';
 
 /**
  * MCP tool invocation options
@@ -32,6 +32,9 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 	private client?: any;
 	private serverInfo?: McpServerInfo;
 	private isDisposed = false;
+	private citationCache = new Map<string, { citations: ExternalCitation[]; timestamp: number }>();
+	private readonly CACHE_TTL = 1800000; // 30 minutes for external citations
+	private readonly MAX_CACHE_SIZE = 200;
 
 	/**
 	 * Initialize the MCP provider with configuration
@@ -82,7 +85,7 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 	}
 
 	/**
-	 * Fetch citations using MCP tools
+	 * Fetch citations using MCP tools with caching
 	 */
 	async fetchCitations(query: string, options: McpToolOptions = {}): Promise<ExternalCitation[]> {
 		if (!this.config || !this.client || !this.serverInfo) {
@@ -97,14 +100,34 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 		const maxResults = options.maxResults ?? settings.maxResults;
 		const timeoutMs = options.timeoutMs ?? settings.requestTimeoutMs;
 
+		// Check cache first
+		const cacheKey = Buffer.from([
+			query.toLowerCase().trim(),
+			maxResults.toString(),
+			settings.slug,
+		].join('|')).toString('base64');
+		const cached = this.citationCache.get(cacheKey);
+		if (cached && (Date.now() - cached.timestamp) < this.CACHE_TTL) {
+			console.log('brAInwav GraphRAG MCP citation cache hit', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				cacheKey,
+				age: Date.now() - cached.timestamp,
+				server: this.serverInfo.name,
+			});
+			return cached.citations;
+		}
+
+		const startTime = Date.now();
+
 		try {
-			// Invoke the search tool with timeout
+			// Invoke the search tool with timeout and circuit breaker
 			const result = await Promise.race([
 				this.client.callTool(settings.tool, {
 					query,
-					max_results: maxResults,
+					max_results: Math.min(maxResults, 10), // Cap for performance
 				}),
-				this.createTimeoutPromise(timeoutMs),
+				this.createTimeoutPromise(Math.min(timeoutMs, 15000)), // Cap timeout for performance
 			]);
 
 			if (!result?.success || !result?.data) {
@@ -112,6 +135,7 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 					component: 'memory-core',
 					brand: 'brAInwav',
 					tool: settings.tool,
+					server: this.serverInfo.name,
 					result,
 				});
 				return [];
@@ -119,8 +143,36 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 
 			// Transform MCP response to standardized citations
 			const citations = this.transformMcpResponse(result.data, settings.slug);
+			const normalizedCitations = citations.map(normalizeCitation);
 
-			return citations.map(normalizeCitation);
+			// Cache results if cache isn't full
+			if (this.citationCache.size < this.MAX_CACHE_SIZE) {
+				this.citationCache.set(cacheKey, {
+					citations: normalizedCitations,
+					timestamp: Date.now(),
+				});
+			} else {
+				// Evict oldest entry
+				const oldestKey = this.citationCache.keys().next().value;
+				this.citationCache.delete(oldestKey);
+				this.citationCache.set(cacheKey, {
+					citations: normalizedCitations,
+					timestamp: Date.now(),
+				});
+			}
+
+			console.log('brAInwav GraphRAG MCP citation fetch completed', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				server: this.serverInfo.name,
+				tool: settings.tool,
+				queryLength: query.length,
+				citationCount: normalizedCitations.length,
+				durationMs: Date.now() - startTime,
+				cacheSize: this.citationCache.size,
+			});
+
+			return normalizedCitations;
 		} catch (error) {
 			console.error('MCP citation fetch failed', {
 				component: 'memory-core',
@@ -129,6 +181,7 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 				server: this.serverInfo.name,
 				tool: settings.tool,
 				query,
+				durationMs: Date.now() - startTime,
 				error: error instanceof Error ? error.message : String(error),
 			});
 
@@ -165,6 +218,9 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 	 * Cleanup resources
 	 */
 	async dispose(): Promise<void> {
+		// Clean up cache
+		this.citationCache.clear();
+
 		if (this.client && !this.isDisposed) {
 			try {
 				await this.client.close();
@@ -180,6 +236,12 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 		this.client = undefined;
 		this.serverInfo = undefined;
 		this.isDisposed = true;
+
+		console.log('brAInwav GraphRAG MCP provider disposed', {
+			component: 'memory-core',
+			brand: 'brAInwav',
+			cacheSize: 0,
+		});
 	}
 
 	/**

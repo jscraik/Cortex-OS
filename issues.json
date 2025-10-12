@@ -1,12 +1,273 @@
 [
   {
-    "file": "/Users/jamiecraik/.Cortex-OS/packages/memory-core/src/services/GraphRAGService.ts",
-    "line": 431,
-    "category": "HIGH",
-    "description": "CRITICAL: Math.random() used for fake data in production path - violates brAInwav production standards",
-    "evidence": "const queryId = `graphrag_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;",
-    "fix": "Replace Math.random() with createPrefixedId() from secure-random.js for unique ID generation",
-    "test_suggestion": "Add test to verify unique ID generation without Math.random()"
+    "file": "/packages/memory-core/src/services/GraphRAGService.ts",
+    "line": 889,
+    "category": "performance",
+    "severity": "high",
+    "description": "Inefficient sequential database queries in Qdrant search results mapping",
+    "evidence": "for (const point of sliced) { const row = this.db.prepare('SELECT * FROM memories WHERE id = ?').get(point.id); }",
+    "fix": "Implement batch database lookup with IN clause: const ids = sliced.map(r => r.id); const rows = this.db.prepare(`SELECT * FROM memories WHERE id IN (${ids.map(() => '?').join(',')})`).all(...ids);",
+    "test_suggestion": "Add performance test with 1000+ search results to verify batch improvement"
+  },
+  {
+    "file": "/packages/memory-core/src/acceleration/GPUAcceleration.ts",
+    "line": 1,
+    "category": "performance",
+    "severity": "high",
+    "description": "Potential GPU memory leaks in embedding generation",
+    "evidence": "GPU acceleration manager lacks proper memory cleanup mechanisms",
+    "fix": "Implement proper GPU memory cleanup and monitoring with explicit disposal methods",
+    "test_suggestion": "Add memory leak detection test for GPU operations"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 643,
+    "category": "security",
+    "severity": "high",
+    "description": "SQL injection potential in dynamic query construction",
+    "evidence": "query += ` WHERE ${conditions.join(' AND ')}` with direct string concatenation",
+    "fix": "Use parameterized queries: const placeholders = conditions.map(() => '?').join(' AND '); query += ` WHERE ${placeholders}`;",
+    "test_suggestion": "Add security test with malicious input to verify SQL injection prevention"
+  },
+  {
+    "file": "/packages/memory-core/src/services/GraphRAGService.ts",
+    "line": 800,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "Excessive cognitive complexity - query method is 263 lines",
+    "evidence": "Single method handling multiple responsibilities: validation, search, expansion, context assembly",
+    "fix": "Extract smaller focused methods: validateQuery(), performSearch(), expandGraph(), assembleContext()",
+    "test_suggestion": "Add unit tests for each extracted method to ensure proper separation"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 297,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "Constructor doing excessive initialization work",
+    "evidence": "69-line constructor handling database, Qdrant, queue, circuit breaker, and backfill initialization",
+    "fix": "Extract initialization to separate methods: initializeDatabase(), initializeQdrant(), startBackfill()",
+    "test_suggestion": "Add tests for each initialization phase to improve testability"
+  },
+  {
+    "file": "/packages/mcp/src/connectors/manager.ts",
+    "line": 242,
+    "category": "code_quality",
+    "severity": "high",
+    "description": "Silent failure in connector refresh without proper error handling",
+    "evidence": "catch (error) { console.warn(...); this.emit('error', error); // Don't re-throw }",
+    "fix": "Implement proper error reporting with retry logic and circuit breaker pattern",
+    "test_suggestion": "Add test for connector refresh failure scenarios"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 461,
+    "category": "performance",
+    "severity": "medium",
+    "description": "Missing composite indexes for common query patterns",
+    "evidence": "Individual indexes on domain, created_at, importance but no composite indexes",
+    "fix": "Add composite indexes: (domain, created_at), (importance, created_at), (tags, domain)",
+    "test_suggestion": "Add performance benchmark tests for common query patterns"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 715,
+    "category": "performance",
+    "severity": "medium",
+    "description": "Sequential processing of Qdrant points in backfill operation",
+    "evidence": "for (const point of points) { await this.qdrant.setPayload(...) }",
+    "fix": "Implement parallel batch processing with Promise.all() and chunking",
+    "test_suggestion": "Add backfill performance test with large dataset"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 657,
+    "category": "performance",
+    "severity": "medium",
+    "description": "Redundant JSON parsing for same data",
+    "evidence": "Multiple JSON.parse() calls on tags and metadata in different methods",
+    "fix": "Cache parsed JSON objects or parse once and reuse",
+    "test_suggestion": "Add performance test to measure JSON parsing overhead"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 235,
+    "category": "security",
+    "severity": "medium",
+    "description": "Hardcoded Bearer token may not match all Ollama configurations",
+    "evidence": "Authorization: 'Bearer ollama' - hardcoded token",
+    "fix": "Make token configurable via environment variable or Ollama configuration",
+    "test_suggestion": "Add test with custom Ollama authentication"
+  },
+  {
+    "file": "/packages/mcp/src/connectors/manager.ts",
+    "line": 1,
+    "category": "security",
+    "severity": "medium",
+    "description": "No rate limiting on external API calls",
+    "evidence": "Direct API calls without rate limiting or circuit breaker",
+    "fix": "Implement rate limiting with configurable limits and circuit breaker pattern",
+    "test_suggestion": "Add rate limiting integration tests"
+  },
+  {
+    "file": "/packages/memory-core/src/services/GraphRAGService.ts",
+    "line": 1067,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Magic numbers and hardcoded configuration values",
+    "evidence": "Hardcoded timeouts (30000), batch sizes (256), thresholds (0.7)",
+    "fix": "Extract to configuration constants with environment variable overrides",
+    "test_suggestion": "Add configuration validation tests"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 5,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Duplicate array validation logic",
+    "evidence": "validateArrayParam function duplicated across multiple files",
+    "fix": "Extract to shared utility function in @cortex-os/utils package",
+    "test_suggestion": "Add unit tests for shared validation utility"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 244,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Unsafe type assertions with 'as any'",
+    "evidence": "const embedding = Array.isArray((data as any)?.data)",
+    "fix": "Implement proper type guards and runtime type checking",
+    "test_suggestion": "Add type safety tests for API responses"
+  },
+  {
+    "file": "/packages/agents/src/subagents/ExecutionSurfaceAgent.ts",
+    "line": 1118,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Missing null checks in tool processing",
+    "evidence": "Access to tool properties without null validation",
+    "fix": "Add proper null checks and default values for tool properties",
+    "test_suggestion": "Add tests with null/undefined tool inputs"
+  },
+  {
+    "file": "/packages/memory-core/src/services/GraphRAGService.ts",
+    "line": 594,
+    "category": "brainwav_policy",
+    "severity": "medium",
+    "description": "Inconsistent log branding in some statements",
+    "evidence": "Some log statements missing '[brAInwav]' prefix",
+    "fix": "Ensure all log statements include brAInwav branding prefix",
+    "test_suggestion": "Add log format validation tests"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 639,
+    "category": "brainwav_policy",
+    "severity": "medium",
+    "description": "Mock embeddings usage with production safeguards",
+    "evidence": "createMockEmbedding used when production safeguards are in place",
+    "fix": "Ensure complete isolation between mock and production environments",
+    "test_suggestion": "Add environment isolation tests"
+  },
+  {
+    "file": "/packages/memory-core/src/services/GraphRAGService.ts",
+    "line": 1518,
+    "category": "performance",
+    "severity": "low",
+    "description": "Unnecessary string concatenations in hot paths",
+    "evidence": "Multiple string concatenations in summary generation",
+    "fix": "Use template literals or string builders for better performance",
+    "test_suggestion": "Micro-benchmark string operations"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 153,
+    "category": "performance",
+    "severity": "low",
+    "description": "Inefficient array operations in tag processing",
+    "evidence": "Multiple array iterations for tag processing and deduplication",
+    "fix": "Combine operations into single pass with Set for deduplication",
+    "test_suggestion": "Performance test with large tag arrays"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 110,
+    "category": "performance",
+    "severity": "low",
+    "description": "Suboptimal regular expression patterns",
+    "evidence": "Global regex patterns compiled on each use",
+    "fix": "Pre-compile regex patterns as constants",
+    "test_suggestion": "Regex performance benchmark"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 766,
+    "category": "security",
+    "severity": "low",
+    "description": "Verbose error messages exposing internal details",
+    "evidence": "Error messages include internal implementation details",
+    "fix": "Sanitize error messages for external consumption",
+    "test_suggestion": "Add error message sanitization tests"
+  },
+  {
+    "file": "/packages/memory-core/src/services/GraphRAGService.ts",
+    "line": 1,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Long parameter lists in configuration methods",
+    "evidence": "Functions with 5+ parameters making them hard to use",
+    "fix": "Use parameter objects or options pattern",
+    "test_suggestion": "Add tests for parameter object validation"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 1,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Inconsistent naming conventions in some areas",
+    "evidence": "Mixed camelCase and snake_case in variable names",
+    "fix": "Standardize on camelCase throughout codebase",
+    "test_suggestion": "Add linting rules for naming consistency"
+  },
+  {
+    "file": "/packages/memory-core/src/services/GraphRAGService.ts",
+    "line": 1,
+    "category": "code_quality",
+    "severity": "low",
+    "description": "Missing JSDoc comments on public methods",
+    "evidence": "Public methods lack comprehensive documentation",
+    "fix": "Add comprehensive JSDoc comments with examples",
+    "test_suggestion": "Add documentation generation to CI pipeline"
+  },
+  {
+    "file": "/packages/memory-core/src/services/GraphRAGService.ts",
+    "line": 1525,
+    "category": "brainwav_policy",
+    "severity": "low",
+    "description": "Inconsistent event branding",
+    "evidence": "Some events missing brAInwav branding in metadata",
+    "fix": "Ensure all events include proper brAInwav branding",
+    "test_suggestion": "Add event format validation tests"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 68,
+    "category": "brainwav_policy",
+    "severity": "low",
+    "description": "Development TODO comments in production code",
+    "evidence": "TODO comments: // import { MemoryWorkflowEngine } and // this.workflows",
+    "fix": "Address TODO comments or remove with proper issue tracking",
+    "test_suggestion": "Add linting rule to prevent TODO in production code"
+  },
+  {
+    "file": "/packages/memory-core/src/providers/LocalMemoryProvider.ts",
+    "line": 314,
+    "category": "code_quality",
+    "severity": "medium",
+    "description": "Inconsistent error handling patterns across methods",
+    "evidence": "Mix of throw vs return error objects in different methods",
+    "fix": "Standardize on consistent error handling pattern throughout class",
+    "test_suggestion": "Add error handling pattern tests"
   },
   {
     "file": "/Users/jamiecraik/.Cortex-OS/packages/memory-core/src/services/GraphRAGService.ts",

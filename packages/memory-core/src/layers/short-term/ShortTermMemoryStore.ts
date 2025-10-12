@@ -12,6 +12,7 @@ export interface ShortTermMemoryStoreOptions {
 	clock?: () => number;
 	onEpisodicPersist?: (payload: { id: string; sessionId: string }) => void;
 	logger?: Pick<Console, 'info' | 'warn' | 'error' | 'debug'>;
+	maxExpiredSessions?: number; // Maximum number of expired sessions to retain in memory
 }
 
 export interface ShortTermMemoryEntry {
@@ -42,6 +43,7 @@ export interface StoreShortTermResult {
 
 export interface FlushExpiredResult {
 	removed: number;
+	expiredSessions: ShortTermMemorySession[];
 }
 
 export interface ShortTermSnapshotEntry {
@@ -78,12 +80,15 @@ export class ShortTermMemoryStore {
 
 	private readonly logger: Pick<Console, 'info' | 'warn' | 'error' | 'debug'>;
 
+	private readonly maxExpiredSessions: number;
+
 	constructor(private readonly options: ShortTermMemoryStoreOptions) {
 		this.workflow = options.workflow;
 		this.checkpointManager = options.checkpointManager;
 		this.ttlMs = options.ttlMs;
 		this.clock = options.clock ?? (() => Date.now());
 		this.logger = options.logger ?? console;
+		this.maxExpiredSessions = options.maxExpiredSessions ?? 100; // Default limit to prevent memory leaks
 	}
 
 	async store(input: StoreShortTermInput): Promise<StoreShortTermResult> {
@@ -116,14 +121,36 @@ export class ShortTermMemoryStore {
 		};
 	}
 
+	promoteSession(sessionId: string): ShortTermMemorySession | undefined {
+		const session = this.sessions.get(sessionId);
+		if (!session) {
+			return undefined;
+		}
+		this.sessions.delete(sessionId);
+		return session;
+	}
+
 	flushExpired(): FlushExpiredResult {
 		const threshold = this.clock() - this.ttlMs;
 		let removed = 0;
+		const expiredSessions: ShortTermMemorySession[] = [];
 		for (const [sessionId, session] of this.sessions.entries()) {
 			const { memories } = session;
 			const active = memories.filter((memory) => memory.storedAt >= threshold);
 			removed += memories.length - active.length;
 			if (active.length === 0) {
+				// Add to expired sessions if under limit, otherwise just log and discard
+				if (expiredSessions.length < this.maxExpiredSessions) {
+					expiredSessions.push({
+						id: session.id,
+						createdAt: session.createdAt,
+						memories: [...session.memories],
+					});
+				} else {
+					this.logger.warn?.(
+						`brAInwav short-term memory expired session limit reached, discarding session ${sessionId} to prevent memory leak`,
+					);
+				}
 				this.sessions.delete(sessionId);
 				continue;
 			}
@@ -136,7 +163,12 @@ export class ShortTermMemoryStore {
 				}.`,
 			);
 		}
-		return { removed };
+		if (expiredSessions.length >= this.maxExpiredSessions) {
+			this.logger.warn?.(
+				`brAInwav short-term memory expired session limit (${this.maxExpiredSessions}) reached. Consider reducing TTL or increasing limit.`,
+			);
+		}
+		return { removed, expiredSessions };
 	}
 
 	async snapshot(checkpointId: string): Promise<ShortTermSnapshot | null> {

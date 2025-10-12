@@ -167,3 +167,192 @@ describe('ConnectorsRegistry', () => {
 		);
 	});
 });
+
+describe('Phase B.2: Agent Registry Tool Filtering', () => {
+	it('should prefer remoteTools from service-map over synthesis', async () => {
+		const registry = new ConnectorsRegistry({
+			serviceMapUrl: 'https://connectors.local',
+			fetch: async () =>
+				Promise.resolve({
+					ok: true,
+					status: 200,
+					json: async () => ({
+						...createServiceMapResponse(),
+						connectors: [
+							{
+								id: 'wikidata',
+								displayName: 'Wikidata',
+								version: '2024.09.18',
+								endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+								auth: { type: 'none' },
+								scopes: ['wikidata:vector-search', 'wikidata:claims'],
+								quotas: { perMinute: 60 },
+								enabled: true,
+								metadata: { brand: 'brAInwav' },
+								tags: ['knowledge'],
+								status: 'online',
+								ttlSeconds: 1800,
+								expiresAt: new Date(Date.now() + 1800_000).toISOString(),
+								remoteTools: [
+									{
+										name: 'vector_search_items',
+										description: 'Semantic vector search over items',
+										tags: ['vector', 'search', 'items'],
+										scopes: ['wikidata:vector-search'],
+									},
+									{
+										name: 'get_claims',
+										description: 'Retrieve entity claims',
+										tags: ['claims', 'entities'],
+										scopes: ['wikidata:claims'],
+									},
+								],
+							},
+						],
+					}),
+				} as Response),
+		});
+
+		await registry.refresh(true);
+		const wikidata = registry.get('wikidata');
+
+		expect(wikidata?.remoteTools).toHaveLength(2);
+		expect(wikidata?.remoteTools?.map((t) => t.name)).toEqual([
+			'vector_search_items',
+			'get_claims',
+		]);
+	});
+
+	it('should synthesize canonical tools when remoteTools absent (Wikidata only)', async () => {
+		const registry = new ConnectorsRegistry({
+			serviceMapUrl: 'https://connectors.local',
+			fetch: async () =>
+				Promise.resolve({
+					ok: true,
+					status: 200,
+					json: async () => ({
+						...createServiceMapResponse(),
+						connectors: [
+							{
+								id: 'wikidata',
+								displayName: 'Wikidata',
+								version: '2024.09.18',
+								endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+								auth: { type: 'none' },
+								scopes: ['wikidata:vector-search'],
+								quotas: { perMinute: 60 },
+								enabled: true,
+								metadata: { brand: 'brAInwav' },
+								tags: ['knowledge'],
+								status: 'online',
+								ttlSeconds: 1800,
+								expiresAt: new Date(Date.now() + 1800_000).toISOString(),
+							},
+						],
+					}),
+				} as Response),
+		});
+
+		await registry.refresh(true);
+		const wikidata = registry.get('wikidata');
+
+		expect(wikidata?.remoteTools).toHaveLength(2);
+		expect(wikidata?.remoteTools?.map((t) => t.name)).toEqual([
+			'wikidata.vector_search',
+			'wikidata.get_claims',
+		]);
+	});
+
+	it('should leave other connectors unchanged (no synthesis)', async () => {
+		const registry = new ConnectorsRegistry({
+			serviceMapUrl: 'https://connectors.local',
+			fetch: async () =>
+				Promise.resolve({
+					ok: true,
+					status: 200,
+					json: async () => ({
+						...createServiceMapResponse(),
+						connectors: [
+							{
+								id: 'perplexity',
+								displayName: 'Perplexity Search',
+								version: '1.2.0',
+								endpoint: 'https://connectors.local/perplexity',
+								auth: { type: 'bearer', headerName: 'Authorization' },
+								scopes: ['search:query'],
+								quotas: { perMinute: 30 },
+								enabled: true,
+								metadata: { brand: 'brAInwav' },
+								tags: ['search'],
+								status: 'online',
+								ttlSeconds: 3600,
+								expiresAt: new Date(Date.now() + 3600_000).toISOString(),
+							},
+						],
+					}),
+				} as Response),
+		});
+
+		await registry.refresh(true);
+		const perplexity = registry.get('perplexity');
+
+		expect(perplexity?.remoteTools).toEqual([]);
+	});
+});
+
+describe('Phase B.2: Tool Filtering Helpers', () => {
+	it('should filter tools by tags', async () => {
+		const { filterToolsByTags } = await import('../../src/connectors/registry.js');
+
+		const tools = [
+			{
+				name: 'tool1',
+				description: 'Tool 1',
+				tags: ['vector', 'search'],
+				scopes: ['scope1'],
+			},
+			{
+				name: 'tool2',
+				description: 'Tool 2',
+				tags: ['claims', 'entities'],
+				scopes: ['scope2'],
+			},
+			{ name: 'tool3', description: 'Tool 3', tags: ['vector'], scopes: ['scope3'] },
+		];
+
+		const filtered = filterToolsByTags(tools, ['vector']);
+
+		expect(filtered).toHaveLength(2);
+		expect(filtered.map((t) => t.name)).toEqual(['tool1', 'tool3']);
+	});
+
+	it('should filter tools by scopes', async () => {
+		const { filterToolsByScopes } = await import('../../src/connectors/registry.js');
+
+		const tools = [
+			{
+				name: 'tool1',
+				description: 'Tool 1',
+				tags: ['vector'],
+				scopes: ['wikidata:vector-search'],
+			},
+			{
+				name: 'tool2',
+				description: 'Tool 2',
+				tags: ['claims'],
+				scopes: ['wikidata:claims'],
+			},
+			{
+				name: 'tool3',
+				description: 'Tool 3',
+				tags: ['sparql'],
+				scopes: ['wikidata:sparql'],
+			},
+		];
+
+		const filtered = filterToolsByScopes(tools, ['wikidata:claims', 'wikidata:sparql']);
+
+		expect(filtered).toHaveLength(2);
+		expect(filtered.map((t) => t.name)).toEqual(['tool2', 'tool3']);
+	});
+});

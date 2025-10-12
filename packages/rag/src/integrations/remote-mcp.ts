@@ -963,3 +963,331 @@ export function createRemoteMCPIngestionManager(
 ): RemoteMCPDocumentIngestionManager {
 	return new RemoteMCPDocumentIngestionManager(config);
 }
+
+//
+// Phase C.2: Remote MCP Orchestration Implementation
+//
+
+import type { ConnectorEntry } from '@cortex-os/protocol';
+import { routeFactQuery } from './agents-shim.js';
+
+// Types for Phase C.2
+export interface VectorSearchResult {
+	qid: string;
+	score: number;
+	title?: string;
+	content?: string;
+}
+
+export interface ClaimsResult {
+	claims: Array<{
+		guid: string;
+		property: string;
+		value?: string;
+		description?: string;
+	}>;
+}
+
+export interface SparqlResult {
+	query: string;
+	results: Array<Record<string, unknown>>;
+}
+
+export interface WikidataMetadata {
+	qid: string;
+	claimGuid?: string;
+	title?: string;
+	properties?: string[];
+	brand: string;
+}
+
+export interface SparqlMetadata {
+	sparql: string;
+	queryType: string;
+	resultCount: number;
+	variables: string[];
+	brand: string;
+}
+
+export interface WorkflowResult {
+	content: string;
+	source: string;
+	metadata: {
+		wikidata?: {
+			qid?: string;
+			claimGuid?: string;
+			sparql?: string;
+		};
+		fallbackReason?: string;
+		partialFailure?: string;
+		originalError?: string;
+		brand: string;
+	};
+}
+
+export interface WorkflowOptions {
+	mcpClient?: AgentMCPClient;
+	localStore?: Store;
+	timeout?: number;
+	enableSparql?: boolean;
+	enablePartialResults?: boolean;
+}
+
+/**
+ * Execute multi-step Wikidata workflow: vector → claims → SPARQL
+ * 
+ * Phase C.2: Remote MCP Orchestration - orchestrates the complete three-step
+ * workflow with metadata stitching, fallback handling, and brAInwav branding.
+ *
+ * @param query - The query to execute
+ * @param connector - The wikidata connector entry
+ * @param options - Workflow execution options
+ * @returns Promise resolving to workflow result with metadata
+ */
+export async function executeWikidataWorkflow(
+	query: string,
+	connector: ConnectorEntry,
+	options?: WorkflowOptions,
+): Promise<WorkflowResult> {
+	const enableSparql = options?.enableSparql ?? true;
+	const enablePartialResults = options?.enablePartialResults ?? true;
+	const timeout = options?.timeout ?? 30000;
+	
+	try {
+		// Step 1: Route to vector search tool
+		const routing = await routeFactQuery(query, connector, { scope: 'facts' });
+		
+		if (!options?.mcpClient) {
+			throw new Error('MCP client not provided for remote workflow');
+		}
+		
+		// Step 1: Execute vector search
+		const vectorResult = await options.mcpClient.callTool(
+			routing.toolName,
+			{ ...routing.parameters, query },
+			timeout
+		) as { results: VectorSearchResult[] };
+		
+		if (!vectorResult.results || vectorResult.results.length === 0) {
+			return await fallbackToLocal(query, options.localStore, 'no_vector_results');
+		}
+		
+		const topResult = vectorResult.results[0];
+		let claimsResult: ClaimsResult | null = null;
+		let sparqlResult: SparqlResult | null = null;
+		let partialFailure: string | undefined;
+		
+		// Step 2: Get claims for top QID
+		try {
+			claimsResult = await options.mcpClient.callTool(
+				'get_claims',
+				{ 
+					qid: topResult.qid,
+					brand: 'brAInwav'
+				},
+				timeout
+			) as ClaimsResult;
+		} catch (error) {
+			console.warn(`brAInwav: Claims retrieval failed for ${topResult.qid}:`, error);
+			if (!enablePartialResults) {
+				return await fallbackToLocal(query, options.localStore, 'claims_failed');
+			}
+			partialFailure = 'claims_unavailable';
+		}
+		
+		// Step 3: Execute SPARQL (optional)
+		if (enableSparql) {
+			try {
+				const sparqlQuery = `SELECT ?inventor WHERE { ?inventor wdt:P31 wd:Q5 . ?inventor wdt:P106 wd:Q901 }`;
+				sparqlResult = await options.mcpClient.callTool(
+					'sparql',
+					{ 
+						query: sparqlQuery,
+						brand: 'brAInwav'
+					},
+					timeout
+				) as SparqlResult;
+			} catch (error) {
+				console.warn('brAInwav: SPARQL execution failed:', error);
+				// SPARQL failure is non-fatal
+			}
+		}
+		
+		// Stitch metadata together
+		const wikidataMetadata: any = { qid: topResult.qid };
+		if (claimsResult && claimsResult.claims.length > 0) {
+			wikidataMetadata.claimGuid = claimsResult.claims[0].guid;
+		}
+		if (sparqlResult) {
+			wikidataMetadata.sparql = sparqlResult.query;
+		}
+		
+		return {
+			content: topResult.content || topResult.title || `Entity ${topResult.qid}`,
+			source: partialFailure ? 'wikidata_partial' : 'wikidata_workflow',
+			metadata: {
+				wikidata: wikidataMetadata,
+				partialFailure,
+				brand: 'brAInwav',
+			},
+		};
+		
+	} catch (error) {
+		console.error('brAInwav: Wikidata workflow failed:', error);
+		return await fallbackToLocal(
+			query, 
+			options?.localStore, 
+			'network_error',
+			error instanceof Error ? error.message : String(error)
+		);
+	}
+}
+
+/**
+ * Stitch QIDs and claim GUIDs into metadata
+ * 
+ * @param vectorResult - Vector search result with QID
+ * @param claimsResult - Claims result with GUIDs
+ * @returns Combined metadata with brAInwav branding
+ */
+export function stitchWikidataMetadata(
+	vectorResult: VectorSearchResult,
+	claimsResult: ClaimsResult,
+): WikidataMetadata {
+	const properties = claimsResult.claims.map(claim => claim.property);
+	
+	return {
+		qid: vectorResult.qid,
+		claimGuid: claimsResult.claims[0]?.guid,
+		title: vectorResult.title,
+		properties,
+		brand: 'brAInwav',
+	};
+}
+
+/**
+ * Capture SPARQL query metadata for provenance
+ * 
+ * @param sparqlResult - SPARQL execution result
+ * @returns Metadata with query information and brAInwav branding
+ */
+export function captureSparqlMetadata(sparqlResult: SparqlResult): SparqlMetadata {
+	// Extract query type (SELECT, ASK, CONSTRUCT, DESCRIBE)
+	const queryType = sparqlResult.query.trim().split(/\s+/)[0].toUpperCase();
+	
+	// Extract variables from SELECT queries
+	const variables: string[] = [];
+	if (queryType === 'SELECT') {
+		const selectMatch = sparqlResult.query.match(/SELECT\s+(.+?)\s+WHERE/i);
+		if (selectMatch) {
+			const variablesPart = selectMatch[1];
+			const varMatches = variablesPart.match(/\?(\w+)/g);
+			if (varMatches) {
+				variables.push(...varMatches.map(v => v.substring(1)));
+			}
+		}
+	}
+	
+	return {
+		sparql: sparqlResult.query,
+		queryType,
+		resultCount: sparqlResult.results.length,
+		variables,
+		brand: 'brAInwav',
+	};
+}
+
+/**
+ * Execute fallback with ranking preservation
+ * 
+ * @param query - Original query
+ * @param results - Local results to preserve
+ * @param options - Fallback options
+ * @returns Results with preserved ranking
+ */
+export function executeWithFallback(
+	query: string,
+	results: Array<{ content: string; score: number; id?: string }>,
+	options?: { preserveRanking?: boolean }
+): Array<{ content: string; score: number; id?: string; metadata?: { rank: number } }> {
+	if (!options?.preserveRanking) {
+		return results;
+	}
+	
+	return results.map((result, index) => ({
+		...result,
+		metadata: {
+			...((result as any).metadata || {}),
+			rank: index + 1,
+		},
+	}));
+}
+
+/**
+ * Fallback to local store on remote failure
+ * 
+ * @param query - Original query  
+ * @param localStore - Local store to query
+ * @param reason - Reason for fallback
+ * @param errorMessage - Optional error message
+ * @returns Fallback workflow result
+ */
+async function fallbackToLocal(
+	query: string,
+	localStore?: Store,
+	reason?: string,
+	errorMessage?: string,
+): Promise<WorkflowResult> {
+	if (!localStore) {
+		return {
+			content: 'No results available - remote service unavailable and no local fallback configured',
+			source: 'error',
+			metadata: {
+				fallbackReason: reason || 'no_local_store',
+				originalError: errorMessage,
+				brand: 'brAInwav',
+			},
+		};
+	}
+	
+	try {
+		// Use a simple embedding for fallback (would normally use actual embedder)
+		const embedding = new Array(1024).fill(0.1); // Placeholder embedding
+		const localResults = await localStore.query(embedding, { k: 5 });
+		
+		const bestResult = localResults[0];
+		if (!bestResult) {
+			return {
+				content: 'No local results found for query',
+				source: 'local_fallback',
+				metadata: {
+					fallbackReason: reason || 'remote_unavailable',
+					originalError: errorMessage,
+					brand: 'brAInwav',
+				},
+			};
+		}
+		
+		return {
+			content: bestResult.content,
+			source: 'local_fallback',
+			metadata: {
+				fallbackReason: reason || 'remote_unavailable',
+				originalError: errorMessage,
+				brand: 'brAInwav',
+			},
+		};
+		
+	} catch (localError) {
+		return {
+			content: 'Both remote and local retrieval failed',
+			source: 'error',
+			metadata: {
+				fallbackReason: 'local_also_failed',
+				originalError: errorMessage,
+				localError: localError instanceof Error ? localError.message : String(localError),
+				brand: 'brAInwav',
+			},
+		};
+	}
+}

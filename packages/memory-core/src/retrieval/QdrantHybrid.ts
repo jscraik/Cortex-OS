@@ -71,6 +71,10 @@ export class QdrantHybridSearch {
 	private config: QdrantConfig;
 	private embedDense: ((text: string) => Promise<number[]>) | null = null;
 	private embedSparse: ((text: string) => Promise<SparseVector>) | null = null;
+	private localCache = new Map<string, { results: GraphRAGSearchResult[]; timestamp: number }>();
+	private readonly LOCAL_CACHE_TTL = 60000; // 1 minute for local cache
+	private readonly MAX_LOCAL_CACHE_SIZE = 100;
+	private distributedCache: import('../caching/DistributedCache.js').DistributedCache | null = null;
 
 	constructor(config: QdrantConfig) {
 		this.config = QdrantConfigSchema.parse(config);
@@ -106,7 +110,7 @@ export class QdrantHybridSearch {
 	}
 
 	/**
-	 * Perform hybrid search using Qdrant's multi-vector capabilities
+	 * Perform hybrid search using Qdrant's multi-vector capabilities with multi-level caching
 	 */
 	async hybridSearch(params: GraphRAGQueryParams): Promise<GraphRAGSearchResult[]> {
 		if (!this.client || !this.embedDense || !this.embedSparse) {
@@ -114,12 +118,58 @@ export class QdrantHybridSearch {
 		}
 
 		const startTime = Date.now();
+		const cacheKey = this._generateCacheKey(params);
 
 		try {
-			const denseVector = await this.embedDense(params.question);
-			const sparseVector = await this.embedSparse(params.question);
+			// Check local cache first (fastest)
+			const localCached = this.localCache.get(cacheKey);
+			if (localCached && (Date.now() - localCached.timestamp) < this.LOCAL_CACHE_TTL) {
+				console.log('brAInwav GraphRAG local cache hit', {
+					component: 'memory-core',
+					brand: 'brAInwav',
+					cacheKey: cacheKey.substring(0, 20) + '...',
+					age: Date.now() - localCached.timestamp,
+				});
+				return localCached.results;
+			}
 
-			const queryRequest: Record<string, unknown> = {
+			// Check distributed cache
+			if (this.distributedCache) {
+				const distributedCached = await this.distributedCache.get<GraphRAGSearchResult[]>(cacheKey, 'qdrant');
+				if (distributedCached) {
+					console.log('brAInwav GraphRAG distributed cache hit', {
+						component: 'memory-core',
+						brand: 'brAInwav',
+						cacheKey: cacheKey.substring(0, 20) + '...',
+					});
+
+					// Store in local cache for faster access
+					if (this.localCache.size < this.MAX_LOCAL_CACHE_SIZE) {
+						this.localCache.set(cacheKey, {
+							results: distributedCached,
+							timestamp: Date.now(),
+						});
+					}
+
+					return distributedCached;
+				}
+			}
+
+			// Cache miss - perform search
+			console.log('brAInwav GraphRAG cache miss - performing search', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				cacheKey: cacheKey.substring(0, 20) + '...',
+			});
+
+			// Parallelize embedding generation
+			const [denseVector, sparseVector] = await Promise.all([
+				this.embedDense(params.question),
+				this.embedSparse(params.question),
+			]);
+
+			// Optimized query request with batch operations
+			const queryRequest = {
 				query: {
 					must: [
 						{
@@ -129,29 +179,36 @@ export class QdrantHybridSearch {
 								limit: params.k,
 							},
 						},
+						// Only add sparse vector if it has meaningful content
+						...(sparseVector.indices.length > 0 ? [{
+							sparse_vector: {
+								name: 'sparse',
+								indices: sparseVector.indices,
+								values: sparseVector.values,
+								limit: params.k,
+							},
+						}] : []),
 					],
 				},
-				with_payload: true,
+				with_payload: {
+					include: ['node_id', 'chunk_content', 'path', 'node_type', 'node_key', 'line_start', 'line_end', 'brainwav_source'],
+				},
 				with_vector: params.includeVectors,
 				limit: params.k,
 				score_threshold: params.threshold,
 				filter: this._buildFilter(params.filters, params.namespace),
 			};
 
-			if (sparseVector.indices.length > 0 && sparseVector.values.length > 0) {
-				(queryRequest.query as { must: Array<Record<string, unknown>> }).must.push({
-					sparse_vector: {
-						name: 'sparse',
-						indices: sparseVector.indices,
-						values: sparseVector.values,
-						limit: params.k,
-					},
-				});
-			}
+			const response = await Promise.race([
+				this.client.query(this.config.collection, queryRequest),
+				new Promise((_, reject) =>
+					setTimeout(() => reject(new Error('Query timeout')), this.config.timeout)
+				),
+			]) as any;
 
-			const response = await this.client.query(this.config.collection, queryRequest);
 			const points = response.points ?? [];
 
+			// Batch transform results for better performance
 			const transformedResults: GraphRAGSearchResult[] = points.map((point) => ({
 				id: String(point.id),
 				score: point.score ?? 0,
@@ -173,14 +230,61 @@ export class QdrantHybridSearch {
 				vector: params.includeVectors ? (point.vector as number[]) : undefined,
 			}));
 
-			console.log(
-				`brAInwav GraphRAG Qdrant search completed: ${transformedResults.length} results in ${Date.now() - startTime}ms`,
-			);
+			// Cache results
+			await this.cacheResults(cacheKey, transformedResults);
+
+			console.log('brAInwav GraphRAG Qdrant search completed', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				resultCount: transformedResults.length,
+				durationMs: Date.now() - startTime,
+				localCacheSize: this.localCache.size,
+			});
 
 			return transformedResults;
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : String(error);
+			console.error('brAInwav GraphRAG Qdrant search failed', {
+				component: 'memory-core',
+				brand: 'brAInwav',
+				error: errorMessage,
+				durationMs: Date.now() - startTime,
+			});
 			throw new Error(`brAInwav GraphRAG Qdrant search failed: ${errorMessage}`);
+		}
+	}
+
+	private async cacheResults(cacheKey: string, results: GraphRAGSearchResult[]): Promise<void> {
+		// Store in local cache
+		if (this.localCache.size < this.MAX_LOCAL_CACHE_SIZE) {
+			this.localCache.set(cacheKey, {
+				results,
+				timestamp: Date.now(),
+			});
+		} else {
+			// Evict oldest local entry
+			const oldestKey = this.localCache.keys().next().value;
+			this.localCache.delete(oldestKey);
+			this.localCache.set(cacheKey, {
+				results,
+				timestamp: Date.now(),
+			});
+		}
+
+		// Store in distributed cache
+		if (this.distributedCache) {
+			try {
+				await this.distributedCache.set(cacheKey, results, {
+					namespace: 'qdrant',
+					ttl: 300000, // 5 minutes
+				});
+			} catch (error) {
+				console.warn('brAInwav GraphRAG distributed cache set failed', {
+					component: 'memory-core',
+					brand: 'brAInwav',
+					error: error instanceof Error ? error.message : String(error),
+				});
+			}
 		}
 	}
 
@@ -283,14 +387,58 @@ export class QdrantHybridSearch {
 	}
 
 	/**
+	 * Set up distributed cache integration
+	 */
+	async setDistributedCache(cache: import('../caching/DistributedCache.js').DistributedCache): Promise<void> {
+		this.distributedCache = cache;
+		console.info('brAInwav Qdrant GraphRAG distributed cache configured', {
+			component: 'memory-core',
+			brand: 'brAInwav',
+		});
+	}
+
+	/**
 	 * Close the connection (following memory-core patterns)
 	 */
 	async close(): Promise<void> {
+		// Clean up local cache
+		this.localCache.clear();
 		// QdrantClient doesn't require explicit closing, but we clean up references
 		this.client = null;
 		this.embedDense = null;
 		this.embedSparse = null;
-		console.log('brAInwav Qdrant GraphRAG client closed');
+		this.distributedCache = null;
+		console.log('brAInwav Qdrant GraphRAG client closed', {
+			component: 'memory-core',
+			brand: 'brAInwav',
+			localCacheSize: 0,
+		});
+	}
+
+	/**
+	 * Generate cache key for query parameters
+	 */
+	private _generateCacheKey(params: GraphRAGQueryParams): string {
+		const keyParts = [
+			params.question,
+			params.k.toString(),
+			params.threshold?.toString() || 'none',
+			params.namespace || 'none',
+			JSON.stringify(params.filters || {}),
+		];
+		return Buffer.from(keyParts.join('|')).toString('base64');
+	}
+
+	/**
+	 * Clean up expired cache entries
+	 */
+	private _cleanupCache(): void {
+		const now = Date.now();
+		for (const [key, value] of this.queryCache.entries()) {
+			if (now - value.timestamp > this.CACHE_TTL) {
+				this.queryCache.delete(key);
+			}
+		}
 	}
 
 	/**

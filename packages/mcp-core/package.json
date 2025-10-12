@@ -32,6 +32,7 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
+    "@cortex-os/utils": "workspace:*",
     "ajv": "^8.17.1",
     "zod": "^3.25.76"
   },
@@ -39,7 +40,7 @@
     "@types/node": "^22.18.1",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^3.2.4",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4",
     "ws": "^8.18.3"
   }
