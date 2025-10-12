@@ -142,7 +142,18 @@ describe('brAInwav Phase C.2: Remote MCP Orchestration', () => {
         })
         .mockResolvedValueOnce({
           // Step 3: SPARQL results with query text scoped to the QID
-          query: 'SELECT ?entity ?entityLabel ?property ?propertyLabel ?value ?valueLabel WHERE { VALUES ?entity { wd:Q34743 } ?entity ?prop ?statement . ?property wikibase:claim ?prop . ?statement ?ps ?value . ?property wikibase:statementProperty ?ps . SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } } ORDER BY ?propertyLabel ?valueLabel LIMIT 100',
+          query: `
+            SELECT ?entity ?entityLabel ?property ?propertyLabel ?value ?valueLabel WHERE {
+              VALUES ?entity { wd:Q34743 }
+              ?entity ?prop ?statement .
+              ?property wikibase:claim ?prop .
+              ?statement ?ps ?value .
+              ?property wikibase:statementProperty ?ps .
+              SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+            }
+            ORDER BY ?propertyLabel ?valueLabel
+            LIMIT 100
+          `,
           results: [
             { entity: 'Q34743', entityLabel: 'Alexander Graham Bell', propertyLabel: 'date of birth', value: '1847-03-03' }
           ]
