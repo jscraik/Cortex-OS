@@ -13,6 +13,29 @@ ai_provenance_hash: sha256:abcd1234...
 import subprocess
 import sys
 from pathlib import Path
+from typing import Sequence
+
+
+def _run_allowlisted_command(command: Sequence[str], **kwargs) -> subprocess.CompletedProcess:
+    """Execute a predefined command after validating arguments."""
+
+    if not command:
+        raise RuntimeError("Empty command is not allowed")
+
+    sanitized: list[str] = []
+    for part in command:
+        if not isinstance(part, str):
+            raise RuntimeError("Command parts must be strings")
+        if any(token in part for token in ("|", "&", ";", "$", "`")):
+            raise RuntimeError(f"Unsafe token in command part: {part}")
+        sanitized.append(part)
+
+    # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - command arguments validated for static tool checks
+    return subprocess.run(
+        sanitized,
+        shell=False,
+        **kwargs,
+    )
 
 
 def check_tool_availability():
@@ -22,7 +45,7 @@ def check_tool_availability():
 
     for tool in tools:
         try:
-            result = subprocess.run(
+            result = _run_allowlisted_command(
                 [tool, "--version"], capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0:

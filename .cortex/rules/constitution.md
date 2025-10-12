@@ -54,9 +54,12 @@ Use affected-only **smart** targets (`pnpm *:smart`), respect Nx dependency grap
 
 ### 5. Agent-First Architecture
 
-**MCP** for external tools (contracts with Zod; audited via MCP audit events).  
-**A2A** for inter-agent comms (event envelopes; no direct cross-domain imports).  
+**MCP** for external tools (contracts with Zod; audited via MCP audit events).
+**A2A** for inter-agent comms (event envelopes; no direct cross-domain imports).
 **Local Memory** for persistent context with **MCP/REST parity** (see §II.3 & §III Documentation).
+**Wikidata Semantic Surface**: The Wikidata connector defined in `config/connectors.manifest.json` is the canonical
+semantic-knowledge interface. Agents must route fact-finding and entity enrichment through this surface unless the
+Constitution grants an explicit waiver.
 
 ### 6. Security by Default
 

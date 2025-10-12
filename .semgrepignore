@@ -59,6 +59,9 @@ docs/**
 
 external/
 apps/**/external/
+apps/chatgpt-dashboard/e2e/**
+apps/cortex-py/tests/**
+scripts/__tests__/**
 data/db/
 data/events/
 

@@ -24,10 +24,13 @@ pnpm add @cortex-os/mcp @cortex-os/a2a-contracts
 ### Basic Usage
 
 ```typescript
+import type { ConnectorEntry } from '@cortex-os/protocol';
 import { executeWikidataWorkflow, routeFactQuery } from '@cortex-os/rag/integrations/remote-mcp';
 import { createAgentMCPClient } from '@cortex-os/rag/stubs/agent-mcp-client';
 import type { ConnectorEntry } from '@cortex-os/protocol';
 
+// Resolve the Wikidata connector from the manifest
+const wikidataConnector = resolveConnector(connectorsManifest, 'wikidata');
 // Initialize MCP client
 const mcpClient = createAgentMCPClient({
   endpoint: 'http://localhost:3029/mcp',
@@ -35,9 +38,14 @@ const mcpClient = createAgentMCPClient({
 });
 
 // Route a fact-finding query
-const routedQuery = await routeFactQuery(
+const routing = await routeFactQuery(
   'Who invented the telephone?',
-  { scope: 'facts', dimensions: 1024 }
+  wikidataConnector,
+  {
+    scope: 'facts',
+    matryoshkaDimension: 768,
+    embedderHint: 'jina-embeddings-v3',
+  }
 );
 
 // Resolve your Wikidata connector (e.g., from MCP discovery)
@@ -54,7 +62,8 @@ const results = await executeWikidataWorkflow(
   }
 );
 
-console.log('[brAInwav] Wikidata Results:', results);
+console.log('[brAInwav] Routing decision:', routing);
+console.log('[brAInwav] Wikidata results:', results);
 ```
 
 ## 🔄 Workflow Components
@@ -65,13 +74,21 @@ Routes queries to appropriate search scope with optimization hints:
 
 ```typescript
 import { routeFactQuery } from '@cortex-os/rag/integrations/remote-mcp';
+import connectorsManifest from '../../../config/connectors.manifest.json' assert { type: 'json' };
+
+const wikidataConnector = connectorsManifest.connectors.find(
+  (entry) => entry.id === 'wikidata'
+);
+
+if (!wikidataConnector) throw new Error('Wikidata connector missing');
 
 const routing = await routeFactQuery(
   'What are the properties of quantum entanglement?',
+  wikidataConnector,
   {
-    scope: 'facts',           // 'facts' | 'properties' | 'general'
-    dimensions: 1024,         // Matryoshka embedding dimensions
-    fallbackLocal: true      // Enable local store fallback
+    scope: 'properties',
+    matryoshkaDimension: 768,
+    embedderHint: 'jina-embeddings-v3',
   }
 );
 
@@ -84,6 +101,19 @@ Complete vector → claims → SPARQL pipeline with metadata stitching:
 
 ```typescript
 import { executeWikidataWorkflow } from '@cortex-os/rag/integrations/remote-mcp';
+import { createAgentMCPClient } from '@cortex-os/rag/integrations/agents-shim';
+import connectorsManifest from '../../../config/connectors.manifest.json' assert { type: 'json' };
+
+const wikidataConnector = connectorsManifest.connectors.find(
+  (entry) => entry.id === 'wikidata'
+);
+
+if (!wikidataConnector) throw new Error('Wikidata connector missing');
+
+const mcpClient = createAgentMCPClient({
+  endpoint: 'http://localhost:3029/mcp',
+  timeout: 30000,
+});
 
 const workflow = await executeWikidataWorkflow(
   routedQuery,
@@ -106,17 +136,26 @@ const workflow = await executeWikidataWorkflow(
 Comprehensive testing stub for development and testing:
 
 ```typescript
-import { createAgentMCPClient } from '@cortex-os/rag/stubs/agent-mcp-client';
+import { createAgentMCPClientStub } from '@cortex-os/rag/stubs/agent-mcp-client';
 
-const stubClient = createAgentMCPClient({
-  mockMode: true,
-  trackCalls: true
+const stubClient = createAgentMCPClientStub();
+
+// Configure mock responses using the canonical tool names
+stubClient.mockCallTool('vector_search_items', {
+  results: [
+    { qid: 'Q1234', title: 'Test Entity', score: 0.95 },
+  ],
 });
 
-// Configure mock responses
-stubClient.mockResponse('wikidata.vector_search_items', [
-  { qid: 'Q1234', title: 'Test Entity', score: 0.95 }
-]);
+stubClient.mockCallTool('get_claims', {
+  claims: [
+    { property: 'P31', value: 'Q898983', qualifiers: [] },
+  ],
+});
+
+stubClient.mockCallTool('sparql', {
+  results: [{ inventor: { type: 'uri', value: 'http://www.wikidata.org/entity/Q1234' } }],
+});
 
 // Track call history
 const history = stubClient.getCallHistory();
@@ -130,10 +169,10 @@ The integration provides these MCP tools:
 
 | Tool Name | Purpose | Input | Output |
 |-----------|---------|-------|--------|
-| `wikidata.vector_search_items` | Vector similarity search | Query, dimensions | Ranked entities |
-| `wikidata.get_claims` | Retrieve entity claims | QID, properties | Structured claims |
-| `wikidata.sparql_query` | Execute SPARQL queries | Query string | Result bindings |
-| `wikidata.search_facts` | Combined fact search | Query, scope | Enriched results |
+| `vector_search_items` | Vector similarity search over items | Query, matryoshkaDimension, scope | Ranked entities |
+| `vector_search_properties` | Vector similarity search over properties | Query, matryoshkaDimension, scope | Ranked properties |
+| `get_claims` | Retrieve entity claims | QID, brand | Structured claims |
+| `sparql` | Execute SPARQL queries | Query string, brand | Result bindings |
 
 ### A2A Event Integration
 
@@ -239,9 +278,9 @@ BRAINWAV_BRAND_ENABLED=true
 const config = {
   // Timeout settings
   timeouts: {
-    vector_search: 15000,
-    claims_retrieval: 10000,
-    sparql_query: 20000
+    vector_search_items: 15000,
+    get_claims: 10000,
+    sparql: 20000
   },
   
   // Fallback behavior
@@ -273,9 +312,23 @@ const config = {
 
 ```typescript
 import { WikidataIntegrationError } from '@cortex-os/rag/integrations/remote-mcp';
+import { createAgentMCPClient } from '@cortex-os/rag/integrations/agents-shim';
+import connectorsManifest from '../../../config/connectors.manifest.json' assert { type: 'json' };
+
+const wikidataConnector = connectorsManifest.connectors.find(
+  (entry) => entry.id === 'wikidata'
+);
+
+if (!wikidataConnector) throw new Error('Wikidata connector missing');
+
+const mcpClient = createAgentMCPClient({ endpoint: 'http://localhost:3029/mcp' });
+const workflowOptions = { timeout: 30000, enableSparql: true };
 
 try {
-  const results = await executeWikidataWorkflow(query, client, options);
+  const results = await executeWikidataWorkflow(query, wikidataConnector, {
+    ...workflowOptions,
+    mcpClient,
+  });
 } catch (error) {
   if (error instanceof WikidataIntegrationError) {
     // Handle specific wikidata errors
@@ -298,9 +351,15 @@ try {
 
 ```typescript
 // Enable graceful fallback to local store
-const safeResults = await executeWikidataWorkflow(query, client, {
-  fallbackLocal: true,
-  gracefulDegradation: true
+import { createAgentMCPClient } from '@cortex-os/rag/integrations/agents-shim';
+
+const mcpClient = createAgentMCPClient({ endpoint: 'http://localhost:3029/mcp' });
+const localStore = createLocalVectorStore();
+
+const safeResults = await executeWikidataWorkflow(query, wikidataConnector, {
+  mcpClient,
+  enablePartialResults: true,
+  localStore,
 });
 
 // Check result source
@@ -327,7 +386,10 @@ console.log('[brAInwav] Health status:', health);
 ```typescript
 // Track workflow performance
 const startTime = Date.now();
-const results = await executeWikidataWorkflow(query, client, options);
+const results = await executeWikidataWorkflow(query, wikidataConnector, {
+  ...options,
+  mcpClient,
+});
 const duration = Date.now() - startTime;
 
 // Log performance metrics
@@ -360,8 +422,16 @@ tail -f logs/wikidata-integration.log
 
 ```typescript
 // Use appropriate scope for better routing
-const factsQuery = await routeFactQuery(query, { scope: 'facts' });
-const propsQuery = await routeFactQuery(query, { scope: 'properties' });
+import connectorsManifest from '../../../config/connectors.manifest.json' assert { type: 'json' };
+
+const wikidataConnector = connectorsManifest.connectors.find(
+  (entry) => entry.id === 'wikidata'
+);
+
+if (!wikidataConnector) throw new Error('Wikidata connector missing');
+
+const factsRouting = await routeFactQuery(query, wikidataConnector, { scope: 'facts' });
+const propsRouting = await routeFactQuery(query, wikidataConnector, { scope: 'properties' });
 ```
 
 ### 2. Error Resilience
@@ -380,7 +450,12 @@ const options = {
 ```typescript
 // Use batch processing for multiple queries
 const batchResults = await Promise.allSettled(
-  queries.map(q => executeWikidataWorkflow(q, client, options))
+  queries.map((q) =>
+    executeWikidataWorkflow(q, wikidataConnector, {
+      ...options,
+      mcpClient,
+    })
+  )
 );
 ```
 

@@ -54,15 +54,35 @@ export type ApiResponse = z.infer<typeof ApiResponseSchema>;
 // ====================
 
 export class LocalMemoryClient {
-	private baseUrl: string;
+        private readonly base: URL;
+        private readonly baseUrl: string;
 
-	constructor(baseUrl = 'http://localhost:3028/api/v1') {
-		this.baseUrl = baseUrl;
-	}
+        constructor(baseUrl = 'http://localhost:3028/api/v1') {
+                const parsed = new URL(baseUrl);
+                if (!['localhost', '127.0.0.1'].includes(parsed.hostname)) {
+                        throw new Error(
+                                'LocalMemoryClient only allows localhost endpoints to avoid unintended outbound requests.'
+                        );
+                }
+                const normalizedPath = parsed.pathname.endsWith('/')
+                        ? parsed.pathname.slice(0, -1)
+                        : parsed.pathname;
+                this.base = new URL(`${parsed.origin}${normalizedPath}/`);
+                this.baseUrl = `${parsed.origin}${normalizedPath}`;
+        }
+
+        private buildUrl(path: string): string {
+                const target = new URL(path, this.base);
+                if (target.origin !== this.base.origin) {
+                        throw new Error('LocalMemoryClient refused to call non-local origin.');
+                }
+                return target.toString();
+        }
 
 	// Core Memory Operations
 	async storeMemory(memory: CreateMemory): Promise<Memory> {
-		const response = await fetch(`${this.baseUrl}/memories`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const response = await fetch(this.buildUrl('/memories'), {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(memory),
@@ -79,7 +99,8 @@ export class LocalMemoryClient {
 	}
 
 	async getMemory(id: string): Promise<Memory> {
-		const response = await fetch(`${this.baseUrl}/memories/${id}`);
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const response = await fetch(this.buildUrl(`/memories/${id}`));
 		const result = await response.json();
 		const parsed = ApiResponseSchema.parse(result);
 
@@ -90,9 +111,12 @@ export class LocalMemoryClient {
 		return MemorySchema.parse(parsed.data);
 	}
 
-	async searchMemories(query: string, limit = 10): Promise<SearchResult[]> {
-		const params = new URLSearchParams({ query, limit: limit.toString() });
-		const response = await fetch(`${this.baseUrl}/memories/search?${params}`);
+        async searchMemories(query: string, limit = 10): Promise<SearchResult[]> {
+                const params = new URLSearchParams({ query, limit: limit.toString() });
+                const url = new URL(this.buildUrl('/memories/search'));
+                url.search = params.toString();
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const response = await fetch(url);
 		const result = await response.json();
 
 		if (!result.data) {
@@ -103,7 +127,8 @@ export class LocalMemoryClient {
 	}
 
 	async updateMemory(id: string, updates: Partial<CreateMemory>): Promise<Memory> {
-		const response = await fetch(`${this.baseUrl}/memories/${id}`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const response = await fetch(this.buildUrl(`/memories/${id}`), {
 			method: 'PUT',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(updates),
@@ -120,7 +145,8 @@ export class LocalMemoryClient {
 	}
 
 	async deleteMemory(id: string): Promise<void> {
-		const response = await fetch(`${this.baseUrl}/memories/${id}`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const response = await fetch(this.buildUrl(`/memories/${id}`), {
 			method: 'DELETE',
 		});
 
@@ -134,7 +160,8 @@ export class LocalMemoryClient {
 
 	// AI-Powered Analysis
 	async analyzeMemories(query: string, analysisType = 'insights'): Promise<unknown> {
-		const response = await fetch(`${this.baseUrl}/analyze`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const response = await fetch(this.buildUrl('/analyze'), {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ query, analysis_type: analysisType }),
@@ -155,7 +182,8 @@ export class LocalMemoryClient {
 		const body: Record<string, unknown> = { limit };
 		if (memoryId) body.memory_id = memoryId;
 
-		const response = await fetch(`${this.baseUrl}/relationships/discover`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const response = await fetch(this.buildUrl('/relationships/discover'), {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body),
@@ -180,7 +208,8 @@ export class LocalMemoryClient {
 		const body: Record<string, unknown> = { analysis_type: analysisType, timeframe };
 		if (concept) body.concept = concept;
 
-		const response = await fetch(`${this.baseUrl}/temporal/patterns`, {
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const response = await fetch(this.buildUrl('/temporal/patterns'), {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body),
@@ -198,7 +227,8 @@ export class LocalMemoryClient {
 
 	// System Operations
 	async healthCheck(): Promise<{ status: string; timestamp: string }> {
-		const response = await fetch(`${this.baseUrl}/health`);
+                // nosemgrep: semgrep.owasp-top-10-2021-a10-server-side-request-forgery - buildUrl restricts requests to localhost origin.
+                const response = await fetch(this.buildUrl('/health'));
 		const result = await response.json();
 		const parsed = ApiResponseSchema.parse(result);
 

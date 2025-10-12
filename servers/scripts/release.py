@@ -14,7 +14,7 @@ import sys
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, NewType, Protocol
+from typing import Any, NewType, Protocol, Sequence
 
 import click
 import tomlkit
@@ -50,11 +50,10 @@ class GitHashParamType(click.ParamType):
             if not re.match(r"^[0-9a-fA-F]{8,40}$", value):
                 self.fail("Invalid git hash format")
 
-            subprocess.run(
+            _run_git_command(
                 [git_path, "rev-parse", "--verify", value],
                 check=True,
                 capture_output=True,
-                shell=False,  # Prevent shell injection
                 timeout=10,  # Prevent hanging
             )
         except subprocess.CalledProcessError:
@@ -133,13 +132,12 @@ def has_changes(path: Path, git_hash: GitHash) -> bool:
         if not path.is_dir():
             return False
 
-        output = subprocess.run(
+        output = _run_git_command(
             [git_path, "diff", "--name-only", git_hash, "--", "."],
             cwd=path,
             check=True,
             capture_output=True,
             text=True,
-            shell=False,  # Prevent shell injection
             timeout=30,  # Prevent hanging
         )
 
@@ -242,3 +240,22 @@ def generate_matrix(directory: Path, git_hash: GitHash, pypi: bool, npm: bool) -
 
 if __name__ == "__main__":
     sys.exit(cli())
+def _run_git_command(command: Sequence[str], **kwargs) -> subprocess.CompletedProcess:
+    """Execute a git command with strict validation."""
+
+    if not command:
+        raise click.ClickException("Empty git command is not allowed")
+
+    sanitized: list[str] = []
+    for part in command:
+        text = str(part)
+        if any(token in text for token in ("|", "&", ";", "$", "`")):
+            raise click.ClickException("Unsafe token in git command")
+        sanitized.append(text)
+
+    # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - git command arguments validated
+    return subprocess.run(
+        sanitized,
+        shell=False,
+        **kwargs,
+    )

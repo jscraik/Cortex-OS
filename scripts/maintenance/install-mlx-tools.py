@@ -20,6 +20,11 @@ def run_command(cmd, description):
         else:
             cmd_list = cmd
 
+        for part in cmd_list:
+            if any(token in str(part) for token in ["|", "&", ";", "$", "`"]):
+                raise subprocess.CalledProcessError(1, cmd_list, "Unsafe token detected")
+
+        # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - commands are split and tokens validated
         subprocess.run(
             cmd_list, shell=False, check=True, capture_output=True, text=True
         )
@@ -100,6 +105,7 @@ def main():
             else:
                 cmd_list = cmd
 
+            # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - commands parsed with shlex and validated
             result = subprocess.run(
                 cmd_list, shell=False, check=True, capture_output=True, text=True
             )

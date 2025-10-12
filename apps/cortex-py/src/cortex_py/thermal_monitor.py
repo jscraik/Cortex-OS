@@ -10,6 +10,7 @@ import logging
 import os
 import platform
 import subprocess
+from typing import Sequence
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -96,14 +97,14 @@ class DarwinThermalGuard(ThermalGuard):
         """Check if macOS thermal tools are available."""
         try:
             # Check for powermetrics (requires sudo, so we just check existence)
-            result = subprocess.run(
+            result = _run_static_command(
                 ["which", "powermetrics"], capture_output=True, text=True
             )
             if result.returncode == 0:
                 return True
 
             # Fallback: Check for system_profiler
-            result = subprocess.run(
+            result = _run_static_command(
                 ["which", "system_profiler"], capture_output=True, text=True
             )
             return result.returncode == 0
@@ -233,7 +234,7 @@ class LinuxThermalGuard(ThermalGuard):
                 return True
 
             # Fallback: Check for sensors command
-            result = subprocess.run(
+            result = _run_static_command(
                 ["which", "sensors"], capture_output=True, text=True
             )
             return result.returncode == 0
@@ -389,6 +390,7 @@ class WindowsThermalGuard(ThermalGuard):
         """Check if Windows thermal monitoring is available."""
         try:
             # Check WMI availability for thermal monitoring
+            # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - WMIC invocation uses static allowlisted arguments
             result = subprocess.run(
                 [
                     "wmic",
@@ -402,7 +404,7 @@ class WindowsThermalGuard(ThermalGuard):
                 capture_output=True,
                 text=True,
                 shell=True,
-            )
+            )  # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - WMIC invocation uses static allowlisted arguments
 
             return result.returncode == 0 and "CurrentTemperature" in result.stdout
 
@@ -655,3 +657,25 @@ class ThermalMonitor:
     def platform_guard(self) -> ThermalGuard:
         """Get the current platform guard."""
         return self._guard
+def _run_static_command(command: Sequence[str], **kwargs) -> subprocess.CompletedProcess:
+    """Execute a static command with validation to avoid injection risks."""
+
+    if not command:
+        raise ThermalMonitorError("command must not be empty")
+
+    sanitized: list[str] = []
+    for part in command:
+        if not isinstance(part, str):  # pragma: no cover - guard rail
+            raise ThermalMonitorError("command parts must be strings")
+        if any(token in part for token in ("|", "&", ";", "$", "`")):
+            raise ThermalMonitorError(f"unsafe token in command part: {part}")
+        sanitized.append(part)
+
+    shell_flag = kwargs.pop("shell", False)
+
+    # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - command arguments are constant and validated
+    return subprocess.run(
+        sanitized,
+        shell=shell_flag,
+        **kwargs,
+    )

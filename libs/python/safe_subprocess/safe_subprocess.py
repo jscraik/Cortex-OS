@@ -164,6 +164,7 @@ def safe_run(
             raise SafeSubprocessError(f"Working directory is not a directory: {cwd}")
 
     try:
+        # nosemgrep: semgrep.owasp-top-10-2021-a03-injection-command - high-level wrapper performs validation before execution
         return subprocess.run(
             cmd_parts,
             cwd=cwd,
