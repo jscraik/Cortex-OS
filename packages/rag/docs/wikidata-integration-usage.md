@@ -30,15 +30,17 @@ import { createAgentMCPClient } from '@cortex-os/rag/integrations/agents-shim';
 // TODO: Update the path below to point to your connectors.manifest.json location
 import connectorsManifest from './path/to/connectors.manifest.json' assert { type: 'json' };
 
-// Resolve the Wikidata connector from the manifest
-const wikidataConnector = connectorsManifest.connectors.find(
-  (entry: ConnectorEntry) => entry.id === 'wikidata'
-);
-
-if (!wikidataConnector) {
-  throw new Error('Wikidata connector missing from manifest');
+// Helper function to resolve a connector by id from the manifest
+function resolveConnector(manifest: { connectors: ConnectorEntry[] }, id: string): ConnectorEntry {
+  const connector = manifest.connectors.find((entry: ConnectorEntry) => entry.id === id);
+  if (!connector) {
+    throw new Error(`Connector with id "${id}" missing from manifest`);
+  }
+  return connector;
 }
 
+// Resolve the Wikidata connector from the manifest
+const wikidataConnector = resolveConnector(connectorsManifest, 'wikidata');
 // Initialize MCP client
 const mcpClient = createAgentMCPClient({
   endpoint: 'http://localhost:3029/mcp',
