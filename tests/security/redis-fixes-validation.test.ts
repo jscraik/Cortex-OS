@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+// eslint-disable-next-line sonarjs/slow-regex
 describe('ReDoS Security Fixes Validation', () => {
 	it('should prevent catastrophic backtracking in vulnerable regex patterns', () => {
 		// These are the old vulnerable patterns that could cause ReDoS
@@ -46,7 +47,7 @@ describe('ReDoS Security Fixes Validation', () => {
 							`Vulnerable pattern ${index} took ${duration}ms on input: ${input.substring(0, 50)}...`,
 						);
 					}
-				} catch (_error) {
+				} catch {
 					// Some patterns might throw due to complexity
 					console.log(`Vulnerable pattern ${index} threw error on malicious input`);
 				}

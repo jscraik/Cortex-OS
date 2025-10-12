@@ -81,6 +81,54 @@ This directory contains the working documentation and task artifacts for the com
             └─────────────┘ └──────────────────┘ └──────────────────┘
 ```
 
+### Layered Memory Execution Flow (2025-10)
+
+![Layered memory orchestration diagram](../docs/memory-core/layered-memory-flow.png)
+
+```ts
+import { createMemoryProviderFromEnv } from '@cortex-os/memory-core';
+
+const provider = createMemoryProviderFromEnv();
+
+// 1. Capture short-term notes without touching SQLite/Qdrant
+const { sessionId, id } = await provider.storeShortTerm('session-123', {
+	content: 'Drafting the release checklist',
+	importance: 4,
+	tags: ['checklist'],
+});
+
+// 2. Inspect or expire the session-scoped buffer as the workflow advances
+const sessionState = provider.getShortTermSession(sessionId);
+provider.flushShortTermExpired();
+
+// 3. Promote the session into the episodic/semantic layers when ready
+await provider.promoteShortTermSession(sessionId);
+
+// 4. Reconstruct reversible provenance from checkpoints when auditing
+const reversible = await provider.snapshotShortTerm('ckpt_short_001');
+```
+
+The short-term API keeps scratch data local and branded, while promotion pathways ensure episodic + semantic layers remain authoritative. Default promotion rules treat importance ≥ 8 as long-term-worthy and flush sessions after five minutes; override via `MEMORY_SHORT_TERM_PROMOTION_IMPORTANCE` and `MEMORY_SHORT_TERM_TTL_MS` as needed for your deployment.
+
+### Qdrant `memory_layer` Tagging & Backfill
+
+- Every new vector upsert in Qdrant now includes `memory_layer`, `memory_layer_version`, and `memory_layer_updated_at` payload fields.
+- Importance ≥ 8 automatically promotes a point to the `long_term` layer; all other vectors default to `semantic`.
+- `LocalMemoryProvider.backfillQdrantMemoryLayers()` scrolls the configured collection, tagging only payloads that are missing the field so the process is idempotent.
+- The backfill helper runs asynchronously on provider construction and can be invoked manually:
+
+```ts
+// Re-run the migration with custom batching or cancellation support
+const summary = await provider.backfillQdrantMemoryLayers({ batchSize: 512 });
+logger.info(summary); // { scanned, updated, skipped }
+```
+
+### Store Sequence (Future Promotion Path)
+
+![store() sequence diagram showing short-term-with tagging](../docs/memory-core/memory-store-sequence.png)
+
+Monitor the startup logs for `brAInwav memory_layer backfill completed` to confirm migrations finished successfully before enabling promotion flows in production.
+
 ## Deployment Architecture
 
 The refactor includes a comprehensive Docker Compose setup that provides:
@@ -148,9 +196,20 @@ async function hybridSearch(query: string) {
 # Enable Pieces integration
 PIECES_MCP_ENABLED=true
 
+# Short-term layer tuning (defaults shown)
+MEMORY_SHORT_TERM_TTL_MS=$((5 * 60 * 1000))
+MEMORY_SHORT_TERM_PROMOTION_IMPORTANCE=8
+
 # Pieces OS endpoint (SSE transport)
 PIECES_MCP_ENDPOINT=http://localhost:39300/model_context_protocol/2024-11-05/sse
 ```
+
+#### Promotion tuning playbook
+
+- **Dev fast loops**: drop `MEMORY_SHORT_TERM_TTL_MS` to `15000` (15 s) and keep `MEMORY_SHORT_TERM_PROMOTION_IMPORTANCE=6` when you need deterministic auto-promotion inside tests. Restore defaults before committing to avoid starving real sessions.
+- **Production guardrails**: keep TTL at least five minutes and leave `MEMORY_SHORT_TERM_PROMOTION_IMPORTANCE` ≥ 8 so only high-signal notes persist automatically. Document rationale in the release checklist whenever you tighten thresholds.
+- **Operational signals**: after changing either knob, verify logs for `brAInwav short-term memory cleanup removed` (TTL expiry cadence) and `brAInwav memory_layer backfill completed` (Qdrant payload parity). Missing or delayed entries indicate promotion lag or backfill drift.
+- **Rollback hooks**: if promotion floods long-term storage, revert env overrides and run `pnpm memory:flush` to trim expired short-term sessions before retrying.
 
 ### Docker Compose Configuration
 
@@ -205,4 +264,3 @@ Each phase includes:
 - [ ] Deterministic IDs; search recall smoke; retention policy unit tests.
 
 > See `CHECKLIST.cortex-os.md` for the full CI gate reference.
-

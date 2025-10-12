@@ -11,7 +11,7 @@ AUTH_MODE=oauth2                  # oauth2 | optional | api-key | anonymous
 AUTH0_DOMAIN=TENANT.auth0.com     # without protocol
 AUTH0_AUDIENCE=https://your-mcp-host/mcp
 MCP_RESOURCE_URL=https://your-mcp-host/mcp
-REQUIRED_SCOPES=search.read docs.write
+REQUIRED_SCOPES=search.read docs.write memory.read memory.write memory.delete
 REQUIRED_SCOPES_ENFORCE=true
 ```
 
@@ -49,7 +49,10 @@ Key exports:
   "resource": "https://your-mcp-host/mcp",
   "scopes": {
     "codebase.search": ["search.read"],
-    "docs.create": ["docs.write"]
+    "docs.create": ["docs.write"],
+    "local_memory_search": ["memory.read"],
+    "local_memory_store": ["memory.write"],
+    "local_memory_delete": ["memory.delete"]
   }
 }
 ```
@@ -60,6 +63,9 @@ Scopes are collected automatically whenever a tool registers with `securitySchem
 
 - `codebase.search` → `[noauth, oauth2(search.read)]`
 - `docs.create` → `[oauth2(docs.write)]`
+- `local_memory_search` → `[oauth2(memory.read)]`
+- `local_memory_store` → `[oauth2(memory.write)]`
+- `local_memory_delete` → `[oauth2(memory.delete)]`
 
 When a tool *only* lists `oauth2`, the runtime checks that the incoming session contains the required scopes before executing the handler. Missing scopes raise an error that surfaces to the client.
 

@@ -1,17 +1,18 @@
 import type { NextFunction, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { pino } from 'pino';
 
 const logger = pino({ level: 'info' });
 
 export function requestLogger(req: Request, res: Response, next: NextFunction): void {
 	const start = Date.now();
-	const requestId = req.headers['x-request-id'] || `req-${Date.now()}-${Math.random()}`;
+	const requestId = req.headers['x-request-id'] || `req-${Date.now()}-${randomUUID()}`;
 
 	// Add request ID to headers
 	res.setHeader('X-Request-ID', requestId);
 
 	// Log request
-	logger.info('API request', {
+	logger.info('[brAInwav] API request', {
 		requestId,
 		method: req.method,
 		url: req.url,
@@ -22,7 +23,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
 	// Log response
 	res.on('finish', () => {
 		const duration = Date.now() - start;
-		logger.info('API response', {
+		logger.info('[brAInwav] API response', {
 			requestId,
 			method: req.method,
 			url: req.url,

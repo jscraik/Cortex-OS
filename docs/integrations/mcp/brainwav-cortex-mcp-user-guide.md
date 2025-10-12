@@ -183,8 +183,9 @@ Example project config (.mcp.json):
 ## Security and reliability
 
 - Treat third‑party servers as untrusted by default; watch for prompt injection.
-- Prefer HTTPS, avoid secrets in URLs, and use minimal scopes/permissions.
+- Prefer HTTPS, avoid secrets in URLs, and use minimal scopes/permissions (MCP OAuth requires `search.read`, `docs.write`, `memory.read`, `memory.write`, `memory.delete`).
 - Cloudflare tunnel health: if no public URL appears, check `cloudflared` and `CLOUDFLARE_*` envs.
+- Evidence: archive the Cloudflare tunnel output, ChatGPT transcript, and Cortex MCP logs for every validation run.
 - Strict mode: set `CORTEX_MCP_TUNNEL_STRICT=1` to fail fast on tunnel errors.
 
 ## Using MCP in Cortex Code (optional)

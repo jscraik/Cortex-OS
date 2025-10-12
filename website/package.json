@@ -2,6 +2,7 @@
   "name": "cortex-os-docs",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "start:local": "docusaurus start --config docusaurus.config.local.ts --port 3005",
     "build:local": "docusaurus build --config docusaurus.config.local.ts",

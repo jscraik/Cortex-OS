@@ -1,0 +1,29 @@
+flowchart TB
+    subgraph Client[Client APIs]
+        A[storeShortTerm]
+        B[persistMemory]
+        C[search]
+    end
+
+    A -->|ShortTermMemoryStore.store| ST[ShortTermMemoryStore]
+    ST -->|promotion| SQL[SQLite Episodic Store]
+    SQL -->|CheckpointManager.snapshot| CP[Checkpoint Manager]
+    SQL -->|scheduleVectorIndexing| Qdrant
+
+    Qdrant -->|memory_layer: semantic| Semantic[(Semantic vectors)]
+    Qdrant -->|memory_layer: long_term| LongTerm[(Long-term vectors)]
+
+    C -->|hybrid search| SearchRouter
+    SearchRouter --> ST
+    SearchRouter --> SQL
+    SearchRouter --> Qdrant
+
+    subgraph Services[brAInwav Orchestration]
+        ST
+        SQL
+        CP
+        SearchRouter
+    end
+
+    classDef layer fill:#0f172a,stroke:#38bdf8,stroke-width:1px,color:#f8fafc
+    class ST,SQL,Qdrant,SearchRouter layer

@@ -278,6 +278,12 @@ export interface MemoryCoreConfig {
 	// Qdrant
 	qdrant?: QdrantConfig;
 
+	// Short-term layer
+	shortTerm?: {
+		ttlMs: number;
+		promotionImportance: number;
+	};
+
 	// Embedding
 	embeddingModel?: string;
 	embedDim?: number;

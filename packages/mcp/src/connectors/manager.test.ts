@@ -242,4 +242,210 @@ describe('ConnectorProxyManager', () => {
                         { name: 'sparql', description: 'Wikidata SPARQL execution' },
                 ]);
         });
+
+	describe('Tool Name Normalization (Phase B.1)', () => {
+		it('should normalize vector_search_items to wikidata.vector_search_items', async () => {
+			const registry = createVersionedToolRegistry();
+			const proxies = new Map();
+			const tools = [
+				{
+					name: 'vector_search_items',
+					description: 'Semantic vector search',
+					inputSchema: { type: 'object' as const, properties: {} },
+				},
+			];
+
+			const manager = new ConnectorProxyManager({
+				manifestPath: null,
+				fetchManifest: async () =>
+					createManifest('secret-123', [
+						{
+							...buildConnectorEntry(),
+							id: 'wikidata',
+							name: 'Wikidata',
+							displayName: 'Wikidata',
+							endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+							scopes: ['wikidata:vector-search'],
+							remoteTools: [
+								{
+									name: 'vector_search_items',
+									description: 'Semantic vector search',
+									tags: ['vector', 'search', 'items'],
+									scopes: ['wikidata:vector-search'],
+								},
+							],
+						},
+					]),
+				connectorsApiKey: 'connectors-token',
+				registry,
+				logger: new Server().getLogger(),
+				createProxy: (config) => {
+					const proxy = new StubProxy(config, tools);
+					proxies.set(config.serviceLabel, proxy);
+					return proxy as never;
+				},
+			});
+
+			await manager.sync(true);
+
+			const registered = registry.listTools().filter((tool) => tool.name.includes('vector_search_items'));
+
+			expect(registered).toHaveLength(1);
+			expect(registered[0].name).toBe('wikidata.vector_search_items');
+		});
+
+		it('should normalize get_entity_claims to wikidata.get_claims', async () => {
+			const registry = createVersionedToolRegistry();
+			const proxies = new Map();
+			const tools = [
+				{
+					name: 'get_entity_claims',
+					description: 'Get claims',
+					inputSchema: { type: 'object' as const, properties: {} },
+				},
+			];
+
+			const manager = new ConnectorProxyManager({
+				manifestPath: null,
+				fetchManifest: async () =>
+					createManifest('secret-123', [
+						{
+							...buildConnectorEntry(),
+							id: 'wikidata',
+							name: 'Wikidata',
+							displayName: 'Wikidata',
+							endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+							scopes: ['wikidata:claims'],
+							remoteTools: [
+								{
+									name: 'get_claims',
+									description: 'Retrieve claims',
+									tags: ['claims', 'entities'],
+									scopes: ['wikidata:claims'],
+								},
+							],
+						},
+					]),
+				connectorsApiKey: 'connectors-token',
+				registry,
+				logger: new Server().getLogger(),
+				createProxy: (config) => {
+					const proxy = new StubProxy(config, tools);
+					proxies.set(config.serviceLabel, proxy);
+					return proxy as never;
+				},
+			});
+
+			await manager.sync(true);
+
+			const registered = registry.listTools().filter((tool) => tool.name.includes('get_claims'));
+
+			expect(registered).toHaveLength(1);
+			expect(registered[0].name).toBe('wikidata.get_claims');
+		});
+
+		it('should attach correct tags from remoteTools', async () => {
+			const registry = createVersionedToolRegistry();
+			const proxies = new Map();
+			const tools = [
+				{
+					name: 'sparql',
+					description: 'SPARQL query',
+					inputSchema: { type: 'object' as const, properties: {} },
+				},
+			];
+
+			const manager = new ConnectorProxyManager({
+				manifestPath: null,
+				fetchManifest: async () =>
+					createManifest('secret-123', [
+						{
+							...buildConnectorEntry(),
+							id: 'wikidata',
+							name: 'Wikidata',
+							displayName: 'Wikidata',
+							endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+							scopes: ['wikidata:sparql'],
+							remoteTools: [
+								{
+									name: 'sparql',
+									description: 'Execute SPARQL',
+									tags: ['sparql', 'graph', 'query'],
+									scopes: ['wikidata:sparql'],
+								},
+							],
+						},
+					]),
+				connectorsApiKey: 'connectors-token',
+				registry,
+				logger: new Server().getLogger(),
+				createProxy: (config) => {
+					const proxy = new StubProxy(config, tools);
+					proxies.set(config.serviceLabel, proxy);
+					return proxy as never;
+				},
+			});
+
+			await manager.sync(true);
+
+			const registered = registry.listTools().filter((tool) => tool.name === 'wikidata.sparql');
+
+			expect(registered).toHaveLength(1);
+			expect(registered[0].metadata?.tags).toEqual(['sparql', 'graph', 'query']);
+		});
+
+		it('should log normalization with brAInwav context', async () => {
+			const registry = createVersionedToolRegistry();
+			const proxies = new Map();
+			const logger = new Server().getLogger();
+			const logSpy = vi.spyOn(logger, 'info');
+			const tools = [
+				{
+					name: 'vector_search_items',
+					description: 'Vector search',
+					inputSchema: { type: 'object' as const, properties: {} },
+				},
+			];
+
+			const manager = new ConnectorProxyManager({
+				manifestPath: null,
+				fetchManifest: async () =>
+					createManifest('secret-123', [
+						{
+							...buildConnectorEntry(),
+							id: 'wikidata',
+							name: 'Wikidata',
+							displayName: 'Wikidata',
+							endpoint: 'https://wd-mcp.wmcloud.org/mcp/',
+							scopes: ['wikidata:vector-search'],
+							remoteTools: [
+								{
+									name: 'vector_search_items',
+									description: 'Semantic vector search',
+									tags: ['vector'],
+									scopes: ['wikidata:vector-search'],
+								},
+							],
+						},
+					]),
+				connectorsApiKey: 'connectors-token',
+				registry,
+				logger,
+				createProxy: (config) => {
+					const proxy = new StubProxy(config, tools);
+					proxies.set(config.serviceLabel, proxy);
+					return proxy as never;
+				},
+			});
+
+			await manager.sync(true);
+
+			expect(logSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					connectorCount: 1,
+				}),
+				'Loaded connectors manifest',
+			);
+		});
+	});
 });

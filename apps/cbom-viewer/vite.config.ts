@@ -9,8 +9,4 @@ export default defineConfig({
 			'@cortex-os/cbom': path.resolve(__dirname, '../../packages/cbom/src'),
 		},
 	},
-	test: {
-		environment: 'jsdom',
-		globals: true,
-	},
 });

@@ -1,0 +1,81 @@
+[
+  {
+    "file": "tasks/wikidata-semantic-layer-integration/SESSION_COMPLETE.md", 
+    "line": 6,
+    "end_line": 6,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Claims '✅ READY FOR PR MERGE' without actual implementation - violates brAInwav production standards",
+    "evidence": "Final Status**: ✅ READY FOR PR MERGE (Pending Test Verification)",
+    "fix": "Change status to 'DOCUMENTATION ONLY - NO IMPLEMENTATION' and remove production-ready claims",
+    "tests_to_add": "Add verification test that checks for actual wikidata package existence before allowing completion claims",
+    "rule": "brainwav.production-ready-without-implementation",
+    "standards": [
+      "policy:RULES_OF_AI#production-claims",
+      "governance:agentic-coding-workflow#phase-verification"
+    ]
+  },
+  {
+    "file": "tasks/wikidata-semantic-layer-integration/SESSION_COMPLETE.md",
+    "line": 25,
+    "end_line": 25, 
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Claims '54% of total project (7 of 13 subphases)' but no actual packages or implementation exist",
+    "evidence": "Progress**: 54% Complete (7 of 13 subphases)",
+    "fix": "Correct progress to 'DOCUMENTATION ONLY - 0% implementation complete'",
+    "tests_to_add": "Add progress verification that checks actual file existence before calculating percentages",
+    "rule": "brainwav.false-completion-claims",
+    "standards": [
+      "policy:RULES_OF_AI#honest-status-reporting",
+      "governance:agentic-coding-workflow#verification-gates"
+    ]
+  },
+  {
+    "file": "packages/mcp-registry/src/providers/mcpmarket.ts",
+    "line": 46,
+    "end_line": 50,
+    "severity": "medium", 
+    "category": "security",
+    "description": "Hardcoded absolute path to wrapper script creates deployment brittleness and security exposure",
+    "evidence": "command: '/Users/jamiecraik/.Cortex-OS/arxiv-mcp-wrapper.sh'",
+    "fix": "Use relative path or environment variable: process.env.ARXIV_WRAPPER_PATH || './scripts/arxiv-mcp-wrapper.sh'",
+    "tests_to_add": "Add test to verify wrapper script path is configurable and doesn't contain absolute user paths",
+    "rule": "security.hardcoded-paths",
+    "standards": [
+      "codestyle:security-boundaries",
+      "owasp:A05-security-misconfiguration"
+    ]
+  },
+  {
+    "file": "packages/memory-core/src/services/GraphRAGService.ts",
+    "line": 49,
+    "end_line": 49,
+    "severity": "low",
+    "category": "brainwav-branding", 
+    "description": "Missing brAInwav branding in DEFAULT_QDRANT_CONFIG property name",
+    "evidence": "brainwavBranding: true,",
+    "fix": "Use consistent branding: 'brAInwavBranding: true' to match company standards",
+    "tests_to_add": "Add test to verify brAInwav branding consistency across configuration objects",
+    "rule": "brainwav.branding.consistency",
+    "standards": [
+      "policy:RULES_OF_AI#branding-standards"
+    ]
+  },
+  {
+    "file": "tasks/wikidata-semantic-layer-integration/research.md",
+    "line": 1,
+    "end_line": -1,
+    "severity": "medium",
+    "category": "quality-gate",
+    "description": "Extensive documentation exists but no corresponding implementation packages found in repository",
+    "evidence": "Multiple task documents totaling ~40,000 lines but zero actual wikidata packages in apps/ or packages/",
+    "fix": "Either implement the documented features or clearly mark documentation as 'PLANNING ONLY' status",
+    "tests_to_add": "Add CI check that verifies documented features have corresponding implementation files",
+    "rule": "quality.documentation-implementation-mismatch", 
+    "standards": [
+      "governance:code-review-checklist#implementation-verification",
+      "policy:RULES_OF_AI#production-claims"
+    ]
+  }
+]

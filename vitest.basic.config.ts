@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { defineConfig } from 'vitest/config';
-import { resolveCoverageThresholds } from './vitest.config';
+import { resolveCoverageThresholds } from './vitest.config.js';
 
 const coverageThresholds = resolveCoverageThresholds();
 

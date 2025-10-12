@@ -55,7 +55,7 @@ AUTH_MODE=oauth2
 AUTH0_DOMAIN=TENANT.auth0.com
 AUTH0_AUDIENCE=https://your-mcp-host/mcp
 MCP_RESOURCE_URL=https://your-mcp-host/mcp
-REQUIRED_SCOPES=search.read docs.write
+REQUIRED_SCOPES=search.read docs.write memory.read memory.write memory.delete
 ```
 
 Then rebuild the server:
@@ -80,7 +80,10 @@ A healthy response looks like:
   "resource": "https://your-mcp-host/mcp",
   "scopes": {
     "codebase.search": ["search.read"],
-    "docs.create": ["docs.write"]
+    "docs.create": ["docs.write"],
+    "local_memory_search": ["memory.read"],
+    "local_memory_store": ["memory.write"],
+    "local_memory_delete": ["memory.delete"]
   }
 }
 ```
@@ -96,7 +99,7 @@ A healthy response looks like:
    | Authorization URL          | `https://TENANT.auth0.com/authorize`                      |
    | Token URL                  | `https://TENANT.auth0.com/oauth/token`                    |
    | Client authentication      | `Basic` (Auth0 client secret)                             |
-   | Scopes                     | `search.read docs.write`                                  |
+   | Scopes                     | `search.read docs.write memory.read memory.write memory.delete` |
    | Protected Resource Metadata| `https://your-mcp-host/.well-known/oauth-protected-resource` |
 
 4. Save the connector. ChatGPT will dynamically register a client with Auth0 and prompt you through Universal Login.

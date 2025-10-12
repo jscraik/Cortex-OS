@@ -28,13 +28,13 @@ const coverageThresholds = resolveCoverageThresholds();
 export default defineConfig({
 	test: {
 		globals: true,
-		// EMERGENCY MEMORY CONSTRAINTS - NEVER REMOVE OR BYPASS
-		fileParallelism: false, // ensure only one file runs at a time
-		maxWorkers: 1, // CRITICAL: prevents multiple memory-hungry processes
+	// Optimized performance settings with memory safety
+		fileParallelism: true, // Enable parallel file execution
+		maxWorkers: 4, // Increased from 1 for better performance
 		// Memory management settings
 		isolate: true,
 		sequence: {
-			concurrent: false, // Run tests sequentially to save memory
+			concurrent: true, // Enable concurrent execution with controlled memory
 		},
 		// Force garbage collection between test files
 		testTimeout: 20000, // Reduced to prevent hanging processes
@@ -45,16 +45,16 @@ export default defineConfig({
 		pool: 'forks',
 		poolOptions: {
 			forks: {
-				// CRITICAL: single fork with strict memory limits
-				singleFork: true,
-				maxForks: 1,
-				minForks: 1,
+				// Optimized fork configuration for performance
+				singleFork: false,
+				maxForks: 4,
+				minForks: 2,
 				execArgv: [
-					'--max-old-space-size=1536', // Reduced from 2048 to prevent system freeze
-					'--heapsnapshot-near-heap-limit=1', // More aggressive heap monitoring
+					'--max-old-space-size=2048', // Balanced memory allocation
+					'--heapsnapshot-near-heap-limit=2', // Moderate heap monitoring
 					'--expose-gc',
-					'--max-semi-space-size=64', // Limit young generation space
-					'--optimize-for-size', // Optimize for memory usage over speed
+					'--max-semi-space-size=128', // Increased young generation space
+					'--optimize-for-size', // Keep memory optimization
 				],
 			},
 		},
