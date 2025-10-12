@@ -36,6 +36,37 @@ const DEFAULT_CONFIG: ThermalPolicyConfig = {
 
 const RECOVERY_REDUCTION = 0.6;
 
+/**
+ * ThermalPolicy is a critical component for managing and enforcing thermal limits
+ * within the system. It provides logic to determine operational constraints based
+ * on current and predicted thermal states, and can recommend throttling, cooldowns,
+ * or restoration of capabilities as appropriate.
+ *
+ * ## Configuration
+ * The policy can be configured via the constructor with options such as:
+ * - `maxDepth`: Maximum allowed operation depth.
+ * - `maxNodes`: Maximum number of nodes allowed.
+ * - `maxConcurrentOps`: Maximum concurrent operations permitted.
+ * - `proactiveTempThreshold`: Temperature threshold for proactive throttling.
+ * - `rapidIncreaseDelta`: Temperature delta to detect rapid increases.
+ * - `cooldownPaddingMs`: Additional cooldown time in milliseconds.
+ *
+ * ## Key Methods
+ * - {@link getThermalLimits}: Given the current thermal state and optional context,
+ *   returns a recommendation for operational limits, including whether throttling
+ *   or cooldown is required.
+ *
+ * ## Usage
+ * Instantiate the policy with optional configuration, then call `getThermalLimits`
+ * as needed to obtain recommendations based on the current system state.
+ *
+ * @example
+ * const policy = new ThermalPolicy({ maxDepth: 10 });
+ * const recommendation = await policy.getThermalLimits(currentState, { operationElapsedMs: 500 });
+ * if (recommendation.cooldownRequired) {
+ *   // Initiate cooldown logic
+ * }
+ */
 export class ThermalPolicy {
         private readonly config: ThermalPolicyConfig;
 
