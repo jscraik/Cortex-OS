@@ -313,7 +313,7 @@ function setupShutdownHandlers(
                 await copilotProxy?.disconnect().catch(() => undefined);
                 await connectorsProxy?.disconnectAll().catch(() => undefined);
                 await metricsServer?.close().catch(() => undefined);
-                metricsServerHandle = null;
+                // Do not mutate global metricsServerHandle here to avoid race conditions.
                 await shutdownTracing().catch(() => undefined);
                 await transport.stop().catch(() => undefined);
                 process.exit(0);
