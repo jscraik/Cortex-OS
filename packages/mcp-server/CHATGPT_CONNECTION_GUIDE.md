@@ -37,7 +37,7 @@ Server Name: brAInwav Cortex Memory
 Description: brAInwav unified memory hub with local and Pieces LTM integration
 ```
 
-**Note:** FastMCP v3.18.0 serves the MCP protocol at `/mcp`. The `/sse` endpoint mentioned in some documentation may be for newer versions or different implementations.
+**Note:** FastMCP v3.19.1 serves the MCP protocol at `/mcp`. The `/sse` endpoint mentioned in some documentation may be for newer versions or different implementations.
 
 ### Step 3: Available Tools
 

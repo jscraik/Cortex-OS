@@ -52,6 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Deployment Status**: ✅ **PRODUCTION READY** - Ready for immediate deployment
 
+### Fixed
+
+- Upgraded `@cortex-os/mcp-server` to FastMCP 3.19.1 to stop `clientInfo.vendor` crashes when clients omit vendor metadata.
+
 ### Security
 
 #### CodeQL Security Fixes - Modules 7-10 (2025-01-11)

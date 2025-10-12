@@ -164,7 +164,7 @@ Install these for all advanced FastMCP v3 features:
 
 ```json
 {
-  "fastmcp": "^3.18.0",
+  "fastmcp": "^3.19.1",
   "@modelcontextprotocol/sdk": "^1.17.4",
   "@standard-schema/spec": "^1.0.0",
   "execa": "^9.6.0",
@@ -237,5 +237,5 @@ brAInwav Cortex Memory MCP Server is a showcase of FastMCP v3’s advanced, prod
 ***
 
 **Maintained by:** brAInwav Development Team  
-**FastMCP Version:** 3.18.0  
+**FastMCP Version:** 3.19.1
 **MCP SDK Version:** 1.17.4
