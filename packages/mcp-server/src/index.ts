@@ -317,13 +317,23 @@ async function main() {
 
 	const connectorsProxy = createConnectorsProxy(connectorsConfig, logger);
 
-	registerTools(server, logger, { piecesProxy, config, ollama, hybrid, auth, oauthOptions });
+        registerTools(server, logger, {
+                piecesProxy,
+                driveProxy,
+                copilotProxy,
+                contextBridge,
+                config,
+                ollama,
+                hybrid,
+                auth,
+                oauthOptions,
+        });
 	createPrompts(server, logger);
 	createResources(server, logger);
 
 	const heartbeatStopper = await maybeWarmupOllama(config, ollama, logger);
 	await validateOllamaDeployment(ollama, logger);
-	await attachPiecesTools(server, logger, piecesProxy, driveProxy, copilotProxy, contextBridge);
+        await attachPiecesTools(server, logger, piecesProxy, driveProxy, copilotProxy, contextBridge);
 	await attachConnectorsTools(server, logger, connectorsProxy);
 	const transport = await startTransport(server, logger, config, auth);
 
