@@ -2,6 +2,14 @@
 
 import type { Logger } from 'pino';
 import { pino } from 'pino';
+import {
+        initializeMetrics,
+} from '@cortex-os/mcp-bridge/runtime/telemetry/metrics';
+import {
+        type MetricsServerHandle,
+        startMetricsServer,
+} from '@cortex-os/mcp-bridge/runtime/telemetry/metrics-server';
+import { initializeTracing, shutdownTracing } from '@cortex-os/mcp-bridge/runtime/telemetry/tracing';
 import { type ConnectorsConfig, loadConnectorsConfig } from './config/connectors.js';
 import { loadHybridConfig } from './config/hybrid.js';
 import { loadOllamaConfig, type OllamaConfig } from './config/ollama.js';
@@ -23,12 +31,14 @@ type HeartbeatStopper = () => void;
 
 const PIECES_DEFAULT_ENDPOINT = 'http://localhost:39300/model_context_protocol/2024-11-05/sse';
 const PIECES_DRIVE_DEFAULT_ENDPOINT =
-	'http://localhost:39301/model_context_protocol/2024-11-05/sse';
+        'http://localhost:39301/model_context_protocol/2024-11-05/sse';
 const PIECES_COPILOT_DEFAULT_ENDPOINT =
-	'http://localhost:39302/model_context_protocol/2024-11-05/sse';
+        'http://localhost:39302/model_context_protocol/2024-11-05/sse';
+
+let metricsServerHandle: MetricsServerHandle | null = null;
 
 function createLogger(level: string): Logger {
-	return pino({ level });
+        return pino({ level });
 }
 
 function createPiecesProxy(config: ServerConfig, logger: Logger): PiecesMCPProxy | null {
@@ -237,30 +247,79 @@ async function validateOllamaDeployment(ollama: OllamaConfig, logger: Logger) {
 		const message = error instanceof Error ? error.message : String(error);
 		logger.warn(
 			createBrandedLog('ollama_validation_error', { error: message }),
-			'Failed to validate Ollama deployment',
-		);
-	}
+                        'Failed to validate Ollama deployment',
+                );
+        }
+}
+
+async function initializeTelemetry(logger: Logger, config: ServerConfig): Promise<void> {
+        initializeMetrics(BRAND.prefix);
+
+        if (config.metricsEnabled) {
+                const metricsPath = config.metricsPath.startsWith('/')
+                        ? (config.metricsPath as `/${string}`)
+                        : (`/${config.metricsPath}` as `/${string}`);
+                try {
+                        metricsServerHandle = startMetricsServer({
+                                brandPrefix: BRAND.prefix,
+                                host: config.metricsHost,
+                                logger,
+                                path: metricsPath,
+                                port: config.metricsPort,
+                        });
+                        logger.info(
+                                createBrandedLog('metrics_enabled', {
+                                        host: config.metricsHost,
+                                        path: metricsPath,
+                                        port: config.metricsPort,
+                                }),
+                                'Prometheus metrics endpoint enabled',
+                        );
+                } catch (error) {
+                        const message = error instanceof Error ? error.message : String(error);
+                        logger.error(
+                                createBrandedLog('metrics_start_failed', {
+                                        host: config.metricsHost,
+                                        path: metricsPath,
+                                        port: config.metricsPort,
+                                        error: message,
+                                }),
+                                'Failed to start Prometheus metrics endpoint',
+                        );
+                }
+        } else {
+                logger.info(
+                        createBrandedLog('metrics_disabled'),
+                        'Prometheus metrics disabled by configuration',
+                );
+        }
+
+        await initializeTracing(BRAND.prefix);
 }
 
 function setupShutdownHandlers(
-	logger: Logger,
-	transport: TransportController,
-	piecesProxy: PiecesMCPProxy | null,
-	driveProxy: PiecesDriveMCPProxy | null,
-	copilotProxy: PiecesCopilotMCPProxy | null,
-	connectorsProxy: ConnectorsProxyManager | null,
-	heartbeatStopper: HeartbeatStopper | null,
+        logger: Logger,
+        transport: TransportController,
+        piecesProxy: PiecesMCPProxy | null,
+        driveProxy: PiecesDriveMCPProxy | null,
+        copilotProxy: PiecesCopilotMCPProxy | null,
+        connectorsProxy: ConnectorsProxyManager | null,
+        metricsServer: MetricsServerHandle | null,
+        heartbeatStopper: HeartbeatStopper | null,
 ) {
-	const shutdown = async (signal: NodeJS.Signals) => {
-		logger.info(createBrandedLog('shutdown_signal', { signal }), `${BRAND.prefix} shutting down`);
-		heartbeatStopper?.();
-		await piecesProxy?.disconnect().catch(() => undefined);
-		await driveProxy?.disconnect().catch(() => undefined);
-		await copilotProxy?.disconnect().catch(() => undefined);
-		await connectorsProxy?.disconnectAll().catch(() => undefined);
-		await transport.stop().catch(() => undefined);
-		process.exit(0);
-	};
+        const shutdown = async (signal: NodeJS.Signals) => {
+                logger.info(createBrandedLog('shutdown_signal', { signal }), `${BRAND.prefix} shutting down`);
+                heartbeatStopper?.();
+                await piecesProxy?.disconnect().catch(() => undefined);
+                await driveProxy?.disconnect().catch(() => undefined);
+                await copilotProxy?.disconnect().catch(() => undefined);
+                await connectorsProxy?.disconnectAll().catch(() => undefined);
+                await metricsServer?.close().catch(() => undefined);
+                metricsServerHandle = null;
+                await shutdownTracing().catch(() => undefined);
+                await transport.stop().catch(() => undefined);
+                process.exit(0);
+        };
 
 	process.once('SIGINT', () => {
 		void shutdown('SIGINT');
@@ -316,17 +375,19 @@ async function attachConnectorsTools(
 }
 
 async function main() {
-	const config = loadServerConfig();
-	const logger = createLogger(config.logLevel);
-	const hybrid = loadHybridConfig(logger);
-	const ollama = loadOllamaConfig(hybrid);
-	const connectorsConfig = loadConnectorsConfig(logger);
-	const { server, auth, oauthOptions } = createServer(logger, config);
+        const config = loadServerConfig();
+        const logger = createLogger(config.logLevel);
+        const hybrid = loadHybridConfig(logger);
+        const ollama = loadOllamaConfig(hybrid);
+        const connectorsConfig = loadConnectorsConfig(logger);
+        const { server, auth, oauthOptions } = createServer(logger, config);
 
-	// Create all Pieces proxies
-	const piecesProxy = createPiecesProxy(config, logger);
-	const driveProxy = createPiecesDriveProxy(config, logger);
-	const copilotProxy = createPiecesCopilotProxy(config, logger);
+        await initializeTelemetry(logger, config);
+
+        // Create all Pieces proxies
+        const piecesProxy = createPiecesProxy(config, logger);
+        const driveProxy = createPiecesDriveProxy(config, logger);
+        const copilotProxy = createPiecesCopilotProxy(config, logger);
 	const contextBridge = createPiecesContextBridge(logger);
 
 	const connectorsProxy = createConnectorsProxy(connectorsConfig, logger);
@@ -354,21 +415,25 @@ async function main() {
 	setupShutdownHandlers(
 		logger,
 		transport,
-		piecesProxy,
-		driveProxy,
-		copilotProxy,
-		connectorsProxy,
-		heartbeatStopper,
-	);
-	setupProcessErrorHandlers(logger);
+                piecesProxy,
+                driveProxy,
+                copilotProxy,
+                connectorsProxy,
+                metricsServerHandle,
+                heartbeatStopper,
+        );
+        setupProcessErrorHandlers(logger);
 }
 
-main().catch((error) => {
-	const logger = pino({ level: 'error' });
-	const message = error instanceof Error ? error.message : String(error);
-	logger.error(
-		createBrandedLog('startup_failed', { error: message }),
-		`${BRAND.prefix} failed to start MCP server`,
-	);
-	process.exit(1);
+main().catch(async (error) => {
+        const logger = pino({ level: 'error' });
+        const message = error instanceof Error ? error.message : String(error);
+        logger.error(
+                createBrandedLog('startup_failed', { error: message }),
+                `${BRAND.prefix} failed to start MCP server`,
+        );
+        await metricsServerHandle?.close().catch(() => undefined);
+        metricsServerHandle = null;
+        await shutdownTracing().catch(() => undefined);
+        process.exit(1);
 });

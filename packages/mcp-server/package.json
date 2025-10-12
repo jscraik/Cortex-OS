@@ -15,12 +15,17 @@
     }
   },
   "scripts": {
+    "predev": "pnpm --filter @cortex-os/mcp-bridge run build",
     "dev": "tsc --watch",
+    "prebuild": "pnpm --filter @cortex-os/mcp-bridge run build",
     "build": "tsc",
+    "pretypecheck": "pnpm --filter @cortex-os/mcp-bridge run build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:unit": "vitest run --config vitest.unit.config.ts",
     "test:int": "vitest run --config vitest.integration.config.ts",
+    "pretest": "pnpm --filter @cortex-os/mcp-bridge run build",
     "test": "pnpm run test:unit && pnpm run test:int",
+    "prestart": "pnpm --filter @cortex-os/mcp-bridge run build",
     "start": "node --max-old-space-size=4096 dist/index.js",
     "start:stdio": "node --max-old-space-size=4096 dist/index.js --transport stdio",
     "start:http": "FASTMCP_HOST=127.0.0.1 node --max-old-space-size=4096 dist/index.js --transport http --port 3024 --host 127.0.0.1"

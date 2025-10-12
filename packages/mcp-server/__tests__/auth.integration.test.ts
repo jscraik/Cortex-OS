@@ -36,17 +36,20 @@ async function createToken(scopes: string[], overrides: Record<string, unknown> 
 }
 
 function createConfig(): ServerConfig {
-	return {
-		port: PORT,
-		host: HOST,
-		httpEndpoint: '/mcp',
-		sseEndpoint: '/sse',
-		metricsEnabled: false,
-		piecesEnabled: false,
-		codebaseSearchEnabled: true,
-		logLevel: 'error',
-		ollamaHost: 'http://127.0.0.1:11434',
-		ollamaEnabled: false,
+        return {
+                port: PORT,
+                host: HOST,
+                httpEndpoint: '/mcp',
+                sseEndpoint: '/sse',
+                metricsEnabled: false,
+                metricsHost: '127.0.0.1',
+                metricsPort: 9464,
+                metricsPath: '/metrics',
+                piecesEnabled: false,
+                codebaseSearchEnabled: true,
+                logLevel: 'error',
+                ollamaHost: 'http://127.0.0.1:11434',
+                ollamaEnabled: false,
 		promptsEnabled: true,
 		resourcesEnabled: true,
 	};

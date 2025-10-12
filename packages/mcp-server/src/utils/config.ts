@@ -37,30 +37,41 @@ export function parseNumberEnv(value: string | undefined, defaultValue: number):
  * Parse port environment variable with validation
  */
 export function parsePortEnv(value: string | undefined, defaultPort: number): number {
-	const port = parseNumberEnv(value, defaultPort);
-	if (port < 1 || port > 65535) {
-		throw new Error(`Invalid port number: ${port}. Must be between 1 and 65535.`);
-	}
-	return port;
+        const port = parseNumberEnv(value, defaultPort);
+        if (port < 1 || port > 65535) {
+                throw new Error(`Invalid port number: ${port}. Must be between 1 and 65535.`);
+        }
+        return port;
+}
+
+function normalizeEndpointPath(value: string | undefined, defaultPath: string): string {
+        const raw = value?.trim();
+        if (!raw) {
+                return defaultPath;
+        }
+        return raw.startsWith('/') ? raw : `/${raw}`;
 }
 
 /**
  * Server configuration interface
  */
 export interface ServerConfig {
-	// Server settings
-	port: number;
-	host: string;
-	httpEndpoint: string;
-	sseEndpoint: string;
+        // Server settings
+        port: number;
+        host: string;
+        httpEndpoint: string;
+        sseEndpoint: string;
 
-	// Feature flags
-	metricsEnabled: boolean;
-	piecesEnabled: boolean;
-	codebaseSearchEnabled: boolean;
+        // Feature flags
+        metricsEnabled: boolean;
+        metricsHost: string;
+        metricsPort: number;
+        metricsPath: string;
+        piecesEnabled: boolean;
+        codebaseSearchEnabled: boolean;
 
-	// Logging
-	logLevel: string;
+        // Logging
+        logLevel: string;
 
 	// Ollama
 	ollamaHost: string;
@@ -79,16 +90,19 @@ export function loadServerConfig(): ServerConfig {
 		// Server settings
 		port: parsePortEnv(process.env.PORT, 3024),
 		host: process.env.MCP_HOST ?? '0.0.0.0',
-		httpEndpoint: process.env.MCP_HTTP_ENDPOINT ?? '/mcp',
-		sseEndpoint: process.env.MCP_SSE_ENDPOINT ?? '/sse',
+                httpEndpoint: process.env.MCP_HTTP_ENDPOINT ?? '/mcp',
+                sseEndpoint: process.env.MCP_SSE_ENDPOINT ?? '/sse',
 
-		// Feature flags
-		metricsEnabled: parseBooleanEnv(process.env.MCP_METRICS_ENABLED, false),
-		piecesEnabled: parseBooleanEnv(process.env.PIECES_MCP_ENABLED, true),
-		codebaseSearchEnabled: parseBooleanEnv(process.env.CODEBASE_SEARCH_ENABLED, true),
+                // Feature flags
+                metricsEnabled: parseBooleanEnv(process.env.MCP_METRICS_ENABLED, false),
+                metricsHost: process.env.MCP_METRICS_HOST ?? '127.0.0.1',
+                metricsPort: parsePortEnv(process.env.MCP_METRICS_PORT, 9464),
+                metricsPath: normalizeEndpointPath(process.env.MCP_METRICS_PATH, '/metrics'),
+                piecesEnabled: parseBooleanEnv(process.env.PIECES_MCP_ENABLED, true),
+                codebaseSearchEnabled: parseBooleanEnv(process.env.CODEBASE_SEARCH_ENABLED, true),
 
-		// Logging
-		logLevel: process.env.MCP_LOG_LEVEL ?? 'info',
+                // Logging
+                logLevel: process.env.MCP_LOG_LEVEL ?? 'info',
 
 		// Ollama
 		ollamaHost: process.env.OLLAMA_HOST ?? 'http://127.0.0.1:11434',
