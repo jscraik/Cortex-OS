@@ -14,8 +14,8 @@
 
 export interface ThermalState {
 	currentTemp: number;
-	trend: 'stable' | 'rising' | 'decreasing' | 'rapidly_rising' | 'critical';
-	zone: 'optimal' | 'normal' | 'elevated' | 'critical' | 'shutdown';
+        trend: 'stable' | 'rising' | 'decreasing' | 'rapidly_rising' | 'critical';
+        zone: 'optimal' | 'normal' | 'elevated' | 'critical' | 'shutdown' | 'recovering';
 	critical: boolean;
 	predictedTemp?: number;
 	predictionWindow?: string;
@@ -32,7 +32,7 @@ export interface ThermalLimits {
 	maxNodes: number;
 	maxConcurrentOps: number;
 	throttlingActive: boolean;
-	throttlingLevel: 'none' | 'proactive' | 'moderate' | 'aggressive' | 'emergency';
+        throttlingLevel: 'none' | 'proactive' | 'moderate' | 'aggressive' | 'emergency' | 'recovery';
 	reason?: string;
 	recoveryMode?: boolean;
 	emergencyMode?: boolean;

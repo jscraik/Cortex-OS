@@ -38,11 +38,11 @@ vi.mock('@cortex-os/model-gateway/src/hybrid-router/HybridRoutingEngine.js', () 
 	})),
 }));
 
-vi.mock('@cortex-os/memory-core/src/context-graph/thermal/ThermalMonitor.js', () => ({
-	ThermalMonitor: vi.fn().mockImplementation(() => ({
-		getCurrentTemperature: vi.fn(),
-		getConstraints: vi.fn(),
-	})),
+vi.mock('@cortex-os/memory-core/src/thermal/ThermalMonitor.js', () => ({
+  ThermalMonitor: vi.fn().mockImplementation(() => ({
+    getCurrentTemperature: vi.fn(),
+    getConstraints: vi.fn()
+  }))
 }));
 
 vi.mock('@cortex-os/memory-core/src/context-graph/evidence/EvidenceGate.js', () => ({

@@ -18,7 +18,7 @@
 import type { ContextPackService } from '@cortex-os/memory-core/src/context-graph/ContextPackService.js';
 import type { ContextSliceService } from '@cortex-os/memory-core/src/context-graph/ContextSliceService.js';
 import type { EvidenceGate } from '@cortex-os/memory-core/src/context-graph/evidence/EvidenceGate.js';
-import type { ThermalMonitor } from '@cortex-os/memory-core/src/context-graph/thermal/ThermalMonitor.js';
+import type { ThermalMonitor } from '@cortex-os/memory-core/src/thermal/ThermalMonitor.js';
 import type { HybridRoutingEngine } from '@cortex-os/model-gateway/src/hybrid-router/HybridRoutingEngine.js';
 import { END, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';

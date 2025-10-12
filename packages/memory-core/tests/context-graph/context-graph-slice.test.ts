@@ -53,7 +53,7 @@ vi.mock('../../src/context-graph/evidence/EvidenceGate.js', () => ({
 	})),
 }));
 
-vi.mock('../../src/context-graph/thermal/ThermalMonitor.js', () => ({
+vi.mock('../../src/thermal/ThermalMonitor.js', () => ({
 	ThermalMonitor: vi.fn().mockImplementation(() => ({
 		getCurrentTemperature: vi.fn(),
 		getThermalTrend: vi.fn(),
