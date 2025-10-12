@@ -256,9 +256,7 @@ async function initializeTelemetry(logger: Logger, config: ServerConfig): Promis
         initializeMetrics(BRAND.prefix);
 
         if (config.metricsEnabled) {
-                const metricsPath = config.metricsPath.startsWith('/')
-                        ? (config.metricsPath as `/${string}`)
-                        : (`/${config.metricsPath}` as `/${string}`);
+                const metricsPath = config.metricsPath;
                 try {
                         metricsServerHandle = startMetricsServer({
                                 brandPrefix: BRAND.prefix,
