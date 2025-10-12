@@ -254,7 +254,7 @@ export class ThermalPolicy {
                 const baseDuration = state.cooldownDuration ?? 3_000;
                 const elapsed = context.operationElapsedMs ?? 0;
                 const padding = this.config.cooldownPaddingMs;
-                return baseDuration + padding - Math.min(elapsed, baseDuration);
+                return Math.max(0, baseDuration + padding - Math.min(elapsed, baseDuration));
         }
 
         private buildRecommendations(
