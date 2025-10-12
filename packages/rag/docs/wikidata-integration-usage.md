@@ -27,7 +27,8 @@ pnpm add @cortex-os/mcp @cortex-os/a2a-contracts
 import type { ConnectorEntry } from '@cortex-os/protocol';
 import { executeWikidataWorkflow, routeFactQuery } from '@cortex-os/rag/integrations/remote-mcp';
 import { createAgentMCPClient } from '@cortex-os/rag/integrations/agents-shim';
-import connectorsManifest from '../../../config/connectors.manifest.json' assert { type: 'json' };
+// TODO: Update the path below to point to your connectors.manifest.json location
+import connectorsManifest from './path/to/connectors.manifest.json' assert { type: 'json' };
 
 // Resolve the Wikidata connector from the manifest
 const wikidataConnector = connectorsManifest.connectors.find(
