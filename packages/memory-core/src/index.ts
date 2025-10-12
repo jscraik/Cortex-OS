@@ -52,17 +52,9 @@ export {
         GraphRAGService,
         type GraphRAGServiceConfig,
 } from './services/GraphRAGService.js';
-export {
-        ThermalMonitor,
-        type ThermalLimits,
-        type ThermalState,
-} from './thermal/ThermalMonitor.js';
-export {
-        ThermalPolicy,
-        type ThermalPolicyConfig,
-        type ThermalPolicyRecommendation,
-        type ThermalContextInput,
-} from './thermal/ThermalPolicy.js';
+export { EvidenceGate } from './context-graph/evidence/EvidenceGate.js';
+export { ABACEngine } from './context-graph/security/ABACEngine.js';
+export { AuditLogger } from './context-graph/audit/AuditLogger.js';
 
 import { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 import { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';

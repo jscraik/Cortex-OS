@@ -15,10 +15,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { EvidenceGate } from '../../src/context-graph/evidence/EvidenceGate.js';
 
-// Mock external dependencies
-vi.mock('../../src/context-graph/security/ABACEngine.js');
-vi.mock('../../src/context-graph/audit/AuditLogger.js');
-
 describe('EvidenceGate', () => {
 	let evidenceGate: EvidenceGate;
 	let mockABACEngine: any;
@@ -26,17 +22,22 @@ describe('EvidenceGate', () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockABACEngine = {
-			checkAccess: vi.fn(),
-			evaluatePolicy: vi.fn(),
-			getUserAttributes: vi.fn(),
-		};
-		mockAuditLogger = {
-			logAccessAttempt: vi.fn(),
-			logPolicyViolation: vi.fn(),
-			logEvidenceGeneration: vi.fn(),
-		};
-		evidenceGate = new EvidenceGate(mockABACEngine, mockAuditLogger);
+                mockABACEngine = {
+                        checkAccess: vi.fn(),
+                        evaluatePolicy: vi.fn(),
+                        getUserAttributes: vi.fn(),
+                        validateCompliance: vi.fn(),
+                        performSecurityScan: vi.fn(),
+                };
+                mockAuditLogger = {
+                        logAccessAttempt: vi.fn(),
+                        logPolicyViolation: vi.fn(),
+                        logEvidenceGeneration: vi.fn(),
+                };
+                evidenceGate = new EvidenceGate({
+                        abacEngine: mockABACEngine,
+                        auditLogger: mockAuditLogger,
+                });
 	});
 
 	describe('validateAccess', () => {
@@ -62,16 +63,19 @@ describe('EvidenceGate', () => {
 				timestamp: '2025-01-09T10:00:00Z',
 			};
 
-			const mockABACResult = {
-				allowed: true,
-				policiesApplied: ['role-based', 'clearance-level', 'department-access'],
-				evidence: {
-					roleMatch: true,
-					clearanceSufficient: true,
-					departmentAuthorized: true,
-					brainwavCompliant: true,
-				},
-			};
+                        const mockABACResult = {
+                                allowed: true,
+                                policiesApplied: ['role-based', 'clearance-level', 'department-access'],
+                                evidence: {
+                                        roleMatch: true,
+                                        clearanceSufficient: true,
+                                        departmentAuthorized: true,
+                                        brainwavCompliant: true,
+                                },
+                                metadata: {
+                                        evaluationTimestamp: context.timestamp,
+                                },
+                        };
 
 			mockABACEngine.checkAccess.mockResolvedValue(mockABACResult);
 
@@ -87,14 +91,15 @@ describe('EvidenceGate', () => {
 			expect(result.evidence.brainwavCompliant).toBe(true);
 			expect(result.policiesApplied).toContain('role-based');
 			expect(result.metadata.brainwavValidated).toBe(true);
-			expect(mockAuditLogger.logAccessAttempt).toHaveBeenCalledWith({
-				userId: 'user123',
-				resourceId: 'context456',
-				action: 'read',
-				granted: true,
-				policiesApplied: mockABACResult.policiesApplied,
-				requestId: 'req789',
-			});
+                        expect(mockAuditLogger.logAccessAttempt).toHaveBeenCalledWith({
+                                userId: 'user123',
+                                resourceId: 'context456',
+                                action: 'read',
+                                granted: true,
+                                policiesApplied: mockABACResult.policiesApplied,
+                                requestId: 'req789',
+                                timestamp: '2025-01-09T10:00:00Z',
+                        });
 		});
 
 		it('should deny access for insufficient clearance level', async () => {
@@ -117,18 +122,27 @@ describe('EvidenceGate', () => {
 				requestId: 'req789',
 			};
 
-			const mockABACResult = {
-				allowed: false,
-				policiesApplied: ['clearance-level', 'role-based'],
-				reason: 'Insufficient clearance level',
-				evidence: {
-					roleMatch: false,
-					clearanceSufficient: false,
-					requiredClearance: 3,
-					userClearance: 1,
-					brainwavCompliant: true,
-				},
-			};
+                        const mockABACResult = {
+                                allowed: false,
+                                policiesApplied: ['clearance-level', 'role-based'],
+                                reason: 'Insufficient clearance level',
+                                evidence: {
+                                        roleMatch: false,
+                                        clearanceSufficient: false,
+                                        requiredClearance: 3,
+                                        userClearance: 1,
+                                        brainwavCompliant: true,
+                                },
+                                violation: {
+                                        type: 'clearance-level',
+                                        details: 'Insufficient clearance level',
+                                        riskLevel: 'high',
+                                        requiresEscalation: true,
+                                },
+                                metadata: {
+                                        evaluationTimestamp: context.timestamp,
+                                },
+                        };
 
 			mockABACEngine.checkAccess.mockResolvedValue(mockABACResult);
 
@@ -141,13 +155,16 @@ describe('EvidenceGate', () => {
 			expect(result.evidence.requiredClearance).toBe(3);
 			expect(result.evidence.userClearance).toBe(1);
 			expect(result.metadata.brainwavValidated).toBe(true);
-			expect(mockAuditLogger.logPolicyViolation).toHaveBeenCalledWith({
-				userId: 'user123',
-				resourceId: 'context456',
-				violation: 'clearance-level',
-				details: 'User clearance 1 < required clearance 3',
-				requestId: 'req789',
-			});
+                        expect(mockAuditLogger.logPolicyViolation).toHaveBeenCalledWith({
+                                userId: 'user123',
+                                resourceId: 'context456',
+                                violation: 'clearance-level',
+                                details: 'User clearance 1 < required clearance 3',
+                                requestId: 'req789',
+                                riskLevel: 'high',
+                                requiresEscalation: true,
+                                timestamp: undefined,
+                        });
 		});
 
 		it('should enforce role-based access control', async () => {
@@ -168,17 +185,26 @@ describe('EvidenceGate', () => {
 				action: 'read',
 			};
 
-			const mockABACResult = {
-				allowed: false,
-				policiesApplied: ['role-based'],
-				reason: 'Role not authorized for resource category',
-				evidence: {
-					userRole: 'qa_engineer',
-					requiredRoles: ['developer', 'devops'],
-					roleMatch: false,
-					brainwavCompliant: true,
-				},
-			};
+                        const mockABACResult = {
+                                allowed: false,
+                                policiesApplied: ['role-based'],
+                                reason: 'Role not authorized for resource category',
+                                evidence: {
+                                        userRole: 'qa_engineer',
+                                        requiredRoles: ['developer', 'devops'],
+                                        roleMatch: false,
+                                        brainwavCompliant: true,
+                                },
+                                violation: {
+                                        type: 'role-based',
+                                        details: 'Role not authorized for resource category',
+                                        riskLevel: 'medium',
+                                        requiresEscalation: false,
+                                },
+                                metadata: {
+                                        evaluationTimestamp: new Date().toISOString(),
+                                },
+                        };
 
 			mockABACEngine.checkAccess.mockResolvedValue(mockABACResult);
 
@@ -213,19 +239,29 @@ describe('EvidenceGate', () => {
 				action: 'read',
 			};
 
-			const mockABACResult = {
-				allowed: false,
-				policiesApplied: ['role-based', 'clearance-level', 'department-access', 'ownership'],
-				reason: 'Policy conflict: role allows but ownership denies',
-				evidence: {
-					roleMatch: true,
-					clearanceSufficient: true,
-					departmentAuthorized: true,
-					ownershipAuthorized: false,
-					policyConflict: true,
-					brainwavCompliant: true,
-				},
-			};
+                        const mockABACResult = {
+                                allowed: false,
+                                policiesApplied: ['role-based', 'clearance-level', 'department-access', 'ownership'],
+                                reason: 'Policy conflict: role allows but ownership denies',
+                                evidence: {
+                                        roleMatch: true,
+                                        clearanceSufficient: true,
+                                        departmentAuthorized: true,
+                                        ownershipAuthorized: false,
+                                        policyConflict: true,
+                                        brainwavCompliant: true,
+                                },
+                                violation: {
+                                        type: 'ownership',
+                                        details: 'Ownership policy denied access',
+                                        riskLevel: 'medium',
+                                        requiresEscalation: false,
+                                },
+                                metadata: {
+                                        evaluationTimestamp: new Date().toISOString(),
+                                        conflictResolution: 'deny-by-default',
+                                },
+                        };
 
 			mockABACEngine.checkAccess.mockResolvedValue(mockABACResult);
 
@@ -259,14 +295,20 @@ describe('EvidenceGate', () => {
 				action: 'read',
 			};
 
-			const accessResult = {
-				granted: true,
-				policiesApplied: ['role-based', 'clearance-level'],
-				evidence: {
-					roleMatch: true,
-					clearanceSufficient: true,
-				},
-			};
+                        const accessResult = {
+                                granted: true,
+                                policiesApplied: ['role-based', 'clearance-level'],
+                                evidence: {
+                                        roleMatch: true,
+                                        clearanceSufficient: true,
+                                },
+                                metadata: {
+                                        brainwavValidated: true,
+                                        evaluationTimestamp: new Date().toISOString(),
+                                },
+                                riskLevel: 'low',
+                                requiresEscalation: false,
+                        };
 
 			// When
 			const evidence = await evidenceGate.generateEvidence(context, accessResult);
@@ -303,16 +345,23 @@ describe('EvidenceGate', () => {
 				action: 'read',
 			};
 
-			const accessResult = {
-				granted: false,
-				reason: 'Insufficient clearance level',
-				policiesApplied: ['clearance-level', 'classification'],
-				evidence: {
-					userClearance: 1,
-					requiredClearance: 4,
-					classificationMismatch: true,
-				},
-			};
+                        const accessResult = {
+                                granted: false,
+                                reason: 'Insufficient clearance level',
+                                policiesApplied: ['clearance-level', 'classification'],
+                                evidence: {
+                                        userClearance: 1,
+                                        requiredClearance: 4,
+                                        classificationMismatch: true,
+                                },
+                                metadata: {
+                                        brainwavValidated: true,
+                                        evaluationTimestamp: new Date().toISOString(),
+                                },
+                                violationType: 'clearance-level',
+                                riskLevel: 'medium',
+                                requiresEscalation: true,
+                        };
 
 			// When
 			const evidence = await evidenceGate.generateEvidence(context, accessResult);
@@ -341,7 +390,22 @@ describe('EvidenceGate', () => {
 			};
 
 			// When
-			const auditEntry = await evidenceGate.createAuditEntry(accessLog);
+                        mockAuditLogger.logAccessAttempt.mockResolvedValue({
+                                id: 'audit-generated',
+                                type: 'access',
+                                userId: 'user123',
+                                resourceId: 'context456',
+                                action: 'read',
+                                granted: true,
+                                policiesApplied: ['role-based', 'clearance-level'],
+                                timestamp: '2025-01-09T10:00:00Z',
+                                signature: 'signature',
+                                immutable: true,
+                                brainwavAudited: true,
+                                metadata: { requestId: 'req789' },
+                        });
+
+                        const auditEntry = await evidenceGate.createAuditEntry(accessLog);
 
 			// Then - This should FAIL until implementation
 			expect(auditEntry).toBeDefined();
@@ -428,7 +492,8 @@ describe('EvidenceGate', () => {
 			};
 
 			// When
-			const result = await evidenceGate.validateCompliance(context, complianceResult);
+                        const integrationGate = new EvidenceGate();
+                        const result = await integrationGate.validateCompliance(context, complianceResult);
 
 			// Then - This should FAIL until implementation
 			expect(result.compliant).toBe(true);
@@ -461,7 +526,8 @@ describe('EvidenceGate', () => {
 			};
 
 			// When
-			const result = await evidenceGate.performSecurityCheck(context, securityScan);
+                        const integrationGate = new EvidenceGate();
+                        const result = await integrationGate.performSecurityCheck(context, securityScan);
 
 			// Then - This should FAIL until implementation
 			expect(result.blocked).toBe(true);
