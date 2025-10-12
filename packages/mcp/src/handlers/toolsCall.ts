@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { MCPToolVersionException } from '../errors.js';
 import type { ToolDescriptor, VersionConstraint } from '../registry/toolRegistry.js';
 import type { Server } from '../server.js';
@@ -254,7 +255,7 @@ export class VersionedToolCallHandler {
 	 * Generate correlation ID for tracking
 	 */
 	private generateCorrelationId(): string {
-		return `tool_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		return `tool_${Date.now()}_${randomUUID().substring(0, 8)}`;
 	}
 
 	/**

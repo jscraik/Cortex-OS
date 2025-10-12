@@ -53,7 +53,9 @@ export const securityValidationNode = async (
 			passed: securityPassed,
 			risk: securityPassed ? 'low' : 'high',
 		},
-		...(securityPassed ? {} : { error: 'Security validation failed' }),
+		...(securityPassed
+			? {}
+			: { error: '[brAInwav] Security validation failed - input contains unsafe content' }),
 	};
 };
 
@@ -381,16 +383,17 @@ async function executeTool(toolName: string, params: any): Promise<any> {
 		};
 	}
 
-	// Mock response for other tools
+	// [brAInwav] Constitutional fix: Proper error handling instead of mock responses
 	if (toolName.includes('failing')) {
-		throw new Error(`Tool ${toolName} failed`);
+		throw new Error(`[brAInwav] Tool ${toolName} failed`, {
+			cause: new Error('Tool execution failure'),
+		});
 	}
 
-	return {
-		success: true,
-		result: `Tool ${toolName} executed successfully`,
-		timestamp: new Date().toISOString(),
-	};
+	// [brAInwav] Throw proper NotImplementedError for unhandled tools
+	throw new Error(`[brAInwav] Tool not implemented: ${toolName}`, {
+		cause: new Error('Feature not implemented'),
+	});
 }
 
 async function synthesizeResponse(params: {

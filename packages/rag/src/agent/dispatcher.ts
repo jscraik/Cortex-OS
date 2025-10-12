@@ -7,6 +7,7 @@ export interface Strategy {
 export interface DispatcherOptions {
 	epsilon?: number; // exploration probability for A/B (0..1)
 	learningRate?: number; // weight update step
+	seed?: number; // [brAInwav] Seed for reproducible agent behavior
 }
 
 export interface FeedbackEvent {
@@ -27,16 +28,32 @@ export class AgenticDispatcher {
 	private readonly eps: number;
 	private readonly lr: number;
 	private readonly weights = new Map<string, WeightTable>(); // by docType
+	private readonly rng: () => number; // [brAInwav] Seeded PRNG for reproducibility
 
 	constructor(strategies: Strategy[], options?: DispatcherOptions) {
 		this.strategies = strategies.slice();
 		this.eps = clamp01(options?.epsilon ?? 0.1);
 		this.lr = Math.max(0.0001, options?.learningRate ?? 0.05);
+
+		// [brAInwav] Use seeded PRNG for reproducible agent behavior
+		const seed = options?.seed ?? 42;
+		this.rng = this.createSeededRNG(seed);
+	}
+
+	/**
+	 * Create seeded pseudo-random number generator for reproducible behavior
+	 */
+	private createSeededRNG(seed: number): () => number {
+		let state = seed;
+		return () => {
+			state = (state * 1103515245 + 12345) & 0x7fffffff;
+			return state / 0x7fffffff;
+		};
 	}
 
 	choose(meta?: Record<string, unknown>): Strategy {
 		const docType = getDocType(meta);
-		if (Math.random() < this.eps) return this.randomStrategy();
+		if (this.rng() < this.eps) return this.randomStrategy();
 		return this.bestStrategyFor(docType);
 	}
 
@@ -82,7 +99,7 @@ export class AgenticDispatcher {
 	}
 
 	private randomStrategy(): Strategy {
-		const i = Math.floor(Math.random() * Math.max(1, this.strategies.length));
+		const i = Math.floor(this.rng() * Math.max(1, this.strategies.length));
 		return this.strategies[Math.min(i, this.strategies.length - 1)];
 	}
 

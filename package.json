@@ -540,6 +540,9 @@
       "vite": ">=5.4.20",
       "pino": ">=10.0.0",
       "fast-redact": "npm:slow-redact@latest"
+    },
+    "patchedDependencies": {
+      "safer-buffer@2.1.2": "patches/safer-buffer@2.1.2.patch"
     }
   },
   "lint-staged": {
