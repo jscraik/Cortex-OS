@@ -170,6 +170,38 @@ describe('brAInwav Phase C.2: Remote MCP Orchestration', () => {
       expect(mockMCPClient.callTool).toHaveBeenNthCalledWith(3, 'sparql', expect.any(Object));
     });
 
+    test('C.2.1a: should skip claims retrieval when disabled', async () => {
+      mockMCPClient.callTool
+        .mockResolvedValueOnce({
+          results: [
+            {
+              qid: 'Q34743',
+              score: 0.95,
+              title: 'Alexander Graham Bell',
+              content: 'Scottish-born inventor, scientist and engineer'
+            }
+          ]
+        })
+        .mockResolvedValueOnce({
+          query: 'SELECT ?inventor WHERE { ?inventor wdt:P31 wd:Q5 . }',
+          results: [
+            { inventor: 'Q34743', label: 'Alexander Graham Bell' }
+          ]
+        });
+
+      const result = await executeWikidataWorkflow(
+        'Who invented the telephone?',
+        mockWikidataConnector,
+        { mcpClient: mockMCPClient, enableClaims: false }
+      );
+
+      expect(result.metadata.wikidata?.claimGuid).toBeUndefined();
+      expect(result.metadata.wikidata?.qid).toBe('Q34743');
+      expect(result.source).toBe('wikidata_workflow');
+      expect(mockMCPClient.callTool).toHaveBeenCalledTimes(2);
+      expect(mockMCPClient.callTool).not.toHaveBeenCalledWith('get_claims', expect.any(Object));
+    });
+
     test('C.2.2: should stitch QIDs and claim GUIDs into metadata', async () => {
       // Given: Vector search result with QID and claims result with GUID
       const vectorResult: VectorSearchResult = {

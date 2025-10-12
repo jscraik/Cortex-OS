@@ -26,6 +26,7 @@ pnpm add @cortex-os/mcp @cortex-os/a2a-contracts
 ```typescript
 import { executeWikidataWorkflow, routeFactQuery } from '@cortex-os/rag/integrations/remote-mcp';
 import { createAgentMCPClient } from '@cortex-os/rag/stubs/agent-mcp-client';
+import type { ConnectorEntry } from '@cortex-os/protocol';
 
 // Initialize MCP client
 const mcpClient = createAgentMCPClient({
@@ -39,11 +40,18 @@ const routedQuery = await routeFactQuery(
   { scope: 'facts', dimensions: 1024 }
 );
 
+// Resolve your Wikidata connector (e.g., from MCP discovery)
+const wikidataConnector: ConnectorEntry = await resolveConnector('wikidata');
+
 // Execute complete Wikidata workflow
 const results = await executeWikidataWorkflow(
   routedQuery,
-  mcpClient,
-  { timeout: 30000, maxResults: 5 }
+  wikidataConnector,
+  {
+    mcpClient,
+    timeout: 30000,
+    enableClaims: true,
+  }
 );
 
 console.log('[brAInwav] Wikidata Results:', results);
@@ -79,17 +87,19 @@ import { executeWikidataWorkflow } from '@cortex-os/rag/integrations/remote-mcp'
 
 const workflow = await executeWikidataWorkflow(
   routedQuery,
-  mcpClient,
+  wikidataConnector,
   {
+    mcpClient,
     timeout: 30000,
-    maxResults: 10,
     enableSparql: true,       // Include SPARQL enrichment
-    enableClaims: true        // Include claims retrieval
+    enableClaims: false       // Skip claims retrieval if you only need vector + SPARQL
   }
 );
 
 // Returns: Complete results with provenance tracking
 ```
+
+> ℹ️ **Claims retrieval is enabled by default.** Set `enableClaims: false` in `WorkflowOptions` to skip the `get_claims` call when you only need vector search (and optional SPARQL) results.
 
 ### 3. Testing Infrastructure (`AgentMCPClientStub`)
 
