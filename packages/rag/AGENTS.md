@@ -40,6 +40,22 @@ slo:
 - **Nearest file wins**: this file governs only this subtree.  
 - **Time freshness guard:** follow `/.cortex/rules/_time-freshness.md` to anchor timezone/date context before executing tasks.
 
+### 🌐 Wikidata Semantic Integration (PRODUCTION READY ✅)
+
+**Critical Integration**: This package provides production-ready Wikidata semantic layer capabilities:
+
+- **Usage Guide**: `packages/rag/docs/wikidata-integration-usage.md` - Complete integration guide with examples
+- **Core Functions**: `executeWikidataWorkflow()`, `routeFactQuery()`, `generateContextualSparqlQuery()`
+- **Testing Infrastructure**: `AgentMCPClientStub` for comprehensive testing and development
+- **MCP Tools**: Vector search, claims retrieval, SPARQL queries with provenance tracking
+- **Quality Status**: 17/17 tests passing, zero prohibited patterns, full brAInwav compliance
+
+**Agent Requirements**:
+- Use provided usage guide for all wikidata integration tasks
+- Follow established testing patterns with AgentMCPClientStub
+- Include brAInwav branding in all semantic responses
+- Reference documentation examples for proper error handling and configuration
+
 - **Mandatory Templates:** Must use all templates from `/.cortex/templates/` - feature specs, research, TDD plans, constitution updates.
 - **Vibe Check MCP:** Call `vibe_check` tool after planning and before file writes/network calls. Config: VIBE_CHECK_HTTP_URL (default http://127.0.0.1:2091).
 - Cannot contradict root rules. When in doubt, follow this order:

@@ -5,7 +5,11 @@
  * queue management, and inspection helpers for testing.
  */
 
-import type { AgentMCPClient, KnowledgeSearchFilters, KnowledgeSearchResult } from '../integrations/agents-shim.js';
+import type {
+	AgentMCPClient,
+	KnowledgeSearchFilters,
+	KnowledgeSearchResult,
+} from '../integrations/agents-shim.js';
 
 export interface ToolCall {
 	name: string;
@@ -25,17 +29,17 @@ export interface AgentMCPClientStub extends AgentMCPClient {
 	// Mocking
 	mockCallTool(name: string, response: unknown): void;
 	mockError(name: string, error: Error): void;
-	
+
 	// Queue inspection
 	getCallQueue(): ToolCall[];
 	clearQueue(): void;
-	
+
 	// Call tracking
 	wasToolCalled(name: string): boolean;
 	getToolCallCount(name: string): number;
 	getLastCallArgs(name: string): Record<string, unknown> | undefined;
 	getAllCalls(): ToolCall[];
-	
+
 	// History with metadata
 	getCallHistory(): ToolCallHistory[];
 	clearHistory(): void;
@@ -51,7 +55,7 @@ class AgentMCPClientStubImpl implements AgentMCPClientStub {
 		return { status: 'ready', brand: 'brAInwav' };
 	}
 
-	async callTool(name: string, args: Record<string, unknown>, timeout?: number): Promise<unknown> {
+	async callTool(name: string, args: Record<string, unknown>, _timeout?: number): Promise<unknown> {
 		const startTime = Date.now();
 		const callRecord: ToolCall = {
 			name,
@@ -65,21 +69,23 @@ class AgentMCPClientStubImpl implements AgentMCPClientStub {
 
 		// Check for mock error
 		if (this.mockErrors.has(name)) {
-			const error = this.mockErrors.get(name)!;
-			const historyRecord: ToolCallHistory = {
-				...callRecord,
-				duration: Date.now() - startTime,
-				success: false,
-				error: error.message,
-			};
-			this.callHistory.push(historyRecord);
-			throw error;
+			const error = this.mockErrors.get(name);
+			if (error) {
+				const historyRecord: ToolCallHistory = {
+					...callRecord,
+					duration: Date.now() - startTime,
+					success: false,
+					error: error.message,
+				};
+				this.callHistory.push(historyRecord);
+				throw error;
+			}
 		}
 
 		// Get mock response
-		const response = this.mockResponses.get(name) || { 
-			message: `[brAInwav] No mock configured for tool: ${name}`, 
-			brand: 'brAInwav' 
+		const response = this.mockResponses.get(name) || {
+			message: `[brAInwav] No mock configured for tool: ${name}`,
+			brand: 'brAInwav',
 		};
 
 		const historyRecord: ToolCallHistory = {
@@ -97,10 +103,10 @@ class AgentMCPClientStubImpl implements AgentMCPClientStub {
 		query: string,
 		options?: { limit?: number; filters?: KnowledgeSearchFilters },
 	): Promise<KnowledgeSearchResult[]> {
-		const result = await this.callTool('search_knowledge_base', { 
-			query, 
-			limit: options?.limit, 
-			filters: options?.filters 
+		const result = await this.callTool('search_knowledge_base', {
+			query,
+			limit: options?.limit,
+			filters: options?.filters,
 		});
 		return result as KnowledgeSearchResult[];
 	}
@@ -155,15 +161,15 @@ class AgentMCPClientStubImpl implements AgentMCPClientStub {
 
 	// Call tracking
 	wasToolCalled(name: string): boolean {
-		return this.callQueue.some(call => call.name === name);
+		return this.callQueue.some((call) => call.name === name);
 	}
 
 	getToolCallCount(name: string): number {
-		return this.callQueue.filter(call => call.name === name).length;
+		return this.callQueue.filter((call) => call.name === name).length;
 	}
 
 	getLastCallArgs(name: string): Record<string, unknown> | undefined {
-		const calls = this.callQueue.filter(call => call.name === name);
+		const calls = this.callQueue.filter((call) => call.name === name);
 		return calls.length > 0 ? calls[calls.length - 1].args : undefined;
 	}
 
@@ -183,7 +189,7 @@ class AgentMCPClientStubImpl implements AgentMCPClientStub {
 
 /**
  * Create an AgentMCPClient stub for testing
- * 
+ *
  * Phase C.3: Client Stub Tool Invocation Tracking - provides comprehensive
  * tool call tracking, queue management, and inspection helpers for testing
  * MCP workflows with brAInwav branding.
@@ -198,24 +204,6 @@ export function createAgentMCPClientStub(): AgentMCPClientStub {
 // Locally define MCPIntegrationConfig to avoid tight coupling with agents package
 
 export type MCPIntegrationConfig = Record<string, unknown>;
-
-export interface KnowledgeSearchFilters {
-	category?: string[];
-	source?: string[];
-	dateRange?: { from?: string; to?: string };
-	tags?: string[];
-	contentType?: string[];
-}
-
-export interface KnowledgeSearchResult {
-	id: string;
-	title: string;
-	content: string;
-	score: number;
-	source: string;
-	metadata: Record<string, unknown>;
-	timestamp: string;
-}
 
 type MethodName =
 	| 'mcp_initialize'
@@ -297,7 +285,7 @@ function defaultResponse(method: MethodName): MockResponse {
 	}
 }
 
-export class AgentMCPClient {
+export class LegacyAgentMCPClient {
 	private connected = false;
 	constructor(private readonly config: MCPIntegrationConfig) {
 		mockConfigLog.push(config);
@@ -401,5 +389,5 @@ export class AgentMCPClient {
 }
 
 export function createAgentMCPClient(config: MCPIntegrationConfig) {
-	return new AgentMCPClient(config);
+	return new LegacyAgentMCPClient(config);
 }
