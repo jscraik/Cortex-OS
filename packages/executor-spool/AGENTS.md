@@ -40,6 +40,8 @@ slo:
 - **Nearest file wins**: this file governs only this subtree.  
 - **Time freshness guard:** follow `/.cortex/rules/_time-freshness.md` to anchor timezone/date context before executing tasks.
 
+- **Mandatory Templates:** Must use all templates from `/.cortex/templates/` - feature specs, research, TDD plans, constitution updates.
+- **Vibe Check MCP:** Call `vibe_check` tool after planning and before file writes/network calls. Config: VIBE_CHECK_HTTP_URL (default http://127.0.0.1:2091).
 - Cannot contradict root rules. When in doubt, follow this order:
   1) `/.cortex/rules/vision.md`  
   2) `/.cortex/rules/agentic-coding-workflow.md`  
@@ -146,7 +148,10 @@ pnpm structure:validate --scope=executor-spool
 - Threat model notes: document in `docs/threat-model.md`.  
 - Data classes: document in `docs/datasheet.md`.
 
-**Absolute prohibitions:** placeholder adapters, fake telemetry/metrics, TODO/FIXME/HACK in prod paths, randomness-driven business logic.
+**Absolute prohibitions:** 
+- Math.random() used to fabricate data; placeholder adapters; TODO/FIXME/HACK; console.warn("not implemented")
+- Any fake/stub/simulated MLX or Ollama usage (embeddings, rerankers, models) or any simulated component of the hybrid-model pipeline
+- Runtime must call live engines only; no placeholder vectors, no recorded/"golden" inference outputs, no echo rerankers, no "dry_run" model modes
 
 ---
 
@@ -233,10 +238,14 @@ pnpm --filter executor-spool mcp:smoke
 
 - [ ] **Small, focused diff**; self-review complete.  
 - [ ] Tests added/updated; coverage & mutation meet local gates.  
+- [ ] **Code Review Checklist:** Completed `/.cortex/rules/code-review-checklist.md` linked in PR with all BLOCKER items ☑ PASS.
+- [ ] **Vibe Check Evidence:** PR contains logs with "brAInwav-vibe-check" at plan→act gates.
+- [ ] **Live Model Evidence:** Model IDs and sample inference logs attached for hybrid model changes.
 - [ ] Contracts updated and versioned where required.  
 - [ ] Security & structure scans clean (no waivers).  
 - [ ] A11y checks green; CLI supports `--plain` if applicable.  
 - [ ] Evidence attached in PR (file paths + line ranges, run IDs, URLs).  
+- [ ] **Memory Persistence:** Decision logged in `.github/instructions/memories.instructions.md` and persisted via Local Memory MCP/REST.
 - [ ] Changelog/ADR updated if behavior changes.
 
 ---
