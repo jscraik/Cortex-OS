@@ -26,18 +26,8 @@ pnpm add @cortex-os/mcp @cortex-os/a2a-contracts
 ```typescript
 import type { ConnectorEntry } from '@cortex-os/protocol';
 import { executeWikidataWorkflow, routeFactQuery } from '@cortex-os/rag/integrations/remote-mcp';
-import { createAgentMCPClient } from '@cortex-os/rag/integrations/agents-shim';
-// TODO: Update the path below to point to your connectors.manifest.json location
-import connectorsManifest from './path/to/connectors.manifest.json' assert { type: 'json' };
-
-// Helper function to resolve a connector by id from the manifest
-function resolveConnector(manifest: { connectors: ConnectorEntry[] }, id: string): ConnectorEntry {
-  const connector = manifest.connectors.find((entry: ConnectorEntry) => entry.id === id);
-  if (!connector) {
-    throw new Error(`Connector with id "${id}" missing from manifest`);
-  }
-  return connector;
-}
+import { createAgentMCPClient } from '@cortex-os/rag/stubs/agent-mcp-client';
+import type { ConnectorEntry } from '@cortex-os/protocol';
 
 // Resolve the Wikidata connector from the manifest
 const wikidataConnector = resolveConnector(connectorsManifest, 'wikidata');
@@ -58,14 +48,17 @@ const routing = await routeFactQuery(
   }
 );
 
+// Resolve your Wikidata connector (e.g., from MCP discovery)
+const wikidataConnector: ConnectorEntry = await resolveConnector('wikidata');
+
 // Execute complete Wikidata workflow
 const results = await executeWikidataWorkflow(
-  'Who invented the telephone?',
+  routedQuery,
   wikidataConnector,
   {
     mcpClient,
     timeout: 30000,
-    enableSparql: true,
+    enableClaims: true,
   }
 );
 
@@ -123,18 +116,20 @@ const mcpClient = createAgentMCPClient({
 });
 
 const workflow = await executeWikidataWorkflow(
-  'What are the properties of quantum entanglement?',
+  routedQuery,
   wikidataConnector,
   {
     mcpClient,
     timeout: 30000,
     enableSparql: true,       // Include SPARQL enrichment
-    enablePartialResults: true,
+    enableClaims: false       // Skip claims retrieval if you only need vector + SPARQL
   }
 );
 
 // Returns: Complete results with provenance tracking
 ```
+
+> ℹ️ **Claims retrieval is enabled by default.** Set `enableClaims: false` in `WorkflowOptions` to skip the `get_claims` call when you only need vector search (and optional SPARQL) results.
 
 ### 3. Testing Infrastructure (`AgentMCPClientStub`)
 

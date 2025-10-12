@@ -1033,11 +1033,12 @@ export interface WorkflowResult {
 }
 
 export interface WorkflowOptions {
-	mcpClient?: AgentMCPClient;
-	localStore?: Store;
-	timeout?: number;
-	enableSparql?: boolean;
-	enablePartialResults?: boolean;
+        mcpClient?: AgentMCPClient;
+        localStore?: Store;
+        timeout?: number;
+        enableSparql?: boolean;
+        enablePartialResults?: boolean;
+        enableClaims?: boolean;
 }
 
 /**
@@ -1056,9 +1057,10 @@ export async function executeWikidataWorkflow(
 	connector: ConnectorEntry,
 	options?: WorkflowOptions,
 ): Promise<WorkflowResult> {
-	const enableSparql = options?.enableSparql ?? true;
-	const enablePartialResults = options?.enablePartialResults ?? true;
-	const timeout = options?.timeout ?? 30000;
+        const enableSparql = options?.enableSparql ?? true;
+        const enablePartialResults = options?.enablePartialResults ?? true;
+        const enableClaims = options?.enableClaims ?? true;
+        const timeout = options?.timeout ?? 30000;
 
 	try {
 		// Step 1: Route to vector search tool
@@ -1085,22 +1087,24 @@ export async function executeWikidataWorkflow(
 		let partialFailure: string | undefined;
 
 		// Step 2: Get claims for top QID
-		try {
-			claimsResult = (await options.mcpClient.callTool(
-				'get_claims',
-				{
-					qid: topResult.qid,
-					brand: 'brAInwav',
-				},
-				timeout,
-			)) as ClaimsResult;
-		} catch (error) {
-			console.warn(`brAInwav: Claims retrieval failed for ${topResult.qid}:`, error);
-			if (!enablePartialResults) {
-				return await fallbackToLocal(query, options.localStore, 'claims_failed');
-			}
-			partialFailure = 'claims_unavailable';
-		}
+                if (enableClaims) {
+                        try {
+                                claimsResult = (await options.mcpClient.callTool(
+                                        'get_claims',
+                                        {
+                                                qid: topResult.qid,
+                                                brand: 'brAInwav',
+                                        },
+                                        timeout,
+                                )) as ClaimsResult;
+                        } catch (error) {
+                                console.warn(`brAInwav: Claims retrieval failed for ${topResult.qid}:`, error);
+                                if (!enablePartialResults) {
+                                        return await fallbackToLocal(query, options.localStore, 'claims_failed');
+                                }
+                                partialFailure = 'claims_unavailable';
+                        }
+                }
 
 		// Step 3: Execute SPARQL (optional)
 		if (enableSparql) {
