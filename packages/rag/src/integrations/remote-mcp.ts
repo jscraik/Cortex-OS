@@ -1105,7 +1105,7 @@ export async function executeWikidataWorkflow(
 		// Step 3: Execute SPARQL (optional)
 		if (enableSparql) {
 			try {
-				// Generate contextual SPARQL query based on top result
+				// Generate contextual SPARQL query anchored to the top result's QID
 				const sparqlQuery = generateContextualSparqlQuery(topResult.qid);
 				sparqlResult = (await options.mcpClient.callTool(
 					'sparql',
@@ -1302,19 +1302,39 @@ async function fallbackToLocal(
 }
 
 /**
- * Generate contextual SPARQL query based on entity QID
+ * Generate contextual SPARQL query anchored to a specific Wikidata entity.
  *
- * @param qid - Wikidata entity QID
- * @returns Contextual SPARQL query string
+ * The query constrains the result set to the provided QID and surfaces the
+ * property's human-readable label alongside the linked value. This allows the
+ * downstream workflow to reason about concrete facts ("entity -> property ->
+ * value") instead of returning a generic discovery query.
+ *
+ * @param qid - Wikidata entity QID used to scope the graph traversal
+ * @returns Contextual SPARQL query string with entity-specific bindings
  */
-function generateContextualSparqlQuery(_qid: string): string {
-	// Default query for discovering related inventors/scientists
-	return `SELECT ?inventor ?label WHERE { 
-		?inventor wdt:P31 wd:Q5 . 
-		?inventor wdt:P106 wd:Q901 . 
-		?inventor rdfs:label ?label . 
-		FILTER(LANG(?label) = "en") 
-	} LIMIT 10`;
+function generateContextualSparqlQuery(qid: string): string {
+	const normalizedQid = String(qid || '').trim().toUpperCase();
+
+	// Fallback to the original broad query if the identifier cannot be
+	// normalized - this guards against unexpected tool responses while
+	// keeping the workflow resilient.
+	if (!/^Q\d+$/.test(normalizedQid)) {
+		return `SELECT ?entity ?entityLabel WHERE {
+		?entity wdt:P31 wd:Q5 .
+		SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+		} LIMIT 10`;
+	}
+
+	return `SELECT ?entity ?entityLabel ?property ?propertyLabel ?value ?valueLabel WHERE {
+		VALUES ?entity { wd:${normalizedQid} }
+		?entity ?prop ?statement .
+		?property wikibase:claim ?prop .
+		?statement ?ps ?value .
+		?property wikibase:statementProperty ?ps .
+		SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+	}
+	ORDER BY ?propertyLabel ?valueLabel
+	LIMIT 100`;
 }
 
 /**
