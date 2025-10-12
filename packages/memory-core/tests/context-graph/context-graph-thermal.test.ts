@@ -34,14 +34,24 @@ describe('ThermalAwareContextService', () => {
 			stopMonitoring: vi.fn(),
 			onTemperatureChange: vi.fn(),
 		};
-		mockThermalPolicy = {
-			getThermalLimits: vi.fn(),
-			shouldThrottle: vi.fn(),
-			getThrottlingLevel: vi.fn(),
-			getRecommendedLimits: vi.fn(),
-			isEmergencyMode: vi.fn(),
-		};
-		thermalContextService = new ThermalAwareContextService(mockThermalMonitor, mockThermalPolicy);
+                mockThermalPolicy = {
+                        getThermalLimits: vi.fn(),
+                        shouldThrottle: vi.fn(),
+                        getThrottlingLevel: vi.fn(),
+                        getRecommendedLimits: vi.fn(),
+                        isEmergencyMode: vi.fn(),
+                };
+                mockThermalPolicy.getRecommendedLimits.mockResolvedValue({
+                        maxDepth: 5,
+                        maxNodes: 50,
+                        maxConcurrentOps: 5,
+                        throttlingActive: false,
+                        throttlingLevel: 'none',
+                });
+                thermalContextService = new ThermalAwareContextService({
+                        thermalMonitor: mockThermalMonitor,
+                        thermalPolicy: mockThermalPolicy,
+                });
 	});
 
 	describe('thermalAwareSlice', () => {
@@ -177,11 +187,11 @@ describe('ThermalAwareContextService', () => {
 			expect(result.metadata.brainwavEmergencyMode).toBe(true);
 		});
 
-		it('should reject operations when thermal threshold is exceeded', async () => {
-			// Given
-			const recipe = {
-				query: 'test query',
-				maxDepth: 3,
+                it('should reject operations when thermal threshold is exceeded', async () => {
+                        // Given
+                        const recipe = {
+                                query: 'test query',
+                                maxDepth: 3,
 				maxNodes: 15,
 				allowedEdgeTypes: ['DEPENDS_ON'],
 				filters: {},
@@ -194,9 +204,18 @@ describe('ThermalAwareContextService', () => {
 				critical: true,
 			};
 
-			mockThermalMonitor.getCurrentTemperature.mockResolvedValue(mockThermalState);
-			mockThermalPolicy.shouldThrottle.mockResolvedValue(true);
-			mockThermalPolicy.isEmergencyMode.mockResolvedValue(true);
+                        mockThermalMonitor.getCurrentTemperature.mockResolvedValue(mockThermalState);
+                        mockThermalPolicy.shouldThrottle.mockResolvedValue(true);
+                        mockThermalPolicy.isEmergencyMode.mockResolvedValue(true);
+                        mockThermalPolicy.getRecommendedLimits.mockResolvedValue({
+                                maxDepth: 0,
+                                maxNodes: 0,
+                                maxConcurrentOps: 0,
+                                throttlingActive: true,
+                                throttlingLevel: 'emergency',
+                                reason: 'Thermal shutdown threshold exceeded',
+                                emergencyMode: true,
+                        });
 
 			// When
 			const result = await thermalContextService.thermalAwareSlice(recipe);
@@ -312,13 +331,22 @@ describe('ThermalAwareContextService', () => {
 				{ temp: 95, timestamp: Date.now() }, // Critical increase
 			];
 
-			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
-				currentTemp: 95,
-				trend: 'rapidly_rising',
-				zone: 'critical',
-			});
-			mockThermalPolicy.shouldThrottle.mockResolvedValue(true);
-			mockThermalPolicy.isEmergencyMode.mockResolvedValue(true);
+                        mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
+                                currentTemp: 95,
+                                trend: 'rapidly_rising',
+                                zone: 'critical',
+                        });
+                        mockThermalPolicy.shouldThrottle.mockResolvedValue(true);
+                        mockThermalPolicy.isEmergencyMode.mockResolvedValue(true);
+                        mockThermalPolicy.getRecommendedLimits.mockResolvedValue({
+                                maxDepth: 1,
+                                maxNodes: 5,
+                                maxConcurrentOps: 1,
+                                throttlingActive: true,
+                                throttlingLevel: 'aggressive',
+                                emergencyMode: true,
+                                reason: 'Critical temperature - aggressive throttling applied',
+                        });
 
 			// Mock rapid temperature increase
 			mockThermalMonitor.startMonitoring.mockImplementation((callback) => {
@@ -357,14 +385,15 @@ describe('ThermalAwareContextService', () => {
 				recoveryMode: true,
 			};
 
-			const mockThermalLimits = {
-				maxDepth: 2, // Still reduced but improving
-				maxNodes: 12, // Still reduced but improving
-				maxConcurrentOps: 3,
-				throttlingActive: true,
-				throttlingLevel: 'recovery',
-				recoveryMode: true,
-			};
+                        const mockThermalLimits = {
+                                maxDepth: 2, // Still reduced but improving
+                                maxNodes: 12, // Still reduced but improving
+                                maxConcurrentOps: 3,
+                                throttlingActive: true,
+                                throttlingLevel: 'recovery',
+                                recoveryMode: true,
+                                capabilitiesRestored: true,
+                        };
 
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue(coolingThermalState);
 			mockThermalPolicy.shouldThrottle.mockResolvedValue(true);
@@ -403,8 +432,17 @@ describe('ThermalAwareContextService', () => {
 				cooldownDuration: 5000, // 5 seconds
 			};
 
-			mockThermalMonitor.getCurrentTemperature.mockResolvedValue(highTempState);
-			mockThermalPolicy.shouldThrottle.mockResolvedValue(true);
+                        mockThermalMonitor.getCurrentTemperature.mockResolvedValue(highTempState);
+                        mockThermalPolicy.shouldThrottle.mockResolvedValue(true);
+                        mockThermalPolicy.getRecommendedLimits.mockResolvedValue({
+                                maxDepth: 3,
+                                maxNodes: 15,
+                                maxConcurrentOps: 1,
+                                throttlingActive: true,
+                                throttlingLevel: 'moderate',
+                                cooldownRequired: true,
+                                cooldownDuration: 5000,
+                        });
 
 			// When
 			const result = await thermalContextService.thermalAwareSlice(recipe);

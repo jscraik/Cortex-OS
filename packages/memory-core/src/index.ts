@@ -46,22 +46,23 @@ export {
 	GraphRAGIngestService,
 } from './services/GraphRAGIngestService.js';
 export {
-	createGraphRAGService,
-	type GraphRAGQueryRequest,
-	type GraphRAGResult,
-	GraphRAGService,
-	type GraphRAGServiceConfig,
+        createGraphRAGService,
+        type GraphRAGQueryRequest,
+        type GraphRAGResult,
+        GraphRAGService,
+        type GraphRAGServiceConfig,
 } from './services/GraphRAGService.js';
 export {
-	ShortTermMemoryStore,
-	type FlushExpiredResult,
-	type ShortTermMemoryEntry,
-	type ShortTermMemorySession,
-	type ShortTermSnapshot,
-	type ShortTermSnapshotEntry,
-	type StoreShortTermInput,
-	type StoreShortTermResult,
-} from './layers/short-term/ShortTermMemoryStore.js';
+        ThermalMonitor,
+        type ThermalLimits,
+        type ThermalState,
+} from './thermal/ThermalMonitor.js';
+export {
+        ThermalPolicy,
+        type ThermalPolicyConfig,
+        type ThermalPolicyRecommendation,
+        type ThermalContextInput,
+} from './thermal/ThermalPolicy.js';
 
 import { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 import { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';

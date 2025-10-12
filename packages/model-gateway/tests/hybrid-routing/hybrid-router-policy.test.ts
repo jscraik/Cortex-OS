@@ -31,7 +31,7 @@ vi.mock('@cortex-os/memory-core/src/context-graph/evidence/EvidenceGate.js', () 
 	})),
 }));
 
-vi.mock('@cortex-os/memory-core/src/context-graph/thermal/ThermalMonitor.js', () => ({
+vi.mock('@cortex-os/memory-core/src/thermal/ThermalMonitor.js', () => ({
 	ThermalMonitor: vi.fn().mockImplementation(() => ({
 		getCurrentTemperature: vi.fn().mockResolvedValue({
 			currentTemp: 65,

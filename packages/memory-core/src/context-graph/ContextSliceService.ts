@@ -18,7 +18,7 @@ import { GraphEdgeType } from '../db/prismaEnums.js';
 import { z } from 'zod';
 import type { GraphRAGResult, GraphRAGService } from '../services/GraphRAGService.js';
 import { EvidenceGate } from './evidence/EvidenceGate.js';
-import { ThermalMonitor } from './thermal/ThermalMonitor.js';
+import { ThermalMonitor } from '../thermal/ThermalMonitor.js';
 
 export const ContextSliceRecipeSchema = z.object({
 	query: z.string().min(1, 'Query cannot be empty'),
@@ -61,17 +61,19 @@ export interface ContextSubgraph {
 		type: string;
 		metadata: Record<string, any>;
 	}>;
-	metadata: {
-		focusNodes: number;
-		expandedNodes: number;
-		totalChunks: number;
-		edgesTraversed: number;
-		depthUsed: number;
-		nodesExplored: number;
-		sliceDuration: number;
-		brainwavGenerated: boolean;
-		brainwavBranded: boolean;
-	};
+        metadata: {
+                focusNodes: number;
+                expandedNodes: number;
+                totalChunks: number;
+                edgesTraversed: number;
+                depthUsed: number;
+                nodesExplored: number;
+                sliceDuration: number;
+                brainwavGenerated: boolean;
+                brainwavBranded: boolean;
+                maxDepthUsed?: number;
+                maxNodesUsed?: number;
+        };
 }
 
 export interface ContextSliceResult {
