@@ -1,0 +1,48 @@
+[
+  {
+    "file": "packages/mcp/src/handlers/toolsCall.ts",
+    "line": 44,
+    "end_line": 44,
+    "severity": "medium", 
+    "category": "types",
+    "description": "Use of 'any' type for registry parameter weakens type safety. Should use proper interface for better type checking.",
+    "evidence": "private registry: any; // VersionedToolRegistry - avoid circular import",
+    "fix": "Create separate interface file to avoid circular imports and use proper typing: `private registry: VersionedToolRegistry;`",
+    "tests_to_add": "Add test ensuring registry parameter conforms to expected interface contract",
+    "rule": null,
+    "standards": [
+      "codestyle:3-javascript-typescript",
+      "codestyle:types-boundaries"
+    ]
+  },
+  {
+    "file": "packages/mcp/src/handlers/toolsCall.ts",
+    "line": 47,
+    "end_line": 47,
+    "severity": "medium",
+    "category": "types", 
+    "description": "Constructor parameter uses 'any' type which should be replaced with proper interface",
+    "evidence": "constructor(server: Server, registry: any, versioningEnabled = false) {",
+    "fix": "Define proper interface: `constructor(server: Server, registry: VersionedToolRegistry, versioningEnabled = false)`",
+    "tests_to_add": "Add integration test verifying registry parameter typing works correctly",
+    "rule": null,
+    "standards": [
+      "codestyle:3-javascript-typescript"
+    ]
+  },
+  {
+    "file": "config/connectors.manifest.json",
+    "line": 114,
+    "end_line": 139,
+    "severity": "low",
+    "category": "quality",
+    "description": "Wikidata connector configuration contains well-formed remoteTools but should include brAInwav-specific descriptions",
+    "evidence": "remoteTools array lacks brAInwav branding in descriptions",
+    "fix": "Update tool descriptions to include brAInwav context: 'brAInwav semantic search over Wikidata...'",
+    "tests_to_add": "Add test verifying connector manifest includes brAInwav branding in descriptions", 
+    "rule": "brainwav.branding.missing-in-descriptions",
+    "standards": [
+      "policy:RULES_OF_AI#branding"
+    ]
+  }
+]
