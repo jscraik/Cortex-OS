@@ -141,10 +141,21 @@ describe('brAInwav Phase C.2: Remote MCP Orchestration', () => {
           ]
         })
         .mockResolvedValueOnce({
-          // Step 3: SPARQL results with query text
-          query: 'SELECT ?inventor WHERE { ?inventor wdt:P31 wd:Q5 . ?inventor wdt:P106 wd:Q901 }',
+          // Step 3: SPARQL results with query text scoped to the QID
+          query: `
+            SELECT ?entity ?entityLabel ?property ?propertyLabel ?value ?valueLabel WHERE {
+              VALUES ?entity { wd:Q34743 }
+              ?entity ?prop ?statement .
+              ?property wikibase:claim ?prop .
+              ?statement ?ps ?value .
+              ?property wikibase:statementProperty ?ps .
+              SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+            }
+            ORDER BY ?propertyLabel ?valueLabel
+            LIMIT 100
+          `,
           results: [
-            { inventor: 'Q34743', label: 'Alexander Graham Bell' }
+            { entity: 'Q34743', entityLabel: 'Alexander Graham Bell', propertyLabel: 'date of birth', value: '1847-03-03' }
           ]
         });
 
@@ -160,7 +171,7 @@ describe('brAInwav Phase C.2: Remote MCP Orchestration', () => {
       expect(result.source).toBe('wikidata_workflow');
       expect(result.metadata.wikidata.qid).toBe('Q34743');
       expect(result.metadata.wikidata.claimGuid).toBe('Q34743$abc123-def456-789');
-      expect(result.metadata.wikidata.sparql).toContain('SELECT ?inventor');
+      expect(result.metadata.wikidata.sparql).toContain('SELECT ?entity');
       expect(result.metadata.brand).toBe('brAInwav');
 
       // Verify MCP client was called for each step
@@ -168,6 +179,10 @@ describe('brAInwav Phase C.2: Remote MCP Orchestration', () => {
       expect(mockMCPClient.callTool).toHaveBeenNthCalledWith(1, 'vector_search_items', expect.any(Object));
       expect(mockMCPClient.callTool).toHaveBeenNthCalledWith(2, 'get_claims', expect.any(Object));
       expect(mockMCPClient.callTool).toHaveBeenNthCalledWith(3, 'sparql', expect.any(Object));
+
+      // The generated SPARQL query should reference the specific QID
+      const [, sparqlPayload] = mockMCPClient.callTool.mock.calls[2];
+      expect(sparqlPayload.query).toContain('wd:Q34743');
     });
 
     test('C.2.2: should stitch QIDs and claim GUIDs into metadata', async () => {
