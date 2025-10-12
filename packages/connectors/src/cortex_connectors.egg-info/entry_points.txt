@@ -1,3 +1,0 @@
-[console_scripts]
-cortex-connectors = cortex_connectors.cli:main
-cortex-connectors-server = cortex_connectors.server:main

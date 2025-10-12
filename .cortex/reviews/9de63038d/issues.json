@@ -1,0 +1,80 @@
+[
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/simlab/src/user-sim.ts",
+    "line": 12,
+    "end_line": 12,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Math.random() used in production code to generate fake data violates brAInwav production standards",
+    "evidence": "Math.random() * 100",
+    "fix": "Replace with secure randomization: import { randomInt } from 'node:crypto'; const value = randomInt(0, 100);",
+    "tests_to_add": "Add test to verify secure random generation produces values in expected range",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#production-ready-prohibition",
+      "codestyle:security-random-generation"
+    ]
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/simlab/src/runner.ts", 
+    "line": 25,
+    "end_line": 25,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Math.random() used in production code to generate fake data violates brAInwav production standards",
+    "evidence": "delay: Math.random() * 1000",
+    "fix": "Replace with secure randomization: import { randomInt } from 'node:crypto'; const delay = randomInt(100, 1000);",
+    "tests_to_add": "Add test to verify delay generation uses secure random values",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "policy:RULES_OF_AI#production-ready-prohibition",
+      "codestyle:security-random-generation"
+    ]
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/packages/memory-rest-api/src/middleware/requestLogger.ts",
+    "line": 8,
+    "end_line": 8, 
+    "severity": "medium",
+    "category": "brainwav-branding",
+    "description": "Log message missing mandatory brAInwav branding",
+    "evidence": "console.log('Request received')",
+    "fix": "console.log('[brAInwav] Request received')",
+    "tests_to_add": "Add test to verify all log messages include brAInwav branding",
+    "rule": "brainwav.branding.missing-in-logs",
+    "standards": [
+      "policy:RULES_OF_AI#branding-mandatory",
+      "codestyle:logging-standards"
+    ]
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/libs/typescript/asbr-schemas/src/index.ts",
+    "line": 355,
+    "end_line": 358,
+    "severity": "low",
+    "category": "quality",
+    "description": "Excellent implementation: proper brAInwav branding in validation error messages",
+    "evidence": "'brAInwav: Tool name must follow dot-notation (connector.tool_name)'",
+    "fix": "No fix needed - exemplary branding implementation",
+    "tests_to_add": "Consider adding test to verify validation error message format consistency",
+    "rule": "positive-finding",
+    "standards": [
+      "policy:RULES_OF_AI#branding-mandatory"
+    ]
+  },
+  {
+    "file": "/Users/jamiecraik/.Cortex-OS/config/connectors.manifest.json",
+    "line": 4,
+    "end_line": 4,
+    "severity": "low", 
+    "category": "quality",
+    "description": "Excellent implementation: proper brAInwav branding in configuration",
+    "evidence": "\"brand\": \"brAInwav\"",
+    "fix": "No fix needed - exemplary branding implementation",
+    "tests_to_add": "Consider adding test to verify manifest brand field validation",
+    "rule": "positive-finding",
+    "standards": [
+      "policy:RULES_OF_AI#branding-mandatory"
+    ]
+  }
+]

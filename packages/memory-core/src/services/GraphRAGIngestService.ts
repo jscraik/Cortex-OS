@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { SecureNeo4j } from '@cortex-os/utils';
-import { GraphNodeType, type Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+import { GraphNodeType } from '../db/prismaEnums.js';
 import { z } from 'zod';
 import { prisma } from '../db/prismaClient.js';
 import {

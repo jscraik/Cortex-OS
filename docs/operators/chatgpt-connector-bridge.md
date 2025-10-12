@@ -94,6 +94,7 @@ curl https://api.openai.com/v1/responses \
 - `require_approval: "always"` keeps human-in-the-loop until the server is trusted.
 - `allowed_tools` trims latency and token cost by exposing only critical tools.
 - A successful call produces `mcp_list_tools` in the response payload; failures return a branded JSON-RPC error.
+- Ensure the Auth0 API exposes scopes `search.read`, `docs.write`, `memory.read`, `memory.write`, `memory.delete` so ChatGPT can consent and tokens include the permissions published in protected-resource metadata.
 
 ### ChatGPT Pro UI connector
 
@@ -106,6 +107,14 @@ curl https://api.openai.com/v1/responses \
 3. Test with `memory.search` or `codebase.search`.
 
 ChatGPT caches neither the server URL path nor headers, so supply them for each session. Logs in Cortex-OS will show `brAInwav MCP client connected` with a hashed subject ID when authentication succeeds.
+
+## Step 4 – Post-deployment validation (2025-10-11)
+
+1. **Tunnel sanity checks** – Immediately after `cloudflared tunnel run`, record the command output and run `curl` against `https://<hostname>/mcp` and `https://<hostname>/health`. Save the JSON-RPC ping response and health status for the TDD plan.
+2. **ChatGPT confirmation** – Launch a ChatGPT session with the custom connector and execute at least `memory.search` and `codebase.search`. Export the transcript or screenshot the tool invocations together with the Cortex MCP logs showing `brAInwav MCP client connected`.
+3. **Evidence capture** – Archive the Cloudflare tunnel session logs, the ChatGPT transcript, and the Cortex MCP log excerpts. Link all three artifacts in the feature/TDD checklist under the Cloudflare + ChatGPT validation gate.
+4. **Automation passes** – Run `pnpm test:smart`, `pnpm lint:smart`, `pnpm typecheck:smart`, and `pnpm security:scan` from the repo root once the connector succeeds. Note the command timestamps and exit codes in the checklist.
+5. **Governance updates** – Update `packages/mcp-server/IMPLEMENTATION_COMPLETE.md` and any related specs the same day you finish the validation, citing the evidence above. Include the oversight ID from the latest `vibe_check` call in the PR description.
 
 ## Observability
 
@@ -148,4 +157,4 @@ This keeps authentication, telemetry, and tool registration identical across bot
 - Cloudflare tunnel config stored at `config/cloudflared/mcp-tunnel.yml`.
 - Prometheus metrics and OTLP tracing switches documented for operators.
 
-_Last updated: 2025-10-09_
+_Last updated: 2025-10-11_

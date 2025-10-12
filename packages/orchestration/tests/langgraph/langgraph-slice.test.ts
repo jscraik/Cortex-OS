@@ -14,38 +14,41 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { type ContextGraphOrchestrator, createContextGraph } from '../../src/langgraph/context-graph/create-context-graph.js';
+import {
+	type ContextGraphOrchestrator,
+	createContextGraph,
+} from '../../src/langgraph/context-graph/create-context-graph.js';
 
 // Mock dependencies
 vi.mock('@cortex-os/memory-core/src/context-graph/ContextSliceService.js', () => ({
-  ContextSliceService: vi.fn().mockImplementation(() => ({
-    slice: vi.fn()
-  }))
+	ContextSliceService: vi.fn().mockImplementation(() => ({
+		slice: vi.fn(),
+	})),
 }));
 
 vi.mock('@cortex-os/memory-core/src/context-graph/ContextPackService.js', () => ({
-  ContextPackService: vi.fn().mockImplementation(() => ({
-    pack: vi.fn()
-  }))
+	ContextPackService: vi.fn().mockImplementation(() => ({
+		pack: vi.fn(),
+	})),
 }));
 
 vi.mock('@cortex-os/model-gateway/src/hybrid-router/HybridRoutingEngine.js', () => ({
-  HybridRoutingEngine: vi.fn().mockImplementation(() => ({
-    route: vi.fn()
-  }))
+	HybridRoutingEngine: vi.fn().mockImplementation(() => ({
+		route: vi.fn(),
+	})),
 }));
 
 vi.mock('@cortex-os/memory-core/src/context-graph/thermal/ThermalMonitor.js', () => ({
-  ThermalMonitor: vi.fn().mockImplementation(() => ({
-    getCurrentTemperature: vi.fn(),
-    getConstraints: vi.fn()
-  }))
+	ThermalMonitor: vi.fn().mockImplementation(() => ({
+		getCurrentTemperature: vi.fn(),
+		getConstraints: vi.fn(),
+	})),
 }));
 
 vi.mock('@cortex-os/memory-core/src/context-graph/evidence/EvidenceGate.js', () => ({
-  EvidenceGate: vi.fn().mockImplementation(() => ({
-    validateAccess: vi.fn()
-  }))
+	EvidenceGate: vi.fn().mockImplementation(() => ({
+		validateAccess: vi.fn(),
+	})),
 }));
 
 describe('LangGraph.js Context Slice Node', () => {
@@ -59,16 +62,16 @@ describe('LangGraph.js Context Slice Node', () => {
 
 		// Create mock services
 		mockContextSliceService = {
-			slice: vi.fn()
+			slice: vi.fn(),
 		};
 
 		mockThermalMonitor = {
 			getCurrentTemperature: vi.fn(),
-			getConstraints: vi.fn()
+			getConstraints: vi.fn(),
 		};
 
 		mockEvidenceGate = {
-			validateAccess: vi.fn()
+			validateAccess: vi.fn(),
 		};
 
 		// Create orchestrator with mocked dependencies
@@ -81,7 +84,7 @@ describe('LangGraph.js Context Slice Node', () => {
 			maxTokens: 10000,
 			maxCost: 1.0,
 			enableThermalManagement: true,
-			enableEvidenceGating: true
+			enableEvidenceGating: true,
 		});
 	});
 
@@ -90,32 +93,39 @@ describe('LangGraph.js Context Slice Node', () => {
 			// Given
 			const mockSubgraph = {
 				nodes: [
-					{ id: 'node1', type: 'FUNCTION', key: 'test', label: 'Test Function', path: '/test.ts', content: 'function test() {}' }
+					{
+						id: 'node1',
+						type: 'FUNCTION',
+						key: 'test',
+						label: 'Test Function',
+						path: '/test.ts',
+						content: 'function test() {}',
+					},
 				],
 				edges: [],
-				metadata: { focusNodes: 1, expandedNodes: 0, totalChunks: 1, edgesTraversed: 0 }
+				metadata: { focusNodes: 1, expandedNodes: 0, totalChunks: 1, edgesTraversed: 0 },
 			};
 
 			mockContextSliceService.slice.mockResolvedValue({
 				subgraph: mockSubgraph,
-				metadata: { sliceDuration: 50, brainwavBranded: true }
+				metadata: { sliceDuration: 50, brainwavBranded: true },
 			});
 
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 70,
 				zone: 'normal',
-				critical: false
+				critical: false,
 			});
 
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: true,
-				evidence: { valid: true }
+				evidence: { valid: true },
 			});
 
 			const initialState = {
 				query: 'Test query',
 				evidenceRequired: true,
-				thermalConstraints: true
+				thermalConstraints: true,
 			};
 
 			// When
@@ -135,19 +145,19 @@ describe('LangGraph.js Context Slice Node', () => {
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 65,
 				zone: 'optimal',
-				critical: false
+				critical: false,
 			});
 
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: true,
 				policiesApplied: ['evidence-required'],
-				evidence: { evidenceValid: true }
+				evidence: { evidenceValid: true },
 			});
 
 			const initialState = {
 				query: 'Evidence test query',
 				evidenceRequired: true,
-				userId: 'user123'
+				userId: 'user123',
 			};
 
 			// When
@@ -158,7 +168,7 @@ describe('LangGraph.js Context Slice Node', () => {
 				user: { id: 'user123', role: 'user' },
 				resource: { id: expect.any(String), type: 'context_slice' },
 				action: 'read',
-				requestId: expect.any(String)
+				requestId: expect.any(String),
 			});
 			expect(result.stepHistory).toContain('slice');
 		});
@@ -167,12 +177,12 @@ describe('LangGraph.js Context Slice Node', () => {
 			// Given
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: false,
-				reason: 'Access denied by evidence gate'
+				reason: 'Access denied by evidence gate',
 			});
 
 			const initialState = {
 				query: 'Unauthorized query',
-				evidenceRequired: true
+				evidenceRequired: true,
 			};
 
 			// When
@@ -192,30 +202,30 @@ describe('LangGraph.js Context Slice Node', () => {
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 85,
 				zone: 'elevated',
-				critical: false
+				critical: false,
 			});
 
 			mockThermalMonitor.getConstraints.mockResolvedValue({
 				throttlingActive: true,
 				maxDepth: 2, // Reduced from default
-				maxNodes: 10  // Reduced from default
-				throttlingLevel: 'moderate'
+				maxNodes: 10, // Reduced from default
+				throttlingLevel: 'moderate',
 			});
 
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: true,
-				evidence: { valid: true }
+				evidence: { valid: true },
 			});
 
 			mockContextSliceService.slice.mockResolvedValue({
 				subgraph: { nodes: [], edges: [], metadata: {} },
-				metadata: { sliceDuration: 80 }
+				metadata: { sliceDuration: 80 },
 			});
 
 			const initialState = {
 				query: 'Thermal test query',
 				evidenceRequired: true,
-				thermalConstraints: true
+				thermalConstraints: true,
 			};
 
 			// When
@@ -227,8 +237,8 @@ describe('LangGraph.js Context Slice Node', () => {
 			expect(mockContextSliceService.slice).toHaveBeenCalledWith(
 				expect.objectContaining({
 					maxDepth: 2,
-					maxNodes: 10
-				})
+					maxNodes: 10,
+				}),
 			);
 			expect(result.thermalConstraints).toBe(true);
 			expect(result.thermalStatus.zone).toBe('elevated');
@@ -239,13 +249,13 @@ describe('LangGraph.js Context Slice Node', () => {
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 105,
 				zone: 'shutdown',
-				critical: true
+				critical: true,
 			});
 
 			const initialState = {
 				query: 'Thermal shutdown test',
 				evidenceRequired: false,
-				thermalConstraints: true
+				thermalConstraints: true,
 			};
 
 			// When
@@ -263,23 +273,23 @@ describe('LangGraph.js Context Slice Node', () => {
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 95,
 				zone: 'critical',
-				critical: true
+				critical: true,
 			});
 
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: true,
-				evidence: { valid: true }
+				evidence: { valid: true },
 			});
 
 			mockContextSliceService.slice.mockResolvedValue({
 				subgraph: { nodes: [], edges: [], metadata: {} },
-				metadata: { sliceDuration: 60 }
+				metadata: { sliceDuration: 60 },
 			});
 
 			const initialState = {
 				query: 'Thermal disabled test',
 				evidenceRequired: true,
-				thermalConstraints: false
+				thermalConstraints: false,
 			};
 
 			// When
@@ -298,22 +308,22 @@ describe('LangGraph.js Context Slice Node', () => {
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 70,
 				zone: 'normal',
-				critical: false
+				critical: false,
 			});
 
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: true,
-				evidence: { valid: true }
+				evidence: { valid: true },
 			});
 
 			mockContextSliceService.slice.mockResolvedValue({
 				subgraph: { nodes: [], edges: [], metadata: {} },
-				metadata: { sliceDuration: 45 }
+				metadata: { sliceDuration: 45 },
 			});
 
 			const initialState = {
 				query: 'Default recipe test',
-				evidenceRequired: true
+				evidenceRequired: true,
 			};
 
 			// When
@@ -327,8 +337,8 @@ describe('LangGraph.js Context Slice Node', () => {
 					maxNodes: 20,
 					allowedEdgeTypes: ['DEPENDS_ON', 'IMPLEMENTS_CONTRACT', 'CALLS_TOOL'],
 					evidenceRequired: true,
-					thermalConstraints: true
-				})
+					thermalConstraints: true,
+				}),
 			);
 		});
 
@@ -339,29 +349,29 @@ describe('LangGraph.js Context Slice Node', () => {
 				maxDepth: 5,
 				maxNodes: 50,
 				allowedEdgeTypes: ['DEPENDS_ON'],
-				filters: { type: 'test' }
+				filters: { type: 'test' },
 			};
 
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 70,
 				zone: 'normal',
-				critical: false
+				critical: false,
 			});
 
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: true,
-				evidence: { valid: true }
+				evidence: { valid: true },
 			});
 
 			mockContextSliceService.slice.mockResolvedValue({
 				subgraph: { nodes: [], edges: [], metadata: {} },
-				metadata: { sliceDuration: 55 }
+				metadata: { sliceDuration: 55 },
 			});
 
 			const initialState = {
 				query: 'Custom recipe test',
 				recipe: customRecipe,
-				evidenceRequired: true
+				evidenceRequired: true,
 			};
 
 			// When
@@ -378,31 +388,31 @@ describe('LangGraph.js Context Slice Node', () => {
 			const mockSubgraph = {
 				nodes: [
 					{ id: 'node1', content: 'A'.repeat(1000) }, // ~250 tokens
-					{ id: 'node2', content: 'B'.repeat(1000) }  // ~250 tokens
+					{ id: 'node2', content: 'B'.repeat(1000) }, // ~250 tokens
 				],
 				edges: [],
-				metadata: {}
+				metadata: {},
 			};
 
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 70,
 				zone: 'normal',
-				critical: false
+				critical: false,
 			});
 
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: true,
-				evidence: { valid: true }
+				evidence: { valid: true },
 			});
 
 			mockContextSliceService.slice.mockResolvedValue({
 				subgraph: mockSubgraph,
-				metadata: { sliceDuration: 50 }
+				metadata: { sliceDuration: 50 },
 			});
 
 			const initialState = {
 				query: 'Token tracking test',
-				evidenceRequired: true
+				evidenceRequired: true,
 			};
 
 			// When
@@ -421,19 +431,19 @@ describe('LangGraph.js Context Slice Node', () => {
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 70,
 				zone: 'normal',
-				critical: false
+				critical: false,
 			});
 
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: true,
-				evidence: { valid: true }
+				evidence: { valid: true },
 			});
 
 			mockContextSliceService.slice.mockRejectedValue(new Error('Slice service unavailable'));
 
 			const initialState = {
 				query: 'Error handling test',
-				evidenceRequired: true
+				evidenceRequired: true,
 			};
 
 			// When
@@ -452,7 +462,7 @@ describe('LangGraph.js Context Slice Node', () => {
 
 			const initialState = {
 				query: 'Recovery limit test',
-				evidenceRequired: false
+				evidenceRequired: false,
 			};
 
 			// When - Execute multiple times to test recovery limits
@@ -472,23 +482,23 @@ describe('LangGraph.js Context Slice Node', () => {
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 70,
 				zone: 'normal',
-				critical: false
+				critical: false,
 			});
 
 			mockEvidenceGate.validateAccess.mockResolvedValue({
 				granted: true,
-				evidence: { valid: true }
+				evidence: { valid: true },
 			});
 
 			mockContextSliceService.slice.mockResolvedValue({
 				subgraph: { nodes: [], edges: [], metadata: {} },
-				metadata: { sliceDuration: 75 }
+				metadata: { sliceDuration: 75 },
 			});
 
 			const initialState = {
 				query: 'Performance test',
 				evidenceRequired: true,
-				requestId: 'test-123'
+				requestId: 'test-123',
 			};
 
 			// When

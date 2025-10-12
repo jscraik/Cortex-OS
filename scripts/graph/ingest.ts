@@ -2,7 +2,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-import { GraphNodeType, type Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+import { GraphNodeType } from '../../packages/memory-core/src/db/prismaEnums.js';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import { prisma } from '../../packages/memory-core/src/db/prismaClient.js';
 

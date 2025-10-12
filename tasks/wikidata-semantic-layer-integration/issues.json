@@ -1,0 +1,130 @@
+[
+  {
+    "file": "packages/agents/src/connectors/registry.ts",
+    "line": 50,
+    "end_line": 143,
+    "severity": "medium",
+    "category": "codestyle",
+    "description": "Function resolveRemoteTools exceeds 40-line limit (93 lines). CODESTYLE.md §1 requires functions ≤40 lines for readability and maintainability.",
+    "evidence": "const resolveRemoteTools = (entry: ConnectorEntry): ConnectorRemoteTool[] => {\n  // ... 93 lines total\n}",
+    "fix": "Extract synthesis logic into separate helper functions: extractServiceMapTools(), extractMetadataTools(), synthesizeWikidataTools(), synthesizeFactsTools(). Each helper ≤30 lines.",
+    "tests_to_add": "Add unit test for resolveRemoteTools that verifies each helper function is called in correct precedence order",
+    "rule": null,
+    "standards": [
+      "codestyle:1-general-principles",
+      "codestyle:functions-40-lines"
+    ]
+  },
+  {
+    "file": "packages/agents/src/subagents/ExecutionSurfaceAgent.ts",
+    "line": 745,
+    "end_line": 815,
+    "severity": "medium",
+    "category": "codestyle",
+    "description": "Function createConnectorPlan exceeds 40-line limit (71 lines). Split into smaller focused functions.",
+    "evidence": "function createConnectorPlan(\n  content: string,\n  targetSurface: ConnectorExecutionSurface,\n): Array<...> {\n  // ... 71 lines\n}",
+    "fix": "Extract step builders: buildVectorSearchStep(), buildClaimsStep(), buildSparqlStep(), buildFallbackStep(). Main function orchestrates these helpers.",
+    "tests_to_add": "Add test verifying each step builder returns correct action structure with brAInwav branding",
+    "rule": null,
+    "standards": [
+      "codestyle:1-general-principles",
+      "codestyle:functions-40-lines"
+    ]
+  },
+  {
+    "file": "packages/mcp/src/connectors/normalization.ts",
+    "line": 19,
+    "end_line": 44,
+    "severity": "low",
+    "category": "brainwav-branding",
+    "description": "Normalization function does not include brAInwav branding in returned metadata or error paths. While this is a library function, adding brand field to NormalizedTool would ensure consistency.",
+    "evidence": "export function normalizeWikidataToolName(...): NormalizedTool {\n  return { originalName, normalizedName, tags, scopes }; // no brand field\n}",
+    "fix": "Add optional brand field to NormalizedTool interface and include brand: 'brAInwav' in return object when connectorId === 'wikidata'",
+    "tests_to_add": "Add test verifying brand field is present in NormalizedTool for wikidata connector",
+    "rule": "brainwav.branding.missing-in-metadata",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#branding"
+    ]
+  },
+  {
+    "file": "packages/agents/src/connectors/registry.ts",
+    "line": 133,
+    "end_line": 148,
+    "severity": "low",
+    "category": "observability",
+    "description": "No structured logging when resolveRemoteTools performs synthesis fallback. This makes debugging precedence issues difficult.",
+    "evidence": "if (isWikidataConnector) {\n  candidates.push(...); // Silent synthesis\n}",
+    "fix": "Add structured log when synthesis occurs: logger?.debug?.({ connectorId: entry.id, synthesisType: 'wikidata', toolCount: 2, brand: 'brAInwav' }, '[brAInwav] Synthesizing canonical Wikidata tools')",
+    "tests_to_add": "Add test that captures log output when synthesis occurs and verifies brAInwav branding present",
+    "rule": null,
+    "standards": [
+      "codestyle:12-logging-telemetry",
+      "governance:observability"
+    ]
+  },
+  {
+    "file": "config/connectors.manifest.json",
+    "line": 114,
+    "end_line": 139,
+    "severity": "low",
+    "category": "quality",
+    "description": "New remoteTools field lacks validation test in manifest schema tests. Should verify array structure and field requirements.",
+    "evidence": "\"remoteTools\": [ { \"name\": \"vector_search_items\", ... } ]",
+    "fix": "Add JSON schema validation test in packages/asbr tests that verifies remoteTools structure matches ConnectorRemoteToolSchema",
+    "tests_to_add": "Add test: validateConnectorManifest() should reject invalid remoteTools (missing name, invalid tags type, etc.)",
+    "rule": null,
+    "standards": [
+      "governance:agentic-coding-workflow#testing",
+      "checklist:6.2-test-verification"
+    ]
+  },
+  {
+    "file": "packages/agents/src/connectors/registry.ts",
+    "line": 51,
+    "end_line": 58,
+    "severity": "low",
+    "category": "null-handling",
+    "description": "Early return assumes entry.remoteTools.length > 0 is sufficient guard, but doesn't validate tool structure. Could fail silently if tools have missing required fields.",
+    "evidence": "if (entry.remoteTools && Array.isArray(entry.remoteTools) && entry.remoteTools.length > 0) {\n  for (const tool of entry.remoteTools) {\n    candidates.push({ name: tool.name, ... }); // assumes tool.name exists\n  }",
+    "fix": "Add validation: if (!tool.name || typeof tool.name !== 'string') { logger?.warn('[brAInwav] Invalid remote tool structure', { connectorId: entry.id }); continue; }",
+    "tests_to_add": "Add test with malformed remoteTools (missing name field) and verify it's skipped with warning log",
+    "rule": null,
+    "standards": [
+      "codestyle:3-javascript-typescript",
+      "codestyle:errors"
+    ]
+  },
+  {
+    "file": "packages/agents/src/subagents/ExecutionSurfaceAgent.ts",
+    "line": 764,
+    "end_line": 764,
+    "severity": "low",
+    "category": "null-handling",
+    "description": "Regex test on tool.name without null check could throw if tool structure is malformed",
+    "evidence": "const claimsTool = remoteTools.find((tool) => /get_claims|claims/i.test(tool.name));",
+    "fix": "Add null safety: const claimsTool = remoteTools.find((tool) => tool?.name && /get_claims|claims/i.test(tool.name));",
+    "tests_to_add": "Add test with null/undefined tool name in remoteTools array and verify graceful handling",
+    "rule": null,
+    "standards": [
+      "codestyle:3-javascript-typescript",
+      "codestyle:errors"
+    ]
+  },
+  {
+    "file": "packages/mcp/src/connectors/normalization.ts",
+    "line": 1,
+    "end_line": 44,
+    "severity": "low",
+    "category": "testing",
+    "description": "New normalization module lacks corresponding test file. Tests exist in manager.test.ts but not in dedicated normalization.test.ts",
+    "evidence": "normalization.ts created without normalization.test.ts",
+    "fix": "Create packages/mcp/src/connectors/normalization.test.ts with dedicated unit tests for WIKIDATA_TOOL_MAPPINGS and edge cases",
+    "tests_to_add": "Add 5 tests: (1) wikidata tools normalized correctly, (2) non-wikidata passthrough, (3) unknown tool name handling, (4) missing remoteTools, (5) empty tags/scopes arrays",
+    "rule": null,
+    "standards": [
+      "governance:agentic-coding-workflow#phase-3-implementation",
+      "checklist:3.2-tdd-implementation"
+    ]
+  }
+]

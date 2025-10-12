@@ -1,10 +1,10 @@
 import type { CbomDocument } from '@cortex-os/cbom';
-import Ajv, { type JSONSchemaType } from 'ajv';
+import Ajv from 'ajv';
 import { useCallback, useRef, useState } from 'react';
-import schema from '../../../../schemas/cbom.schema.json';
+import schema from '../../../../schemas/cbom.schema.json' with { type: 'json' };
 
 const ajv = new Ajv({ strict: true, allErrors: true });
-const schemaDefinition = schema as JSONSchemaType<CbomDocument>;
+const schemaDefinition = schema as unknown;
 const validate = ajv.compile(schemaDefinition);
 
 interface HookState {

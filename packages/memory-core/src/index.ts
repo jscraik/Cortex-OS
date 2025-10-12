@@ -52,6 +52,16 @@ export {
 	GraphRAGService,
 	type GraphRAGServiceConfig,
 } from './services/GraphRAGService.js';
+export {
+	ShortTermMemoryStore,
+	type FlushExpiredResult,
+	type ShortTermMemoryEntry,
+	type ShortTermMemorySession,
+	type ShortTermSnapshot,
+	type ShortTermSnapshotEntry,
+	type StoreShortTermInput,
+	type StoreShortTermResult,
+} from './layers/short-term/ShortTermMemoryStore.js';
 
 import { LocalMemoryProvider } from './providers/LocalMemoryProvider.js';
 import { RemoteMemoryProvider } from './providers/RemoteMemoryProvider.js';
@@ -79,6 +89,11 @@ export function createMemoryProviderFromEnv(): LocalMemoryProvider | RemoteMemor
 		queueConcurrency: parseInt(process.env.MEMORY_QUEUE_CONCURRENCY || '10', 10),
 		logLevel: (process.env.MEMORY_LOG_LEVEL as any) || 'info',
 		embedDim: parseInt(process.env.EMBED_DIM || '384', 10),
+	};
+
+	config.shortTerm = {
+		ttlMs: parseInt(process.env.MEMORY_SHORT_TERM_TTL_MS || String(5 * 60 * 1000), 10),
+		promotionImportance: parseInt(process.env.MEMORY_SHORT_TERM_PROMOTION_IMPORTANCE || '8', 10),
 	};
 
 	// Add Qdrant config if available

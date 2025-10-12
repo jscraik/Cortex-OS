@@ -12,14 +12,13 @@
  * - Performance targets and error handling
  */
 
-import { GraphEdgeType, GraphNodeType } from '@prisma/client';
+import { GraphEdgeType, GraphNodeType } from '../../src/db/prismaEnums.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContextSliceService } from '../../src/context-graph/ContextSliceService.js';
 import { GraphRAGService } from '../../src/services/GraphRAGService.js';
 
 // Mock Prisma client
-vi.mock('@prisma/client', () => ({
-	PrismaClient: vi.fn(),
+vi.mock('../../src/db/prismaEnums.js', () => ({
 	GraphNodeType: {
 		FUNCTION: 'FUNCTION',
 		CLASS: 'CLASS',

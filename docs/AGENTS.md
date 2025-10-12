@@ -74,3 +74,8 @@ Enforcement through automated checks:
 Agents must use scripts under `agent-toolkit/tools` for search, codemods, diff review and validation. Invoke via `just` recipes or direct script calls to keep outputs deterministic.
 
 </user_instructions>
+
+## Local Memory
+
+Proactively use local-memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time. Store key insights including lessons learned, architectural decisions, development strategies, and project outcomes. Use semantic search and relationship mapping to find relevant memories across all projects and sessions.
+This prompts your AI agents to automatically use Local Memory for persistent context across conversations.

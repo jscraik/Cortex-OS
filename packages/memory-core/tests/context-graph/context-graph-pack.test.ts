@@ -12,7 +12,7 @@
  * - Integration with external knowledge bases
  */
 
-import { GraphNodeType } from '@prisma/client';
+import { GraphNodeType } from '../../src/db/prismaEnums.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContextPackService } from '../../src/context-graph/ContextPackService.js';
 

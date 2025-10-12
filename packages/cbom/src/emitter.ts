@@ -3,7 +3,7 @@ import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { Envelope } from '@cortex-os/a2a-contracts/envelope.js';
-import type { Router } from '@cortex-os/a2a-core/router.js';
+import type { Router } from '@cortex-os/a2a-core/src/router.js';
 import type { Context, Span } from '@opentelemetry/api';
 import { trace } from '@opentelemetry/api';
 import type { ReadableSpan, SpanProcessor } from '@opentelemetry/sdk-trace-base';
@@ -243,6 +243,7 @@ export function createCbomEmitter(options: CreateCbomEmitterOptions = {}): CbomE
 }
 
 export async function writeDefaultCbom(emitter: CbomEmitter): Promise<string> {
+	const reportsDirectory = path.resolve('reports/cbom');
 	await fs.mkdir(reportsDirectory, { recursive: true });
 	const outputPath = path.join(reportsDirectory, 'latest.cbom.json');
 	await emitter.flushToFile(outputPath);

@@ -13,7 +13,8 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { GraphEdgeType, type GraphNodeType } from '@prisma/client';
+import type { GraphNodeType } from '@prisma/client';
+import { GraphEdgeType } from '../db/prismaEnums.js';
 import { z } from 'zod';
 import type { GraphRAGResult, GraphRAGService } from '../services/GraphRAGService.js';
 import { EvidenceGate } from './evidence/EvidenceGate.js';
