@@ -277,6 +277,7 @@ if (!memory) {
 - ⏳ Unit tests need to be added for get() method
 - ⏳ Integration tests with ChatGPT connector pending
 - ⏳ Performance benchmarks pending
+- ⏳ Post-deployment evidence (Cloudflare tunnel logs + ChatGPT transcript + Cortex MCP logs) still needs to be captured and attached to the TDD checklist
 
 ---
 
@@ -316,12 +317,12 @@ if (!memory) {
 
 ### ⏳ Recommended Before Deployment
 
-- [ ] Add unit tests for get() method (both providers)
-- [ ] Add integration test for ChatGPT tools
-- [ ] Performance benchmark comparing old vs new fetch
-- [ ] Test with actual ChatGPT connector
-- [ ] Run full test suite: `pnpm test:smart`
-- [ ] Security scan: `pnpm security:scan`
+- [ ] Validate ChatGPT connector end-to-end through the Cloudflare tunnel and archive the tunnel output, ChatGPT transcript, and Cortex MCP log excerpts.
+- [ ] Add unit tests for get() method (both providers).
+- [ ] Add integration test for ChatGPT tools that exercises `tools/call` via the tunneled `/mcp` endpoint.
+- [ ] Performance benchmark comparing old vs new fetch and document the results.
+- [ ] Run full automation suite: `pnpm test:smart`, `pnpm lint:smart`, `pnpm typecheck:smart`.
+- [ ] Security scan: `pnpm security:scan`.
 
 ---
 
@@ -385,11 +386,10 @@ if (!memory) {
      }'
    ```
 
-4. **Test with ChatGPT Connector**:
-   - Add MCP server URL to ChatGPT Connectors
-   - Enable connector in conversation
-   - Test: "Search for memories about AI"
-   - Test: "Fetch memory with ID xyz"
+4. **Test with ChatGPT Connector + Cloudflare tunnel**:
+   - Add the tunneled MCP server URL (e.g., `https://cortex-mcp.brainwav.io/mcp`) to ChatGPT Connectors.
+   - Enable the connector in conversation and call `memory.search` followed by `codebase.search` (or equivalent).
+   - Capture the ChatGPT transcript, Cloudflare tunnel output, and Cortex MCP log entries (`brAInwav MCP client connected`) and attach them to the TDD checklist.
 
 ### Phase 2-4 (Optional Refactoring)
 
@@ -411,12 +411,14 @@ These are code quality improvements from REFACTORING_GUIDE.md:
 
 - [ ] Server starts without hanging
 - [ ] Health endpoint responds: `curl http://localhost:3024/health`
+- [ ] Cloudflare tunnel endpoint responds: `curl https://<hostname>/health`
 - [ ] Search returns proper content array structure
 - [ ] Fetch returns proper content array structure
 - [ ] Fetch is noticeably faster than before
 - [ ] ChatGPT connector can call search tool
 - [ ] ChatGPT connector can call fetch tool
 - [ ] Deep research returns valid citations
+- [ ] Cloudflare tunnel logs, ChatGPT transcript, and Cortex MCP logs archived in TDD checklist
 
 ### Automated Testing (Recommended)
 

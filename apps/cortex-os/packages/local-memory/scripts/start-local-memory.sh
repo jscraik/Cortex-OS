@@ -10,7 +10,9 @@
 # 1. Checks prerequisites (Ollama, Qdrant)
 # 2. Starts Qdrant if not running
 # 3. Builds the REST API server
-# 4. Starts the REST API server on port 3028
+# 4. Configures hybrid model routing defaults
+# 5. Starts the vibe-check oversight server
+# 6. Starts the REST API server on port 3028
 #
 # Usage: ./start-local-memory.sh
 
@@ -27,6 +29,7 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$SCRIPT_DIR/../../../.."
 LOCAL_MEMORY_DIR="$SCRIPT_DIR/.."
+HYBRID_ENV_FILE="$PROJECT_ROOT/config/hybrid.env"
 
 # Source port configuration
 if [ -f "$LOCAL_MEMORY_DIR/port.env" ]; then
@@ -42,6 +45,23 @@ fi
 MEMORY_API_PORT=${MEMORY_API_PORT:-3028}
 LOCAL_MEMORY_HOST=${LOCAL_MEMORY_HOST:-127.0.0.1}
 LOCAL_MEMORY_BASE_URL=${LOCAL_MEMORY_BASE_URL:-http://127.0.0.1:3028}
+
+# Helper to read a key from an env file without overriding explicit exports
+read_env_default() {
+  local key="$1"
+  local file="$2"
+  if [ ! -f "$file" ]; then
+    return 1
+  fi
+  local line
+  line=$(grep -E "^${key}=" "$file" | tail -n1 | cut -d'=' -f2-)
+  if [ -z "$line" ]; then
+    return 1
+  fi
+  line="${line%\"}"
+  line="${line#\"}"
+  printf '%s' "$line"
+}
 
 echo -e "${BLUE}=== brAInwav Local Memory REST API Server ===${NC}"
 echo -e "${YELLOW}Note: This is the OPTIONAL REST API server (port 3028)${NC}"
@@ -62,7 +82,7 @@ port_in_use() {
 }
 
 # Step 1: Check Prerequisites
-echo -e "${YELLOW}[1/6] Checking prerequisites...${NC}"
+echo -e "${YELLOW}[1/7] Checking prerequisites...${NC}"
 
 if ! command_exists ollama; then
   echo -e "${RED}✗ Ollama not found${NC}"
@@ -79,7 +99,7 @@ fi
 echo -e "${GREEN}✓ Embedding model available${NC}"
 
 # Step 2: Check/Start Qdrant
-echo -e "\n${YELLOW}[2/6] Checking Qdrant status...${NC}"
+echo -e "\n${YELLOW}[2/7] Checking Qdrant status...${NC}"
 
 if [ -f "$HOME/.local-memory/qdrant" ]; then
   if ! pgrep -f "qdrant" > /dev/null; then
@@ -107,7 +127,7 @@ else
 fi
 
 # Step 3: Check if port is available
-echo -e "\n${YELLOW}[3/6] Checking port availability...${NC}"
+echo -e "\n${YELLOW}[3/7] Checking port availability...${NC}"
 
 if port_in_use $MEMORY_API_PORT; then
   echo -e "${YELLOW}⚠ Port ${MEMORY_API_PORT} is already in use${NC}"
@@ -128,7 +148,7 @@ else
 fi
 
 # Step 4: Build the service
-echo -e "\n${YELLOW}[4/6] Building local-memory service...${NC}"
+echo -e "\n${YELLOW}[4/7] Building local-memory service...${NC}"
 
 cd "$LOCAL_MEMORY_DIR"
 
@@ -150,7 +170,7 @@ else
 fi
 
 # Step 5: Export environment variables
-echo -e "\n${YELLOW}[5/6] Configuring environment...${NC}"
+echo -e "\n${YELLOW}[5/7] Configuring environment...${NC}"
 
 export MEMORY_API_PORT
 export LOCAL_MEMORY_HOST
@@ -162,8 +182,82 @@ echo "  MEMORY_API_PORT=${MEMORY_API_PORT}"
 echo "  LOCAL_MEMORY_HOST=${LOCAL_MEMORY_HOST}"
 echo "  LOCAL_MEMORY_BASE_URL=${LOCAL_MEMORY_BASE_URL}"
 
+# Derive hybrid routing defaults for the vibe-check server when not explicitly provided
+if [ -z "${VIBE_CHECK_MODEL_GATEWAY_URL:-}" ]; then
+  VIBE_CHECK_MODEL_GATEWAY_URL=$(read_env_default MODEL_GATEWAY_URL "$HYBRID_ENV_FILE" || printf '')
+fi
+if [ -z "${VIBE_CHECK_MODEL_GATEWAY_TIMEOUT:-}" ]; then
+  VIBE_CHECK_MODEL_GATEWAY_TIMEOUT=$(read_env_default MODEL_GATEWAY_TIMEOUT "$HYBRID_ENV_FILE" || printf '5000')
+fi
+if [ -z "${VIBE_CHECK_MODEL_GATEWAY_API_KEY:-}" ]; then
+  VIBE_CHECK_MODEL_GATEWAY_API_KEY=$(read_env_default MODEL_GATEWAY_API_KEY "$HYBRID_ENV_FILE" || printf '')
+fi
+if [ -z "${VIBE_CHECK_MODEL_GATEWAY_MODEL:-}" ]; then
+  VIBE_CHECK_MODEL_GATEWAY_MODEL=$(read_env_default CORTEX_MODEL_GATEWAY_MODEL "$HYBRID_ENV_FILE" || printf '')
+fi
+
+export VIBE_CHECK_MODEL_GATEWAY_URL
+export VIBE_CHECK_MODEL_GATEWAY_TIMEOUT
+export VIBE_CHECK_MODEL_GATEWAY_API_KEY
+export VIBE_CHECK_MODEL_GATEWAY_MODEL
+
+echo "  VIBE_CHECK_MODEL_GATEWAY_URL=${VIBE_CHECK_MODEL_GATEWAY_URL:-<unset>}"
+echo "  VIBE_CHECK_MODEL_GATEWAY_TIMEOUT=${VIBE_CHECK_MODEL_GATEWAY_TIMEOUT:-<unset>}"
+echo "  VIBE_CHECK_MODEL_GATEWAY_MODEL=${VIBE_CHECK_MODEL_GATEWAY_MODEL:-<unset>}"
+
+# Step 6: Ensure vibe-check oversight server is running with hybrid routing
+echo -e "\n${YELLOW}[6/7] Starting brAInwav vibe-check server...${NC}"
+
+mkdir -p "$LOCAL_MEMORY_DIR/logs"
+
+if ! pgrep -f "vibe-check-mcp.*2091" > /dev/null; then
+  echo -e "${BLUE}Starting vibe-check server on port 2091...${NC}"
+  if command -v vibe-check-mcp >/dev/null 2>&1; then
+    VIBE_CHECK_CMD=(vibe-check-mcp)
+  else
+    echo -e "${YELLOW}[brAInwav] vibe-check CLI not found globally, falling back to npx runner${NC}"
+    VIBE_CHECK_CMD=(npx @pv-bhat/vibe-check-mcp)
+  fi
+  nohup "${VIBE_CHECK_CMD[@]}" start --http --port 2091 > "$LOCAL_MEMORY_DIR/logs/vibe-check.log" 2>&1 &
+  VIBE_CHECK_PID=$!
+  sleep 5
+else
+  VIBE_CHECK_PID=$(pgrep -f "vibe-check-mcp.*2091" | head -n1)
+  echo -e "${GREEN}✓ Vibe-check server already running (PID: ${VIBE_CHECK_PID})${NC}"
+fi
+
+if [ -n "${VIBE_CHECK_PID:-}" ] && ps -p "$VIBE_CHECK_PID" > /dev/null 2>&1; then
+  if curl -f -s "http://127.0.0.1:2091/healthz" > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Vibe-check health check passed${NC}"
+    VIBE_SMOKE_PAYLOAD='{"jsonrpc":"2.0","id":"startup-health","method":"tools/call","params":{"name":"vibe_check","arguments":{"goal":"startup smoke test","plan":"1) ensure availability","sessionId":"startup-health"}}}'
+    if curl -s -f \
+      -H 'Content-Type: application/json' \
+      -H 'Accept: application/json, text/event-stream' \
+      -d "$VIBE_SMOKE_PAYLOAD" \
+      "http://127.0.0.1:2091/mcp" > /dev/null; then
+      echo -e "${GREEN}✓ Vibe-check MCP smoke test passed${NC}"
+    else
+      echo -e "${RED}✗ Vibe-check MCP smoke test failed${NC}"
+      echo "Check logs at: $LOCAL_MEMORY_DIR/logs/vibe-check.log"
+      kill "$VIBE_CHECK_PID" 2>/dev/null || true
+      wait "$VIBE_CHECK_PID" 2>/dev/null || true
+      exit 1
+    fi
+  else
+    echo -e "${RED}✗ Vibe-check health check failed${NC}"
+    echo "Check logs at: $LOCAL_MEMORY_DIR/logs/vibe-check.log"
+    kill "$VIBE_CHECK_PID" 2>/dev/null || true
+    wait "$VIBE_CHECK_PID" 2>/dev/null || true
+    exit 1
+  fi
+else
+  echo -e "${RED}✗ Vibe-check server failed to start${NC}"
+  echo "Check logs at: $LOCAL_MEMORY_DIR/logs/vibe-check.log"
+  exit 1
+fi
+
 # Step 6: Start the service
-echo -e "\n${YELLOW}[6/6] Starting local-memory REST API server...${NC}"
+echo -e "\n${YELLOW}[7/7] Starting local-memory REST API server...${NC}"
 
 # Create log directory if it doesn't exist
 mkdir -p "$LOCAL_MEMORY_DIR/logs"

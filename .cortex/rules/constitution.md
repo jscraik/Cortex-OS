@@ -4,18 +4,16 @@ alwaysApply: true
 ---
 # brAInwav Cortex-OS Constitution
 
-**Version**: 1.1.0  
+**Version**: 1.2.0  
 **Ratified**: 2025-10-08  
-**Last Amended**: 2025-10-11  
+**Last Amended**: 2025-10-12  
 **Maintainer**: brAInwav Development Team
 
 ---
 
 ## Purpose
 
-This constitution defines the **foundational principles** that govern all development within the brAInwav Cortex-OS
-ecosystem. It complements and extends `RULES_OF_AI.md` and `CODESTYLE.md` with project-specific governance for
-feature development, agent behavior, and quality standards.
+This constitution defines the **foundational principles** that govern all development within the brAInwav Cortex-OS ecosystem. It complements and extends `RULES_OF_AI.md` and `CODESTYLE.md` with project-specific governance for feature development, agent behavior, and quality standards. It is part of the **Governance Pack** (`/.cortex/rules/*`).
 
 ---
 
@@ -23,158 +21,92 @@ feature development, agent behavior, and quality standards.
 
 ### 1. brAInwav Production Standards (NON-NEGOTIABLE)
 
-**No Mock Production Claims**: Never describe any implementation as "production-ready", "complete",
-"operational", or "fully implemented" if it contains:
+**No Mock Production Claims**: Never describe any implementation as "production-ready", "complete", "operational", or "fully implemented" if it contains any of the following in production paths:
+- `Math.random()` or fabricated data
+- Hardcoded mocks or placeholder adapters ("will be wired later")
+- `TODO`/`FIXME`/`HACK`, or `console.warn("not implemented")`
+- Fake metrics/telemetry
 
-- `Math.random()` calls for generating fake data
-- Hardcoded mock responses (e.g., "Mock adapter response - adapters not yet implemented")
-- TODO comments in production code paths
-- Placeholder implementations with notes like "will be wired later"
-- Disabled features with `console.warn("not implemented")`
-- Fake system metrics or thermal data
+**brAInwav Branding**: All system outputs, error messages, health checks, and status logs **must** include brAInwav branding (`"[brAInwav]"` and `brand:"brAInwav"` in structured logs).
 
-**brAInwav Branding**: All system outputs, error messages, health checks, and status logs MUST include "brAInwav" branding.
+**Evidence-Based Status**: Status claims must be verified against passing gates and attached evidence.
 
-**Evidence-Based Status**: All status claims must be verified against actual code implementation and passing quality gates.
+**Type Safety & Style (prod paths)**: No `any` in TS, **named exports only**, max **40 lines per function**, guard clauses, strict boundary types, `async/await` with `AbortSignal`.
+
+**Domain Boundaries**: No cross-domain imports; interact via declared contracts (A2A topics, MCP tools/resources/prompts).
 
 ### 2. Test-Driven Development (MANDATORY)
 
-**Red-Green-Refactor Cycle**:
+**Red–Green–Refactor**:
+1) Write failing tests first  
+2) Implement minimal pass  
+3) Refactor while staying green
 
-1. Write failing tests FIRST
-2. Get user/stakeholder approval on test scenarios
-3. Implement minimal code to pass tests
-4. Refactor for quality while maintaining green tests
-
-**Coverage Requirements**:
-
-- 90%+ minimum test coverage threshold
-- All new features require comprehensive test suites
-- TDD approach documented in `[feature]-tdd-plan.md`
+**Coverage Requirements**: ≥ **90% global**, ≥ **95% changed lines**; mutation ≥ **90%** where enabled. TDD plan stored per task.
 
 ### 3. Accessibility First (WCAG 2.2 AA)
 
-All UI components MUST meet WCAG 2.2 AA compliance:
-
-- Semantic HTML with appropriate ARIA attributes
-- Keyboard navigation for all interactive elements
-- Minimum 44x44 CSS pixel target sizes
-- Screen reader compatibility with `jest-axe` test coverage
-- brAInwav branding in accessibility announcements
+Semantic HTML/ARIA, keyboard complete, target ≥ 44×44 CSS px, screen-reader coverage via `jest-axe`/axe. Include branding in a11y announcements where appropriate.
 
 ### 4. Monorepo Integrity
 
-**Nx Smart Execution**: Use smart wrappers for affected-only execution:
-
-- `pnpm build:smart`, `pnpm test:smart`, `pnpm lint:smart`, `pnpm typecheck:smart`
-- Respect project boundaries and dependency graphs
-- No circular dependencies
-
-**Named Exports Only**: No `export default` statements
-
-- Improves tree-shaking and refactoring
-- Explicit imports enhance code clarity
-
-**Function Size Limit**: Maximum 40 lines per function
-
-- Split immediately if exceeding limit
-- Prefer composition and guard clauses
+Use affected-only **smart** targets (`pnpm *:smart`), respect Nx dependency graph, forbid circular deps. Follow repo structure rules and structure guard.
 
 ### 5. Agent-First Architecture
 
-**MCP Integration**: All external tool integrations via Model Context Protocol
-
-- Contract-based tool definitions with Zod schemas
-- Audit events emitted via MCP audit publisher
-- Local memory integration for persistent context
-
-**A2A Communication**: Cross-feature communication via Agent-to-Agent events
-
-- Use `createEnvelope(...)` from `@cortex-os/a2a-contracts`
-- No direct cross-domain imports
-- Event-driven architecture for loose coupling
+**MCP** for external tools (contracts with Zod; audited via MCP audit events).  
+**A2A** for inter-agent comms (event envelopes; no direct cross-domain imports).  
+**Local Memory** for persistent context with **MCP/REST parity** (see §II.3 & §III Documentation).
 
 ### 6. Security by Default
 
-**Quality Gates**: All changes must pass:
+Semgrep (**block ERROR**), gitleaks (**block ANY**), OSV clean, SBOM (CycloneDX), provenance (SLSA/in-toto), minimal/pinned containers (non-root, read-only FS, drop caps). **No secrets in code**. Use shared env loader (`scripts/utils/dotenv-loader.mjs` or `@cortex-os/utils`) — **never call `dotenv.config()` directly**.
 
-- `pnpm security:scan` - Semgrep OWASP rules
-- `pnpm security:scan:gitleaks` - Secret detection
-- `pnpm test:security` - Security-focused test scenarios
-- Dependency vulnerability scanning
+### 7. Time Freshness Guard
 
-**No Secrets in Code**: Never commit credentials, API keys, or sensitive data
+All reasoning anchored to harness "today"; convert relative dates to **ISO-8601**; treat "latest/current" as freshness checks. (See `/_time-freshness.md`.)
 
-- Use environment variables via `.env` files
-- 1Password CLI integration for local development
-- Secrets management via secure vaults
+### 8. Hybrid Model Solution — **Live Only**
+
+Embeddings, rerankers, generations must use **live** engines (MLX, Ollama, or approved Frontier). **No stubs, recorded outputs, or "dry_run" modes.** Pre-merge evidence requires `pnpm models:health && pnpm models:smoke` logs (engine, model IDs, vector dims/norms, latency).
+
+### 9. Governance Hooks (AGENTS.md + Vibe-Check)
+
+Agents must load the nearest `AGENTS.md` and record its SHA (`AGENTS_MD_SHA:<sha>`) in run state and logs. Agents must call **Vibe Check MCP** `vibe_check` after planning and **before** file writes/network calls/long runs; logs must include `"brAInwav-vibe-check"`.
 
 ---
 
-## II. Development Workflow
+## II. Development Workflow (Phases & HITL)
 
-### Phase 0: Task Initialization
+### Phase Machine (R → G → F → REVIEW) — HITL Only at REVIEW
 
-- Create semantic task ID slug (e.g., `feature-name` or `bugfix-description`)
-- Store context in `~/tasks/[feature]/research.md`
-- Document in local memory MCP for persistence
+- **R (Red)**: Write failing tests; plan minimal pass. No `human_input`.  
+  Auto-advance to **G** once new failing tests then pass on next commit.
 
-### Phase 1: Research
+- **G (Green)**: Implement to pass; run security scans and live model smoke. No `human_input`.  
+  Auto-advance to **F** when tests pass and coverage gates met.
 
-- Utilize semantic search for existing patterns
-- Use web search for up-to-date information
-- Document findings in `~/tasks/[feature]/research.md`
-- Include brAInwav-specific architectural patterns
+- **F (Finished)**: Refactor, docs, a11y, SBOM/provenance, structure guard. No `human_input`.  
+  Auto-advance to **REVIEW** when a11y + scans + live-model evidence attached.
 
-### Phase 2: Planning
+- **REVIEW**: **HITL permitted**; complete Code Review Checklist; approvals/waivers per Constitution.
 
-- Read research file and develop TDD plan
-- Create `~/tasks/[feature]/tdd-plan.md` with:
-  - Scope and goals
-  - Testing strategy (write tests first)
-  - Implementation checklist with priorities
-  - Dependencies and architectural decisions
+**Forbidden**: Any `human_input` before REVIEW is a policy violation.
 
-### Phase 3: Implementation
+### Evidence Tokens (CI-Scanned)
 
-- Follow TDD plan systematically
-- Use named exports, async/await exclusively
-- Keep functions ≤ 40 lines
-- Include brAInwav branding in all outputs
-- Update implementation checklist as work progresses
+- `AGENTS_MD_SHA:<sha>`  
+- `PHASE_TRANSITION:<from>-><to>`  
+- `brAInwav-vibe-check`  
+- `MODELS:LIVE:OK engine=<mlx|ollama|frontier>`
 
-### Phase 4: Review, Testing, Validation & Monitoring
+### Phase 0–7 (Task Spine)
 
-- Run comprehensive testing (unit, integration, system, acceptance, accessibility, security, performance)
-- Execute CI/CD and deployment validation
-- Include HITL (Human-in-the-Loop) integration for high-stakes areas
-- Perform continuous refactoring and code review
-- Document all results in `~/tasks/[feature]/test-logs/` and `~/tasks/[feature]/validation/`
-
-### Phase 5: Verification
-
-- Run quality gates: `pnpm lint && pnpm test && pnpm security:scan`
-- Validate structure: `pnpm structure:validate`
-- Check coverage: Ensure 90%+ maintained
-- Test accessibility where applicable
-- **Reality Filter**: Never present generated/inferred content as fact; label unverified content with
-  `[Inference]`, `[Speculation]`, `[Unverified]`; verify all claims before stating as complete
-- Store lessons learned in local memory
-
-### Phase 6: Monitoring, Iteration & Scaling
-
-- Maintain active monitoring with deployment dashboards and log analysis
-- Rapidly respond to feedback, incidents, and drift
-- Record model performance, drift detection, and retraining activities
-- Consider scalability and efficiency improvements
-
-### Phase 7: Archive
-
-- Move completed TDD plan to appropriate documentation location
-- **MANDATORY**: Update CHANGELOG.md with entry
-- **MANDATORY**: Update README.md if features/changes are user-facing
-- Update website documentation for user-facing changes
-- Store comprehensive task summary with brAInwav context in `~/tasks/[feature]/SUMMARY.md`
+Keep the existing task spine (Initialization → Research → Planning → Implementation → Review/Testing/Validation/Monitoring → Verification → Monitoring/Iteration/Scaling → Archive), with these **constitutional inserts**:
+- At **Planning**: prepare checklist, vibe-check plan, time-freshness normalization, and live-model probes.  
+- At **Implementation**: enforce style, domain boundaries, env loader, and memory parity.  
+- At **Verification**: enforce coverage/mutation, structure guard, a11y reports, branding checks, hybrid live-only evidence.  
+- At **Archive**: mirror filled checklist to `.cortex/audit/reviews/<PR_NUMBER>-<SHORT_SHA>.md`.
 
 ---
 
@@ -182,139 +114,69 @@ All UI components MUST meet WCAG 2.2 AA compliance:
 
 ### Code Quality
 
-- ESLint, Biome, and ast-grep enforcement
-- Python: Ruff linting with strict mode
-- Rust: Clippy with deny warnings
-- No `console.log` in production code paths
+ESLint/Biome/ast-grep; Python Ruff; Rust Clippy; no `console.log` in prod paths; deterministic outputs; structured logs with brand + request/run IDs; OTel traces/metrics.
 
 ### Testing Requirements
 
-- Vitest for TypeScript packages
-- pytest for Python modules
-- Property-based testing for critical algorithms
-- Mutation testing with Stryker for high-risk code
+Vitest (TS), pytest (Py), property-based for critical code, Stryker mutation where enabled. a11y tests via axe/jest-axe.
 
 ### Documentation
 
-- All packages require README.md with:
-
-  - Purpose and scope
-  - Installation/setup instructions
-  - API documentation
-  - Usage examples
-  - brAInwav branding
-- Keep documentation current with code changes
+Each package requires README with purpose, setup, API, examples, branding.  
+Per-task artifacts stored under `~/tasks/[feature]/`.  
+**Local Memory parity**: decisions/rationales appended to `.github/instructions/memories.instructions.md` **and** persisted via Local Memory MCP/REST.
 
 ### Observability
 
-- OpenTelemetry instrumentation for all services
-- Structured logging with Pino (TypeScript) or Python logging
-- Metrics emission to Prometheus-compatible endpoints
-- Include brAInwav context in all telemetry
+OpenTelemetry for services, Prometheus endpoints, structured logging (Pino/Python), include `brand:"brAInwav"`, request/run IDs.
+
+### Runtime Surfaces & Auth
+
+MCP requires API key by default (dev may set `NO_AUTH=true`). OAuth2 mode (Auth0) allowed with scopes: `search.read`, `docs.write`, `memory.read`, `memory.write`, `memory.delete`; RBAC + Add-Permissions-in-Token enabled. MCP config must match port registry (`3024`, `3026`, `3028`, `39300`) and `.well-known/mcp.json`.
 
 ---
 
 ## IV. Feature Development Standards
 
-### Priority-Based User Stories
-
-All features MUST define prioritized user stories:
-
-- **P0 (Critical)**: Blocking issues, security vulnerabilities
-- **P1 (High)**: Core functionality, primary user journeys
-- **P2 (Medium)**: Important enhancements, secondary features
-- **P3 (Low)**: Nice-to-haves, future improvements
-
-Each story must be **independently testable** - implementing just one story should deliver viable value.
-
-### Acceptance Criteria
-
-Use Given-When-Then format:
-
-```markdown
-**Given** [initial state]
-**When** [user action]
-**Then** [expected outcome]
-```
-
-### Technical Debt Management
-
-- Document all technical debt in ADRs (Architecture Decision Records)
-- Track in GitHub Issues with `technical-debt` label
-- Include payoff plan and timeline
-- No accumulation without justification
+Prioritized stories (P0–P3) that are **independently testable**; Given–When–Then acceptance criteria.  
+Technical debt tracked via ADRs + Issues with payoff plan.
 
 ---
 
 ## V. Compliance & Governance
 
-### Open Source Licensing
+**Licensing**: Apache-2.0; `pnpm license:validate`; SBOM via `pnpm sbom:generate`.  
+**Privacy**: Local-first; GDPR erasure; privacy-preserving telemetry.
 
-- Apache 2.0 for all brAInwav Cortex-OS code
-- License scanning via `pnpm license:validate`
-- SBOM generation for compliance: `pnpm sbom:generate`
-
-### Privacy & Data Protection
-
-- GDPR Article 17 compliance (right to erasure)
-- Local-first architecture (no data exfiltration)
-- Privacy-preserving telemetry
-- Transparent data handling policies
-
-### brAInwav Branding Requirements
-
-- All system outputs include "brAInwav" reference
-- Error messages branded consistently
-- Documentation headers include brAInwav attribution
-- Co-authored commits: `Co-authored-by: brAInwav Development Team`
+**Review & Checklists (ENFORCED)**:
+- A **human (non-author)** completes and posts `/.cortex/rules/code-review-checklist.md`.  
+- BLOCKER items must be PASS; MAJORs need fixes or a waiver; MINORs need a follow-up task.
 
 ---
 
 ## VI. Amendment Process
 
-### Proposing Changes
-
-1. Create ADR in `project-documentation/adrs/`
-2. Document rationale and impact analysis
-3. Get approval from maintainers
-4. Update constitution version (semantic versioning)
-5. Announce changes to team
-
-### Conflict Resolution
-
-Hierarchy of authority (highest to lowest):
-
-1. `/.cortex/rules/RULES_OF_AI.md` (immutable ethics)
-2. This Constitution
-3. `CODESTYLE.md` (coding standards)
-4. `AGENTS.md` (agent behaviors)
-5. Model-specific guidelines (CLAUDE.md, QWEN.md, GEMINI.md)
+**Proposing Changes**: Create ADR; include rationale/impact; maintainer approval; bump version; announce.  
+**Conflict Resolution (highest → lowest)**:
+1. **Governance Pack** (`/.cortex/rules/*`) with precedence:
+   - `RULES_OF_AI.md` (immutable ethics)
+   - **This Constitution**
+   - `vision.md`, `agentic-coding-workflow.md`, `code-review-checklist.md`, `_time-freshness.md`, `CHECKLIST.cortex-os.md`
+2. `CODESTYLE.md`  
+3. Root `AGENTS.md`  
+4. Package-level `AGENTS.md`  
+5. Model guides (adapters)
 
 ---
 
 ## VII. Enforcement
 
-**Automated Checks**:
+**Automated**: CI gates (coverage/mutation, structure, security, a11y), evidence-token scan, checklist presence, live-model probes, env-loader rule, domain boundary checks.
 
-- CI/CD pipeline enforces all quality gates
-- Pre-commit hooks validate formatting and linting
-- Structure guard validates repository organization
-- Pattern guards detect anti-patterns and violations
+**Manual**: Code owners approve; checklist verified; architecture decisions reviewed.
 
-**Manual Review**:
-
-- All PRs require approval from code owners
-- Constitution compliance verified in code review
-- Architectural decisions reviewed against principles
-
-**Continuous Improvement**:
-
-- Retrospectives identify process improvements
-- Metrics tracked for quality trends
-- Regular audits of compliance adherence
+**Continuous Improvement**: Retros, metrics, periodic audits.
 
 ---
-
-**This constitution is living documentation. It evolves as brAInwav Cortex-OS matures, but foundational principles remain constant.**
 
 Co-authored-by: brAInwav Development Team

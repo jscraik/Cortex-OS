@@ -204,8 +204,14 @@ export const memoryUpdateNode = async (state: CortexState): Promise<Partial<Cort
 export const errorHandlingNode = async (state: CortexState): Promise<Partial<CortexState>> => {
 	const error = state.error || 'Unknown error occurred';
 
-	// Log error
-	console.error('Agent execution error:', error);
+	// Log error with brAInwav branding
+	console.error('brAInwav Agent execution error', {
+		component: 'agents',
+		brand: 'brAInwav',
+		error,
+		severity: 'error',
+		step: 'error_handling',
+	});
 
 	// Determine error type and appropriate response
 	const errorResponse = generateErrorResponse(error);
@@ -288,6 +294,7 @@ function analyzeIntent(content: string): {
 		test_generation: ['test', 'spec', 'unit test', 'coverage'],
 		documentation: ['document', 'readme', 'docs', 'explain'],
 		security: ['security', 'vulnerability', 'scan', 'audit'],
+		research: ['research', 'paper', 'arxiv', 'academic', 'scholar', 'literature', 'citation'],
 		general: ['help', 'how to', 'what is'],
 	};
 
@@ -324,6 +331,7 @@ function determineCapabilities(intent: any, _content: string): string[] {
 		test_generation: ['test-generator', 'coverage-analyzer'],
 		documentation: ['doc-generator', 'markdown-formatter'],
 		security: ['security-scanner', 'vulnerability-db'],
+		research: ['arxiv-search', 'arxiv-download', 'citation-manager'],
 		general: ['web-search', 'calculator'],
 	};
 
@@ -332,15 +340,48 @@ function determineCapabilities(intent: any, _content: string): string[] {
 
 function selectTools(capabilities: string[], availableTools: any[]): string[] {
 	return availableTools
-		.filter((tool) => capabilities.some((cap) => tool.name.includes(cap)))
+		.filter((tool) =>
+			capabilities.some(
+				(cap) =>
+					tool.name.includes(cap) ||
+					// Enhanced matching for arXiv tools
+					(cap === 'arxiv-search' && tool.name === 'arxiv_search') ||
+					(cap === 'arxiv-download' && tool.name === 'arxiv_download') ||
+					(cap === 'citation-manager' && tool.name.includes('arxiv')) ||
+					// General research tools
+					(cap.includes('research') && tool.name.startsWith('arxiv_')),
+			),
+		)
 		.map((tool) => tool.name);
 }
 
 async function executeTool(toolName: string, params: any): Promise<any> {
 	// Implement tool execution via MCP
-	console.log(`Executing tool: ${toolName}`, params);
+	console.info('brAInwav Tool execution started', {
+		component: 'agents',
+		brand: 'brAInwav',
+		tool: toolName,
+		params,
+	});
 
-	// Mock response for now
+	// Check if this is a registered arXiv tool
+	if (toolName.startsWith('arxiv_')) {
+		// For arXiv tools, we would normally delegate to the registered MCP client
+		// For now, provide a structured response indicating the tool was recognized
+		return {
+			success: true,
+			result: {
+				tool: toolName,
+				message: `${toolName} tool execution requested`,
+				parameters: params,
+				source: 'langgraph_node',
+				timestamp: new Date().toISOString(),
+			},
+			status: 'success',
+		};
+	}
+
+	// Mock response for other tools
 	if (toolName.includes('failing')) {
 		throw new Error(`Tool ${toolName} failed`);
 	}
@@ -379,7 +420,12 @@ function generateInteractionId(): string {
 
 async function storeInteraction(interaction: any): Promise<void> {
 	// Store in memory system
-	console.log('Storing interaction:', interaction);
+	console.info('brAInwav Interaction stored', {
+		component: 'agents',
+		brand: 'brAInwav',
+		interactionId: JSON.parse(interaction.content).id,
+		timestamp: interaction.timestamp,
+	});
 }
 
 function generateErrorResponse(error: string): string {

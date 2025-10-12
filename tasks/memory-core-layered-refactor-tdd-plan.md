@@ -19,7 +19,7 @@ Implement a layered memory architecture in `@cortex-os/memory-core` that separat
 > **Integration Note**: This task aligns with PRP Runner quality gates to ensure consistent quality standards.
 
 ### Enforcement Profile Reference
-- **Source**: `packages/workflow-common/src/schemas/enforcement-profile.ts` (planned location, default brAInwav profile)
+- **Source**: `packages/workflow-common/src/schemas/enforcement-profile.ts` (default brAInwav profile)
 - **Coverage Targets**: From PRP G2 (Test Plan gate)
   - Lines: `95%` (from `enforcementProfile.budgets.coverageLines` defaults)
   - Branches: `95%` (from `enforcementProfile.budgets.coverageBranches` defaults)
@@ -81,6 +81,7 @@ Implement a layered memory architecture in `@cortex-os/memory-core` that separat
 - [x] Review existing `MemoryWorkflowEngine` usage for short-term orchestration
 - [x] Analyse current SQLite + Qdrant integration points in `LocalMemoryProvider`
 - [x] Review compliance requirements from memory hygiene guidance (source pointers, deletion)
+- [ ] Confirm availability of Qdrant collection management utilities for semantic/long-term split
 
 ### Internal Dependencies
 - **Package**: `@cortex-os/tool-spec` – shared request/response contracts for memory APIs
@@ -96,7 +97,7 @@ Implement a layered memory architecture in `@cortex-os/memory-core` that separat
 ```bash
 pnpm install
 # Optional: start local Qdrant for integration tests
-docker-compose -f docker/qdrant-compose.yml up -d
+./docker/scripts/dev-qdrant-up.sh
 # Ensure MEMORY_DB_PATH points to writable sqlite file under repo data/
 export MEMORY_DB_PATH="./data/unified-memories.db"
 ```
@@ -202,10 +203,17 @@ export MEMORY_DB_PATH="./data/unified-memories.db"
 
 ---
 
+### Test Authoring Order
+
+1. Implement failing unit specs for `ShortTermMemoryStore` to lock correct promotion + expiration behaviour.
+2. Follow with failing specs for `WorkingMemoryChecklist`, including duplicate prevention and retention TTL coverage.
+3. Add `ProceduralMemoryRegistry` specs once consent front matter parsing helper is stubbed.
+4. Create integration tests after unit scaffolding compiles to exercise cross-layer promotion and deletion.
+
 ## Test Data & Fixtures
 
 - SQLite fixture database seeded via helper `createEphemeralSqlite()` inside tests
-- Temporary Qdrant container spun up via `./docker/scripts/dev-qdrant-up.sh` (guard tests with env flag)
+- Temporary Qdrant container spun up via `docker-compose -f docker/qdrant-compose.yml up -d` (guard tests with env flag)
 - Markdown fixture files placed under `packages/memory-core/testdata/procedural/`
 - Checklist fixtures stored under `packages/memory-core/testdata/working/`
 
@@ -219,11 +227,17 @@ export MEMORY_DB_PATH="./data/unified-memories.db"
 
 ---
 
+## Decisions & Follow-ups (2025-10-11)
+
+- **Qdrant layering strategy**: Reuse the existing `local_memory_v1` collection and tag each point with a `memory_layer` payload attribute (`short_term`, `episodic`, `semantic`, `long_term`). Filtering by that property keeps compatibility with current deployments while enabling layer-aware queries; migration hooks ensure the tag is backfilled before enabling the new orchestrator.
+- **Procedural ingestion consent**: Procedural playbooks must declare `memory_consent: true` in YAML front matter. The ingest registry will reject files lacking explicit consent unless they live inside the allowlisted `docs/playbooks/` tree that already underwent governance review, emitting branded log warnings for any skipped assets.
+- **Checklist retention**: Checklist entries become immutable once persisted to the episodic layer; the working store automatically expires items 24 hours after persistence (configurable TTL) and emits provenance audit events so revocation requests remove both short-term and episodic copies.
+- **memory_layer tagging**: All new Qdrant upserts label payloads with `memory_layer` (`semantic` by default, `long_term` for importance ≥ 8) and append version/timestamp metadata; a backfill helper (`LocalMemoryProvider.backfillQdrantMemoryLayers`) migrates existing points lacking the tag using paged scroll + setPayload operations.
+- **Short-term promotion gates**: Importance ≥ 8 triggers immediate promotion via `storeShortTerm`, and TTL expirations route through `flushShortTermExpired()` which now hands sessions to the episodic pipeline before eviction.
+
 ## Open Questions
 
-1. Do we need distinct Qdrant collections for semantic vs. long-term memories or can a single collection with payload flag suffice?
-2. Should procedural markdown indexing respect repo-level consent metadata (front matter) or rely on folder allowlist?
-3. What is the retention policy for working-memory checklist items once persisted to episodic store?
+- None at this stage; any new blockers will be captured during unit test scaffolding.
 
 ---
 
@@ -233,4 +247,3 @@ export MEMORY_DB_PATH="./data/unified-memories.db"
 - [ ] Implementation aligns with layered architecture plan
 - [ ] Evidence artifacts captured and indexed
 - [ ] Stakeholders sign off on MCP/REST/Pieces activation order documentation
-

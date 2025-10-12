@@ -110,7 +110,33 @@
         "languages": ["en", "fr", "ar"],
         "datasetMd5": "dd7375a69774324dead6d3ea5abc01b7"
       },
-      "tags": ["knowledge", "graph"]
+      "tags": ["knowledge", "graph"],
+      "remoteTools": [
+        {
+          "name": "vector_search_items",
+          "description": "Semantic vector search over Wikidata items using Jina embeddings with Matryoshka dimension support",
+          "tags": ["vector", "search", "items"],
+          "scopes": ["wikidata:vector-search"]
+        },
+        {
+          "name": "vector_search_properties",
+          "description": "Semantic vector search over Wikidata properties using Jina embeddings",
+          "tags": ["vector", "search", "properties"],
+          "scopes": ["wikidata:vector-search"]
+        },
+        {
+          "name": "get_claims",
+          "description": "Retrieve structured claims for specific Wikidata entities by QID with claim GUID tracking",
+          "tags": ["claims", "entities"],
+          "scopes": ["wikidata:claims"]
+        },
+        {
+          "name": "sparql",
+          "description": "Execute SPARQL queries against the Wikidata knowledge graph for complex relational queries",
+          "tags": ["sparql", "graph", "query"],
+          "scopes": ["wikidata:sparql"]
+        }
+      ]
     }
   ]
 }

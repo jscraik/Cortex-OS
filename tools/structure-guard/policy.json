@@ -624,7 +624,8 @@
       "@cortex-os/agent-contracts**",
       "@cortex-os/commands**",
       "@cortex-os/security**",
-      "@cortex-os/tdd-coach**"
+      "@cortex-os/tdd-coach**",
+      "@cortex-os/workflow-common**"
     ]
   },
   "enforcement": {

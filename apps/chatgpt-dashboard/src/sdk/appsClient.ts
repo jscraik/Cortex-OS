@@ -1,4 +1,4 @@
-import type { ConnectorServiceEntry } from './types';
+import type { ConnectorServiceEntry } from './types.js';
 
 declare global {
 	interface Window {

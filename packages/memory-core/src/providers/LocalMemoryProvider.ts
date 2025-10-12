@@ -1,3 +1,4 @@
+import type { AbortSignal } from 'node:abort_controller';
 import { createHash, randomUUID } from 'node:crypto';
 
 // Inline array validator to avoid dependency issues
@@ -38,6 +39,13 @@ import PQueue from 'p-queue';
 import { pino } from 'pino';
 import type { CheckpointManager } from '../checkpoints/index.js';
 import { createCheckpointManager } from '../checkpoints/index.js';
+import {
+	type FlushExpiredResult,
+	type ShortTermMemorySession,
+	ShortTermMemoryStore,
+	type ShortTermSnapshot,
+	type StoreShortTermResult,
+} from '../layers/short-term/ShortTermMemoryStore.js';
 import type {
 	Memory,
 	MemoryAnalysisResult,
@@ -56,6 +64,14 @@ import type {
 import { MemoryProviderError } from '../types.js';
 
 type NormalizedStoreInput = MemoryStoreInput & { metadata?: MemoryMetadata };
+
+// Ollama API response types for brAInwav compliance
+interface OllamaEmbeddingResponse {
+	data?: Array<{
+		embedding?: number[];
+	}>;
+	embedding?: number[];
+}
 
 // import { MemoryWorkflowEngine } from '../workflows/memoryWorkflow.js'; // Temporarily disabled
 // Local types to replace workflow types
@@ -233,9 +249,9 @@ async function requestOllamaEmbedding(text: string): Promise<number[] | null> {
 				}),
 			},
 		});
-		const embedding = Array.isArray((data as any)?.data)
-			? ((data as any).data?.[0]?.embedding as number[] | undefined)
-			: (data as any)?.embedding;
+		const embedding = Array.isArray((data as OllamaEmbeddingResponse)?.data)
+			? ((data as OllamaEmbeddingResponse).data?.[0]?.embedding as number[] | undefined)
+			: (data as OllamaEmbeddingResponse)?.embedding;
 		if (!Array.isArray(embedding)) {
 			logger.warn('brAInwav Ollama embedding returned invalid payload');
 			return null;
@@ -281,6 +297,11 @@ export class LocalMemoryProvider implements MemoryProvider {
 
 	private readonly checkpointManager: CheckpointManager;
 
+	private readonly shortTermStore: ShortTermMemoryStore;
+	private readonly memoryLayerVersion = '2025-10-11';
+	private readonly shortTermPromoteImportance: number;
+	private readonly shortTermTtlMs: number;
+
 	constructor(config: MemoryCoreConfig) {
 		this.config = config;
 		this.db = new Database(config.sqlitePath);
@@ -315,6 +336,27 @@ export class LocalMemoryProvider implements MemoryProvider {
 			policy: config.checkpoint,
 		});
 
+		const shortTermConfig = config.shortTerm ?? {
+			ttlMs: 5 * 60 * 1000,
+			promotionImportance: 8,
+		};
+		this.shortTermTtlMs = shortTermConfig.ttlMs;
+		this.shortTermPromoteImportance = shortTermConfig.promotionImportance;
+		this.shortTermStore = this.createShortTermStore();
+
+		if (this.qdrant && this.qdrantConfig) {
+			this.queue
+				.add(async () => {
+					const result = await this.backfillQdrantMemoryLayers({ batchSize: 256 });
+					logger.info('brAInwav memory_layer backfill completed', result);
+				})
+				.catch((error) => {
+					logger.warn('brAInwav memory_layer backfill failed', {
+						error: (error as Error).message,
+					});
+				});
+		}
+
 		/* Temporarily disabled
   // this.workflows = new MemoryWorkflowEngine({
   //   store: {
@@ -344,6 +386,26 @@ export class LocalMemoryProvider implements MemoryProvider {
 			tags,
 			metadata,
 		};
+	}
+
+	private createShortTermStore(): ShortTermMemoryStore {
+		return new ShortTermMemoryStore({
+			workflow: {
+				runStore: async (input) => ({
+					id: randomUUID(),
+					vectorIndexed: false,
+				}),
+			},
+			checkpointManager: this.checkpointManager,
+			ttlMs: this.shortTermTtlMs,
+			clock: () => Date.now(),
+			logger,
+		});
+	}
+
+	private resolveVectorLayer(importance?: number): 'semantic' | 'long_term' {
+		const score = typeof importance === 'number' ? importance : 5;
+		return score >= 8 ? 'long_term' : 'semantic';
 	}
 
 	private initializeDatabase(): void {
@@ -469,6 +531,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 					throw new MemoryProviderError('INTERNAL', 'Qdrant not configured');
 				}
 				const provenance = buildProvenancePayload(input.metadata, sanitizedContent);
+				const memoryLayer = this.resolveVectorLayer(input.importance);
 				await this.qdrant.upsert(this.qdrantConfig.collection, {
 					points: [
 						{
@@ -485,6 +548,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 								createdAt: timestamp,
 								updatedAt: timestamp,
 								importance: input.importance || 5,
+								memory_layer: memoryLayer,
+								memory_layer_version: this.memoryLayerVersion,
+								memory_layer_updated_at: new Date(timestamp).toISOString(),
 							},
 						},
 					],
@@ -561,6 +627,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	private async generateEmbedding(text: string): Promise<number[]> {
+		// brAInwav policy: No mock data in any code path - production or development
 		const mlxEmbedding = await requestMlxEmbedding(text);
 		if (mlxEmbedding) {
 			return mlxEmbedding;
@@ -571,15 +638,11 @@ export class LocalMemoryProvider implements MemoryProvider {
 			return ollamaEmbedding;
 		}
 
-		if (process.env.NODE_ENV === 'production' || process.env.BRAINWAV_STRICT === '1') {
-			throw new MemoryProviderError(
-				'INTERNAL',
-				'brAInwav: Embedding backend not configured - mock embeddings forbidden in production',
-			);
-		}
-
-		logger.warn('brAInwav: Using mock embeddings - NOT SUITABLE FOR PRODUCTION');
-		return createMockEmbedding(text, this.config.embedDim || 384);
+		// brAInwav policy: No mock data under any circumstances
+		throw new MemoryProviderError(
+			'INTERNAL',
+			'brAInwav: Embedding backend not configured - please configure MLX or Ollama for embeddings',
+		);
 	}
 
 	async get(id: string): Promise<Memory | null> {
@@ -615,9 +678,136 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	async store(input: MemoryStoreInput): Promise<{ id: string; vectorIndexed: boolean }> {
+		const normalizedInput = this.normalizeStoreInput(input);
+		return this.persistNormalizedMemory(normalizedInput, input.domain);
+	}
+
+	async promoteShortTermSession(sessionId: string): Promise<Array<{ id: string }>> {
+		return this.persistShortTermSession(sessionId);
+	}
+
+	async storeShortTerm(sessionId: string, input: MemoryStoreInput): Promise<StoreShortTermResult> {
+		const normalized = this.normalizeStoreInput(input);
+		const result = await this.shortTermStore.store({ sessionId, memory: normalized });
+		const importance = normalized.importance ?? 5;
+		logger.debug('Short-term memory stored', {
+			sessionId,
+			importance,
+			promotionImportance: this.shortTermPromoteImportance,
+		});
+		if (importance >= this.shortTermPromoteImportance) {
+			await this.persistShortTermSession(sessionId);
+		}
+		return result;
+	}
+
+	getShortTermSession(sessionId: string): ShortTermMemorySession | undefined {
+		return this.shortTermStore.getSession(sessionId);
+	}
+
+	async flushShortTermExpired(): Promise<FlushExpiredResult> {
+		const result = this.shortTermStore.flushExpired();
+		for (const session of result.expiredSessions) {
+			await this.persistShortTermSession(session.id, session);
+		}
+		return result;
+	}
+
+	async snapshotShortTerm(checkpointId: string): Promise<ShortTermSnapshot | null> {
+		return this.shortTermStore.snapshot(checkpointId);
+	}
+
+	async backfillQdrantMemoryLayers(options: { batchSize?: number; signal?: AbortSignal } = {}) {
+		if (!this.qdrant || !this.qdrantConfig) {
+			return { scanned: 0, updated: 0, skipped: 0 };
+		}
+
+		const batchSize = Math.max(1, options.batchSize ?? 128);
+		let offset: number[] | null | undefined;
+		let scanned = 0;
+		let updated = 0;
+		let skipped = 0;
+
+		const nowIso = () => new Date().toISOString();
+
+		while (true) {
+			if (options.signal?.aborted) {
+				throw new Error('backfillQdrantMemoryLayers aborted');
+			}
+
+			const response = await this.qdrant.scroll(this.qdrantConfig.collection, {
+				with_payload: true,
+				with_vectors: false,
+				limit: batchSize,
+				offset: offset ?? undefined,
+			});
+
+			const points = response.points ?? [];
+			if (points.length === 0) {
+				break;
+			}
+
+			offset = response.next_page_offset;
+			scanned += points.length;
+
+			for (const point of points) {
+				const payload = (point.payload ?? {}) as Record<string, unknown>;
+				if (payload.memory_layer) {
+					skipped += 1;
+					continue;
+				}
+
+				const importance = typeof payload.importance === 'number' ? payload.importance : undefined;
+				const layer = this.resolveVectorLayer(importance);
+				await this.qdrant.setPayload(this.qdrantConfig.collection, {
+					points: [point.id],
+					payload: {
+						memory_layer: layer,
+						memory_layer_version: this.memoryLayerVersion,
+						memory_layer_updated_at: nowIso(),
+					},
+				});
+				updated += 1;
+
+				if (options.signal?.aborted) {
+					throw new Error('backfillQdrantMemoryLayers aborted');
+				}
+			}
+
+			if (!offset) {
+				break;
+			}
+		}
+
+		return { scanned, updated, skipped };
+	}
+
+	private async persistShortTermSession(
+		sessionId: string,
+		session?: ShortTermMemorySession,
+	): Promise<Array<{ id: string }>> {
+		const target = session ?? this.shortTermStore.promoteSession(sessionId);
+		if (!target) {
+			return [];
+		}
+		const results: Array<{ id: string }> = [];
+		for (const entry of target.memories) {
+			const normalized = this.normalizeStoreInput({
+				content: entry.content,
+				importance: entry.importance,
+				metadata: entry.metadata,
+			});
+			const stored = await this.persistNormalizedMemory(normalized, normalized.domain);
+			results.push({ id: stored.id });
+		}
+		return results;
+	}
+
+	private async persistNormalizedMemory(
+		normalizedInput: NormalizedStoreInput,
+		domain?: string,
+	): Promise<{ id: string; vectorIndexed: boolean }> {
 		try {
-			// Direct implementation without workflow engine
-			const normalizedInput = this.normalizeStoreInput(input);
 			const id = randomUUID();
 			const timestamp = Date.now();
 			await this.persistMemoryRecord({ id, input: normalizedInput, timestamp });
@@ -629,14 +819,14 @@ export class LocalMemoryProvider implements MemoryProvider {
 			const result = { id, vectorIndexed: indexingResult.vectorIndexed };
 			logger.info('Memory stored', {
 				id: result.id,
-				domain: input.domain,
+				domain,
 				vectorIndexed: result.vectorIndexed,
 			});
 			return result;
 		} catch (error) {
 			logger.error('Failed to store memory', {
 				error: (error as Error).message,
-				domain: input.domain,
+				domain,
 			});
 			throw new MemoryProviderError('STORAGE', 'Failed to store memory', {
 				error: (error as Error).message,
@@ -718,9 +908,11 @@ export class LocalMemoryProvider implements MemoryProvider {
 			.filter((id): id is string => typeof id === 'string');
 		if (ids.length === 0) return results;
 
+		// Security: Use parameterized query to prevent SQL injection
+		const placeholders = ids.map(() => '?').join(',');
 		const rows = this.db
 			.prepare(`
-      SELECT * FROM memories WHERE id IN (${ids.map(() => '?').join(',')})
+      SELECT * FROM memories WHERE id IN (${placeholders})
     `)
 			.all(...ids) as SQLiteMemoryRow[];
 
@@ -731,6 +923,7 @@ export class LocalMemoryProvider implements MemoryProvider {
 			if (!row) continue;
 
 			const memory = this.mapRowToMemory(row);
+			this.mergeVectorPayloadMetadata(memory, (point as { payload?: unknown }).payload);
 			const pointTyped = point as { score?: number };
 			const safeScore = typeof pointTyped.score === 'number' ? pointTyped.score : 0;
 			const result: MemorySearchResult = {
@@ -756,6 +949,29 @@ export class LocalMemoryProvider implements MemoryProvider {
 		offset: number,
 		_threshold: number,
 	): Promise<MemorySearchResult[]> {
+		// Build query components
+		const { query, params } = this.buildFtsQuery(input);
+
+		// Add pagination
+		const finalQuery = `${query} ORDER BY score DESC, memories.created_at DESC LIMIT ? OFFSET ?`;
+		const finalParams = [...params, limit, offset];
+
+		const rows = this.db.prepare(finalQuery).all(...finalParams) as (SQLiteMemoryRow & {
+			score: number;
+		})[];
+
+		return rows.map((row) => ({
+			...this.mapRowToMemory(row),
+			score: row.score || 0,
+			matchType: 'keyword' as const,
+		}));
+	}
+
+	// Extracted helper to build FTS query components - reduces cognitive complexity
+	private buildFtsQuery(input: MemorySearchInput): {
+		query: string;
+		params: Array<string | number>;
+	} {
 		let query = `
       SELECT memories.*,
 	     COALESCE(memories_fts.rank, 0) as score
@@ -766,7 +982,28 @@ export class LocalMemoryProvider implements MemoryProvider {
 		const conditions: string[] = [];
 		const params: Array<string | number> = [];
 
-		// FTS match
+		// Add FTS match condition
+		this.addFtsMatchCondition(input, conditions, params);
+
+		// Add filter conditions
+		this.addDomainFilter(input, conditions, params);
+		this.addTagsFilter(input, conditions, params);
+		this.addTenantFilter(input, conditions, params);
+		this.addLabelsFilter(input, conditions, params);
+
+		if (conditions.length > 0) {
+			query += ` WHERE ${conditions.join(' AND ')}`;
+		}
+
+		return { query, params };
+	}
+
+	// Extracted helper for FTS match condition
+	private addFtsMatchCondition(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (
 			input.search_type === 'keyword' ||
 			input.search_type === 'tags' ||
@@ -775,29 +1012,58 @@ export class LocalMemoryProvider implements MemoryProvider {
 			conditions.push('memories_fts MATCH ?');
 			params.push(input.query);
 		}
+	}
 
-		// Domain filter
+	// Extracted helper for domain filter
+	private addDomainFilter(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (input.domain) {
 			conditions.push('memories.domain = ?');
 			params.push(input.domain);
 		}
+	}
 
-		// Tags filter
+	// Extracted helper for tags filter with security validation
+	private addTagsFilter(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (input.tags && input.tags.length > 0) {
 			const tagConditions = input.tags
-				.map(() => 'json_extract(memories.tags, ?) IS NOT NULL')
+				.map((tag, index) => `json_extract(memories.tags, ?) IS NOT NULL`)
 				.join(' AND ');
 			conditions.push(`(${tagConditions})`);
+
+			// Security: Validate tags to prevent injection
 			for (const tag of input.tags) {
-				params.push(`$[? == "${tag}"]`);
+				const sanitizedTag = tag.replace(/[^a-zA-Z0-9\s\-_]/g, '');
+				params.push(`$[? == "${sanitizedTag}"]`);
 			}
 		}
+	}
 
+	// Extracted helper for tenant filter
+	private addTenantFilter(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (input.tenant) {
 			conditions.push("json_extract(memories.metadata, '$.tenant') = ?");
 			params.push(input.tenant);
 		}
+	}
 
+	// Extracted helper for labels filter
+	private addLabelsFilter(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (input.labels && input.labels.length > 0) {
 			for (const label of input.labels) {
 				conditions.push(`EXISTS (
@@ -808,22 +1074,6 @@ export class LocalMemoryProvider implements MemoryProvider {
 				params.push(label);
 			}
 		}
-
-		if (conditions.length > 0) {
-			query += ` WHERE ${conditions.join(' AND ')}`;
-		}
-
-		// Order and limit
-		query += ' ORDER BY score DESC, memories.created_at DESC LIMIT ? OFFSET ?';
-		params.push(limit, offset);
-
-		const rows = this.db.prepare(query).all(...params) as (SQLiteMemoryRow & { score: number })[];
-
-		return rows.map((row) => ({
-			...this.mapRowToMemory(row),
-			score: row.score || 0,
-			matchType: 'keyword' as const,
-		}));
 	}
 
 	private buildQdrantFilter(input: MemorySearchInput): Record<string, unknown> | undefined {
@@ -866,8 +1116,10 @@ export class LocalMemoryProvider implements MemoryProvider {
 		if (input.tags && input.tags.length > 0) {
 			const tagConditions = input.tags.map(() => 'json_extract(tags, ?) IS NOT NULL').join(' OR ');
 			conditions.push(`(${tagConditions})`);
+			// Security: Validate tags to prevent injection
 			for (const tag of input.tags) {
-				params.push(`$[? == "${tag}"]`);
+				const sanitizedTag = tag.replace(/[^a-zA-Z0-9\s\-_]/g, '');
+				params.push(`$[? == "${sanitizedTag}"]`);
 			}
 		}
 
@@ -1547,6 +1799,39 @@ export class LocalMemoryProvider implements MemoryProvider {
 		const safeSemantic = this.safePointScore(semanticScore);
 		const safeFts = this.safePointScore(ftsScore);
 		return safeSemantic * weight + safeFts * (1 - weight);
+	}
+
+	private mergeVectorPayloadMetadata(memory: Memory, payload: unknown): void {
+		if (!payload || typeof payload !== 'object') {
+			return;
+		}
+
+		const candidate = payload as Record<string, unknown>;
+		const updates: Record<string, unknown> = {};
+
+		const layer = candidate.memory_layer;
+		if (typeof layer === 'string' && layer.length > 0) {
+			updates.memory_layer = layer;
+		}
+
+		const layerVersion = candidate.memory_layer_version;
+		if (typeof layerVersion === 'string' && layerVersion.length > 0) {
+			updates.memory_layer_version = layerVersion;
+		}
+
+		const updatedAt = candidate.memory_layer_updated_at;
+		if (typeof updatedAt === 'string' && updatedAt.length > 0) {
+			updates.memory_layer_updated_at = updatedAt;
+		}
+
+		if (Object.keys(updates).length === 0) {
+			return;
+		}
+
+		memory.metadata = {
+			...(memory.metadata ?? {}),
+			...updates,
+		} as MemoryMetadata;
 	}
 
 	private async applyHybridIfNeeded(

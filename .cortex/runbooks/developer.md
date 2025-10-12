@@ -49,3 +49,9 @@ bun run -T nx run-many -t test --parallel
 - Do not rely on color-only status in TUI. Provide text labels in ratatui.
 - Ensure CI logs include explicit PASS/FAIL text.
 - Provide `--plain` CLIs where possible for screen readers.
+
+## Memory promotion tuning (dev)
+
+- Use short TTLs locally: `MEMORY_SHORT_TERM_TTL_MS=15000` keeps promotion loops fast for tests.
+- Drop the auto-promotion bar with `MEMORY_SHORT_TERM_PROMOTION_IMPORTANCE=6` only while reproducing promotion issues; reset to `8` before merging.
+- Tail logs for `brAInwav short-term memory cleanup removed` to confirm expiry cadence and `brAInwav memory_layer backfill completed` after tweaks.

@@ -1,24 +1,209 @@
+/**
+ * Phase C.3: Agent MCP Client Stub Implementation
+ *
+ * Provides a test stub for AgentMCPClient with tool call tracking,
+ * queue management, and inspection helpers for testing.
+ */
+
+import type {
+	AgentMCPClient,
+	KnowledgeSearchFilters,
+	KnowledgeSearchResult,
+} from '../integrations/agents-shim.js';
+
+export interface ToolCall {
+	name: string;
+	args: Record<string, unknown>;
+	timestamp: number;
+	brand: string;
+}
+
+export interface ToolCallHistory extends ToolCall {
+	duration: number;
+	success: boolean;
+	result?: unknown;
+	error?: string;
+}
+
+export interface AgentMCPClientStub extends AgentMCPClient {
+	// Mocking
+	mockCallTool(name: string, response: unknown): void;
+	mockError(name: string, error: Error): void;
+
+	// Queue inspection
+	getCallQueue(): ToolCall[];
+	clearQueue(): void;
+
+	// Call tracking
+	wasToolCalled(name: string): boolean;
+	getToolCallCount(name: string): number;
+	getLastCallArgs(name: string): Record<string, unknown> | undefined;
+	getAllCalls(): ToolCall[];
+
+	// History with metadata
+	getCallHistory(): ToolCallHistory[];
+	clearHistory(): void;
+}
+
+class AgentMCPClientStubImpl implements AgentMCPClientStub {
+	private mockResponses = new Map<string, unknown>();
+	private mockErrors = new Map<string, Error>();
+	private callQueue: ToolCall[] = [];
+	private callHistory: ToolCallHistory[] = [];
+
+	async initialize(): Promise<unknown> {
+		return { status: 'ready', brand: 'brAInwav' };
+	}
+
+	async callTool(name: string, args: Record<string, unknown>, _timeout?: number): Promise<unknown> {
+		const startTime = Date.now();
+		const callRecord: ToolCall = {
+			name,
+			args: { ...args },
+			timestamp: startTime,
+			brand: (args.brand as string) || 'brAInwav',
+		};
+
+		// Add to queue
+		this.callQueue.push(callRecord);
+
+		// Check for mock error
+		if (this.mockErrors.has(name)) {
+			const error = this.mockErrors.get(name);
+			if (error) {
+				const historyRecord: ToolCallHistory = {
+					...callRecord,
+					duration: Date.now() - startTime,
+					success: false,
+					error: error.message,
+				};
+				this.callHistory.push(historyRecord);
+				throw error;
+			}
+		}
+
+		// Get mock response
+		const response = this.mockResponses.get(name) || {
+			message: `[brAInwav] No mock configured for tool: ${name}`,
+			brand: 'brAInwav',
+		};
+
+		const historyRecord: ToolCallHistory = {
+			...callRecord,
+			duration: Date.now() - startTime,
+			success: true,
+			result: response,
+		};
+		this.callHistory.push(historyRecord);
+
+		return response;
+	}
+
+	async searchKnowledgeBase(
+		query: string,
+		options?: { limit?: number; filters?: KnowledgeSearchFilters },
+	): Promise<KnowledgeSearchResult[]> {
+		const result = await this.callTool('search_knowledge_base', {
+			query,
+			limit: options?.limit,
+			filters: options?.filters,
+		});
+		return result as KnowledgeSearchResult[];
+	}
+
+	async createTask(
+		title: string,
+		description: string,
+		options?: Record<string, unknown>,
+	): Promise<unknown> {
+		return this.callTool('create_task', { title, description, ...options });
+	}
+
+	async updateTaskStatus(taskId: string, status: string, notes?: string): Promise<unknown> {
+		return this.callTool('update_task_status', { taskId, status, notes });
+	}
+
+	async uploadDocument(
+		content: string,
+		filename: string,
+		options?: { tags?: string[]; metadata?: Record<string, unknown> },
+	): Promise<{ documentId: string; url: string }> {
+		const result = await this.callTool('upload_document', { content, filename, ...options });
+		return result as { documentId: string; url: string };
+	}
+
+	async healthCheck(): Promise<boolean> {
+		const result = await this.callTool('health_check', {});
+		return Boolean(result);
+	}
+
+	async disconnect(): Promise<void> {
+		await this.callTool('disconnect', {});
+	}
+
+	// Mocking methods
+	mockCallTool(name: string, response: unknown): void {
+		this.mockResponses.set(name, response);
+	}
+
+	mockError(name: string, error: Error): void {
+		this.mockErrors.set(name, error);
+	}
+
+	// Queue inspection
+	getCallQueue(): ToolCall[] {
+		return [...this.callQueue];
+	}
+
+	clearQueue(): void {
+		this.callQueue = [];
+	}
+
+	// Call tracking
+	wasToolCalled(name: string): boolean {
+		return this.callQueue.some((call) => call.name === name);
+	}
+
+	getToolCallCount(name: string): number {
+		return this.callQueue.filter((call) => call.name === name).length;
+	}
+
+	getLastCallArgs(name: string): Record<string, unknown> | undefined {
+		const calls = this.callQueue.filter((call) => call.name === name);
+		return calls.length > 0 ? calls[calls.length - 1].args : undefined;
+	}
+
+	getAllCalls(): ToolCall[] {
+		return [...this.callQueue];
+	}
+
+	// History with metadata
+	getCallHistory(): ToolCallHistory[] {
+		return [...this.callHistory];
+	}
+
+	clearHistory(): void {
+		this.callHistory = [];
+	}
+}
+
+/**
+ * Create an AgentMCPClient stub for testing
+ *
+ * Phase C.3: Client Stub Tool Invocation Tracking - provides comprehensive
+ * tool call tracking, queue management, and inspection helpers for testing
+ * MCP workflows with brAInwav branding.
+ *
+ * @returns AgentMCPClientStub with tracking capabilities
+ */
+export function createAgentMCPClientStub(): AgentMCPClientStub {
+	return new AgentMCPClientStubImpl();
+}
+
+// Existing mock infrastructure (preserve compatibility)
 // Locally define MCPIntegrationConfig to avoid tight coupling with agents package
 
 export type MCPIntegrationConfig = Record<string, unknown>;
-
-export interface KnowledgeSearchFilters {
-	category?: string[];
-	source?: string[];
-	dateRange?: { from?: string; to?: string };
-	tags?: string[];
-	contentType?: string[];
-}
-
-export interface KnowledgeSearchResult {
-	id: string;
-	title: string;
-	content: string;
-	score: number;
-	source: string;
-	metadata: Record<string, unknown>;
-	timestamp: string;
-}
 
 type MethodName =
 	| 'mcp_initialize'
@@ -100,7 +285,7 @@ function defaultResponse(method: MethodName): MockResponse {
 	}
 }
 
-export class AgentMCPClient {
+export class LegacyAgentMCPClient {
 	private connected = false;
 	constructor(private readonly config: MCPIntegrationConfig) {
 		mockConfigLog.push(config);
@@ -204,5 +389,5 @@ export class AgentMCPClient {
 }
 
 export function createAgentMCPClient(config: MCPIntegrationConfig) {
-	return new AgentMCPClient(config);
+	return new LegacyAgentMCPClient(config);
 }
