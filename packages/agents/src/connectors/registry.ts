@@ -1,50 +1,51 @@
+import { randomUUID } from 'node:crypto';
 import type { ConnectorEntry } from '@cortex-os/protocol';
 import {
-        ConnectorServiceMapError,
-        type ConnectorServiceMapClientOptions,
-        fetchConnectorServiceMap,
+	type ConnectorServiceMapClientOptions,
+	ConnectorServiceMapError,
+	fetchConnectorServiceMap,
 } from './service-map-client.js';
 import { recordConnectorTtl, setConnectorAvailability } from './telemetry.js';
 
 export interface ConnectorRegistryOptions extends ConnectorServiceMapClientOptions {
-        connectorsApiKey?: string;
-        now?: () => number;
+	connectorsApiKey?: string;
+	now?: () => number;
 }
 
 export interface ConnectorRemoteTool {
-        name: string;
-        description: string;
-        tags?: string[];
-        scopes?: string[];
+	name: string;
+	description: string;
+	tags?: string[];
+	scopes?: string[];
 }
 
 export interface ConnectorDefinition extends ConnectorEntry {
-        headers: Record<string, string>;
-        expiresAtMs: number;
-        remoteTools?: ConnectorRemoteTool[];
+	headers: Record<string, string>;
+	expiresAtMs: number;
+	remoteTools?: ConnectorRemoteTool[];
 }
 
 const resolveAuthHeader = (entry: ConnectorEntry, apiKey?: string): Record<string, string> => {
-        if (!entry.auth || entry.auth.type === 'none') {
-                return {};
-        }
+	if (!entry.auth || entry.auth.type === 'none') {
+		return {};
+	}
 
-        if (!apiKey) {
-                throw new ConnectorServiceMapError(
-                        `Connector "${entry.id}" requires CONNECTORS_API_KEY to establish MCP proxy`,
-                );
-        }
+	if (!apiKey) {
+		throw new ConnectorServiceMapError(
+			`Connector "${entry.id}" requires CONNECTORS_API_KEY to establish MCP proxy`,
+		);
+	}
 
-        if (entry.auth.type === 'bearer') {
-                return { Authorization: `Bearer ${apiKey}` };
-        }
+	if (entry.auth.type === 'bearer') {
+		return { Authorization: `Bearer ${apiKey}` };
+	}
 
-        const headerName = entry.auth.headerName ?? 'Authorization';
-        if (headerName.toLowerCase() === 'authorization') {
-                return { Authorization: `Bearer ${apiKey}` };
-        }
+	const headerName = entry.auth.headerName ?? 'Authorization';
+	if (headerName.toLowerCase() === 'authorization') {
+		return { Authorization: `Bearer ${apiKey}` };
+	}
 
-        return { [headerName]: apiKey };
+	return { [headerName]: apiKey };
 };
 
 // Extract service-map tools (highest precedence)
@@ -159,7 +160,7 @@ const resolveRemoteTools = (entry: ConnectorEntry): ConnectorRemoteTool[] => {
 		return [...synthesizeWikidataTools(entry), ...synthesizeFactsTools(entry)];
 	} catch (error) {
 		// brAInwav policy: Use structured logging with correlation IDs for better tracing
-		const correlationId = `cortex_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+		const correlationId = `cortex_${Date.now()}_${randomUUID().substring(0, 8)}`;
 
 		console.warn('brAInwav connector registry: Remote tools resolution failed', {
 			component: 'connectors',
@@ -167,11 +168,14 @@ const resolveRemoteTools = (entry: ConnectorEntry): ConnectorRemoteTool[] => {
 			correlationId,
 			connectorId: entry.id,
 			connectorName: entry.displayName,
-			error: error instanceof Error ? {
-				name: error.name,
-				message: error.message,
-				stack: error.stack
-			} : String(error),
+			error:
+				error instanceof Error
+					? {
+							name: error.name,
+							message: error.message,
+							stack: error.stack,
+						}
+					: String(error),
 			severity: 'warning',
 			action: 'returning_empty_tools_array',
 			timestamp: new Date().toISOString(),
@@ -183,7 +187,10 @@ const resolveRemoteTools = (entry: ConnectorEntry): ConnectorRemoteTool[] => {
 };
 
 // Phase B.2: Filtering helpers
-export function filterToolsByTags(tools: ConnectorRemoteTool[], tags: string[]): ConnectorRemoteTool[] {
+export function filterToolsByTags(
+	tools: ConnectorRemoteTool[],
+	tags: string[],
+): ConnectorRemoteTool[] {
 	if (tags.length === 0) return tools;
 	return tools.filter((tool) => {
 		if (!tool.tags || tool.tags.length === 0) return false;
@@ -191,7 +198,10 @@ export function filterToolsByTags(tools: ConnectorRemoteTool[], tags: string[]):
 	});
 }
 
-export function filterToolsByScopes(tools: ConnectorRemoteTool[], scopes: string[]): ConnectorRemoteTool[] {
+export function filterToolsByScopes(
+	tools: ConnectorRemoteTool[],
+	scopes: string[],
+): ConnectorRemoteTool[] {
 	if (scopes.length === 0) return tools;
 	return tools.filter((tool) => {
 		if (!tool.scopes || tool.scopes.length === 0) return false;
@@ -200,84 +210,87 @@ export function filterToolsByScopes(tools: ConnectorRemoteTool[], scopes: string
 }
 
 export class ConnectorRegistry {
-        private readonly options: ConnectorRegistryOptions;
-        private readonly connectors = new Map<string, ConnectorDefinition>();
-        private expiresAtMs = 0;
+	private readonly options: ConnectorRegistryOptions;
+	private readonly connectors = new Map<string, ConnectorDefinition>();
+	private expiresAtMs = 0;
 
-        constructor(options: ConnectorRegistryOptions) {
-                this.options = options;
-        }
+	constructor(options: ConnectorRegistryOptions) {
+		this.options = options;
+	}
 
-        async refresh(force = false): Promise<void> {
-                const now = this.options.now?.() ?? Date.now();
-                if (!force && now < this.expiresAtMs) {
-                        return;
-                }
+	async refresh(force = false): Promise<void> {
+		const now = this.options.now?.() ?? Date.now();
+		if (!force && now < this.expiresAtMs) {
+			return;
+		}
 
-                try {
-                        const result = await fetchConnectorServiceMap(this.options);
-                        this.expiresAtMs = result.expiresAtMs;
-                        this.connectors.clear();
+		try {
+			const result = await fetchConnectorServiceMap(this.options);
+			this.expiresAtMs = result.expiresAtMs;
+			this.connectors.clear();
 
-                        for (const entry of result.map.connectors) {
-                                try {
-                                        const headers = resolveAuthHeader(entry, this.options.connectorsApiKey);
+			for (const entry of result.map.connectors) {
+				try {
+					const headers = resolveAuthHeader(entry, this.options.connectorsApiKey);
 
-                                        const definition: ConnectorDefinition = {
-                                                ...entry,
-                                                headers,
-                                                expiresAtMs: this.expiresAtMs,
-                                                remoteTools: resolveRemoteTools(entry),
-                                        };
+					const definition: ConnectorDefinition = {
+						...entry,
+						headers,
+						expiresAtMs: this.expiresAtMs,
+						remoteTools: resolveRemoteTools(entry),
+					};
 
-                                        this.connectors.set(entry.id, definition);
-                                        setConnectorAvailability(entry.id, entry.status === 'enabled');
-                                        recordConnectorTtl(entry.id, this.expiresAtMs);
-                                } catch (error) {
-                                        // brAInwav policy: Use structured logging with correlation IDs for better tracing
-                                        const correlationId = `cortex_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+					this.connectors.set(entry.id, definition);
+					setConnectorAvailability(entry.id, entry.status === 'enabled');
+					recordConnectorTtl(entry.id, this.expiresAtMs);
+				} catch (error) {
+					// brAInwav policy: Use structured logging with correlation IDs for better tracing
+					const correlationId = `cortex_${Date.now()}_${randomUUID().substring(0, 8)}`;
 
-                                        console.warn('brAInwav connector registry: Connector processing failed', {
-                                                component: 'connectors',
-                                                brand: 'brAInwav',
-                                                correlationId,
-                                                connectorId: entry.id,
-                                                connectorName: entry.displayName,
-                                                error: error instanceof Error ? {
-                                                        name: error.name,
-                                                        message: error.message,
-                                                        stack: error.stack
-                                                } : String(error),
-                                                severity: 'warning',
-                                                action: 'setting_availability_false',
-                                                timestamp: new Date().toISOString(),
-                                        });
+					console.warn('brAInwav connector registry: Connector processing failed', {
+						component: 'connectors',
+						brand: 'brAInwav',
+						correlationId,
+						connectorId: entry.id,
+						connectorName: entry.displayName,
+						error:
+							error instanceof Error
+								? {
+										name: error.name,
+										message: error.message,
+										stack: error.stack,
+									}
+								: String(error),
+						severity: 'warning',
+						action: 'setting_availability_false',
+						timestamp: new Date().toISOString(),
+					});
 
-                                        // Set availability to false for problematic connectors
-                                        setConnectorAvailability(entry.id, false);
-                                }
-                        }
-                } catch (error) {
-                        // Handle service map fetch errors gracefully
-                        if (error instanceof ConnectorServiceMapError) {
-                                console.error(`brAInwav connector registry: Service map error - ${error.message}`);
-                        } else {
-                                console.error('brAInwav connector registry: Unexpected error during refresh:', error);
-                        }
-                        // Don't update connectors if fetch failed, keep existing configuration
-                        throw error; // Re-throw to allow caller to handle
-                }
-        }
+					// Set availability to false for problematic connectors
+					setConnectorAvailability(entry.id, false);
+				}
+			}
+		} catch (error) {
+			// Handle service map fetch errors gracefully
+			if (error instanceof ConnectorServiceMapError) {
+				console.error(`brAInwav connector registry: Service map error - ${error.message}`);
+			} else {
+				console.error('brAInwav connector registry: Unexpected error during refresh:', error);
+			}
+			// Don't update connectors if fetch failed, keep existing configuration
+			throw error; // Re-throw to allow caller to handle
+		}
+	}
 
-        list(): ConnectorDefinition[] {
-                return Array.from(this.connectors.values());
-        }
+	list(): ConnectorDefinition[] {
+		return Array.from(this.connectors.values());
+	}
 
-        get(id: string): ConnectorDefinition | undefined {
-                return this.connectors.get(id);
-        }
+	get(id: string): ConnectorDefinition | undefined {
+		return this.connectors.get(id);
+	}
 
-        getExpiry(): number {
-                return this.expiresAtMs;
-        }
+	getExpiry(): number {
+		return this.expiresAtMs;
+	}
 }

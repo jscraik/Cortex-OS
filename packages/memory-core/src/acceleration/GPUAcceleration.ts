@@ -9,6 +9,7 @@
  * - Provides intelligent CPU/GPU workload distribution
  */
 
+import { randomUUID } from 'node:crypto';
 import type { GraphRAGQueryRequest } from '../services/GraphRAGService.js';
 
 export interface GPUDeviceInfo {
@@ -111,7 +112,7 @@ export class GPUAccelerationManager {
 
 	async initialize(
 		denseEmbedder: (texts: string[]) => Promise<number[][]>,
-		sparseEmbedder: (texts: string[]) => Promise<any[]>
+		sparseEmbedder: (texts: string[]) => Promise<any[]>,
 	): Promise<void> {
 		try {
 			this.denseEmbedder = denseEmbedder;
@@ -160,8 +161,8 @@ export class GPUAccelerationManager {
 			const detectedDevices = await this.detectRealGPUDevices();
 
 			// Filter devices by configuration
-			this.gpuDevices = detectedDevices.filter(device =>
-				this.config.cuda.deviceIds.includes(device.id) && device.isAvailable
+			this.gpuDevices = detectedDevices.filter(
+				(device) => this.config.cuda.deviceIds.includes(device.id) && device.isAvailable,
 			);
 
 			if (this.gpuDevices.length === 0) {
@@ -177,10 +178,10 @@ export class GPUAccelerationManager {
 					component: 'memory-core',
 					brand: 'brAInwav',
 					deviceCount: this.gpuDevices.length,
-					devices: this.gpuDevices.map(d => ({
+					devices: this.gpuDevices.map((d) => ({
 						name: d.name,
 						memory: d.memoryTotal,
-						computeCapability: d.computeCapability
+						computeCapability: d.computeCapability,
 					})),
 				});
 			}
@@ -292,14 +293,14 @@ export class GPUAccelerationManager {
 			priority?: 'high' | 'normal' | 'low';
 			preferGPU?: boolean;
 			batchId?: string;
-		} = {}
+		} = {},
 	): Promise<EmbeddingResult[]> {
 		if (!this.isInitialized || !this.denseEmbedder) {
 			throw new Error('brAInwav GPU Acceleration Manager not initialized');
 		}
 
 		const startTime = Date.now();
-		const batchId = options.batchId || `batch_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+		const batchId = options.batchId || `batch_${Date.now()}_${randomUUID().substring(0, 8)}`;
 
 		this.metrics.totalRequests += texts.length;
 
@@ -365,7 +366,7 @@ export class GPUAccelerationManager {
 	private shouldUseGPU(
 		textCount: number,
 		priority: 'high' | 'normal' | 'low',
-		preferGPU?: boolean
+		preferGPU?: boolean,
 	): boolean {
 		if (!this.config.enabled || !this.config.cuda.enabled || this.gpuDevices.length === 0) {
 			return false;
@@ -391,11 +392,14 @@ export class GPUAccelerationManager {
 	}
 
 	private getAvailableGPUDevice(): GPUDeviceInfo | null {
-		return this.gpuDevices.find(device =>
-			device.isAvailable &&
-			device.memoryFree > this.config.cuda.maxMemoryUsage &&
-			device.utilization < 90 // Less than 90% utilization
-		) || null;
+		return (
+			this.gpuDevices.find(
+				(device) =>
+					device.isAvailable &&
+					device.memoryFree > this.config.cuda.maxMemoryUsage &&
+					device.utilization < 90, // Less than 90% utilization
+			) || null
+		);
 	}
 
 	private async processWithGPU(texts: string[], batchId: string): Promise<EmbeddingResult[]> {
@@ -415,7 +419,7 @@ export class GPUAccelerationManager {
 
 		if (requiredMemoryWithMargin > device.memoryFree) {
 			throw new Error(
-				`Insufficient GPU memory: need ${requiredMemoryWithMargin} (with safety margin), have ${device.memoryFree} - brAInwav safety policy enforced`
+				`Insufficient GPU memory: need ${requiredMemoryWithMargin} (with safety margin), have ${device.memoryFree} - brAInwav safety policy enforced`,
 			);
 		}
 
@@ -447,7 +451,10 @@ export class GPUAccelerationManager {
 		} catch (error) {
 			// Memory cleanup on error using safety-margin adjusted memory
 			device.memoryUsed = Math.max(0, device.memoryUsed - requiredMemoryWithMargin);
-			device.memoryFree = Math.min(device.memoryTotal, device.memoryFree + requiredMemoryWithMargin);
+			device.memoryFree = Math.min(
+				device.memoryTotal,
+				device.memoryFree + requiredMemoryWithMargin,
+			);
 			throw error;
 		}
 	}
@@ -488,7 +495,7 @@ export class GPUAccelerationManager {
 		const batch = this.requestQueue.splice(0, batchSize);
 
 		const batchId = `auto_batch_${Date.now()}`;
-		const texts = batch.map(req => req.text);
+		const texts = batch.map((req) => req.text);
 
 		try {
 			await this.generateEmbeddings(texts, { batchId });
@@ -516,14 +523,14 @@ export class GPUAccelerationManager {
 		}
 
 		// Calculate fallback rate
-		this.metrics.fallbackRate = this.metrics.totalRequests > 0
-			? this.metrics.cpuRequests / this.metrics.totalRequests
-			: 0;
+		this.metrics.fallbackRate =
+			this.metrics.totalRequests > 0 ? this.metrics.cpuRequests / this.metrics.totalRequests : 0;
 
 		// Calculate batch efficiency
-		this.metrics.batchEfficiency = this.processingBatches.size > 0
-			? Math.min(100, (this.metrics.gpuRequests / this.metrics.totalRequests) * 100)
-			: 0;
+		this.metrics.batchEfficiency =
+			this.processingBatches.size > 0
+				? Math.min(100, (this.metrics.gpuRequests / this.metrics.totalRequests) * 100)
+				: 0;
 
 		// Check performance thresholds
 		if (this.metrics.averageLatency > this.config.monitoring.performanceThreshold) {
@@ -545,8 +552,7 @@ export class GPUAccelerationManager {
 
 	private updateMetrics(processingTime: number): void {
 		// Update average latency
-		this.metrics.averageLatency =
-			(this.metrics.averageLatency + processingTime) / 2;
+		this.metrics.averageLatency = (this.metrics.averageLatency + processingTime) / 2;
 	}
 
 	/**
@@ -574,7 +580,7 @@ export class GPUAccelerationManager {
 		lastMetrics: GPUMetrics;
 	}> {
 		const healthy = this.isInitialized && this.denseEmbedder !== null;
-		const gpuAvailable = this.gpuDevices.some(device => device.isAvailable);
+		const gpuAvailable = this.gpuDevices.some((device) => device.isAvailable);
 
 		return {
 			healthy,

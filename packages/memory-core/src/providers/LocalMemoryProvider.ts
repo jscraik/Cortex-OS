@@ -39,6 +39,13 @@ import PQueue from 'p-queue';
 import { pino } from 'pino';
 import type { CheckpointManager } from '../checkpoints/index.js';
 import { createCheckpointManager } from '../checkpoints/index.js';
+import {
+	type FlushExpiredResult,
+	type ShortTermMemorySession,
+	ShortTermMemoryStore,
+	type ShortTermSnapshot,
+	type StoreShortTermResult,
+} from '../layers/short-term/ShortTermMemoryStore.js';
 import type {
 	Memory,
 	MemoryAnalysisResult,
@@ -55,15 +62,16 @@ import type {
 	SQLiteRelationshipRow,
 } from '../types.js';
 import { MemoryProviderError } from '../types.js';
-import {
-	ShortTermMemoryStore,
-	type FlushExpiredResult,
-	type ShortTermMemorySession,
-	type ShortTermSnapshot,
-	type StoreShortTermResult,
-} from '../layers/short-term/ShortTermMemoryStore.js';
 
 type NormalizedStoreInput = MemoryStoreInput & { metadata?: MemoryMetadata };
+
+// Ollama API response types for brAInwav compliance
+interface OllamaEmbeddingResponse {
+	data?: Array<{
+		embedding?: number[];
+	}>;
+	embedding?: number[];
+}
 
 // import { MemoryWorkflowEngine } from '../workflows/memoryWorkflow.js'; // Temporarily disabled
 // Local types to replace workflow types
@@ -241,9 +249,9 @@ async function requestOllamaEmbedding(text: string): Promise<number[] | null> {
 				}),
 			},
 		});
-		const embedding = Array.isArray((data as any)?.data)
-			? ((data as any).data?.[0]?.embedding as number[] | undefined)
-			: (data as any)?.embedding;
+		const embedding = Array.isArray((data as OllamaEmbeddingResponse)?.data)
+			? ((data as OllamaEmbeddingResponse).data?.[0]?.embedding as number[] | undefined)
+			: (data as OllamaEmbeddingResponse)?.embedding;
 		if (!Array.isArray(embedding)) {
 			logger.warn('brAInwav Ollama embedding returned invalid payload');
 			return null;
@@ -948,7 +956,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 		const finalQuery = `${query} ORDER BY score DESC, memories.created_at DESC LIMIT ? OFFSET ?`;
 		const finalParams = [...params, limit, offset];
 
-		const rows = this.db.prepare(finalQuery).all(...finalParams) as (SQLiteMemoryRow & { score: number })[];
+		const rows = this.db.prepare(finalQuery).all(...finalParams) as (SQLiteMemoryRow & {
+			score: number;
+		})[];
 
 		return rows.map((row) => ({
 			...this.mapRowToMemory(row),
@@ -958,7 +968,10 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	// Extracted helper to build FTS query components - reduces cognitive complexity
-	private buildFtsQuery(input: MemorySearchInput): { query: string; params: Array<string | number> } {
+	private buildFtsQuery(input: MemorySearchInput): {
+		query: string;
+		params: Array<string | number>;
+	} {
 		let query = `
       SELECT memories.*,
 	     COALESCE(memories_fts.rank, 0) as score
@@ -986,7 +999,11 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	// Extracted helper for FTS match condition
-	private addFtsMatchCondition(input: MemorySearchInput, conditions: string[], params: Array<string | number>): void {
+	private addFtsMatchCondition(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (
 			input.search_type === 'keyword' ||
 			input.search_type === 'tags' ||
@@ -998,7 +1015,11 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	// Extracted helper for domain filter
-	private addDomainFilter(input: MemorySearchInput, conditions: string[], params: Array<string | number>): void {
+	private addDomainFilter(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (input.domain) {
 			conditions.push('memories.domain = ?');
 			params.push(input.domain);
@@ -1006,7 +1027,11 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	// Extracted helper for tags filter with security validation
-	private addTagsFilter(input: MemorySearchInput, conditions: string[], params: Array<string | number>): void {
+	private addTagsFilter(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (input.tags && input.tags.length > 0) {
 			const tagConditions = input.tags
 				.map((tag, index) => `json_extract(memories.tags, ?) IS NOT NULL`)
@@ -1022,7 +1047,11 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	// Extracted helper for tenant filter
-	private addTenantFilter(input: MemorySearchInput, conditions: string[], params: Array<string | number>): void {
+	private addTenantFilter(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (input.tenant) {
 			conditions.push("json_extract(memories.metadata, '$.tenant') = ?");
 			params.push(input.tenant);
@@ -1030,7 +1059,11 @@ export class LocalMemoryProvider implements MemoryProvider {
 	}
 
 	// Extracted helper for labels filter
-	private addLabelsFilter(input: MemorySearchInput, conditions: string[], params: Array<string | number>): void {
+	private addLabelsFilter(
+		input: MemorySearchInput,
+		conditions: string[],
+		params: Array<string | number>,
+	): void {
 		if (input.labels && input.labels.length > 0) {
 			for (const label of input.labels) {
 				conditions.push(`EXISTS (

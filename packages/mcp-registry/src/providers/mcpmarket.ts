@@ -46,10 +46,10 @@ const FALLBACK_SERVERS: Record<string, ServerInfo> = {
 	'arxiv-1': {
 		name: 'arxiv-1',
 		transport: 'stdio',
-		command: 'npx',
-		args: ['-y', '@modelcontextprotocol/server-arxiv'],
+		command: process.env.ARXIV_WRAPPER_PATH || './scripts/arxiv-mcp-wrapper.sh',
+		args: [],
 		env: {
-			ARXIV_EMAIL: 'set-your-registered-email@example.com',
+			ARXIV_EMAIL: process.env.ARXIV_EMAIL || 'jscraik@brainwav.io',
 		},
 		// Enhanced metadata for arXiv MCP server
 		metadata: {
