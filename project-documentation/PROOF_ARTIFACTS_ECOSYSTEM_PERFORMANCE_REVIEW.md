@@ -73,7 +73,7 @@ Assess the Cortex-OS Proof Artifacts ecosystem to surface current throughput, la
 
 ### Option 1: Worker-Thread Hashing & Streaming IO
 
-**Description**: Introduce a shared worker pool to process artifact, bundle, and evidence hashing tasks using `crypto.subtle.digest` or `node:crypto` streams, while migrating read paths to `createReadStream` pipelines.
+**Description**: Introduce a shared worker pool to process artifact, bundle, and evidence hashing tasks using `node:crypto` stream-based hashing (e.g., `createHash` with pipeline) for large files, while migrating read paths to `createReadStream` pipelines. For small in-memory buffers, `crypto.subtle.digest` may be used, but it is not suitable for large payloads.
 
 **Pros**:
 - ✅ Removes long synchronous IO from main thread, improving CLI responsiveness.
