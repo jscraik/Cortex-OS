@@ -17,14 +17,14 @@ Assess the current Context Bill of Materials (CBOM) instrumentation pipeline for
 
 ### Existing Implementation
 - **Location**: `packages/cbom/src/emitter.ts`
-- **Current Approach**: The emitter wires itself into the A2A router and OpenTelemetry tracer, serializing envelopes and spans into JSON, redacting data, and buffering evidence in-memory before flushing documents to disk. Git metadata is detected by synchronously shelling out to `git` during emitter construction. 【F:packages/cbom/src/emitter.ts†L32-L125】【F:packages/cbom/src/emitter.ts†L205-L272】
-- **Limitations**: Heavy JSON serialization occurs inline on every dispatch, evidence is stored in a single-threaded `Map`, and synchronous `spawnSync` invocations block the event loop for repository metadata, compounding latency under bursty routing. File flushes rewrite entire documents with pretty-printing, inflating I/O costs. 【F:packages/cbom/src/emitter.ts†L50-L124】【F:packages/cbom/src/emitter.ts†L266-L272】
+- **Current Approach**: The emitter wires itself into the A2A router and OpenTelemetry tracer, serializing envelopes and spans into JSON, redacting data, and buffering evidence in-memory before flushing documents to disk. Git metadata is detected by synchronously shelling out to `git` during emitter construction. (see `packages/cbom/src/emitter.ts` lines 32-125 and 205-272)
+- **Limitations**: Heavy JSON serialization occurs inline on every dispatch, evidence is stored in a single-threaded `Map`, and synchronous `spawnSync` invocations block the event loop for repository metadata, compounding latency under bursty routing. File flushes rewrite entire documents with pretty-printing, inflating I/O costs. (see `packages/cbom/src/emitter.ts` lines 50-124 and 266-272)
 
 ### Related Components
-- **CbomRedactor**: Performs per-call hashing and optional file reads, relying on repeated SHA-256 computations without caching, leading to duplicated work when the same payload appears across spans or files. 【F:packages/cbom/src/redactor.ts†L6-L44】
-- **CbomReplayer**: Replays decisions sequentially and performs `await` within the loop for each decision, lacking batching or concurrency controls, which limits throughput for large CBOM archives. 【F:packages/cbom/src/replayer.ts†L12-L46】
-- **CLI (`cli/index.ts`)**: The record, export, and attest commands rebuild TypeScript output each invocation and duplicate file copies instead of streaming, causing redundant filesystem churn on large artifacts. 【F:packages/cbom/cli/index.ts†L11-L70】
-- **CbomSigner**: Reads full CBOM payloads into memory and synchronously generates Ed25519 key pairs when keys are absent, performing blocking crypto operations and multiple filesystem writes per attestation. 【F:packages/cbom/src/signer.ts†L38-L114】
+- **CbomRedactor**: Performs per-call hashing and optional file reads, relying on repeated SHA-256 computations without caching, leading to duplicated work when the same payload appears across spans or files. (see `packages/cbom/src/redactor.ts` lines 6-44)
+- **CbomReplayer**: Replays decisions sequentially and performs `await` within the loop for each decision, lacking batching or concurrency controls, which limits throughput for large CBOM archives. (see `packages/cbom/src/replayer.ts` lines 12-46)
+- **CLI (`cli/index.ts`)**: The record, export, and attest commands rebuild TypeScript output each invocation and duplicate file copies instead of streaming, causing redundant filesystem churn on large artifacts. (see `packages/cbom/cli/index.ts` lines 11-70)
+- **CbomSigner**: Reads full CBOM payloads into memory and synchronously generates Ed25519 key pairs when keys are absent, performing blocking crypto operations and multiple filesystem writes per attestation. (see `packages/cbom/src/signer.ts` lines 38-114)
 
 ### brAInwav-Specific Context
 - **MCP Integration**: The emitter hooks into A2A router dispatch to capture tool activity, but lacks back-pressure or streaming integration with MCP logs, risking dropped spans when MCP bursts occur.
