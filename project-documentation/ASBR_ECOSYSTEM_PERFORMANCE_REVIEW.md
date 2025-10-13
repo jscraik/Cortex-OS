@@ -53,7 +53,7 @@ Document current performance characteristics and bottlenecks within the packages
      - Record spans around I/O boundaries (manifest read, ledger append).
 
 ### Best Practices (2025)
-- **Node.js HTTP Server Throughput**: Adopt `undici` keep-alive pools and disable Nagle where appropriate to reduce handshake overhead for SDK consumers; pair with circuit breaker libraries such as `cockatiel` for manifest fetch retries.
+- **Node.js HTTP Server Throughput**: Adopt `undici` keep-alive pools and disable Nagle's algorithm where appropriate to reduce handshake overhead for SDK consumers; pair with circuit breaker libraries such as `cockatiel` for manifest fetch retries.
   - Source: Node.js Performance Working Group guidance (2025 Q2 notes).
   - Application: Replace raw `safeFetch`/`NodeEventSource` calls with pooled clients.
 - **Event Streaming**: Use bounded queues with worker drains (e.g., `p-queue`) to decouple disk persistence from emitters while preserving ordering guarantees required by governance.
