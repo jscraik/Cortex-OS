@@ -305,7 +305,7 @@ _None required for initial phases._
 ```typescript
 export async function publishBatch(envelopes: ObservabilityEventEnvelope[]): Promise<void> {
   await Promise.all(
-    envelopes.map((envelope) => queueMicrotask(() => bus.publish(envelope)))
+    envelopes.map((envelope) => Promise.resolve().then(() => bus.publish(envelope)))
   );
 }
 ```
