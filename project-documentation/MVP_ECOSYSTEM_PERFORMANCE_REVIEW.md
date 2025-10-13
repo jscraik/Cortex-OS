@@ -212,7 +212,7 @@ Evaluate the MVP package family (kernel, teaching layer, MCP adapter, Fastify se
 ---
 
 ## Open Questions & Next Steps
-- What pool size keeps test runs under 250 ms p95 without breaching the 256 MB package memory budget?【F:packages/mvp/AGENTS.md†L12-L21】
+- What pool size keeps test runs under 250 ms p95 without breaching the (target) 256 MB package memory budget? _(Verify that this budget is enforced or update to reflect actual constraints as defined in `packages/mvp/AGENTS.md`.)_【F:packages/mvp/AGENTS.md†L12-L21】
 - Can existing observability hooks expose pool depth and phase timings without introducing heavy dependencies?【F:packages/mvp/mvp-core/src/secure-executor.ts†L6-L241】
 - Do downstream consumers require schema updates to handle streamed PRP phase outputs, or can we wrap them transparently?
 - Schedule follow-up review after Week 4 to finalize the teaching-layer roadmap.
