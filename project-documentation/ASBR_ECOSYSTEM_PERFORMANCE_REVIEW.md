@@ -19,7 +19,7 @@ Document current performance characteristics and bottlenecks within the packages
 - **Location**: `packages/asbr/src/api/server.ts`
 - **Current Approach**: Single-process Express server maintains task, profile, artifact, event, and idempotency state in memory with optional token-bucket rate limiting and SSE/WebSocket fan-out managed through the shared event manager.
 - **Limitations**:
-  - Event delivery path stores per-task buffers and a global array, then walks every subscription on each emit, resulting in O(n·m) fan-out while synchronously appending to disk-backed NDJSON ledgers. 【F:packages/asbr/src/core/events.ts†L61-L197】【F:packages/asbr/src/core/events.ts†L360-L437】
+  - Event delivery path stores per-task buffers and a global array, then walks every subscription on each emit, resulting in O(n×m) fan-out while synchronously appending to disk-backed NDJSON ledgers. 【F:packages/asbr/src/core/events.ts†L61-L197】【F:packages/asbr/src/core/events.ts†L360-L437】
   - Task lifecycle endpoints share an in-memory `Map` with no eviction policy beyond manual mutation, so long-running sessions can exhaust the 256 MB budget under sustained load. 【F:packages/asbr/src/api/server.ts†L96-L185】
   - Service-map endpoint rereads and reparses the manifest on every call, rebuilding signatures synchronously even though manifests only change when regenerated. 【F:packages/asbr/src/api/server.ts†L325-L369】
   - SSE `/v1/events` handler flattens every task’s buffered events on each request, forcing quadratic growth as history increases. 【F:packages/asbr/src/api/server.ts†L215-L274】
