@@ -63,8 +63,8 @@ Evaluate the current Cortex Kernel package implementation to identify performanc
 
 ### Best Practices (2025)
 - **Deterministic Concurrency**: Use bounded async pools (e.g., `p-limit`, worker threads) that respect input ordering but allow overlapped I/O.  
-  - Source: OpenJS Foundation recommendations above.  
-  - Application: Kernel scheduler can batch tasks using promises resolved with deterministic commit order while increasing throughput.
+    - Source: OpenJS Foundation recommendations above.  
+    - Application: Kernel scheduler can batch tasks using promises resolved with deterministic commit order while increasing throughput.
 
 ### Relevant Libraries/Frameworks
 | Library | Version | Purpose | License | Recommendation |
