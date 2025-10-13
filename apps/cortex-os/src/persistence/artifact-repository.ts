@@ -55,6 +55,19 @@ interface ArtifactRepositoryOptions {
 }
 
 const BINARY_TMP_SUFFIX = '.tmp';
+const DEFAULT_LIST_CONCURRENCY = 8;
+const MAX_LIST_CONCURRENCY = 32;
+const LIST_CONCURRENCY = (() => {
+        const raw = process.env.CORTEX_OS_ARTIFACT_LIST_CONCURRENCY;
+        if (!raw) return DEFAULT_LIST_CONCURRENCY;
+
+        const parsed = Number.parseInt(raw, 10);
+        if (Number.isNaN(parsed) || parsed < 1) {
+                return DEFAULT_LIST_CONCURRENCY;
+        }
+
+        return Math.min(parsed, MAX_LIST_CONCURRENCY);
+})();
 
 export class ArtifactRepository {
 	private readonly now: () => Date;
@@ -115,27 +128,47 @@ export class ArtifactRepository {
 		return { metadata: located.metadata, binary };
 	}
 
-	async list(filter: ArtifactFilter = {}): Promise<ArtifactMetadata[]> {
-		const indexDir = await ensureDataDir(...INDEX_NAMESPACE);
-		const entries = await readdir(indexDir, { withFileTypes: true });
-		const results: ArtifactMetadata[] = [];
+        async list(filter: ArtifactFilter = {}): Promise<ArtifactMetadata[]> {
+                const indexDir = await ensureDataDir(...INDEX_NAMESPACE);
+                const entries = await readdir(indexDir, { withFileTypes: true });
+                const artifactIds = entries
+                        .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
+                        .map((entry) => entry.name.slice(0, -'.json'.length));
 
-		for (const entry of entries) {
-			if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
-			const id = entry.name.slice(0, -'.json'.length);
-			const located = await this.loadArtifact(id);
-			if (!located) continue;
+                if (artifactIds.length === 0) {
+                        return [];
+                }
 
-			if (filter.taskId && located.metadata.taskId !== filter.taskId) continue;
-			if (filter.tag && (!located.metadata.tags || !located.metadata.tags.includes(filter.tag)))
-				continue;
-			if (filter.filename && located.metadata.filename !== filter.filename) continue;
+                const concurrency = Math.max(1, Math.min(LIST_CONCURRENCY, artifactIds.length));
+                const metadataSlots: Array<ArtifactMetadata | undefined> = new Array(artifactIds.length);
+                let cursor = 0;
 
-			results.push(located.metadata);
-		}
+                const workers = Array.from({ length: concurrency }, async () => {
+                        while (true) {
+                                const index = cursor++;
+                                if (index >= artifactIds.length) {
+                                        break;
+                                }
 
-		return results;
-	}
+                                const id = artifactIds[index];
+                                const located = await this.loadArtifact(id);
+                                if (!located) {
+                                        continue;
+                                }
+
+                                const { metadata } = located;
+                                if (filter.taskId && metadata.taskId !== filter.taskId) continue;
+                                if (filter.tag && (!metadata.tags || !metadata.tags.includes(filter.tag))) continue;
+                                if (filter.filename && metadata.filename !== filter.filename) continue;
+
+                                metadataSlots[index] = metadata;
+                        }
+                });
+
+                await Promise.all(workers);
+
+                return metadataSlots.filter((metadata): metadata is ArtifactMetadata => metadata !== undefined);
+        }
 
 	async delete(id: string): Promise<void> {
 		const located = await this.loadArtifact(id);
