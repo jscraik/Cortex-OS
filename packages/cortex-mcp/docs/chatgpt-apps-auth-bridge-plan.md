@@ -31,7 +31,7 @@
    - Wire route in server bootstrap (`src/server.ts`) under `/.well-known/oauth-protected-resource`.
    - Configuration: read issuer list, resource identifier (audience), and scope catalogue from env or config file.
 2. **Token Verification Utility**
-   - Introduce `src/auth/verifier.ts` with JWKS caching (use `jose` or `jwks-rsa`), verifying `iss`, `aud`, `exp`, `nbf`, `scope`.
+   - Introduce `src/auth/verifier.ts` with JWKS caching (use `jose` for JWT verification and JWKS support, as it is actively maintained and widely adopted), verifying `iss`, `aud`, `exp`, `nbf`, `scope`.
    - Expose helper `requireScopes(claims, requiredScopes)` returning boolean / throwing typed error.
    - Consider pluggable DPoP validation hook (stub with TODO if IdP not ready).
 3. **Identity Projection**
