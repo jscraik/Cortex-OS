@@ -63,7 +63,7 @@ Assess the Cortex-OS Proof Artifacts ecosystem to surface current throughput, la
 | Library | Version | Purpose | License | Recommendation |
 |---------|---------|---------|---------|----------------|
 | `piscina` | ^4.6 | Worker thread pool for Node.js | MIT | ✅ Use |
-| `node:stream/promises` | Node 22 builtin | Stream-based pipeline utilities | MIT (Node) | ✅ Use |
+| `node:stream/promises` | Node built-in (>=16) | Stream-based pipeline utilities | MIT (Node) | ✅ Use |
 | `lru-cache` | ^11.1 | TTL-bound in-memory caching | ISC | ⚠️ Evaluate |
 | `undici` | ^6.19 | HTTP client with keep-alive pooling | MIT | ✅ Use |
 
