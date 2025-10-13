@@ -39,9 +39,34 @@ jobs:
                 check: /## 🎯 Type of Change[\s\S]*- \[[xX]\]/.test(body)
               },
               {
+                name: 'What Changed section present',
+                check: /## 🔍 What Changed/.test(body) &&
+                       /### Core Changes/.test(body) &&
+                       /### Files Modified/.test(body)
+              },
+              {
                 name: 'Testing section completed',
                 check: /## 🧪 Testing[\s\S]*- \[[xX]\]/.test(body) &&
                        !body.includes('# Paste relevant test output here')
+              },
+              {
+                name: 'Documentation section present',
+                check: /## 📖 Documentation/.test(body)
+              },
+              {
+                name: 'Related issues section present',
+                check: /## 🔗 Related Issues/.test(body)
+              },
+              {
+                name: 'Screenshots section present',
+                check: /## 📸 Screenshots\/Recordings/.test(body)
+              },
+              {
+                name: 'Deployment notes section present',
+                check: /## 🚀 Deployment Notes/.test(body) &&
+                       /### Environment Variables/.test(body) &&
+                       /### Database Changes/.test(body) &&
+                       /### Configuration Changes/.test(body)
               },
               {
                 name: 'Security testing completed',
@@ -50,6 +75,16 @@ jobs:
               {
                 name: 'Pre-submission checklist completed',
                 check: /## ✅ Pre-submission Checklist[\s\S]*- \[[xX]\]/.test(body)
+              },
+              {
+                name: 'Reviewer guidance section present',
+                check: /## 👥 Reviewer Guidance/.test(body) &&
+                       /### Focus Areas/.test(body) &&
+                       /### Questions for Reviewers/.test(body)
+              },
+              {
+                name: 'Post-merge tasks section present',
+                check: /## 🏃‍♂️ Post-Merge Tasks/.test(body)
               }
             ];
 
