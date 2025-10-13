@@ -17,20 +17,20 @@ Assess current performance characteristics of the `@cortex-os/protocol` package 
 
 ### Existing Implementation
 - **Location**: `packages/protocol/src/connectors/service-map.ts`
-- **Current Approach**: Connector manifests are validated with Zod schemas and canonicalized by recursively sorting object keys and arrays before generating HMAC signatures for verification. Each verification recomputes canonical JSON and allocates intermediate objects on every call.【F:packages/protocol/src/connectors/service-map.ts†L1-L93】
-- **Limitations**: Canonicalization performs deep copies without structural sharing, resulting in repeated allocations for large manifests. Signature verification duplicates buffers and performs synchronous crypto work on the event loop for every request, increasing latency under load.【F:packages/protocol/src/connectors/service-map.ts†L55-L93】
+- **Current Approach**: Connector manifests are validated with Zod schemas and canonicalized by recursively sorting object keys and arrays before generating HMAC signatures for verification. Each verification recomputes canonical JSON and allocates intermediate objects on every call.
+- **Limitations**: Canonicalization performs deep copies without structural sharing, resulting in repeated allocations for large manifests. Signature verification duplicates buffers and performs synchronous crypto work on the event loop for every request, increasing latency under load.
 
 - **Location**: `packages/protocol/src/schemas.ts`
-- **Current Approach**: Runtime contracts rely on large Zod discriminated unions and nested lazy schemas to validate agent plans, stream events, and budgets. Consumers (agents, stream protocol, connectors) parse every payload through these schemas at runtime.【F:packages/protocol/src/schemas.ts†L1-L142】
+- **Current Approach**: Runtime contracts rely on large Zod discriminated unions and nested lazy schemas to validate agent plans, stream events, and budgets. Consumers (agents, stream protocol, connectors) parse every payload through these schemas at runtime.
 - **Limitations**: Repeated `parse` invocations rebuild coercion graphs and traverse the entire structure, which becomes expensive for streaming traffic (token/status events) and deeply nested plans. The lack of schema compilation or caching introduces avoidable CPU overhead.
 
 ### Related Components
-- **Component 1**: `packages/agents/src/connectors/service-map-client.ts` — Fetches manifests, invokes `serviceMapResponseSchema.parse`, and verifies signatures synchronously before dispatching connector updates. Any latency in schema validation or canonicalization directly delays agent connector refresh cycles.【F:packages/agents/src/connectors/service-map-client.ts†L1-L85】
-- **Component 2**: `packages/stream-protocol/src/ws.ts` — Uses `StreamEventSchema` to validate every WebSocket event, inheriting the heavy discriminated union parsing path from the protocol package.【F:packages/stream-protocol/src/ws.ts†L1-L80】
+- **Component 1**: `packages/agents/src/connectors/service-map-client.ts` — Fetches manifests, invokes `serviceMapResponseSchema.parse`, and verifies signatures synchronously before dispatching connector updates. Any latency in schema validation or canonicalization directly delays agent connector refresh cycles.
+- **Component 2**: `packages/stream-protocol/src/ws.ts` — Uses `StreamEventSchema` to validate every WebSocket event, inheriting the heavy discriminated union parsing path from the protocol package.
 
 ### brAInwav-Specific Context
 - **MCP Integration**: MCP surfaces depend on `StreamEventSchema` and `ToolResultSchema` to gate outbound traffic. Performance regressions in schema parsing can throttle SSE/WS delivery and inflate MCP latency budgets.
-- **A2A Events**: Agents publish A2A envelopes conforming to `EnvelopeSchema`; synchronous validation adds pressure to the shared event loop during bursty orchestrations.【F:packages/protocol/src/schemas.ts†L27-L76】
+- **A2A Events**: Agents publish A2A envelopes conforming to `EnvelopeSchema`; synchronous validation adds pressure to the shared event loop during bursty orchestrations.
 - **Local Memory**: Task and plan schemas are used to persist context snapshots; slow validation increases persistence time and risks breaching local-first latency SLOs.
 - **Existing Patterns**: Other ecosystem reviews already recommend adaptive dispatch and batching; protocol performance is prerequisite because every downstream domain relies on these schemas for contract enforcement.
 
