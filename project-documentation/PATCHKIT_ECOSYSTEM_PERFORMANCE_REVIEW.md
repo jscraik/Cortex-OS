@@ -191,25 +191,6 @@ Evaluate the @cortex-os/patchkit package and its consumers to document current p
 
 ---
 
-## Proof of Concept Findings
-
-_No dedicated POC executed for this research. Existing unit tests and historical profiling informed findings._
-
-### POC Setup
-- **Environment**: N/A
-- **Code Location**: N/A
-- **Test Scenarios**: N/A
-
-### Results
-- **Scenario 1**: N/A
-  - **Result**: ⚠️ Partial (insufficient data)
-  - **Observations**: Requires future worker-thread experiment.
-
-- **Scenario 2**: N/A
-  - **Result**: ⚠️ Partial
-  - **Observations**: Add instrumentation before running benchmarks.
-
-### Performance Metrics
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
 | Diff generation latency (10k LOC) | ≤ 250 ms | Unknown | ⚠️ |
