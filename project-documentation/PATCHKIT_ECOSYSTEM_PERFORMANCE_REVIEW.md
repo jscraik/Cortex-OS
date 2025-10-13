@@ -132,7 +132,7 @@ Evaluate the @cortex-os/patchkit package and its consumers to document current p
 | **Maintainability** | Medium | High | Low |
 | **brAInwav Fit** | Medium | High | Medium |
 | **Community Support** | Medium | High | Medium |
-| **License Compatibility** | High | High | ⚠️ (libgit2 GPLv2 linking considerations) |
+| **License Compatibility** | High | High | ⚠️ (libgit2 GPLv2 static/dynamic linking: static linking requires full GPLv2 compliance; dynamic linking may still pose risks—legal review needed) |
 
 ---
 
