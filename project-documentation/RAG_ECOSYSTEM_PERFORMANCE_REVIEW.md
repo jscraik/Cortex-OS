@@ -191,8 +191,8 @@ Adopt a phased plan that first lands Option 1 (bounded async ingestion) and Opti
 ```
 
 **License Verification Required**:
-- [ ] `p-limit` – MIT – ✅ Compatible
-- [ ] `@opentelemetry/instrumentation-http` – Apache-2.0 – ✅ Compatible
+- [x] `p-limit` – MIT – ✅ Compatible
+- [x] `@opentelemetry/instrumentation-http` – Apache-2.0 – ✅ Compatible
 
 ### Configuration Changes
 - **File**: `packages/rag/project.json`
