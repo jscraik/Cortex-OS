@@ -139,7 +139,10 @@ export class ArtifactRepository {
                         return [];
                 }
 
-                const concurrency = Math.max(1, Math.min(LIST_CONCURRENCY, artifactIds.length));
+                // Only use concurrency if artifactIds.length > 10 to avoid unnecessary overhead
+                const concurrency = artifactIds.length > 10
+                        ? Math.max(1, Math.min(LIST_CONCURRENCY, artifactIds.length))
+                        : 1;
                 const metadataSlots: Array<ArtifactMetadata | undefined> = new Array(artifactIds.length);
                 let cursor = 0;
 
