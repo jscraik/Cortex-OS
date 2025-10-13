@@ -77,7 +77,7 @@ jobs:
 
       - name: Create PR
         if: inputs.run == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           branch: ${{ steps.detect_branch.outputs.branch }}
           title: "chore(cortex-code): automated upstream vendor sync"
