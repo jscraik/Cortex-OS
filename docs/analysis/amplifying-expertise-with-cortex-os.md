@@ -16,7 +16,7 @@ This guide synthesizes key capabilities in brAInwav Cortex-OS that help teams ca
 
 ## 3. Combine RAG, orchestration, and governance
 
-- Leverage the agent template’s `plan → gather → critic → synthesize → verify` loop to coordinate planners, specialists, and reviewers with consistent guardrails.
+- Leverage the [agent template](https://github.com/cortex-os/docs/blob/main/templates/agent-template.md) workflow’s `plan → gather → critic → synthesize → verify` loop to coordinate planners, specialists, and reviewers with consistent guardrails.
 - Route knowledge-intensive work through the Model Gateway and RAG stack (embeddings, retrieval, reranking) to surface the right context before agents act.
 - Maintain trust with policy enforcement, CloudEvents auditing, and HITL approvals so expert interventions are traceable and reviewable.
 
