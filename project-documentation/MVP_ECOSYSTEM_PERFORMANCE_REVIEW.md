@@ -17,7 +17,7 @@ Evaluate the MVP package family (kernel, teaching layer, MCP adapter, Fastify se
 
 ### Existing Implementation
 - **Location**: `packages/mvp/mvp/src/graph-simple.ts`
-- **Current Approach**: `SimplePRPGraph.runPRPWorkflow` executes strategy → build → evaluation sequentially, persisting every state snapshot into an unbounded in-memory history map and simulating work with fixed-duration timers for each phase.【F:packages/mvp/mvp/src/graph-simple.ts†L39-L303】
+- **Current Approach**: `SimplePRPGraph.runPRPWorkflow` executes the strategy, then build, then evaluation phases sequentially, persisting every state snapshot into an unbounded in-memory history map and simulating work with fixed-duration timers for each phase.【F:packages/mvp/mvp/src/graph-simple.ts†L39-L303】
 - **Limitations**: Each workflow run pays ~350 ms of artificial latency, phases cannot overlap, and history retention grows without eviction, risking latency spikes and elevated memory pressure under bursty workloads.
 
 - **Location**: `packages/mvp/mvp/src/teaching/example-capture.ts`
