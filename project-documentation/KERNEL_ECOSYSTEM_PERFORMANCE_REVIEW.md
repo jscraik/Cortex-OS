@@ -255,7 +255,7 @@ Adopting bounded async pooling maximizes kernel throughput while keeping determi
 ```
 
 **License Verification Required**:
-- [ ] `p-limit` - MIT - ✅ Compatible
+- [x] `p-limit` - MIT - ✅ Compatible
 
 ### Configuration Changes
 - **File**: `packages/kernel/package.json`
