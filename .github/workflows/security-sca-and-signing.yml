@@ -91,7 +91,7 @@ jobs:
           pnpm build || true
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@f713795cb21599bc4e5c4b58cbad1da852d7eeb9
+        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62
         with:
           cosign-release: 'v2.3.0'
 
@@ -124,7 +124,7 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@f713795cb21599bc4e5c4b58cbad1da852d7eeb9
+        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62
         with:
           cosign-release: 'v2.3.0'
 
