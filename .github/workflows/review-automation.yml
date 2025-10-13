@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
       - name: Auto-assign reviewers based on changes
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -100,7 +100,7 @@ jobs:
 
     steps:
       - name: Add labels based on PR content
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -166,7 +166,7 @@ jobs:
 
     steps:
       - name: Check PR requirements
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -216,7 +216,7 @@ jobs:
 
     steps:
       - name: Require security team approval
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const { owner, repo } = context.repo;
