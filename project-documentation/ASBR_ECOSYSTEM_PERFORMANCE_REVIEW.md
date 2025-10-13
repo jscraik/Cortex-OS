@@ -96,7 +96,7 @@ Document current performance characteristics and bottlenecks within the packages
 
 ### Option 2: Cached Connector Service Map with File Watchers
 
-**Description**: Cache the parsed connector manifest and signed service map in memory with TTL aligned to manifest `ttlSeconds`. Use `fs.watch` or `chokidar` to refresh when the manifest file changes, falling back to manual reload on signature mismatch.
+**Description**: Cache the parsed connector manifest and signed service map in memory with TTL aligned to manifest `ttlSeconds`. Use `chokidar` (preferred for cross-platform reliability) to refresh when the manifest file changes, falling back to manual reload on signature mismatch. Avoid using `fs.watch` due to known platform inconsistencies.
 
 **Pros**:
 - ✅ Eliminates repeated JSON parse/signature cycles per request. 【F:packages/asbr/src/api/server.ts†L325-L369】
