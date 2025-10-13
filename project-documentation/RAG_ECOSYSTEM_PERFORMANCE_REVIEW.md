@@ -17,7 +17,7 @@
 ### Retrieval & Querying
 - Retrieval pipelines always embed, query, post-process, and sanitize serially without concurrency. There is no prefetch of store results while sanitization executes, and the same embedder call is repeated for every cache route variant.【F:packages/rag/src/rag-pipeline.ts†L361-L396】【F:packages/rag/src/rag-pipeline.ts†L440-L472】
 - `queryMaybeHybrid` is wrapped by `selfSafe`, so any store failure returns an empty result without surfacing errors. Downstream clients then retry the same request, incurring duplicate embedder work and inflating latency with zero signal to alerting.【F:packages/rag/src/rag-pipeline.ts†L474-L487】【F:packages/rag/src/rag-pipeline.ts†L592-L598】
-- `PgVectorStore.hybridQuery` performs vector and keyword queries sequentially on the same connection and fuses the results in memory without reuse of the `withRetry` instrumentation, losing correlation IDs and doubling round-trip latency when hybrid search is enabled.【F:packages/rag/src/store/pgvector-store.ts†L233-L297】
+- `PgVectorStore.hybridQuery` performs vector and keyword queries sequentially on the same connection and combines the results in memory without reuse of the `withRetry` instrumentation, losing correlation IDs and doubling round-trip latency when hybrid search is enabled.【F:packages/rag/src/store/pgvector-store.ts†L233-L297】
 
 ### HTTP Surfaces & Controllers
 - The Fastify server is created with default timeouts disabled and no per-route signal deadlines, so long-running ingest or self-RAG queries keep sockets open indefinitely and can block the worker pool.【F:packages/rag-http/src/server.ts†L88-L158】
