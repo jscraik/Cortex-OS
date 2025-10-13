@@ -34,8 +34,8 @@ interface ConnectorState {
 type FetchReason = 'initial' | 'manual' | 'auto';
 
 interface NormalisedMap {
-	readonly payload: ServiceMapPayload;
-	readonly signature?: string;
+        readonly payload: ServiceMapPayload & { readonly connectors: ConnectorCard[] };
+        readonly signature?: string;
 }
 
 interface AppsClientLike {
@@ -163,19 +163,19 @@ const normaliseMap = (value: unknown): NormalisedMap | null => {
 		return null;
 	}
 
-	const connectors = connectorsValue
-		.filter((entry): entry is Record<string, unknown> => isRecord(entry))
-		.map((entry) => normaliseConnector(entry, generatedAt));
+        const connectors: ConnectorCard[] = connectorsValue
+                .filter((entry): entry is Record<string, unknown> => isRecord(entry))
+                .map((entry) => normaliseConnector(entry, generatedAt));
 
 	if (connectors.length === 0) return null;
 
 	return {
-		payload: {
-			id,
-			brand,
-			generatedAt,
-			ttlSeconds,
-			connectors,
+                payload: {
+                        id,
+                        brand,
+                        generatedAt,
+                        ttlSeconds,
+                        connectors,
 		},
 		signature,
 	};
@@ -238,19 +238,16 @@ const ttlFromMetadata = (metadata: ConnectorMetadata | undefined): number => {
 };
 
 const buildStateFromMap = (
-	map: NormalisedMap,
+        map: NormalisedMap,
 ): {
-	connectors: ConnectorCard[];
-	metadata: ConnectorMetadata;
+        connectors: ConnectorCard[];
+        metadata: ConnectorMetadata;
 } => {
-	const metadata = toMetadata(map);
-	const connectors = map.payload.connectors.map((connector) =>
-		normaliseConnector(connector as Record<string, unknown>, map.payload.generatedAt),
-	);
-	return {
-		connectors,
-		metadata: { ...metadata, remainingSeconds: ttlFromMetadata(metadata) },
-	};
+        const metadata = toMetadata(map);
+        return {
+                connectors: map.payload.connectors,
+                metadata: { ...metadata, remainingSeconds: ttlFromMetadata(metadata) },
+        };
 };
 
 export const useConnectorState = (): ConnectorState => {

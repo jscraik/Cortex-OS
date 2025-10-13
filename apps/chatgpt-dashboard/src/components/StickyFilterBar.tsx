@@ -3,23 +3,31 @@ import * as React from 'react';
 export function StickyFilterBar(): React.ReactElement {
 	const [visible, setVisible] = React.useState(false);
 
-	React.useEffect(() => {
-		const strip = document.getElementById('metric-strip');
-		const handleScroll = () => {
-			if (!strip) {
-				setVisible(false);
-				return;
-			}
+        React.useEffect(() => {
+                const strip = document.getElementById('metric-strip');
+                if (!strip) {
+                        setVisible(false);
+                        return;
+                }
 
-			const threshold = strip.offsetTop + strip.offsetHeight;
-			const y = window.scrollY + 64; // header height
-			setVisible(y > threshold);
-		};
+                const observer = new IntersectionObserver(
+                        ([entry]) => {
+                                if (!entry) {
+                                        return;
+                                }
+                                const nextVisible = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+                                setVisible((current) => (current === nextVisible ? current : nextVisible));
+                        },
+                        {
+                                root: null,
+                                rootMargin: '-64px 0px 0px 0px',
+                                threshold: [0, 1],
+                        },
+                );
 
-		handleScroll();
-		window.addEventListener('scroll', handleScroll, { passive: true });
-		return () => window.removeEventListener('scroll', handleScroll);
-	}, []);
+                observer.observe(strip);
+                return () => observer.disconnect();
+        }, []);
 
 	return (
 		<div
