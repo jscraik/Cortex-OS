@@ -50,7 +50,7 @@ Assess the Cortex-OS Proof Artifacts ecosystem to surface current throughput, la
 
 ### Best Practices (2025)
 - **Async File Hashing Pipelines**: Use worker threads or streaming `createReadStream` + `crypto.createHash` to parallelize digest calculation without blocking the event loop.
-  - Source: Node.js Performance Working Group 2025 report.
+  - Source: [Node.js Documentation: Worker Threads](https://nodejs.org/api/worker_threads.html), [Node.js Documentation: Streams](https://nodejs.org/api/stream.html#stream_readable_createreadstream_path_options)
   - Application: Replace synchronous hashing in create/verify flows and expose bounded worker pools for artifacts and bundles.
 - **Ajv Validator Reuse**: Pre-compile Ajv schemas once per process and share across modules using dependency injection or singleton factories.
   - Source: Ajv 8 performance guide.
