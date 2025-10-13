@@ -11,9 +11,21 @@ Following CODESTYLE.md:
 - brAInwav branding in reports
 """
 
+from bisect import bisect_left, insort
 from collections import defaultdict, deque
-from typing import Dict, List, Set, Optional
-import statistics
+from dataclasses import dataclass, field
+from typing import Deque, Dict, List, Optional, Set
+
+
+@dataclass
+class EndpointMetrics:
+    """Sliding windows and aggregates for a single endpoint."""
+
+    latency_window: Deque[float] = field(default_factory=deque)
+    latency_sorted: List[float] = field(default_factory=list)
+    request_window: Deque[bool] = field(default_factory=deque)
+    success_count: int = 0
+    failure_count: int = 0
 
 
 class SLOTracker:
@@ -31,10 +43,7 @@ class SLOTracker:
             window_size: Maximum samples to retain per endpoint
         """
         self.window_size = window_size
-        self.latencies: Dict[str, deque] = defaultdict(
-            lambda: deque(maxlen=window_size)
-        )
-        self.requests: Dict[str, List[bool]] = defaultdict(list)
+        self.metrics: Dict[str, EndpointMetrics] = defaultdict(EndpointMetrics)
 
     def track(self, endpoint: str, latency_ms: float):
         """
@@ -52,7 +61,24 @@ class SLOTracker:
         if latency_ms < 0:
             return
 
-        self.latencies[endpoint].append(latency_ms)
+        metrics = self.metrics[endpoint]
+
+        if len(metrics.latency_window) == self.window_size:
+            oldest = metrics.latency_window.popleft()
+            remove_index = bisect_left(metrics.latency_sorted, oldest)
+            if (
+                remove_index < len(metrics.latency_sorted)
+                and metrics.latency_sorted[remove_index] == oldest
+            ):
+                metrics.latency_sorted.pop(remove_index)
+            else:
+                try:
+                    metrics.latency_sorted.remove(oldest)
+                except ValueError:
+                    pass
+
+        metrics.latency_window.append(latency_ms)
+        insort(metrics.latency_sorted, latency_ms)
 
     def track_request(self, endpoint: str, success: bool):
         """
@@ -68,11 +94,20 @@ class SLOTracker:
         if not endpoint:
             return
 
-        self.requests[endpoint].append(success)
-        
-        # Keep only recent window
-        if len(self.requests[endpoint]) > self.window_size:
-            self.requests[endpoint] = self.requests[endpoint][-self.window_size:]
+        metrics = self.metrics[endpoint]
+
+        if len(metrics.request_window) == self.window_size:
+            oldest = metrics.request_window.popleft()
+            if oldest:
+                metrics.success_count -= 1
+            else:
+                metrics.failure_count -= 1
+
+        metrics.request_window.append(success)
+        if success:
+            metrics.success_count += 1
+        else:
+            metrics.failure_count += 1
 
     def get_percentile(self, endpoint: str, percentile: float) -> float:
         """
@@ -88,20 +123,29 @@ class SLOTracker:
         Following CODESTYLE.md: Guard clauses
         """
         # Guard: check if endpoint has data
-        if endpoint not in self.latencies:
-            return 0.0
-        
-        latency_list = list(self.latencies[endpoint])
-        
-        # Guard: check for empty list
-        if not latency_list:
+        metrics = self.metrics.get(endpoint)
+
+        if not metrics or not metrics.latency_sorted:
             return 0.0
 
-        return statistics.quantiles(
-            latency_list,
-            n=100,
-            method='inclusive'
-        )[int(percentile) - 1]
+        if percentile <= 0 or percentile > 100:
+            return 0.0
+
+        sorted_latencies = metrics.latency_sorted
+        count = len(sorted_latencies)
+
+        if count == 1:
+            return float(sorted_latencies[0])
+
+        rank = (percentile / 100.0) * (count - 1)
+        lower_index = int(rank)
+        upper_index = min(lower_index + 1, count - 1)
+        fraction = rank - lower_index
+
+        lower_value = sorted_latencies[lower_index]
+        upper_value = sorted_latencies[upper_index]
+
+        return float(lower_value + fraction * (upper_value - lower_value))
 
     def get_error_rate(self, endpoint: str) -> float:
         """
@@ -116,17 +160,17 @@ class SLOTracker:
         Following CODESTYLE.md: Guard clauses
         """
         # Guard: check if endpoint has data
-        if endpoint not in self.requests:
-            return 0.0
-        
-        requests_list = self.requests[endpoint]
-        
-        # Guard: empty list
-        if not requests_list:
+        metrics = self.metrics.get(endpoint)
+
+        if not metrics:
             return 0.0
 
-        failures = sum(1 for success in requests_list if not success)
-        return failures / len(requests_list)
+        total_requests = metrics.success_count + metrics.failure_count
+
+        if total_requests == 0:
+            return 0.0
+
+        return metrics.failure_count / total_requests
 
     def meets_slo(
         self,
@@ -148,7 +192,9 @@ class SLOTracker:
         Following CODESTYLE.md: Guard clauses
         """
         # Guard: validate endpoint exists
-        if endpoint not in self.latencies:
+        metrics = self.metrics.get(endpoint)
+
+        if not metrics:
             return True  # No data = no violations
 
         p95 = self.get_percentile(endpoint, 95)
@@ -168,7 +214,7 @@ class SLOTracker:
         
         Following CODESTYLE.md: Simple accessor
         """
-        return set(self.latencies.keys())
+        return set(self.metrics.keys())
 
 
 # Global tracker instance
