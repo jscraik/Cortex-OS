@@ -160,7 +160,7 @@ Evaluate the MVP package family (kernel, teaching layer, MCP adapter, Fastify se
 **Selected**: Option 2 – MCP Tool Execution Pool & Module Cache (Phase 1), followed by Option 1 – Async Phase Pipeline (Phase 2)
 
 **Rationale**:
-- Module caching and pooled execution immediately reduce median workflow time because test and analysis tools are the dominant bottleneck today; caching addresses repeated dynamic imports while respecting security guards.【F:packages/mvp/mvp/src/mcp/adapter.ts†L220-L450】
+- Module caching and pooled execution immediately reduce median workflow time because test and analysis tools are the dominant bottleneck today. Caching also addresses repeated dynamic imports while respecting security guards.【F:packages/mvp/mvp/src/mcp/adapter.ts†L220-L450】
 - Introducing TTL-based context cleanup resolves the silent leak in the adapter and keeps long-running orchestrations from exhausting memory.【F:packages/mvp/mvp/src/mcp/adapter.ts†L77-L215】
 - Once tool latency is tamed, the sequential PRP graph becomes the next limiter; upgrading to an async pipeline improves throughput while keeping deterministic runs available via configuration.【F:packages/mvp/mvp/src/graph-simple.ts†L50-L303】
 - Teaching compaction (Option 3) remains valuable but depends on telemetry gathered after phase/tool improvements, so it lands as a follow-up workstream with clearer sizing.
