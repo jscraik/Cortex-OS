@@ -17,7 +17,7 @@
 ## Observed Performance Risks
 ### Loader pipeline
 1. **Sequential directory traversal** – `scanDirectory` awaits each recursive branch serially; on SSDs this forfeits I/O parallelism during cold loads.【F:packages/memory-core/src/skills/loaders/skill-loader.ts†L191-L228】
-2. **Unbounded concurrency for heavy validation** – `loadSkillsFromDirectory` fans out every file via `Promise.all`, so YAML parsing plus schema, security, and ethics validation all compete simultaneously, risking event-loop starvation on large batches.【F:packages/memory-core/src/skills/loaders/skill-loader.ts†L292-L408】
+2. **Unbounded concurrency for heavy validation** – `loadSkillsFromDirectory` fans out every file via `Promise.all`. As a result, YAML parsing, schema validation, security checks, and ethics validation all compete simultaneously. This risks event-loop starvation on large batches.【F:packages/memory-core/src/skills/loaders/skill-loader.ts†L292-L408】
 3. **Global cache without size tuning** – A single `SkillCache` with a fixed 1 000-entry cap is shared by all loaders, yet `cacheMaxSize` from options is never plumbed through, preventing callers from tailoring eviction to corpus size.【F:packages/memory-core/src/skills/loaders/skill-loader.ts†L96-L185】【F:packages/memory-core/src/skills/loaders/skill-loader.ts†L252-L361】
 
 ### Registry and indexing
