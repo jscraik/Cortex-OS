@@ -1,6 +1,6 @@
 # Amplifying Expertise with Cortex-OS
 
-This guide synthesizes key capabilities in Cortex-OS that help teams capture, extend, and reuse expertise across projects. It links to authoritative documents for deeper dives.
+This guide synthesizes key capabilities in brAInwav Cortex-OS that help teams capture, extend, and reuse expertise across projects. It links to authoritative documents for deeper dives.
 
 ## 1. Deploy specialized subagents
 
