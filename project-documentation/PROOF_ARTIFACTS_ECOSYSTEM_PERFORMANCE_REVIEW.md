@@ -178,7 +178,7 @@ Assess the Cortex-OS Proof Artifacts ecosystem to surface current throughput, la
 ### Technical Constraints
 - Nx executor integration requires caching layer to respect `pnpm --filter` boundaries and avoid cross-package pollution.
 - Node 20+ runtime is mandated; `stream/promises` utilities are always available, but worker pools must degrade gracefully if worker threads are unavailable (e.g., in restricted environments).
-- Performance goals: maintain ≤250 ms p95 signing latency and ≤800 ms cold start per package manifest (AGENTS §0).
+- Performance goals: maintain ≤250 ms p95 signing latency and ≤800 ms cold start per package manifest ([AGENTS.md §Performance Goals](../AGENTS.md#performance-goals)).
 - Multi-platform support (macOS, Linux, Windows) demands filesystem-safe cache paths and locking strategies.
 
 ### Security Constraints
