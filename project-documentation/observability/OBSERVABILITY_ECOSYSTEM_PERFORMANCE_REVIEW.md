@@ -68,7 +68,7 @@ Assess the current Observability package surface (events, logging, metrics, trac
 
 ### Best Practices (2025)
 - **Node.js Telemetry Pipelines**: Enable OTEL BatchSpanProcessor with backpressure-aware concurrency, keep-alive exporters, and targeted instrumentation packages to reduce cold start.
-  - Source: CNCF Observability WG recommendations (2024-09)
+  - Source: CNCF Observability WG recommendations (2024-09) (hypothetical reference for illustration; no published document as of 2025-01)
   - Application: Replace eager `getNodeAutoInstrumentations()` with explicit instrumentation selection and asynchronous startup in Cortex-OS.
 
 ### Relevant Libraries/Frameworks
