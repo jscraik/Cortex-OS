@@ -17,19 +17,19 @@ Identify performance bottlenecks across the Cortex-OS A2A ecosystem (bus, transp
 
 ### Existing Implementation
 - **Location**: `packages/a2a/a2a-core/src/bus.ts`
-- **Current Approach**: The A2A bus wraps a transport, applies schema validation, injects trace context, enforces ACLs, and manages idempotency through an in-memory Map keyed by message ID with time-based sweeping on each lookup.【F:packages/a2a/a2a-core/src/bus.ts†L36-L216】
-- **Limitations**: Duplicate detection requires iterating the entire Map for TTL eviction, publish operations block on sequential `transport.publish` calls, and backpressure integration always reports a zero queue depth, preventing dynamic throttling.【F:packages/a2a/a2a-core/src/bus.ts†L51-L112】【F:packages/a2a/a2a-transport/src/inproc.ts†L4-L29】
+- **Current Approach**: The A2A bus wraps a transport, applies schema validation, injects trace context, enforces ACLs, and manages idempotency through an in-memory Map keyed by message ID with time-based sweeping on each lookup. [`packages/a2a/a2a-core/src/bus.ts` lines 36–216]
+- **Limitations**: Duplicate detection requires iterating the entire Map for TTL eviction, publish operations block on sequential `transport.publish` calls, and backpressure integration always reports a zero queue depth, preventing dynamic throttling. [`packages/a2a/a2a-core/src/bus.ts` lines 51–112], [`packages/a2a/a2a-transport/src/inproc.ts` lines 4–29]
 
 ### Related Components
-- **Component 1**: `packages/a2a/a2a-transport/src/inproc.ts` — the default in-process transport iterates subscribers sequentially with awaited handlers, preventing concurrent fan-out or timeout isolation.【F:packages/a2a/a2a-transport/src/inproc.ts†L4-L29】
-- **Component 2**: `packages/a2a/a2a-core/src/schema-registry.ts` — schemas are cached in-memory with a per-access `setTimeout` eviction, and validation work aggregates naive stats without percentile insight, risking timer churn and limited observability.【F:packages/a2a/a2a-core/src/schema-registry.ts†L71-L175】
-- **Component 3**: `packages/a2a/src/outbox-service.ts` and `packages/a2a/src/in-memory-outbox-repository.ts` — outbox orchestration runs serial repository calls, with Map-backed storage and cleanup loops that scale linearly with message volume, lacking batching or cursor-based retrieval.【F:packages/a2a/src/outbox-service.ts†L87-L142】【F:packages/a2a/src/in-memory-outbox-repository.ts†L39-L161】
-- **Component 4**: `packages/a2a/src/task-manager.ts` — Task processing is single-worker, uses Promise.race for timeouts without bounded concurrency controls, and emits events synchronously from an EventEmitter, limiting throughput for high task volume.【F:packages/a2a/src/task-manager.ts†L120-L214】
+- **Component 1**: `packages/a2a/a2a-transport/src/inproc.ts` — the default in-process transport iterates subscribers sequentially with awaited handlers, preventing concurrent fan-out or timeout isolation. [`packages/a2a/a2a-transport/src/inproc.ts` lines 4–29]
+- **Component 2**: `packages/a2a/a2a-core/src/schema-registry.ts` — schemas are cached in-memory with a per-access `setTimeout` eviction, and validation work aggregates naive stats without percentile insight, risking timer churn and limited observability. [`packages/a2a/a2a-core/src/schema-registry.ts` lines 71–175]
+- **Component 3**: `packages/a2a/src/outbox-service.ts` and `packages/a2a/src/in-memory-outbox-repository.ts` — outbox orchestration runs serial repository calls, with Map-backed storage and cleanup loops that scale linearly with message volume, lacking batching or cursor-based retrieval. [`packages/a2a/src/outbox-service.ts` lines 87–142], [`packages/a2a/src/in-memory-outbox-repository.ts` lines 39–161]
+- **Component 4**: `packages/a2a/src/task-manager.ts` — Task processing is single-worker, uses Promise.race for timeouts without bounded concurrency controls, and emits events synchronously from an EventEmitter, limiting throughput for high task volume. [`packages/a2a/src/task-manager.ts` lines 120–214]
 
 ### brAInwav-Specific Context
-- **MCP Integration**: MCP tools surface A2A outbox sync operations; throughput issues propagate to MCP tool latency when repository scans are slow.【F:packages/a2a/src/outbox-service.ts†L87-L142】
-- **A2A Events**: CloudEvents envelopes rely on schema registry lookups per publish/subscribe cycle; cache inefficiencies add latency to hot topics.【F:packages/a2a/a2a-core/src/schema-registry.ts†L71-L175】
-- **Local Memory**: Outbox metrics recorder currently only logs sanitized console messages, providing limited historic insights for Local Memory ingestion and performance tuning.【F:packages/a2a/src/outbox-service.ts†L55-L126】
+- **MCP Integration**: MCP tools surface A2A outbox sync operations; throughput issues propagate to MCP tool latency when repository scans are slow. [`packages/a2a/src/outbox-service.ts` lines 87–142]
+- **A2A Events**: CloudEvents envelopes rely on schema registry lookups per publish/subscribe cycle; cache inefficiencies add latency to hot topics. [`packages/a2a/a2a-core/src/schema-registry.ts` lines 71–175]
+- **Local Memory**: Outbox metrics recorder currently only logs sanitized console messages, providing limited historic insights for Local Memory ingestion and performance tuning. [`packages/a2a/src/outbox-service.ts` lines 55–126]
 - **Existing Patterns**: Observability helpers in `a2a-observability` and prom-client integrations across other packages can be reused to replace ad-hoc counters and logging.
 
 ---
