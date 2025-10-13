@@ -16,7 +16,7 @@ export function StickyFilterBar(): React.ReactElement {
                                         return;
                                 }
                                 const nextVisible = !entry.isIntersecting && entry.boundingClientRect.top < 0;
-                                setVisible((current) => (current === nextVisible ? current : nextVisible));
+                                setVisible(nextVisible);
                         },
                         {
                                 root: null,
