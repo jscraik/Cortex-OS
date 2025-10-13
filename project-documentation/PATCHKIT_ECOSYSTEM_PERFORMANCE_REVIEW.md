@@ -193,8 +193,8 @@ Evaluate the @cortex-os/patchkit package and its consumers to document current p
 
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
-| Diff generation latency (10k LOC) | ≤ 250 ms | Unknown | ⚠️ |
-| Batch throughput (20 ops) | ≤ 800 ms cold | Unknown | ⚠️ |
+| Diff generation latency (10k LOC) | (TBD) | Unknown | ⚠️ |
+| Batch throughput (20 ops) | (TBD) | Unknown | ⚠️ |
 
 ---
 
