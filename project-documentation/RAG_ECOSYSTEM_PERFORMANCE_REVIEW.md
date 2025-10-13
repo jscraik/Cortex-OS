@@ -27,7 +27,7 @@
 ## Recommendations
 
 ### Immediate (protect current SLOs)
-1. **Batch database writes and add per-stage timers**: convert `PgVectorStore.upsert` to bulk `INSERT ... SELECT` (or pg `COPY`) inside a single transaction, and emit stage timings for embed vs store so ingest alerts can pinpoint saturation.【F:packages/rag/src/rag-pipeline.ts†L300-L328】【F:packages/rag/src/store/pgvector-store.ts†L152-L181】
+1. **Batch database writes and add per-stage timers**: convert `PgVectorStore.upsert` to bulk `INSERT ... SELECT` (or PostgreSQL `COPY`) inside a single transaction, and emit stage timings for embed vs store so ingest alerts can pinpoint saturation.【F:packages/rag/src/rag-pipeline.ts†L300-L328】【F:packages/rag/src/store/pgvector-store.ts†L152-L181】
 2. **Stop silent fallbacks on store failures**: replace `selfSafe` with retry-and-escalate semantics that short-circuit before rerunning the full pipeline. Surface structured errors so clients can back off instead of thrashing the embedder.【F:packages/rag/src/rag-pipeline.ts†L474-L487】【F:packages/rag/src/rag-pipeline.ts†L592-L598】
 3. **Apply request deadlines & concurrency guards**: configure Fastify's `connectionTimeout`/`bodyLimit`, wrap ingest/query handlers with `AbortController`, and cap simultaneous self-RAG executions to avoid event-loop starvation.【F:packages/rag-http/src/server.ts†L88-L158】【F:packages/rag/src/self-rag/controller.ts†L74-L113】
 
