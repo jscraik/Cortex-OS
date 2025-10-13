@@ -338,6 +338,7 @@ Implementing TTL-aware caching inside the runtime client delivers the largest pe
 ```typescript
 import AsyncCacheDedupe from 'async-cache-dedupe';
 
+const ttlSeconds = 60; // Set cache TTL to 60 seconds (adjust as needed)
 const cache = new AsyncCacheDedupe({ ttl: () => ttlSeconds * 1000 });
 
 export const createCachedServiceMap = (fetchServiceMap: () => Promise<ConnectorServiceMap>) => {
