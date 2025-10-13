@@ -6,7 +6,7 @@
 
 ## Executive Summary
 - Loader throughput collapses under large repositories because directory walks and batch validation run sequentially. Meanwhile, skill parsing and policy checks execute with unbounded concurrency, causing bursty CPU spikes followed by idle waits. Tighten concurrency and reuse intermediate artifacts to keep p95 ingestion under control.
-- Registry search is effectively an \(O(n)\) table scan that rebuilds scoring inputs on every call; it ignores the existing secondary indexes and recompiles regular expressions per document, which will not meet the 250 ms SLA once catalogs grow past a few hundred entries. Adopt index-driven narrowing and cached term vectors to make lookups proportional to result size.
+- Registry search performs an \(O(n)\) table scan that rebuilds scoring inputs on every call. It ignores existing secondary indexes and recompiles regular expressions per document. This approach will not meet the 250 ms SLA once catalogs grow past a few hundred entries. Adopt index-driven narrowing and cached term vectors to make lookups proportional to result size.
 - Observability is minimal: cache statistics are exposed but no timings, high-water marks, or rejection metrics are emitted. Without instrumentation, regression detection and capacity planning for the SKILLS surface remain guesswork.
 
 ## Architecture Snapshot
