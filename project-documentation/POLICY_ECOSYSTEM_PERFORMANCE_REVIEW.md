@@ -276,7 +276,7 @@ No dedicated POC executed for this research cycle; proposals are analytical base
 ## Related Research
 
 ### Internal Documentation
-- `project-documentation/brainwav-build-fix-phase2-report.md` – prior investigations into dependency health.
+- `project-documentation/brAInwav-build-fix-phase2-report.md` – prior investigations into dependency health.
 - `project-documentation/observability` – instrumentation patterns to reuse for policy metrics.
 
 ### External Resources
