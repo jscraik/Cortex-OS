@@ -25,4 +25,3 @@ This guide synthesizes key capabilities in brAInwav Cortex-OS that help teams ca
 - Orchestrate multi-agent workflows with the built-in runtime, workflows, and observability.
 - Expand coverage with Wikidata integration, governance templates, and the agent toolkit so teams can accelerate onboarding and decision quality.
 
-> For a condensed answer tailored to "How can we use Cortex-OS to amplify expertise?", see the assistant response in the main conversation, which cites the underlying sources referenced here.
