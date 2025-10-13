@@ -245,7 +245,7 @@ Adopt a phased plan that first lands Option 1 (bounded async ingestion) and Opti
 ## Next Steps
 
 1. **Immediate**:
-   - [ ] Socialize findings with RAG maintainers (#cortex-ops).
+   - [ ] Socialize findings with RAG maintainers (**[verify and insert correct channel here]**).
    - [ ] Capture baseline metrics for ingest latency and memory usage.
 
 2. **Before Implementation**:
