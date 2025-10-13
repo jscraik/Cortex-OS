@@ -69,11 +69,11 @@ describe('ArtifactRepository', () => {
 		expect(Buffer.compare(retrieved?.binary ?? Buffer.alloc(0), payload)).toBe(0);
 	});
 
-	test('lists artifacts with task filter', async () => {
-		const repo = new ArtifactRepository({ now: () => FIXED_NOW });
-		const first = await repo.save({
-			filename: 'first.txt',
-			contentType: 'text/plain',
+        test('lists artifacts with task filter', async () => {
+                const repo = new ArtifactRepository({ now: () => FIXED_NOW });
+                const first = await repo.save({
+                        filename: 'first.txt',
+                        contentType: 'text/plain',
 			taskId: 'task-a',
 			tags: ['export'],
 			binary: Buffer.from('first'),
@@ -87,9 +87,41 @@ describe('ArtifactRepository', () => {
 		});
 
 		const filtered = await repo.list({ taskId: 'task-a' });
-		expect(filtered).toHaveLength(1);
-		expect(filtered[0]?.id).toBe(first.id);
-	});
+                expect(filtered).toHaveLength(1);
+                expect(filtered[0]?.id).toBe(first.id);
+        });
+
+        test('lists artifacts with tag filter across multiple entries', async () => {
+                const repo = new ArtifactRepository({ now: () => FIXED_NOW });
+                const matching = await Promise.all(
+                        ['alpha', 'beta'].map((suffix) =>
+                                repo.save({
+                                        id: `00000000-0000-0000-0000-0000000000${suffix === 'alpha' ? '1' : '2'}`,
+                                        filename: `${suffix}.log`,
+                                        contentType: 'text/plain',
+                                        tags: ['report', suffix],
+                                        binary: Buffer.from(suffix),
+                                }),
+                        ),
+                );
+
+                await repo.save({
+                        filename: 'gamma.log',
+                        contentType: 'text/plain',
+                        tags: ['telemetry'],
+                        binary: Buffer.from('gamma'),
+                });
+
+                const results = await repo.list({ tag: 'report' });
+
+                const sortedResults = results.sort((a, b) => a.id.localeCompare(b.id));
+                const sortedExpected = matching
+                        .map((artifact) => artifact.id)
+                        .sort((a, b) => a.localeCompare(b));
+
+                expect(sortedResults).toHaveLength(2);
+                expect(sortedResults.map((item) => item.id)).toEqual(sortedExpected);
+        });
 
 	test('enforces optimistic locking on conflicting updates', async () => {
 		const repo = new ArtifactRepository({ now: () => FIXED_NOW });
