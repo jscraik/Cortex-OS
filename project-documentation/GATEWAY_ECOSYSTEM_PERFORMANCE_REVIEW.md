@@ -103,6 +103,7 @@ This sequence unlocks immediate latency savings from pooling while setting the s
 
 ```ts
 // Example: reusing enhanced MCP clients
+// NOTE: `createEnhancedClientPool` is conceptual pseudocode/example implementation and may not exist in the codebase.
 const clientPool = createEnhancedClientPool({ size: 4, transport: resolvedTransport });
 
 app.addHook('onClose', async () => {
