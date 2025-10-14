@@ -86,6 +86,8 @@ describe('ToolLayerAgent arXiv Integration', () => {
 
 			expect(ArxivMCPTools).toHaveBeenCalledWith({
 				serverSlug: 'arxiv-1',
+				searchToolName: 'search_papers',
+				downloadToolName: 'download_paper',
 				defaultMaxResults: 10,
 			});
 
@@ -105,6 +107,27 @@ describe('ToolLayerAgent arXiv Integration', () => {
 
 			expect(ArxivMCPTools).toHaveBeenCalledWith({
 				serverSlug: undefined,
+				searchToolName: 'search_papers',
+				downloadToolName: 'download_paper',
+				defaultMaxResults: undefined,
+			});
+		});
+		it('should pass through custom arXiv tool names', () => {
+			const config = {
+				name: 'custom-agent',
+				enableArxivResearch: true,
+				arxivSearchTool: 'custom.search',
+				arxivDownloadTool: 'custom.download',
+			};
+
+			const { ArxivMCPTools } = require('../../src/mcp/ArxivMCPTools.js');
+
+			agent = createToolLayerAgent(config);
+
+			expect(ArxivMCPTools).toHaveBeenCalledWith({
+				serverSlug: undefined,
+				searchToolName: 'custom.search',
+				downloadToolName: 'custom.download',
 				defaultMaxResults: undefined,
 			});
 		});

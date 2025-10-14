@@ -100,6 +100,7 @@ export interface ToolLayerConfig {
 	enableArxivResearch: boolean;
 	arxivServerSlug?: string;
 	arxivSearchTool?: string;
+	arxivDownloadTool?: string;
 	arxivMaxResults?: number;
 }
 
@@ -140,6 +141,8 @@ export class ToolLayerAgent extends EventEmitter {
 		if (this.config.enableArxivResearch) {
 			this.arxivMCPTools = new ArxivMCPTools({
 				serverSlug: this.config.arxivServerSlug,
+				searchToolName: this.config.arxivSearchTool,
+				downloadToolName: this.config.arxivDownloadTool,
 				defaultMaxResults: this.config.arxivMaxResults,
 			});
 			// Register tools asynchronously in the background
@@ -914,6 +917,7 @@ export function createToolLayerAgent(config?: Partial<ToolLayerConfig>): ToolLay
 		enableArxivResearch: true,
 		arxivServerSlug: 'arxiv-1',
 		arxivSearchTool: 'search_papers',
+		arxivDownloadTool: 'download_paper',
 		arxivMaxResults: 5,
 		...config,
 	};
