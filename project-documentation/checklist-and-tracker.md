@@ -18,6 +18,10 @@ Last updated: 2025-09-15
 - Use Agent Toolkit for search/mods/verification: `just scout`, `just codemod`, `just verify`.
 - Local Memory via `createStoreFromEnv()` when tests touch memories.
 
+## Governance Checkpoint — Live Evidence Gate
+
+- [ ] Block review until the associated task folder contains live model execution logs and Wikidata workflow evidence (vector search, claims, SPARQL) captured from a recorded `executeWikidataWorkflow` run.
+
 ## Coverage Assessment — Did the plan cover all gaps?
 
 Covered by plan (examples):
