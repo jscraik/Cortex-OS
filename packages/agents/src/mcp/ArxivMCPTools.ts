@@ -72,10 +72,10 @@ export class ArxivMCPTools {
         private static cacheEvictions = 0;
 
         constructor(config: ArxivMCPToolsConfig = {}) {
-                const envTTL = Number.parseInt(process.env.ARXIV_CACHE_TTL_MS ?? '', 10);
-                const envMax = Number.parseInt(process.env.ARXIV_CACHE_MAX_ENTRIES ?? '', 10);
-                const normalizedTTL = Number.isFinite(envTTL) && envTTL > 0 ? envTTL : 300000;
-                const normalizedMaxEntries = Number.isFinite(envMax) && envMax > 0 ? envMax : 200;
+                const envTTL = process.env.ARXIV_CACHE_TTL_MS ? Number.parseInt(process.env.ARXIV_CACHE_TTL_MS, 10) : undefined;
+                const envMax = process.env.ARXIV_CACHE_MAX_ENTRIES ? Number.parseInt(process.env.ARXIV_CACHE_MAX_ENTRIES, 10) : undefined;
+                const normalizedTTL = typeof envTTL === 'number' && Number.isFinite(envTTL) && envTTL > 0 ? envTTL : 300000;
+                const normalizedMaxEntries = typeof envMax === 'number' && Number.isFinite(envMax) && envMax > 0 ? envMax : 200;
 
                 this.config = {
                         serverSlug: config.serverSlug || 'arxiv-1',
