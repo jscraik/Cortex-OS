@@ -71,9 +71,9 @@
 
 | Phase | Timeline | Key Deliverables | Dependencies |
 |-------|----------|------------------|---------------|
-| Phase 1 | 2025-02 → 2025-03 | Parallel gate execution with streaming outcomes; shared schema registry bootstrap | Requires concurrency-safe dependency wrappers, registry singleton wiring |
-| Phase 2 | 2025-03 → 2025-04 | Retrieval cache layer, router timeout guards, standardized dependency decorators | Depends on Phase 1 telemetry to size resource pools |
-| Phase 3 | 2025-04 → 2025-05 | Bus transport pooling, enriched event schemas, OTEL trace integration | Needs Observability pipeline updates, registry changes landed |
+| Phase 1 | February 2025 → March 2025 | Parallel gate execution with streaming outcomes; shared schema registry bootstrap | Requires concurrency-safe dependency wrappers, registry singleton wiring |
+| Phase 2 | March 2025 → April 2025 | Retrieval cache layer, router timeout guards, standardized dependency decorators | Depends on Phase 1 telemetry to size resource pools |
+| Phase 3 | April 2025 → May 2025 | Bus transport pooling, enriched event schemas, OTEL trace integration | Needs Observability pipeline updates, registry changes landed |
 
 ## 6. Risks & Mitigations
 - **Concurrency regressions:** Parallelizing suites risks resource contention; mitigate with configurable worker limits and per-suite circuit breakers.
