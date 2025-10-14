@@ -130,14 +130,14 @@ Provide a focused performance assessment of the `@cortex-os/executor-spool` pack
 
 ## Comparative Analysis
 
-| Criteria | Option 1 | Option 2 | Option 3 |
-|----------|----------|----------|----------|
-| **Performance** | High gains via concurrency & streaming | Moderate gains via caching | Variable; depends on network |
-| **Security** | Requires careful sandbox limits | Neutral | Higher risk (remote surface) |
-| **Maintainability** | Moderate complexity | Low complexity | High operational burden |
-| **brAInwav Fit** | Strong (local-first preserved) | Strong | Weak |
-| **Community Support** | Strong (Node ecosystem) | Strong | Mixed |
-| **License Compatibility** | MIT/ISC | MIT/ISC | Varies by platform |
+Criteria | Option 1 | Option 2 | Option 3
+----------|----------|----------|----------
+**Performance** | High gains via concurrency & streaming | Moderate gains via caching | Variable; depends on network
+**Security** | Requires careful sandbox limits | Neutral | Higher risk (remote surface)
+**Maintainability** | Moderate complexity | Low complexity | High operational burden
+**brAInwav Fit** | Strong (local-first preserved) | Strong | Weak
+**Community Support** | Strong (Node ecosystem) | Strong | Mixed
+**License Compatibility** | MIT/ISC | MIT/ISC | Varies by platform
 
 ---
 
