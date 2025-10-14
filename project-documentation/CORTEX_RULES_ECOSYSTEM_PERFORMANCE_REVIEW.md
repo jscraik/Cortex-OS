@@ -17,13 +17,13 @@ Evaluate the @cortex-os/cortex-rules JavaScript and Python toolchain to surface 
 
 ### Existing Implementation
 - **Location**: `packages/cortex-rules/src/index.ts`
-- **Current Approach**: Each `getFreshnessRule` call resolves the user's timezone, searches several possible `_time-freshness.md` paths synchronously, and reads template contents with `fs.readFileSync` before performing string substitutions.【F:packages/cortex-rules/src/index.ts†L23-L116】
+- **Current Approach**: Each `getFreshnessRule` call resolves the user's timezone, searches several possible `_time-freshness.md` paths synchronously, and reads template contents with `fs.readFileSync` before performing string substitutions. [Source: `packages/cortex-rules/src/index.ts` (L23-L116)](./packages/cortex-rules/src/index.ts#L23-L116)
 - **Limitations**: Repeated synchronous file system probes (`existsSync`/`readFileSync`) block the Node.js event loop, redundant `Intl.DateTimeFormat` instantiation occurs per call, and no caching exists for the resolved template path or compiled replacements.
 
 ### Related Components
-- **Python parity module**: `packages/cortex-rules/src/python/cortex_rules.py` mirrors the synchronous template read pattern via `Path.read_text` without memoization, redoing environment lookups and string replacements for every invocation.【F:packages/cortex-rules/src/python/cortex_rules.py†L10-L86】
-- **Tests**: `packages/cortex-rules/src/index.test.ts` focuses on correctness and default fallbacks but omits latency, concurrency, or cache eviction coverage, leaving performance regressions undetected by CI.【F:packages/cortex-rules/src/index.test.ts†L1-L88】
-- **Packaging**: `package.json` exposes a `cortex-time-tool` binary even though no `tools/` directory ships, risking slow startup failures when CLIs attempt to bootstrap with missing assets; this also hints that build artifacts are not precomputing rule templates.【F:packages/cortex-rules/package.json†L1-L40】
+- **Python parity module**: `packages/cortex-rules/src/python/cortex_rules.py` mirrors the synchronous template read pattern via `Path.read_text` without memoization, redoing environment lookups and string replacements for every invocation. [Source: `packages/cortex-rules/src/python/cortex_rules.py` (L10-L86)](./packages/cortex-rules/src/python/cortex_rules.py#L10-L86)
+- **Tests**: `packages/cortex-rules/src/index.test.ts` focuses on correctness and default fallbacks but omits latency, concurrency, or cache eviction coverage, leaving performance regressions undetected by CI. [Source: `packages/cortex-rules/src/index.test.ts` (L1-L88)](./packages/cortex-rules/src/index.test.ts#L1-L88)
+- **Packaging**: `package.json` exposes a `cortex-time-tool` binary even though no `tools/` directory ships, risking slow startup failures when CLIs attempt to bootstrap with missing assets; this also hints that build artifacts are not precomputing rule templates. [Source: `packages/cortex-rules/package.json` (L1-L40)](./packages/cortex-rules/package.json#L1-L40)
 
 ### brAInwav-Specific Context
 - **MCP Integration**: Agents source the freshness preamble before invoking MCP tools; blocking reads extend tail latency for every outbound call.
