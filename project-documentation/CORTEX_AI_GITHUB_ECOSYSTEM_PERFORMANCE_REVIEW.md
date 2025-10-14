@@ -9,32 +9,32 @@
 
 The Cortex AI GitHub package wires an Express webhook server (`CortexWebhookServer`) to the `CortexAiGitHubApp` task manager that proxies work to the GitHub Models API. Event handling flows are:
 
-1. Webhook delivery enters `/webhook`, which validates HMAC signatures, parses payloads, and routes to event-specific handlers before enqueuing tasks on the AI app. 【F:packages/cortex-ai-github/src/server/webhook-server.ts†L23-L214】
-2. `CortexAiGitHubApp.queueTask` stores requests in an in-memory `Map`, emits queue metrics, and immediately processes items when rate limits appear available. 【F:packages/cortex-ai-github/src/core/ai-github-app.ts†L83-L146】
-3. `callModel` issues a fresh `fetch` POST per task with a per-request abort controller and parses the GitHub Models completion response. 【F:packages/cortex-ai-github/src/core/ai-github-app.ts†L211-L288】
-4. Progressive status updates and emoji reactions feed back to GitHub via dynamic Octokit clients on every state transition. 【F:packages/cortex-ai-github/src/server/webhook-server.ts†L305-L384】
+1. Webhook delivery enters `/webhook`, which validates HMAC signatures, parses payloads, and routes to event-specific handlers before enqueuing tasks on the AI app. [webhook-server.ts:23-214](packages/cortex-ai-github/src/server/webhook-server.ts#L23-L214)
+2. `CortexAiGitHubApp.queueTask` stores requests in an in-memory `Map`, emits queue metrics, and immediately processes items when rate limits appear available. [ai-github-app.ts:83-146](packages/cortex-ai-github/src/core/ai-github-app.ts#L83-L146)
+3. `callModel` issues a fresh `fetch` POST per task with a per-request abort controller and parses the GitHub Models completion response. [ai-github-app.ts:211-288](packages/cortex-ai-github/src/core/ai-github-app.ts#L211-L288)
+4. Progressive status updates and emoji reactions feed back to GitHub via dynamic Octokit clients on every state transition. [webhook-server.ts:305-384](packages/cortex-ai-github/src/server/webhook-server.ts#L305-L384)
 
 ## 2. Observed Performance Hot Spots
 
 ### 2.1 Queue starvation under rate limiting
 
-- `queueTask` only schedules immediate execution when `rateLimitInfo.remaining > 0`, but no follow-up scheduler revisits queued work after the GitHub Models limit resets. Tasks submitted during a 0-remaining window stay in `taskQueue` without ever executing, causing indefinite backlog and user-visible stalls. 【F:packages/cortex-ai-github/src/core/ai-github-app.ts†L105-L146】【F:packages/cortex-ai-github/src/core/ai-github-app.ts†L409-L420】
+- `queueTask` only schedules immediate execution when `rateLimitInfo.remaining > 0`, but no follow-up scheduler revisits queued work after the GitHub Models limit resets. Tasks submitted during a 0-remaining window stay in `taskQueue` without ever executing, causing indefinite backlog and user-visible stalls. [ai-github-app.ts:105-146](packages/cortex-ai-github/src/core/ai-github-app.ts#L105-L146)[ai-github-app.ts:409-420](packages/cortex-ai-github/src/core/ai-github-app.ts#L409-L420)
 - Because processing is triggered with `setImmediate`, any burst that arrives before the limiter updates will spin up unbounded concurrent requests. Combined with the missing retry window, this oscillates between over-saturation and starvation.
 
 ### 2.2 Unbounded concurrency and missing backpressure
 
-- `processTask` runs for every queued ID without a concurrency cap; `activeRequests` only guards duplicate execution, not total workers. A busy repository can launch dozens of simultaneous `fetch` calls, increasing tail latency and breaching p95 goals. 【F:packages/cortex-ai-github/src/core/ai-github-app.ts†L147-L210】
-- The webhook handlers enqueue multiple tasks sequentially (e.g., label-driven security + docs scans) without batching or deduping, multiplying parallel load with no prioritization. 【F:packages/cortex-ai-github/src/server/webhook-server.ts†L215-L304】
+- `processTask` runs for every queued ID without a concurrency cap; `activeRequests` only guards duplicate execution, not total workers. A busy repository can launch dozens of simultaneous `fetch` calls, increasing tail latency and breaching p95 goals. [ai-github-app.ts:147-210](packages/cortex-ai-github/src/core/ai-github-app.ts#L147-L210)
+- The webhook handlers enqueue multiple tasks sequentially (e.g., label-driven security + docs scans) without batching or deduping, multiplying parallel load with no prioritization. [webhook-server.ts:215-304](packages/cortex-ai-github/src/server/webhook-server.ts#L215-L304)
 
 ### 2.3 Inefficient GitHub feedback loop
 
-- Progressive reactions (`eyes` → `gear` → `rocket`) each await a freshly imported Octokit client, performing redundant module loads and serial API round-trips that extend request handling and hold Express request threads longer than necessary. 【F:packages/cortex-ai-github/src/server/webhook-server.ts†L305-L384】
+- Progressive reactions (`eyes` → `gear` → `rocket`) each await a freshly imported Octokit client, performing redundant module loads and serial API round-trips that extend request handling and hold Express request threads longer than necessary. [webhook-server.ts:305-384](packages/cortex-ai-github/src/server/webhook-server.ts#L305-L384)
 - The sequential `await` chain for status updates blocks comment processing until all reactions resolve; slow GitHub API latency can extend webhook response times and increase retry pressure.
 
 ### 2.4 Networking overhead on model requests
 
-- Every `callModel` invocation creates a new TCP connection because the code uses the global `fetch` without keep-alive agents; repeated TLS handshakes inflate latency and CPU. 【F:packages/cortex-ai-github/src/core/ai-github-app.ts†L211-L288】
-- `fetchWithTimeout` spins up a new `AbortController` per call but provides no retry or jitter strategy, causing thundering-herd retries when GitHub briefly hiccups. 【F:packages/cortex-ai-github/src/lib/fetch-with-timeout.ts†L1-L18】
+- Every `callModel` invocation creates a new TCP connection because the code uses the global `fetch` without keep-alive agents; repeated TLS handshakes inflate latency and CPU. [ai-github-app.ts:211-288](packages/cortex-ai-github/src/core/ai-github-app.ts#L211-L288)
+- `fetchWithTimeout` spins up a new `AbortController` per call but provides no retry or jitter strategy, causing thundering-herd retries when GitHub briefly hiccups. [fetch-with-timeout.ts:1-18](packages/cortex-ai-github/src/lib/fetch-with-timeout.ts#L1-L18)
 
 ### 2.5 Memory pressure from rate limiter store
 
