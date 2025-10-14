@@ -45,7 +45,7 @@ Assess the current performance characteristics of the `@cortex-os/evidence-runne
    - **Key Requirements**: Maintain warm execution contexts, batch workloads where possible, and eliminate redundant model loading across requests.
 
 2. **Apple MLX Best Practices (WWDC 2024)**
-   - **Relevance**: Apple recommends shared model handles with asynchronous dispatch on Apple Silicon to avoid repeated `mlx.core` initialisation.
+   - **Relevance**: Apple recommends shared model handles with asynchronous dispatch on Apple Silicon to avoid repeated `mlx.core` initialization.
    - **Key Requirements**: Keep models resident in memory, share metal buffers across invocations, and surface telemetry for GPU memory pressure.
 
 ### Best Practices (2025)
