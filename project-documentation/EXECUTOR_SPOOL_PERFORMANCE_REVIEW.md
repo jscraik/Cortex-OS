@@ -199,7 +199,7 @@ Option 1 directly addresses the dominant bottlenecks: serialized shell execution
 ## Proof of Concept Findings
 
 ### POC Setup
-- **Environment**: Not executed in sandbox (vibe check endpoint unavailable).
+- **Environment**: Not executed in sandbox (sandbox health check endpoint unavailable).
 - **Code Location**: N/A
 - **Test Scenarios**: Pending once worker pool prototype exists.
 
