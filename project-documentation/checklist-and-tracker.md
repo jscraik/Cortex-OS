@@ -27,6 +27,47 @@ Last updated: 2025-09-15
 - Use Agent Toolkit for search/mods/verification: `just scout`, `just codemod`, `just verify`.
 - Local Memory via `createStoreFromEnv()` when tests touch memories.
 
+## Observability Deliverables Gate (Pre-Review)
+
+Each workstream must attach observability evidence before requesting review:
+
+- **Architecture & Security Guardrails**
+  - [ ] Dashboard link recorded in project docs or PR description.
+  - [ ] Metrics scrape configuration committed (e.g., `docs/observability/architecture-metrics.yaml`).
+  - [ ] Health endpoint validation log attached (see `logs/observability/health-validation.json`).
+- **Evidence-First RAG & CloudEvents**
+  - [ ] Dashboard link recorded in project docs or PR description.
+  - [ ] Metrics scrape configuration committed.
+  - [ ] Health endpoint validation log attached.
+- **A2A Controls: Limits, Quotas, Replay**
+  - [ ] Dashboard link recorded in project docs or PR description.
+  - [ ] Metrics scrape configuration committed.
+  - [ ] Health endpoint validation log attached.
+- **Model Gateway Resilience & Resource Management**
+  - [ ] Dashboard link recorded in project docs or PR description.
+  - [ ] Metrics scrape configuration committed.
+  - [ ] Health endpoint validation log attached.
+- **Cerebrum & Agent Quality**
+  - [ ] Dashboard link recorded in project docs or PR description.
+  - [ ] Metrics scrape configuration committed.
+  - [ ] Health endpoint validation log attached.
+- **Observability & Telemetry**
+  - [ ] Dashboard link recorded in project docs or PR description.
+  - [ ] Metrics scrape configuration committed.
+  - [ ] Health endpoint validation log attached.
+- **MCP Enhancements**
+  - [ ] Dashboard link recorded in project docs or PR description.
+  - [ ] Metrics scrape configuration committed.
+  - [ ] Health endpoint validation log attached.
+- **Memory Lifecycle**
+  - [ ] Dashboard link recorded in project docs or PR description.
+  - [ ] Metrics scrape configuration committed.
+  - [ ] Health endpoint validation log attached.
+- **Security & Supply Chain**
+  - [ ] Dashboard link recorded in project docs or PR description.
+  - [ ] Metrics scrape configuration committed.
+  - [ ] Health endpoint validation log attached.
+
 ## Coverage Assessment — Did the plan cover all gaps?
 
 Covered by plan (examples):
