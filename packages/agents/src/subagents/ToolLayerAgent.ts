@@ -1139,7 +1139,7 @@ interface ArxivSearchParameters {
 
 function createArxivSearchParameters(content: string): ArxivSearchParameters {
         const query = extractSearchQuery(content) || content.trim();
-        const maxResults = extractMaxResults(content) ?? 5;
+        const maxResults = extractMaxResults(content) || 5;
         const field = extractArxivField(content);
         const sortBy = extractArxivSort(content);
 
