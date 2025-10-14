@@ -6,7 +6,7 @@
  */
 
 import crypto from 'node:crypto';
-import type { StructuredFact, FactExtractionResult, CompressionEncodingResult } from './types.js';
+import type { CompressionEncodingResult, FactExtractionResult, StructuredFact } from './types.js';
 
 /**
  * Fact extractor configuration
@@ -78,7 +78,7 @@ export class FactExtractor {
 
 			// Filter by confidence threshold and limit
 			const filteredFacts = facts
-				.filter(fact => fact.confidence >= this.config.confidenceThreshold)
+				.filter((fact) => fact.confidence >= this.config.confidenceThreshold)
 				.slice(0, this.config.maxFactsPerChunk);
 
 			const extractionTime = Date.now() - startTime;
@@ -119,7 +119,8 @@ export class FactExtractor {
 			},
 			// Measurements with units: 123kg, 45.6MB, 10km/h
 			{
-				pattern: /\b(\d+\.?\d*)\s*(kg|g|mg|lb|oz|km|m|cm|mm|mi|ft|in|mm|mb|gb|tb|kb|b|hz|khz|mhz|ghz|ms|s|min|h|day|week|month|year|°c|°f|k|v|a|w|kw|mw|gw|pa|kpa|mpa|gpa|n|kn|mph|km\/h|l|ml|cl|dl|mcm|µm|nm|pm|fm|am)/gi,
+				pattern:
+					/\b(\d+\.?\d*)\s*(kg|g|mg|lb|oz|km|m|cm|mm|mi|ft|in|mm|mb|gb|tb|kb|b|hz|khz|mhz|ghz|ms|s|min|h|day|week|month|year|°c|°f|k|v|a|w|kw|mw|gw|pa|kpa|mpa|gpa|n|kn|mph|km\/h|l|ml|cl|dl|mcm|µm|nm|pm|fm|am)/gi,
 				type: 'number' as const,
 			},
 			// Pure numbers: 123, 45.67, 1,000
@@ -268,7 +269,7 @@ export class FactExtractor {
 		// Date patterns
 		const datePatterns = [
 			// ISO dates: 2024-03-15, 2024/03/15
-			/\b(\d{4}[-\/]\d{1,2}[-\/]\d{1,2})\b/g,
+			/\b(\d{4}[-/]\d{1,2}[-/]\d{1,2})\b/g,
 			// US dates: 03/15/2024, March 15, 2024
 			/\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4})\b/gi,
 			// Relative dates: 2 days ago, next week, last month
@@ -367,7 +368,12 @@ export class FactExtractor {
 	/**
 	 * Extract context around a match
 	 */
-	private extractContext(text: string, matchIndex: number, matchLength: number, contextWindow = 100): string {
+	private extractContext(
+		text: string,
+		matchIndex: number,
+		matchLength: number,
+		contextWindow = 100,
+	): string {
 		const start = Math.max(0, matchIndex - contextWindow);
 		const end = Math.min(text.length, matchIndex + matchLength + contextWindow);
 		return text.slice(start, end).trim();
@@ -383,9 +389,13 @@ export class FactExtractor {
 
 		// Handle suffixes (K, M, B)
 		if (cleanValue.match(/[KMB]n?$/i)) {
-			const multiplier = cleanValue.toLowerCase().endsWith('k') ? 1000 :
-				cleanValue.toLowerCase().endsWith('m') ? 1000000 :
-					cleanValue.toLowerCase().endsWith('b') ? 1000000000 : 1;
+			const multiplier = cleanValue.toLowerCase().endsWith('k')
+				? 1000
+				: cleanValue.toLowerCase().endsWith('m')
+					? 1000000
+					: cleanValue.toLowerCase().endsWith('b')
+						? 1000000000
+						: 1;
 			return parsed * multiplier;
 		}
 
@@ -458,7 +468,7 @@ export class FactExtractor {
 		let confidence = 0.8; // Base confidence
 
 		// Format factors
-		if (date.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/)) confidence += 0.1; // ISO format
+		if (date.match(/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/)) confidence += 0.1; // ISO format
 		if (date.match(/^(Jan|Feb|Mar|...|Dec)/i)) confidence += 0.05; // Month name
 
 		// Context factors
@@ -472,12 +482,13 @@ export class FactExtractor {
 	 * Calculate confidence score for entities
 	 */
 	private calculateEntityConfidence(entity: string, subtype: string): number {
-		const baseConfidence = {
-			email: 0.95,
-			url: 0.9,
-			filepath: 0.85,
-			version: 0.8,
-		}[subtype] || 0.7;
+		const baseConfidence =
+			{
+				email: 0.95,
+				url: 0.9,
+				filepath: 0.85,
+				version: 0.8,
+			}[subtype] || 0.7;
 
 		// Validation bonuses
 		if (subtype === 'email' && entity.match(/^[^@]+@[^@]+\.[^@]+$/)) return 1.0;
@@ -547,7 +558,7 @@ export class FactExtractor {
 	 * Detect date format
 	 */
 	private detectDateFormat(date: string): string {
-		if (date.match(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/)) return 'iso';
+		if (date.match(/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/)) return 'iso';
 		if (date.match(/^(Jan|Feb|Mar|...|Dec)/i)) return 'natural';
 		if (date.match(/\d{1,2}:\d{2}/)) return 'time';
 		if (date.match(/\d+\s+(day|week|month|year)/i)) return 'relative';
@@ -609,7 +620,10 @@ export class CompressionEncoder {
 			// This would load the projection matrix from a file
 			// For now, create a deterministic matrix for reproducibility
 			const originalDimensions = 1536; // Common embedding dimension
-			this.projectionMatrix = this.createDeterministicProjection(originalDimensions, this.targetDimensions);
+			this.projectionMatrix = this.createDeterministicProjection(
+				originalDimensions,
+				this.targetDimensions,
+			);
 		} catch (error) {
 			throw new Error(`Failed to load projection weights from ${path}: ${error}`);
 		}
@@ -657,7 +671,7 @@ export class CompressionEncoder {
 
 				// Convert hash to float value between -1 and 1
 				const hashValue = parseInt(hash.substring(0, 8), 16);
-				const normalizedValue = (hashValue / 0xFFFFFFFF) * 2 - 1;
+				const normalizedValue = (hashValue / 0xffffffff) * 2 - 1;
 
 				// Apply Gaussian-like scaling
 				row.push(normalizedValue * scale);
@@ -703,7 +717,7 @@ export class CompressionEncoder {
 	 */
 	private calculateVariance(arr: number[]): number {
 		const mean = arr.reduce((sum, val) => sum + val, 0) / arr.length;
-		const variance = arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / arr.length;
+		const variance = arr.reduce((sum, val) => sum + (val - mean) ** 2, 0) / arr.length;
 		return variance;
 	}
 }

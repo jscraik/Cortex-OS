@@ -5,11 +5,7 @@
  * mandatory expansion hints for safe and comprehensive retrieval.
  */
 
-import type {
-	RiskClass,
-	QueryGuardResult,
-	ExpansionHint,
-} from './types.js';
+import type { ExpansionHint, QueryGuardResult, RiskClass } from './types.js';
 
 /**
  * Query guard configuration
@@ -43,32 +39,101 @@ export const DEFAULT_QUERY_GUARD_CONFIG: QueryGuardConfig = {
 	enableEntityExtraction: true,
 	customRiskKeywords: {
 		medical: [
-			'diagnosis', 'symptom', 'treatment', 'medication', 'dosage',
-			'side effect', 'contraindication', 'prescription', 'therapy',
-			'clinical', 'patient', 'disease', 'condition', 'cure', 'heal',
-			'surgery', 'operation', 'prognosis', 'diagnostic', 'remedy',
+			'diagnosis',
+			'symptom',
+			'treatment',
+			'medication',
+			'dosage',
+			'side effect',
+			'contraindication',
+			'prescription',
+			'therapy',
+			'clinical',
+			'patient',
+			'disease',
+			'condition',
+			'cure',
+			'heal',
+			'surgery',
+			'operation',
+			'prognosis',
+			'diagnostic',
+			'remedy',
 		],
 		financial: [
-			'investment', 'portfolio', 'returns', 'risk', 'asset',
-			'dividend', 'interest', 'inflation', 'market', 'stock',
-			'trading', 'broker', 'wealth', 'retirement', 'pension',
-			'tax', 'audit', 'compliance', 'regulation', 'securities',
+			'investment',
+			'portfolio',
+			'returns',
+			'risk',
+			'asset',
+			'dividend',
+			'interest',
+			'inflation',
+			'market',
+			'stock',
+			'trading',
+			'broker',
+			'wealth',
+			'retirement',
+			'pension',
+			'tax',
+			'audit',
+			'compliance',
+			'regulation',
+			'securities',
 		],
 		safety: [
-			'safety', 'hazard', 'emergency', 'protocol', 'procedure',
-			'warning', 'caution', 'danger', 'critical', 'failure',
-			'accident', 'injury', 'prevention', 'protection', 'secure',
+			'safety',
+			'hazard',
+			'emergency',
+			'protocol',
+			'procedure',
+			'warning',
+			'caution',
+			'danger',
+			'critical',
+			'failure',
+			'accident',
+			'injury',
+			'prevention',
+			'protection',
+			'secure',
 		],
 		legal: [
-			'legal', 'law', 'contract', 'liability', 'compliance',
-			'regulation', 'statute', 'jurisdiction', 'litigation',
-			'court', 'judge', 'lawyer', 'attorney', 'lawsuit',
-			'patent', 'copyright', 'trademark', 'intellectual property',
+			'legal',
+			'law',
+			'contract',
+			'liability',
+			'compliance',
+			'regulation',
+			'statute',
+			'jurisdiction',
+			'litigation',
+			'court',
+			'judge',
+			'lawyer',
+			'attorney',
+			'lawsuit',
+			'patent',
+			'copyright',
+			'trademark',
+			'intellectual property',
 		],
 		security: [
-			'security', 'vulnerability', 'exploit', 'attack', 'threat',
-			'malware', 'virus', 'hacker', 'breach', 'intrusion',
-			'firewall', 'encryption', 'authentication', 'authorization',
+			'security',
+			'vulnerability',
+			'exploit',
+			'attack',
+			'threat',
+			'malware',
+			'virus',
+			'hacker',
+			'breach',
+			'intrusion',
+			'firewall',
+			'encryption',
+			'authentication',
+			'authorization',
 		],
 	},
 	thresholds: {
@@ -180,18 +245,21 @@ export class QueryGuard {
 	/**
 	 * Analyze keywords for risk factors
 	 */
-	private analyzeKeywords(query: string): { risks: Array<{ risk: RiskClass; confidence: number; reason: string }>; hints: ExpansionHint[] } {
+	private analyzeKeywords(query: string): {
+		risks: Array<{ risk: RiskClass; confidence: number; reason: string }>;
+		hints: ExpansionHint[];
+	} {
 		const risks: Array<{ risk: RiskClass; confidence: number; reason: string }> = [];
 		const hints: ExpansionHint[] = [];
 		const lowerQuery = query.toLowerCase();
 
 		// Check custom risk keywords
 		for (const [domain, keywords] of Object.entries(this.config.customRiskKeywords || {})) {
-			const matchedKeywords = keywords.filter(keyword => lowerQuery.includes(keyword));
+			const matchedKeywords = keywords.filter((keyword) => lowerQuery.includes(keyword));
 
 			if (matchedKeywords.length > 0) {
 				const risk = this.getRiskClassForDomain(domain);
-				const confidence = Math.min(0.9, 0.5 + (matchedKeywords.length * 0.1));
+				const confidence = Math.min(0.9, 0.5 + matchedKeywords.length * 0.1);
 
 				risks.push({
 					risk,
@@ -215,7 +283,11 @@ export class QueryGuard {
 	/**
 	 * Classify query domains
 	 */
-	private classifyDomains(query: string): { risks: Array<{ risk: RiskClass; confidence: number; reason: string }>; hints: ExpansionHint[]; domains: string[] } {
+	private classifyDomains(query: string): {
+		risks: Array<{ risk: RiskClass; confidence: number; reason: string }>;
+		hints: ExpansionHint[];
+		domains: string[];
+	} {
 		const risks: Array<{ risk: RiskClass; confidence: number; reason: string }> = [];
 		const hints: ExpansionHint[] = [];
 		const domains: string[] = [];
@@ -295,9 +367,11 @@ export class QueryGuard {
 		const entities: string[] = [];
 
 		// Numeric entities
-		const numericMatches = query.match(/\b\d+(?:\.\d+)?(?:\s*(?:%|percent|\$|€|£|¥|kg|g|mg|lb|oz|km|m|cm|mm|mi|ft|in))?\b/g);
+		const numericMatches = query.match(
+			/\b\d+(?:\.\d+)?(?:\s*(?:%|percent|\$|€|£|¥|kg|g|mg|lb|oz|km|m|cm|mm|mi|ft|in))?\b/g,
+		);
 		if (numericMatches) {
-			numericMatches.forEach(num => {
+			numericMatches.forEach((num) => {
 				entities.push(num);
 				hints.push({
 					type: 'numeric',
@@ -309,9 +383,11 @@ export class QueryGuard {
 		}
 
 		// Date entities
-		const dateMatches = query.match(/\b\d{4}[-\/]\d{1,2}[-\/]\d{1,2}\b|\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}\b/gi);
+		const dateMatches = query.match(
+			/\b\d{4}[-/]\d{1,2}[-/]\d{1,2}\b|\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}\b/gi,
+		);
 		if (dateMatches) {
-			dateMatches.forEach(date => {
+			dateMatches.forEach((date) => {
 				entities.push(date);
 				hints.push({
 					type: 'temporal',
@@ -325,7 +401,7 @@ export class QueryGuard {
 		// Code entities (function names, variables, etc.)
 		const codeMatches = query.match(/\b[a-zA-Z_]\w*\(\)|\b[a-zA-Z_]\w*\.[a-zA-Z_]\w*\b|`[^`]+`/g);
 		if (codeMatches) {
-			codeMatches.forEach(code => {
+			codeMatches.forEach((code) => {
 				entities.push(code);
 				hints.push({
 					type: 'code',
@@ -339,7 +415,8 @@ export class QueryGuard {
 		// Proper nouns (capitalized words)
 		const properNounMatches = query.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g);
 		if (properNounMatches) {
-			properNounMatches.slice(0, 5).forEach(noun => { // Limit to prevent noise
+			properNounMatches.slice(0, 5).forEach((noun) => {
+				// Limit to prevent noise
 				entities.push(noun);
 				hints.push({
 					type: 'entity',
@@ -356,7 +433,10 @@ export class QueryGuard {
 	/**
 	 * Analyze query patterns for risk factors
 	 */
-	private analyzePatterns(query: string): { risks: Array<{ risk: RiskClass; confidence: number; reason: string }>; hints: ExpansionHint[] } {
+	private analyzePatterns(query: string): {
+		risks: Array<{ risk: RiskClass; confidence: number; reason: string }>;
+		hints: ExpansionHint[];
+	} {
 		const risks: Array<{ risk: RiskClass; confidence: number; reason: string }> = [];
 		const hints: ExpansionHint[] = [];
 
@@ -430,7 +510,9 @@ export class QueryGuard {
 	/**
 	 * Determine final risk class from collected factors
 	 */
-	private determineRiskClass(riskFactors: Array<{ risk: RiskClass; confidence: number; reason: string }>): RiskClass {
+	private determineRiskClass(
+		riskFactors: Array<{ risk: RiskClass; confidence: number; reason: string }>,
+	): RiskClass {
 		if (riskFactors.length === 0) {
 			return RiskClass.LOW;
 		}
@@ -458,9 +540,9 @@ export class QueryGuard {
 		}
 
 		// Return the risk class with the highest score
-		const maxRisk = Object.entries(riskScores).reduce((max, [risk, score]) =>
-			score > max.score ? { risk: risk as RiskClass, score } : max,
-			{ risk: RiskClass.LOW, score: 0 }
+		const maxRisk = Object.entries(riskScores).reduce(
+			(max, [risk, score]) => (score > max.score ? { risk: risk as RiskClass, score } : max),
+			{ risk: RiskClass.LOW, score: 0 },
 		);
 
 		return maxRisk.score > 0.3 ? maxRisk.risk : RiskClass.LOW;
@@ -487,14 +569,13 @@ export class QueryGuard {
 		}
 
 		// Convert back to array and sort by priority
-		const prioritized = Array.from(uniqueHints.values())
-			.sort((a, b) => {
-				// Mandatory hints first
-				if (a.mandatory && !b.mandatory) return -1;
-				if (!a.mandatory && b.mandatory) return 1;
-				// Then by priority (descending)
-				return b.priority - a.priority;
-			});
+		const prioritized = Array.from(uniqueHints.values()).sort((a, b) => {
+			// Mandatory hints first
+			if (a.mandatory && !b.mandatory) return -1;
+			if (!a.mandatory && b.mandatory) return 1;
+			// Then by priority (descending)
+			return b.priority - a.priority;
+		});
 
 		// Limit number of hints based on risk class
 		const maxHints = {
@@ -532,7 +613,7 @@ export class QueryGuard {
 		}
 
 		// Include numeric precision for queries with numbers
-		const numericEntities = entities.filter(e => /\d/.test(e));
+		const numericEntities = entities.filter((e) => /\d/.test(e));
 		if (numericEntities.length > 0) {
 			hints.push({
 				type: 'numeric',
@@ -550,10 +631,7 @@ export class QueryGuard {
 	 */
 	private getHardRequirements(riskClass: RiskClass): string[] {
 		const requirements = {
-			[RiskClass.LOW]: [
-				'Relevant and accurate information',
-				'Proper citations when available',
-			],
+			[RiskClass.LOW]: ['Relevant and accurate information', 'Proper citations when available'],
 			[RiskClass.MEDIUM]: [
 				'Relevant and accurate information',
 				'Proper citations when available',
@@ -625,32 +703,31 @@ export class QueryGuard {
 		}
 
 		// Average confidence of factors that contributed to the final risk
-		const relevantFactors = riskFactors.filter(factor => factor.risk === finalRisk);
+		const relevantFactors = riskFactors.filter((factor) => factor.risk === finalRisk);
 		if (relevantFactors.length === 0) {
 			return 0.5;
 		}
 
-		const avgConfidence = relevantFactors.reduce((sum, factor) => sum + factor.confidence, 0) / relevantFactors.length;
+		const avgConfidence =
+			relevantFactors.reduce((sum, factor) => sum + factor.confidence, 0) / relevantFactors.length;
 		return Math.min(avgConfidence, 1.0);
 	}
 
 	/**
 	 * Create high-risk result for invalid queries
 	 */
-	private createHighRiskResult(
-		query: string,
-		reason: string,
-		startTime: number,
-	): QueryGuardResult {
+	private createHighRiskResult(query: string, reason: string, startTime: number): QueryGuardResult {
 		return {
 			riskClass: RiskClass.HIGH,
 			hardRequirements: ['Query validation required'],
-			expansionHints: [{
-				type: 'domain',
-				value: 'validation',
-				priority: 1.0,
-				mandatory: true,
-			}],
+			expansionHints: [
+				{
+					type: 'domain',
+					value: 'validation',
+					priority: 1.0,
+					mandatory: true,
+				},
+			],
 			metadata: {
 				confidence: 1.0,
 				processingTimeMs: Date.now() - startTime,
@@ -665,16 +742,18 @@ export class QueryGuard {
 	 */
 	private sanitizeInput(input: string): string {
 		// Remove or replace potentially dangerous characters
-		return input
-			// Remove null bytes
-			.replace(/\0/g, '')
-			// Remove control characters except newlines and tabs
-			// biome-ignore lint/suspicious/noControlCharactersInRegex: Security requirement to filter control chars
-			.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-			// Normalize multiple spaces
-			.replace(/\s+/g, ' ')
-			// Trim whitespace
-			.trim();
+		return (
+			input
+				// Remove null bytes
+				.replace(/\0/g, '')
+				// Remove control characters except newlines and tabs
+				// biome-ignore lint/suspicious/noControlCharactersInRegex: Security requirement to filter control chars
+				.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+				// Normalize multiple spaces
+				.replace(/\s+/g, ' ')
+				// Trim whitespace
+				.trim()
+		);
 	}
 
 	/**
@@ -695,7 +774,7 @@ export class QueryGuard {
 			// Command injection patterns
 			/(\$\(.*?\)|`.*?`|\|\s*[\w\s]+\s*\|)/g,
 			// Path traversal
-			/\.\.[\/\\]/g,
+			/\.\.[/\\]/g,
 			// JavaScript attempts
 			/(javascript:|on\w+\s*=)/gi,
 			// HTML encoding attempts
