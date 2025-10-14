@@ -154,7 +154,7 @@ Implementing bounded parallelism in `GraphRAGIngestService` addresses the most a
 
 ### brAInwav-Specific Constraints
 - ✅ **Local-First**: Parallel embedding remains in-process and respects local execution guarantees.【F:packages/memory-core/src/services/GraphRAGIngestService.ts†L332-L381】
-- ✅ **Zero Exfiltration**: REST adapter continue using allowlisted hosts through `safeFetch`, now with pooled agents.【F:packages/memories/src/adapters/rest-api/http-client.ts†L20-L105】
+- ✅ **Zero Exfiltration**: REST adapter continues using allowlisted hosts through `safeFetch`, now with pooled agents.【F:packages/memories/src/adapters/rest-api/http-client.ts†L20-L105】
 - ✅ **Named Exports**: Enhancements preserve named export structure from `memories` and `memory-core` index modules.【F:packages/memories/src/index.ts†L1-L112】【F:packages/memory-core/src/index.ts†L1-L60】
 - ✅ **Function Size**: Plan scopes new utilities into helper modules to stay within 40-line guidance.
 - ✅ **Branding**: Existing branded headers and events remain untouched.【F:packages/memories/src/adapters/rest-api/rest-adapter.ts†L65-L106】【F:packages/memory-core/src/services/GraphRAGService.ts†L1520-L1566】
