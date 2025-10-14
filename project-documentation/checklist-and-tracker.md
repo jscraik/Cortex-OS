@@ -155,6 +155,17 @@ Missing or underspecified in plan (added to tracker below):
 - [ ] CodeQL workflow
 - [ ] cosign signing + verification
 
+#### Security Incident Response Matrix
+
+| Severity | Initial Acknowledgment | Investigation & Owner | Fix & Disclosure Target | Notes |
+| -------- | ---------------------- | ---------------------- | ----------------------- | ----- |
+| Critical (CVSS ≥ 9.0) | ≤24 hours (goal), ≤72 hours absolute | Security Response Lead with Product Engineering Director | Mitigation in place ASAP; coordinated disclosure ≤45 days with weekly status updates | Emergency communications tree activated, 24/7 pager rotation engaged. |
+| High (CVSS 7.0–8.9) | ≤72 hours | Security Response Lead with Service Owners | Fix planned within 14 days, public disclosure ≤45 days | Prioritize backlog, schedule maintenance windows as needed. |
+| Medium (CVSS 4.0–6.9) | ≤72 hours | Security Engineering Triage + Component Owner | Fix or mitigation before 45-day disclosure window closes | Track progress in task folder, escalate if SLAs risk breach. |
+| Low (CVSS < 4.0) | ≤72 hours | Component Owner with Security Advisor | Remediation scheduled; disclose with next release or ≤45 days if customer impact | Document risk acceptance if deferring beyond next release. |
+
+Owners log acknowledgments, remediation steps, and disclosures in the corresponding task folder (e.g., `tasks/security-operations-plan/`) and update the public security policy when timelines or responsible parties change.
+
 ---
 
 ## TDD Micro-Tasks Backlog (bitesize, test-first)
