@@ -24,6 +24,22 @@ npm run health:check
 npm run observability:export
 ```
 
+### 🔧 Tool Layer Configuration
+
+Operators can tune the Tool Layer Agent’s arXiv integration without code changes by overriding the following configuration keys
+when calling `createToolLayerAgent` or supplying equivalent runtime configuration:
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `arxivServerSlug` | Registry slug resolved from the MCP registry. Use this to point at alternate arXiv backends. | `arxiv-1` |
+| `arxivSearchTool` | MCP registry tool name invoked for paper search. | `search_papers` |
+| `arxivDownloadTool` | MCP registry tool name invoked for PDF/source download. | `download_paper` |
+| `arxivMaxResults` | Default maximum number of results returned from search calls. | `5` |
+
+These values flow directly into `ArxivMCPTools`, ensuring `callTool` uses the injected MCP contract names from the registry.
+Updates to registry naming conventions therefore only require configuration changes in deployment manifests or environment
+variables, not code patches.
+
 ## 🐳 Docker Deployment
 
 ### Production Dockerfile
