@@ -40,9 +40,7 @@ jobs:
               },
               {
                 name: 'What Changed section present',
-                check: /## 🔍 What Changed/.test(body) &&
-                       /### Core Changes/.test(body) &&
-                       /### Files Modified/.test(body)
+                check: /## 🔍 What Changed[\s\S]*?### Core Changes[\s\S]*?### Files Modified/.test(body)
               },
               {
                 name: 'Testing section completed',
