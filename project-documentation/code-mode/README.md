@@ -167,7 +167,7 @@ try {
 
 ### Quality Gate Expectations
 
-- **Coverage**: Maintain at least 65% branch coverage on every merge candidate, with teams targeting 90%+ statements/branches/functions and 95% lines for release readiness, as mandated in CODESTYLE §10.
+- **Coverage**: For every merge candidate, maintain at least 65% branch coverage (this is a strict minimum required for merging, as mandated in CODESTYLE §10). For release readiness, teams must target at least 90% coverage for statements, branches, and functions, and 95% for lines. The higher release targets are aspirational and should be achieved before major releases, while the 65% branch coverage is enforced on all pull requests to ensure baseline quality.
 - **Mutation testing**: Keep Stryker mutation scores above the 75% threshold defined in CODESTYLE §10 and refresh the metrics whenever code paths change.
 - **Performance budgets**: Define and monitor bundle, latency, and memory budgets for Code Mode services; budgets must fail fast in CI when exceeded to satisfy the observability requirements in CODESTYLE §15.
 
