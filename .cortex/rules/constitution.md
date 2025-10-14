@@ -63,7 +63,7 @@ Constitution grants an explicit waiver.
 
 ### 6. Security by Default
 
-Semgrep (**block ERROR**), gitleaks (**block ANY**), OSV clean, SBOM (CycloneDX), provenance (SLSA/in-toto), minimal/pinned containers (non-root, read-only FS, drop caps). **No secrets in code**. Use shared env loader (`scripts/utils/dotenv-loader.mjs` or `@cortex-os/utils`) — **never call `dotenv.config()` directly**.
+Semgrep (**block ERROR**), gitleaks (**block ANY**), OSV clean, SBOM (CycloneDX), provenance (SLSA/in-toto), minimal/pinned containers (non-root, read-only FS, drop caps). **No secrets in code**. Use shared env loader (`scripts/utils/dotenv-loader.mjs` or `@cortex-os/utils`) — **never call `dotenv.config()` directly**. Retrieve API keys, SSH keys, and tokens via the 1Password CLI (`op`) at call time; do not persist them in shell profiles, repo artifacts, or long-lived environment variables.
 
 ### 7. Time Freshness Guard
 

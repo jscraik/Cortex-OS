@@ -85,10 +85,9 @@ export class CargoAdapter implements ValidationTool {
 	async validate(inputs: AgentToolkitValidationInput): Promise<AgentToolkitValidationResult> {
 		try {
 			const scriptPath = await this.scriptPathPromise;
-			const { stdout } = await execWithRetry(`"${scriptPath}"`, {
-				timeoutMs: 60_000,
-				retries: 1,
-				backoffMs: 300,
+			const { stdout } = await safeExecFileWithRetry(scriptPath, [], {
+				timeout: 60000,
+				maxRetries: 1,
 			});
 			const result = JSON.parse(stdout) as AgentToolkitValidationResult;
 			if (result.tool !== 'cargo') throw new Error('Unexpected tool result format');
@@ -116,10 +115,9 @@ export class MultiValidatorAdapter implements ValidationTool {
 		try {
 			await writeFile(tempFile, (inputs.files || []).join('\n'));
 			const scriptPath = await this.scriptPathPromise;
-			const { stdout } = await execWithRetry(`"${scriptPath}" "${tempFile}"`, {
-				timeoutMs: 60_000,
-				retries: 1,
-				backoffMs: 300,
+			const { stdout } = await safeExecFileWithRetry(scriptPath, [tempFile], {
+				timeout: 60000,
+				maxRetries: 1,
 			});
 			// Parse result for potential future use
 			JSON.parse(stdout) as {

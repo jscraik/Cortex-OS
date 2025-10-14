@@ -1,0 +1,1304 @@
+
+> @cortex-os/memory-core@0.1.0 test /Users/jamiecraik/.Cortex-OS/packages/memory-core
+> vitest -- __tests__/acceleration/GPUAcceleration.memory.test.ts --run
+
+
+ DEV  v3.2.4 /Users/jamiecraik/.Cortex-OS/packages/memory-core
+
+ ❯ src/skills/__tests__/security-validator.test.ts (25 tests | 3 failed) 14ms
+   ✓ Security Validation - Code Injection > should pass validation for safe skill 1ms
+   ✓ Security Validation - Code Injection > should detect eval() usage 0ms
+   ✓ Security Validation - Code Injection > should detect Function() constructor 0ms
+   ✓ Security Validation - Code Injection > should detect script tag injection 0ms
+   ✓ Security Validation - Code Injection > should allow safe code examples in markdown 0ms
+   × Security Validation - Code Injection > should detect dangerous process methods 3ms
+     → expected false to be true // Object.is equality
+   ✓ Security Validation - Path Traversal > should detect ../ patterns 0ms
+   × Security Validation - Path Traversal > should detect absolute path access 0ms
+     → expected 0 to be greater than 0
+   ✓ Security Validation - Path Traversal > should allow safe relative paths 0ms
+   ✓ Security Validation - Path Traversal > should detect encoded path traversal 0ms
+   ✓ Security Validation - XSS Patterns > should detect javascript: protocol 0ms
+   ✓ Security Validation - XSS Patterns > should detect data: protocol with script 0ms
+   ✓ Security Validation - XSS Patterns > should detect event handlers in HTML 0ms
+   ✓ Security Validation - XSS Patterns > should allow safe markdown links 0ms
+   ✓ Security Validation - Resource Limits > should reject skills exceeding size limit 5ms
+   ✓ Security Validation - Resource Limits > should reject excessive nesting depth 0ms
+   ✓ Security Validation - Resource Limits > should accept skills within size limits 2ms
+   ✓ Security Validation - Shell Commands > should detect dangerous shell commands 0ms
+   ✓ Security Validation - Shell Commands > should detect command substitution 0ms
+   ✓ Security Validation - Shell Commands > should allow safe command examples in code blocks 0ms
+   ✓ Security Validation - Comprehensive > should detect multiple security violations 0ms
+   × Security Validation - Comprehensive > should provide specific violation details 0ms
+     → expected undefined to be defined
+   ✓ Security Validation - Comprehensive > should assign appropriate severity levels 0ms
+   ✓ Security Validation - Performance > should validate in less than 10ms 0ms
+   ✓ Security Validation - Performance > should handle large safe content efficiently 1ms
+ ❯ __tests__/layers/short-term.store.test.ts (9 tests | 6 failed) 7ms
+   ✓ ShortTermMemoryStore > should create isolated working session state without touching episodic persistence 2ms
+   ✓ ShortTermMemoryStore > should discard expired entries when flushExpired runs 0ms
+   ✓ ShortTermMemoryStore > should convert checkpoint payloads into reversible short-term snapshot metadata 0ms
+   × LocalMemoryProvider short-term promotion > promotes short-term entries into episodic persistence 2ms
+     → provider.storeShortTerm is not a function
+   × LocalMemoryProvider short-term promotion > auto-promotes high-importance entries during storeShortTerm 0ms
+     → persistShortTermSession does not exist
+   × LocalMemoryProvider short-term promotion > auto-promotes expired sessions during flush 1ms
+     → persistShortTermSession does not exist
+   × LocalMemoryProvider short-term promotion > tags semantic layer payloads during promotion 0ms
+     → Cannot set properties of undefined (setting 'add')
+   × LocalMemoryProvider short-term promotion > tags long_term payloads when importance is high 0ms
+     → Cannot set properties of undefined (setting 'add')
+   × LocalMemoryProvider short-term promotion > returns auto-promoted short-term notes with memory_layer metadata via search 0ms
+     → Cannot set properties of undefined (setting 'add')
+ ❯ tests/context-graph/context-graph-slice.test.ts (11 tests | 6 failed) 12ms
+   ✓ ContextSliceService > slice > should slice context with default parameters 2ms
+   × ContextSliceService > slice > should slice context with custom depth and breadth limits 4ms
+     → expected [] to have a length of 2 but got +0
+   ✓ ContextSliceService > slice > should handle empty results gracefully 1ms
+   × ContextSliceService > slice > should apply evidence filtering before slicing 1ms
+     → expected undefined to be true // Object.is equality
+   × ContextSliceService > slice > should enforce thermal constraints during slicing 0ms
+     → expected undefined to be true // Object.is equality
+   ✓ ContextSliceService > slice > should handle GraphRAG service errors gracefully 0ms
+   × ContextSliceService > slice > should validate input parameters 1ms
+     → expected 'query: Query cannot be empty' to contain 'Invalid input parameters'
+   × ContextSliceService > slice > should track slicing metrics for observability 0ms
+     → expected undefined to be defined
+   ✓ ContextSliceService > validateRecipe > should validate recipe schema 0ms
+   × ContextSliceService > validateRecipe > should reject invalid recipe schema 1ms
+     → expected [ Array(5) ] to include 'Query cannot be empty'
+   ✓ ContextSliceService > performance > should complete slicing within performance targets 0ms
+ ❯ tests/context-graph/context-graph-pack.test.ts (10 tests | 9 failed) 8ms
+   × ContextPackService > pack > should pack context with basic citation generation 3ms
+     → expected undefined to be defined
+   × ContextPackService > pack > should generate proper citations with source attribution 1ms
+     → Target cannot be null or undefined.
+   × ContextPackService > pack > should enforce privacy mode by filtering sensitive content 1ms
+     → expected undefined to be true // Object.is equality
+   × ContextPackService > pack > should aggregate evidence across multiple sources 0ms
+     → expected undefined to be defined
+   × ContextPackService > pack > should handle token limits by prioritizing high-scoring content 0ms
+     → expected undefined to be true // Object.is equality
+   × ContextPackService > pack > should format output according to specified format 0ms
+     → expected undefined to be 'json' // Object.is equality
+   × ContextPackService > pack > should integrate with external knowledge bases 0ms
+     → expected undefined to be defined
+   × ContextPackService > pack > should handle empty subgraphs gracefully 0ms
+     → Target cannot be null or undefined.
+   × ContextPackService > pack > should validate pack options 1ms
+     → expected 'Packing error: Cannot read properties…' to contain 'Invalid pack options'
+   ✓ ContextPackService > performance > should complete packing within performance targets 0ms
+ ❯ src/skills/__tests__/skill-validator.test.ts (29 tests | 17 failed) 14ms
+   ✓ validateSkillMetadata > should validate correct metadata 2ms
+   × validateSkillMetadata > should reject invalid version format 3ms
+     → expected 'Must be valid semver (e.g., 1.0.0)' to contain 'version'
+   × validateSkillMetadata > should reject empty author 1ms
+     → expected 'String must contain at least 1 charac…' to contain 'author'
+   × validateSkillMetadata > should reject invalid category 1ms
+     → expected 'Invalid enum value. Expected \'coding…' to contain 'category'
+   × validateSkillMetadata > should reject empty tags array 0ms
+     → expected 'Array must contain at least 1 element…' to contain 'tags'
+   × validateSkillMetadata > should reject too many tags 0ms
+     → expected 'Array must contain at most 20 element…' to contain 'tags'
+   × validateSkillMetadata > should reject invalid difficulty level 0ms
+     → expected 'Invalid enum value. Expected \'beginn…' to contain 'difficulty'
+   × validateSkillMetadata > should reject negative estimatedTokens 0ms
+     → expected 'Number must be greater than 0' to contain 'estimatedTokens'
+   × validateSkillMetadata > should reject excessive estimatedTokens 0ms
+     → expected 'Number must be less than or equal to …' to contain 'estimatedTokens'
+   ✓ validateSkillMetadata > should accept optional fields when omitted 0ms
+   ✓ validateSkillMetadata > should validate optional requiredTools when present 0ms
+   × validateSkillMetadata > should reject too many requiredTools 0ms
+     → expected 'Array must contain at most 50 element…' to contain 'requiredTools'
+   ✓ validateSkill > should validate complete valid skill 0ms
+   × validateSkill > should reject invalid skill ID format 1ms
+     → expected 'ID must start with "skill-" followed …' to contain 'id'
+   × validateSkill > should reject short skill name 0ms
+     → expected 'String must contain at least 3 charac…' to contain 'name'
+   × validateSkill > should reject short description 0ms
+     → expected 'String must contain at least 10 chara…' to contain 'description'
+   × validateSkill > should reject short content 0ms
+     → expected 'String must contain at least 50 chara…' to contain 'content'
+   × validateSkill > should reject excessive content length 0ms
+     → expected 'String must contain at most 50000 cha…' to contain 'content'
+   × validateSkill > should reject missing successCriteria 0ms
+     → expected 'Array must contain at least 1 element…' to contain 'successCriteria'
+   ✓ validateSkill > should validate skill with optional fields 0ms
+   × validateSkill > should reject too many examples 0ms
+     → expected 'Array must contain at most 10 element…' to contain 'examples'
+   ✓ validateSkill > should provide multiple error messages for multiple issues 0ms
+   ✓ validateSkill > should include field path in error messages 0ms
+   ✓ validateSkill - persuasiveFraming > should validate skill with persuasive framing 0ms
+   × validateSkill - persuasiveFraming > should reject excessive persuasive framing text 0ms
+     → expected 'String must contain at most 500 chara…' to contain 'authority'
+   ✓ validateSkill - persuasiveFraming > should accept empty persuasive framing object 0ms
+   ✓ Validator Performance > should validate skill in less than 5ms 0ms
+   ✓ Validator Performance > should validate metadata in less than 2ms 0ms
+   ✓ Validator Performance > should handle batch validation efficiently 1ms
+ ❯ src/skills/__tests__/skill-loader.test.ts (23 tests | 11 failed) 86ms
+   ✓ Skill Loader - Directory Scanning > should scan directory and find .md files 2ms
+   ✓ Skill Loader - Directory Scanning > should recursively scan subdirectories 1ms
+   ✓ Skill Loader - Directory Scanning > should skip hidden files and directories 1ms
+   ✓ Skill Loader - Directory Scanning > should handle empty directories gracefully 1ms
+   ✓ Skill Loader - Directory Scanning > should handle non-existent directories 1ms
+   ✓ Skill Loader - Directory Scanning > should filter only .md files 1ms
+   ✓ Skill Loader - Directory Scanning > should perform scan in less than 100ms for 100 files 13ms
+   × Skill Loader - File Loading > should load and parse valid skill file 6ms
+     → expected false to be true // Object.is equality
+   ✓ Skill Loader - File Loading > should validate skill content 2ms
+   ✓ Skill Loader - File Loading > should check file size before loading 1ms
+   ✓ Skill Loader - File Loading > should skip hidden files 1ms
+   ✓ Skill Loader - File Loading > should collect validation errors 1ms
+   × Skill Loader - File Loading > should load multiple skills from directory 3ms
+     → expected [] to have a length of 3 but got +0
+   × Skill Loader - File Loading > should separate successful and failed loads 1ms
+     → expected +0 to be 1 // Object.is equality
+   ✓ Skill Loader - File Loading > should handle file system errors gracefully 0ms
+   × Skill Loader - Caching > should cache loaded skills 5ms
+     → expected false to be true // Object.is equality
+   × Skill Loader - Caching > should invalidate cache on file modification 3ms
+     → expected undefined to be false // Object.is equality
+   × Skill Loader - Caching > should respect cache size limits 3ms
+     → expected undefined to be false // Object.is equality
+   × Skill Loader - Caching > should provide cache statistics 1ms
+     → expected 0 to be greater than 0
+   × Skill Loader - Caching > should allow cache bypass 1ms
+     → expected undefined to be false // Object.is equality
+   × Skill Loader - Caching > should cache 100 skills efficiently 34ms
+     → expected [] to have a length of 100 but got +0
+   × Skill Loader - Integration > should load, validate, and cache skills end-to-end 2ms
+     → expected [] to have a length of 2 but got +0
+   × Skill Loader - Integration > should handle mixed valid and invalid skills 1ms
+     → expected +0 to be 2 // Object.is equality
+ ❯ src/skills/__tests__/ethical-validator.test.ts (23 tests | 7 failed) 7ms
+   ✓ Ethical Validation - Bias Detection > should pass validation for inclusive skill 1ms
+   × Ethical Validation - Bias Detection > should detect gender-biased language 3ms
+     → expected false to be true // Object.is equality
+   × Ethical Validation - Bias Detection > should suggest inclusive alternatives 0ms
+     → expected 0 to be greater than 0
+   ✓ Ethical Validation - Bias Detection > should detect potentially exclusionary terms 0ms
+   ✓ Ethical Validation - Bias Detection > should suggest modern inclusive terminology 0ms
+   ✓ Ethical Validation - Transparency > should accept skill with clear description 0ms
+   × Ethical Validation - Transparency > should flag vague descriptions 0ms
+     → expected false to be true // Object.is equality
+   ✓ Ethical Validation - Transparency > should require clear success criteria 0ms
+   × Ethical Validation - Transparency > should validate examples are explanatory 0ms
+     → expected false to be true // Object.is equality
+   ✓ Ethical Validation - Safety > should accept safe, helpful content 0ms
+   ✓ Ethical Validation - Safety > should detect potentially harmful instructions 0ms
+   ✓ Ethical Validation - Safety > should flag missing user consent requirements 0ms
+   × Ethical Validation - Safety > should detect privacy-concerning patterns 0ms
+     → expected false to be true // Object.is equality
+   ✓ Ethical Validation - Accessibility > should accept accessibility-conscious content 0ms
+   × Ethical Validation - Accessibility > should flag purely visual-only instructions 0ms
+     → expected false to be true // Object.is equality
+   ✓ Ethical Validation - Accessibility > should suggest inclusive alternatives for visual-only content 0ms
+   ✓ Ethical Validation - brAInwav Compliance > should accept skills with brAInwav branding 0ms
+   ✓ Ethical Validation - brAInwav Compliance > should validate consistent brAInwav standards 0ms
+   ✓ Ethical Validation - Comprehensive > should detect multiple ethical issues 0ms
+   × Ethical Validation - Comprehensive > should assign appropriate severity levels 0ms
+     → expected false to be true // Object.is equality
+   ✓ Ethical Validation - Comprehensive > should provide actionable suggestions 0ms
+   ✓ Ethical Validation - Performance > should validate in less than 15ms 0ms
+   ✓ Ethical Validation - Performance > should handle large content efficiently 0ms
+ ❯ src/__tests__/LocalMemoryProvider.security.test.ts (3 tests | 3 failed) 6ms
+   × LocalMemoryProvider security hardening > redacts sensitive content before embedding and includes provenance payload 3ms
+     → queue did not schedule task
+   × LocalMemoryProvider security hardening > rejects searches without tenant, domain, tags, or labels 3ms
+     → promise resolved "{ hits: [], tookMs: +0 }" instead of rejecting
+   × LocalMemoryProvider security hardening > clamps limit and offset when executing FTS searches 0ms
+     → expected "spy" to be called with arguments: [ ObjectContaining{…}, 100, 1000, 0.5 ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ✓ src/__tests__/checkpoint-manager.test.ts (3 tests) 17ms
+ ✓ src/skills/__tests__/skill-registry.test.ts (42 tests) 9ms
+ ✓ src/__tests__/memoryWorkflowEngine.test.ts (2 tests) 16ms
+ ✓ src/skills/__tests__/skill-parser.test.ts (47 tests) 10ms
+ ✓ tests/context-graph/context-graph-thermal.test.ts (12 tests) 5ms
+ ✓ tests/LocalMemoryProvider.security.test.ts (7 tests) 2ms
+ ✓ src/skills/__tests__/types.test.ts (18 tests) 2ms
+ ✓ src/__tests__/GraphRAGIngestService.test.ts (2 tests) 4ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  __tests__/GraphRAGService.mcp-provider.test.ts [ __tests__/GraphRAGService.mcp-provider.test.ts ]
+ FAIL  __tests__/provider-parity.test.ts [ __tests__/provider-parity.test.ts ]
+ FAIL  __tests__/acceleration/GPUAcceleration.memory.test.ts [ __tests__/acceleration/GPUAcceleration.memory.test.ts ]
+Error: Transform failed with 1 error:
+/Users/jamiecraik/.Cortex-OS/packages/memory-core/src/acceleration/GPUAcceleration.ts:549:13: ERROR: Expected ")" but found "."
+  Plugin: vite:esbuild
+  File: /Users/jamiecraik/.Cortex-OS/packages/memory-core/src/acceleration/GPUAcceleration.ts:549:13
+  
+  Expected ")" but found "."
+  547 |  
+  548 |  			// Memory cleanup: Force garbage collection if memory usage is high
+  549 |  			if (device.memoryUsed > this.config.cuda.maxMemoryUsage * 0.8) {
+      |               ^
+  550 |  				if (global.gc) {
+  551 |  					global.gc();
+  
+ ❯ failureErrorWithLog ../../node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:1467:15
+ ❯ ../../node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:736:50
+ ❯ responseCallbacks.<computed> ../../node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:603:9
+ ❯ handleIncomingPacket ../../node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:658:12
+ ❯ Socket.readFromStdout ../../node_modules/.pnpm/esbuild@0.25.10/node_modules/esbuild/lib/main.js:581:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/68]⎯
+
+ FAIL  __tests__/services/GraphRAGService.gpu-shutdown.test.ts [ __tests__/services/GraphRAGService.gpu-shutdown.test.ts ]
+Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
+ ❯ src/services/GraphRAGService.ts:33:1
+     31| import { getQueryPrecomputer, type PrecomputationConfig } from '../pre…
+     32| import { getStreamingResponse, type StreamingOptions, type StreamingCo…
+     33| import { 
+       | ^
+     34|  getGPUAccelerationManager, 
+     35|  stopGPUAccelerationManager,
+
+Caused by: ReferenceError: Cannot access 'mockGetGPUAccelerationManager' before initialization
+ ❯ __tests__/services/GraphRAGService.gpu-shutdown.test.ts:81:30
+ ❯ src/services/GraphRAGService.ts:33:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/68]⎯
+
+ FAIL  src/__tests__/GraphRAGService.test.ts [ src/__tests__/GraphRAGService.test.ts ]
+Error: [vitest] There was an error when mocking a module. If you are using "vi.mock" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock
+ ❯ src/services/GraphRAGService.ts:16:1
+     14| import { GraphEdgeType, GraphNodeType } from '../db/prismaEnums.js';
+     15| import { z } from 'zod';
+     16| import { prisma, shutdownPrisma } from '../db/prismaClient.js';
+       | ^
+     17| import { assembleContext } from '../retrieval/contextAssembler.js';
+     18| import { expandNeighbors } from '../retrieval/expandGraph.js';
+
+Caused by: ReferenceError: Cannot access 'prismaMock' before initialization
+ ❯ src/__tests__/GraphRAGService.test.ts:65:10
+ ❯ src/services/GraphRAGService.ts:16:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/68]⎯
+
+ FAIL  tests/context-graph/context-graph-evidence.test.ts [ tests/context-graph/context-graph-evidence.test.ts ]
+Error: Cannot find module '../config/clearance-levels.json' imported from '/Users/jamiecraik/.Cortex-OS/packages/memory-core/src/context-graph/security/ABACEngine.ts'
+ ❯ src/context-graph/security/ABACEngine.ts:25:1
+     23| // Clearance levels are now externalized to configuration for maintain…
+     24| // If equivalence between levels is intentional, document in the confi…
+     25| import clearanceLevels from '../config/clearance-levels.json';
+       | ^
+     26| const CLEARANCE_LEVELS: Record<string, number> = clearanceLevels;
+     27| 
+
+Caused by: Error: Failed to load url ../config/clearance-levels.json (resolved id: ../config/clearance-levels.json) in /Users/jamiecraik/.Cortex-OS/packages/memory-core/src/context-graph/security/ABACEngine.ts. Does the file exist?
+ ❯ loadAndTransform ../../node_modules/.pnpm/vite@7.1.9_@types+node@22.18.10_jiti@2.6.1_less@4.4.2_sass-embedded@1.93.2_sass@1.93.2__79b78c360375c363f440c874ae925394/node_modules/vite/dist/node/chunks/dep-Chhhsdoe.js:26136:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/68]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 62 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  __tests__/layers/short-term.store.test.ts > LocalMemoryProvider short-term promotion > promotes short-term entries into episodic persistence
+TypeError: provider.storeShortTerm is not a function
+ ❯ __tests__/layers/short-term.store.test.ts:194:18
+    192|   const provider = new LocalMemoryProvider(baseConfig);
+    193| 
+    194|   await provider.storeShortTerm('session-42', {
+       |                  ^
+    195|    content: 'Reflection that needs persistence',
+    196|    importance: 5,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/68]⎯
+
+ FAIL  __tests__/layers/short-term.store.test.ts > LocalMemoryProvider short-term promotion > auto-promotes high-importance entries during storeShortTerm
+Error: persistShortTermSession does not exist
+ ❯ __tests__/layers/short-term.store.test.ts:206:25
+    204|  it('auto-promotes high-importance entries during storeShortTerm', asy…
+    205|   const provider = new LocalMemoryProvider(baseConfig);
+    206|   const persistSpy = vi.spyOn(provider as unknown as { persistShortTer…
+       |                         ^
+    207| 
+    208|   await provider.storeShortTerm('session-auto', {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/68]⎯
+
+ FAIL  __tests__/layers/short-term.store.test.ts > LocalMemoryProvider short-term promotion > auto-promotes expired sessions during flush
+Error: persistShortTermSession does not exist
+ ❯ __tests__/layers/short-term.store.test.ts:221:25
+    219|   vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    220|   const provider = new LocalMemoryProvider(baseConfig);
+    221|   const persistSpy = vi.spyOn(provider as unknown as { persistShortTer…
+       |                         ^
+    222| 
+    223|   vi.setSystemTime(new Date('2025-10-11T12:00:00Z'));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/68]⎯
+
+ FAIL  __tests__/layers/short-term.store.test.ts > LocalMemoryProvider short-term promotion > tags semantic layer payloads during promotion
+TypeError: Cannot set properties of undefined (setting 'add')
+ ❯ createProviderWithMockedQdrant __tests__/layers/short-term.store.test.ts:263:49
+    261|   ]);
+    262|   (provider as unknown as { isQdrantHealthy: any }).isQdrantHealthy = …
+    263|   (provider as unknown as { queue: any }).queue.add = (task: any) => P…
+       |                                                 ^
+    264| 
+    265|   return { provider, upsert, search } as const;
+ ❯ __tests__/layers/short-term.store.test.ts:269:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/68]⎯
+
+ FAIL  __tests__/layers/short-term.store.test.ts > LocalMemoryProvider short-term promotion > tags long_term payloads when importance is high
+TypeError: Cannot set properties of undefined (setting 'add')
+ ❯ createProviderWithMockedQdrant __tests__/layers/short-term.store.test.ts:263:49
+    261|   ]);
+    262|   (provider as unknown as { isQdrantHealthy: any }).isQdrantHealthy = …
+    263|   (provider as unknown as { queue: any }).queue.add = (task: any) => P…
+       |                                                 ^
+    264| 
+    265|   return { provider, upsert, search } as const;
+ ❯ __tests__/layers/short-term.store.test.ts:288:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/68]⎯
+
+ FAIL  __tests__/layers/short-term.store.test.ts > LocalMemoryProvider short-term promotion > returns auto-promoted short-term notes with memory_layer metadata via search
+TypeError: Cannot set properties of undefined (setting 'add')
+ ❯ createProviderWithMockedQdrant __tests__/layers/short-term.store.test.ts:263:49
+    261|   ]);
+    262|   (provider as unknown as { isQdrantHealthy: any }).isQdrantHealthy = …
+    263|   (provider as unknown as { queue: any }).queue.add = (task: any) => P…
+       |                                                 ^
+    264| 
+    265|   return { provider, upsert, search } as const;
+ ❯ __tests__/layers/short-term.store.test.ts:304:40
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/68]⎯
+
+ FAIL  src/__tests__/LocalMemoryProvider.security.test.ts > LocalMemoryProvider security hardening > redacts sensitive content before embedding and includes provenance payload
+Error: queue did not schedule task
+ ❯ src/__tests__/LocalMemoryProvider.security.test.ts:49:10
+     47| 
+     48|   if (!queuedTask) {
+     49|    throw new Error('queue did not schedule task');
+       |          ^
+     50|   }
+     51|   await queuedTask;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/68]⎯
+
+ FAIL  src/__tests__/LocalMemoryProvider.security.test.ts > LocalMemoryProvider security hardening > rejects searches without tenant, domain, tags, or labels
+AssertionError: promise resolved "{ hits: [], tookMs: +0 }" instead of rejecting
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- Error {[39m
+[32m-   "message": "rejected promise",[39m
+[31m+ {[39m
+[31m+   "hits": [],[39m
+[31m+   "tookMs": 0,[39m
+[2m  }[22m
+
+ ❯ src/__tests__/LocalMemoryProvider.security.test.ts:80:3
+     78|     hybrid_weight: 0.6,
+     79|    }),
+     80|   ).rejects.toThrow(/Tenant, domain, tags, or labels/i);
+       |   ^
+     81|  });
+     82| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/68]⎯
+
+ FAIL  src/__tests__/LocalMemoryProvider.security.test.ts > LocalMemoryProvider security hardening > clamps limit and offset when executing FTS searches
+AssertionError: expected "spy" to be called with arguments: [ ObjectContaining{…}, 100, 1000, 0.5 ][90m
+
+Number of calls: [1m0[22m
+[39m
+ ❯ src/__tests__/LocalMemoryProvider.security.test.ts:98:43
+     96|   });
+     97| 
+     98|   expect((provider as any).searchWithFts).toHaveBeenCalledWith(
+       |                                           ^
+     99|    expect.objectContaining({ domain: 'security-tests' }),
+    100|    100,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/68]⎯
+
+ FAIL  tests/context-graph/context-graph-pack.test.ts > ContextPackService > pack > should pack context with basic citation generation
+AssertionError: expected undefined to be defined
+ ❯ tests/context-graph/context-graph-pack.test.ts:101:29
+     99|    expect(result).toBeDefined();
+    100|    expect(result.packedContext).toBeDefined();
+    101|    expect(result.citations).toBeDefined();
+       |                             ^
+    102|    expect(result.citations).toHaveLength(2);
+    103|    expect(result.metadata.totalNodes).toBe(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/68]⎯
+
+ FAIL  tests/context-graph/context-graph-pack.test.ts > ContextPackService > pack > should generate proper citations with source attribution
+AssertionError: Target cannot be null or undefined.
+ ❯ tests/context-graph/context-graph-pack.test.ts:144:29
+    142| 
+    143|    // Then - This should FAIL until implementation
+    144|    expect(result.citations).toHaveLength(1);
+       |                             ^
+    145|    const citation = result.citations[0];
+    146|    expect(citation.path).toBe('/src/utils/file1.ts');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/68]⎯
+
+ FAIL  tests/context-graph/context-graph-pack.test.ts > ContextPackService > pack > should enforce privacy mode by filtering sensitive content
+AssertionError: expected undefined to be true // Object.is equality
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ tests/context-graph/context-graph-pack.test.ts:207:48
+    205|    // Then - This should FAIL until implementation
+    206|    expect(result.packedContext).toBeDefined();
+    207|    expect(result.metadata.privacyModeEnforced).toBe(true);
+       |                                                ^
+    208|    expect(result.metadata.nodesFiltered).toBe(1);
+    209|    expect(result.metadata.filterReason).toContain('High sensitivity co…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/68]⎯
+
+ FAIL  tests/context-graph/context-graph-pack.test.ts > ContextPackService > pack > should aggregate evidence across multiple sources
+AssertionError: expected undefined to be defined
+ ❯ tests/context-graph/context-graph-pack.test.ts:265:28
+    263| 
+    264|    // Then - This should FAIL until implementation
+    265|    expect(result.evidence).toBeDefined();
+       |                            ^
+    266|    expect(result.evidence.sources).toEqual(['source1', 'source2', 'sou…
+    267|    expect(result.evidence.confidence).toBe(0.88);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/68]⎯
+
+ FAIL  tests/context-graph/context-graph-pack.test.ts > ContextPackService > pack > should handle token limits by prioritizing high-scoring content
+AssertionError: expected undefined to be true // Object.is equality
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ tests/context-graph/context-graph-pack.test.ts:329:47
+    327| 
+    328|    // Then - This should FAIL until implementation
+    329|    expect(result.metadata.tokenLimitEnforced).toBe(true);
+       |                                               ^
+    330|    expect(result.metadata.totalTokens).toBeLessThanOrEqual(250);
+    331|    expect(result.packedContext).toContain('High scoring content'); // …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/68]⎯
+
+ FAIL  tests/context-graph/context-graph-pack.test.ts > ContextPackService > pack > should format output according to specified format
+AssertionError: expected undefined to be 'json' // Object.is equality
+
+[32m- Expected:[39m 
+"json"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ tests/context-graph/context-graph-pack.test.ts:366:39
+    364| 
+    365|    // Then - This should FAIL until implementation
+    366|    expect(jsonResult.metadata.format).toBe('json');
+       |                                       ^
+    367|    expect(jsonResult.packedContext).toContain('"content":');
+    368|    expect(jsonResult.packedContext).toContain('"citations":');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/68]⎯
+
+ FAIL  tests/context-graph/context-graph-pack.test.ts > ContextPackService > pack > should integrate with external knowledge bases
+AssertionError: expected undefined to be defined
+ ❯ tests/context-graph/context-graph-pack.test.ts:415:29
+    413| 
+    414|    // Then - This should FAIL until implementation
+    415|    expect(result.citations).toBeDefined();
+       |                             ^
+    416|    expect(result.citations).toHaveLength(1);
+    417|    const citation = result.citations[0];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/68]⎯
+
+ FAIL  tests/context-graph/context-graph-pack.test.ts > ContextPackService > pack > should handle empty subgraphs gracefully
+AssertionError: Target cannot be null or undefined.
+ ❯ tests/context-graph/context-graph-pack.test.ts:442:29
+    440|    expect(result).toBeDefined();
+    441|    expect(result.packedContext).toBe('');
+    442|    expect(result.citations).toHaveLength(0);
+       |                             ^
+    443|    expect(result.metadata.totalNodes).toBe(0);
+    444|    expect(result.metadata.totalEdges).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/68]⎯
+
+ FAIL  tests/context-graph/context-graph-pack.test.ts > ContextPackService > pack > should validate pack options
+AssertionError: expected 'Packing error: Cannot read properties…' to contain 'Invalid pack options'
+
+Expected: [32m"Invalid pack options"[39m
+Received: [31m"Packing error: Cannot read properties of undefined (reading '0')"[39m
+
+ ❯ tests/context-graph/context-graph-pack.test.ts:479:34
+    477| 
+    478|    // Then - This should FAIL until implementation
+    479|    expect(result.metadata.error).toContain('Invalid pack options');
+       |                                  ^
+    480|    expect(result.metadata.brainwavBranded).toBe(true);
+    481|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/68]⎯
+
+ FAIL  tests/context-graph/context-graph-slice.test.ts > ContextSliceService > slice > should slice context with custom depth and breadth limits
+AssertionError: expected [] to have a length of 2 but got +0
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 2[39m
+[31m+ 0[39m
+
+ ❯ tests/context-graph/context-graph-slice.test.ts:179:34
+    177| 
+    178|    // Then - This should FAIL until implementation
+    179|    expect(result.subgraph.nodes).toHaveLength(2);
+       |                                  ^
+    180|    expect(result.subgraph.edges).toHaveLengthGreaterThan(0);
+    181|    expect(result.metadata.sliceDuration).toBeLessThan(150);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/68]⎯
+
+ FAIL  tests/context-graph/context-graph-slice.test.ts > ContextSliceService > slice > should apply evidence filtering before slicing
+AssertionError: expected undefined to be true // Object.is equality
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ tests/context-graph/context-graph-slice.test.ts:244:45
+    242|    expect(result).toBeDefined();
+    243|    expect(result.subgraph.nodes).toHaveLength(0);
+    244|    expect(result.metadata.evidenceFiltered).toBe(true);
+       |                                             ^
+    245|    expect(result.metadata.evidenceReason).toContain('Access denied');
+    246|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/68]⎯
+
+ FAIL  tests/context-graph/context-graph-slice.test.ts > ContextSliceService > slice > should enforce thermal constraints during slicing
+AssertionError: expected undefined to be true // Object.is equality
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ tests/context-graph/context-graph-slice.test.ts:269:47
+    267| 
+    268|    // Then - This should FAIL until implementation
+    269|    expect(result.metadata.thermalConstrained).toBe(true);
+       |                                               ^
+    270|    expect(result.metadata.depthUsed).toBeLessThanOrEqual(2);
+    271|    expect(result.metadata.nodesExplored).toBeLessThanOrEqual(20);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/68]⎯
+
+ FAIL  tests/context-graph/context-graph-slice.test.ts > ContextSliceService > slice > should validate input parameters
+AssertionError: expected 'query: Query cannot be empty' to contain 'Invalid input parameters'
+
+Expected: [32m"Invalid input parameters"[39m
+Received: [31m"query: Query cannot be empty"[39m
+
+ ❯ tests/context-graph/context-graph-slice.test.ts:311:34
+    309|    // Then - This should FAIL until implementation
+    310|    expect(result).toBeDefined();
+    311|    expect(result.metadata.error).toContain('Invalid input parameters');
+       |                                  ^
+    312|    expect(result.metadata.brainwavBranded).toBe(true);
+    313|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/68]⎯
+
+ FAIL  tests/context-graph/context-graph-slice.test.ts > ContextSliceService > slice > should track slicing metrics for observability
+AssertionError: expected undefined to be defined
+ ❯ tests/context-graph/context-graph-slice.test.ts:360:27
+    358| 
+    359|    // Then - This should FAIL until implementation
+    360|    expect(result.metrics).toBeDefined();
+       |                           ^
+    361|    expect(result.metrics.nodesProcessed).toBeGreaterThan(0);
+    362|    expect(result.metrics.edgesProcessed).toBeGreaterThan(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/68]⎯
+
+ FAIL  tests/context-graph/context-graph-slice.test.ts > ContextSliceService > validateRecipe > should reject invalid recipe schema
+AssertionError: expected [ Array(5) ] to include 'Query cannot be empty'
+ ❯ tests/context-graph/context-graph-slice.test.ts:403:26
+    401|    expect(result.valid).toBe(false);
+    402|    expect(result.errors.length).toBeGreaterThan(0);
+    403|    expect(result.errors).toContain('Query cannot be empty');
+       |                          ^
+    404|    expect(result.errors).toContain('Max depth must be positive');
+    405|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/68]⎯
+
+ FAIL  src/skills/__tests__/ethical-validator.test.ts > Ethical Validation - Bias Detection > should detect gender-biased language
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/skills/__tests__/ethical-validator.test.ts:74:64
+     72|   expect(violations.length).toBeGreaterThan(0);
+     73|   expect(violations.some((v) => v.type === 'bias_language')).toBe(true…
+     74|   expect(violations.some((v) => v.message.includes('gender'))).toBe(tr…
+       |                                                                ^
+     75|  });
+     76| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/68]⎯
+
+ FAIL  src/skills/__tests__/ethical-validator.test.ts > Ethical Validation - Bias Detection > should suggest inclusive alternatives
+AssertionError: expected 0 to be greater than 0
+ ❯ src/skills/__tests__/ethical-validator.test.ts:84:29
+     82|   const violations = validateEthicalCompliance(skill);
+     83| 
+     84|   expect(violations.length).toBeGreaterThan(0);
+       |                             ^
+     85|   const violation = violations.find((v) => v.type === 'bias_language');
+     86|   expect(violation?.suggestion).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/68]⎯
+
+ FAIL  src/skills/__tests__/ethical-validator.test.ts > Ethical Validation - Transparency > should flag vague descriptions
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/skills/__tests__/ethical-validator.test.ts:137:69
+    135| 
+    136|   expect(violations.some((v) => v.type === 'transparency')).toBe(true);
+    137|   expect(violations.some((v) => v.message.includes('description'))).to…
+       |                                                                     ^
+    138|  });
+    139| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/68]⎯
+
+ FAIL  src/skills/__tests__/ethical-validator.test.ts > Ethical Validation - Transparency > should validate examples are explanatory
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/skills/__tests__/ethical-validator.test.ts:163:61
+    161|   const violations = validateEthicalCompliance(skill);
+    162| 
+    163|   expect(violations.some((v) => v.type === 'transparency')).toBe(true);
+       |                                                             ^
+    164|  });
+    165| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/68]⎯
+
+ FAIL  src/skills/__tests__/ethical-validator.test.ts > Ethical Validation - Safety > should detect privacy-concerning patterns
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/skills/__tests__/ethical-validator.test.ts:208:55
+    206|   const violations = validateEthicalCompliance(skill);
+    207| 
+    208|   expect(violations.some((v) => v.type === 'safety')).toBe(true);
+       |                                                       ^
+    209|  });
+    210| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/68]⎯
+
+ FAIL  src/skills/__tests__/ethical-validator.test.ts > Ethical Validation - Accessibility > should flag purely visual-only instructions
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/skills/__tests__/ethical-validator.test.ts:238:63
+    236| 
+    237|   expect(violations.some((v) => v.type === 'accessibility')).toBe(true…
+    238|   expect(violations.some((v) => v.message.includes('color'))).toBe(tru…
+       |                                                               ^
+    239|  });
+    240| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/68]⎯
+
+ FAIL  src/skills/__tests__/ethical-validator.test.ts > Ethical Validation - Comprehensive > should assign appropriate severity levels
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/skills/__tests__/ethical-validator.test.ts:320:57
+    318|   const violations = validateEthicalCompliance(skill);
+    319| 
+    320|   expect(violations.some((v) => v.severity === 'high')).toBe(true);
+       |                                                         ^
+    321|  });
+    322| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/68]⎯
+
+ FAIL  src/skills/__tests__/security-validator.test.ts > Security Validation - Code Injection > should detect dangerous process methods
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/skills/__tests__/security-validator.test.ts:118:62
+    116| 
+    117|   expect(violations.length).toBeGreaterThan(0);
+    118|   expect(violations.some((v) => v.type === 'dangerous_api')).toBe(true…
+       |                                                              ^
+    119|  });
+    120| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/68]⎯
+
+ FAIL  src/skills/__tests__/security-validator.test.ts > Security Validation - Path Traversal > should detect absolute path access
+AssertionError: expected 0 to be greater than 0
+ ❯ src/skills/__tests__/security-validator.test.ts:145:29
+    143|   const violations = validateSecurityRules(skill);
+    144| 
+    145|   expect(violations.length).toBeGreaterThan(0);
+       |                             ^
+    146|   expect(violations.some((v) => v.type === 'path_traversal')).toBe(tru…
+    147|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/68]⎯
+
+ FAIL  src/skills/__tests__/security-validator.test.ts > Security Validation - Comprehensive > should provide specific violation details
+AssertionError: expected undefined to be defined
+ ❯ src/skills/__tests__/security-validator.test.ts:333:21
+    331| 
+    332|   const violation = violations[0];
+    333|   expect(violation).toBeDefined();
+       |                     ^
+    334|   expect(violation?.message).toBeTruthy();
+    335|   expect(violation?.type).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - File Loading > should load and parse valid skill file
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:205:26
+    203|   const result = await loadSkill(filePath);
+    204| 
+    205|   expect(result.success).toBe(true);
+       |                          ^
+    206|   expect(result.skill).toBeDefined();
+    207|   expect(result.skill?.id).toBe('skill-test');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - File Loading > should load multiple skills from directory
+AssertionError: expected [] to have a length of 3 but got +0
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 3[39m
+[31m+ 0[39m
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:272:26
+    270|   const results = await loadSkillsFromDirectory(TEST_DIR);
+    271| 
+    272|   expect(results.loaded).toHaveLength(3);
+       |                          ^
+    273|   expect(results.failed).toHaveLength(0);
+    274|   expect(results.total).toBe(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - File Loading > should separate successful and failed loads
+AssertionError: expected +0 to be 1 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:283:33
+    281|   const results = await loadSkillsFromDirectory(TEST_DIR);
+    282| 
+    283|   expect(results.loaded.length).toBe(1);
+       |                                 ^
+    284|   expect(results.failed.length).toBe(1);
+    285|   expect(results.total).toBe(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - Caching > should cache loaded skills
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:325:27
+    323|   const time2 = performance.now();
+    324| 
+    325|   expect(result1.success).toBe(true);
+       |                           ^
+    326|   expect(result2.success).toBe(true);
+    327|   expect(result2.fromCache).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - Caching > should invalidate cache on file modification
+AssertionError: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:354:28
+    352|   const result = await loadSkill(filePath, options);
+    353| 
+    354|   expect(result.fromCache).toBe(false);
+       |                            ^
+    355|   expect(result.skill?.name).toBe('Modified');
+    356|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - Caching > should respect cache size limits
+AssertionError: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:384:29
+    382|   // First file should have been evicted (LRU)
+    383|   const result1 = await loadSkill(file1, options);
+    384|   expect(result1.fromCache).toBe(false);
+       |                             ^
+    385| 
+    386|   // Most recent files should still be cached
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - Caching > should provide cache statistics
+AssertionError: expected 0 to be greater than 0
+ ❯ src/skills/__tests__/skill-loader.test.ts:404:36
+    402| 
+    403|   expect(results.cacheStats).toBeDefined();
+    404|   expect(results.cacheStats?.hits).toBeGreaterThan(0);
+       |                                    ^
+    405|  });
+    406| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - Caching > should allow cache bypass
+AssertionError: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:419:28
+    417|   const result = await loadSkill(filePath, noCacheOptions);
+    418| 
+    419|   expect(result.fromCache).toBe(false);
+       |                            ^
+    420|  });
+    421| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - Caching > should cache 100 skills efficiently
+AssertionError: expected [] to have a length of 100 but got +0
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 100[39m
+[31m+ 0[39m
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:446:26
+    444|   const duration2 = performance.now() - start2;
+    445| 
+    446|   expect(results.loaded).toHaveLength(100);
+       |                          ^
+    447|   expect(duration2).toBeLessThan(duration1 / 2); // Cached should be 2…
+    448|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - Integration > should load, validate, and cache skills end-to-end
+AssertionError: expected [] to have a length of 2 but got +0
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 2[39m
+[31m+ 0[39m
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:477:26
+    475|   const results = await loadSkillsFromDirectory(TEST_DIR, options);
+    476| 
+    477|   expect(results.loaded).toHaveLength(2);
+       |                          ^
+    478|   expect(results.failed).toHaveLength(1);
+    479|   expect(results.total).toBe(3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/68]⎯
+
+ FAIL  src/skills/__tests__/skill-loader.test.ts > Skill Loader - Integration > should handle mixed valid and invalid skills
+AssertionError: expected +0 to be 2 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 2[39m
+[31m+ 0[39m
+
+ ❯ src/skills/__tests__/skill-loader.test.ts:494:33
+    492|   const results = await loadSkillsFromDirectory(TEST_DIR);
+    493| 
+    494|   expect(results.loaded.length).toBe(2);
+       |                                 ^
+    495|   expect(results.failed.length).toBe(2);
+    496|   expect(results.successRate).toBe(0.5);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkillMetadata > should reject invalid version format
+AssertionError: expected 'Must be valid semver (e.g., 1.0.0)' to contain 'version'
+
+Expected: [32m"version"[39m
+Received: [31m"Must be valid semver (e.g., 1.0.0)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:83:37
+     81|   expect(result.valid).toBe(false);
+     82|   expect(result.errors.length).toBeGreaterThan(0);
+     83|   expect(result.errors[0]?.message).toContain('version');
+       |                                     ^
+     84|  });
+     85| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkillMetadata > should reject empty author
+AssertionError: expected 'String must contain at least 1 charac…' to contain 'author'
+
+Expected: [32m"author"[39m
+Received: [31m"String must contain at least 1 character(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:91:37
+     89| 
+     90|   expect(result.valid).toBe(false);
+     91|   expect(result.errors[0]?.message).toContain('author');
+       |                                     ^
+     92|  });
+     93| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkillMetadata > should reject invalid category
+AssertionError: expected 'Invalid enum value. Expected \'coding…' to contain 'category'
+
+Expected: [32m"category"[39m
+Received: [31m"Invalid enum value. Expected 'coding' | 'communication' | 'security' | 'analysis' | 'automation' | 'integration' | 'testing' | 'documentation' | 'other', received 'invalid'"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:99:37
+     97| 
+     98|   expect(result.valid).toBe(false);
+     99|   expect(result.errors[0]?.message).toContain('category');
+       |                                     ^
+    100|  });
+    101| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkillMetadata > should reject empty tags array
+AssertionError: expected 'Array must contain at least 1 element…' to contain 'tags'
+
+Expected: [32m"tags"[39m
+Received: [31m"Array must contain at least 1 element(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:107:37
+    105| 
+    106|   expect(result.valid).toBe(false);
+    107|   expect(result.errors[0]?.message).toContain('tags');
+       |                                     ^
+    108|  });
+    109| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkillMetadata > should reject too many tags
+AssertionError: expected 'Array must contain at most 20 element…' to contain 'tags'
+
+Expected: [32m"tags"[39m
+Received: [31m"Array must contain at most 20 element(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:118:37
+    116| 
+    117|   expect(result.valid).toBe(false);
+    118|   expect(result.errors[0]?.message).toContain('tags');
+       |                                     ^
+    119|  });
+    120| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkillMetadata > should reject invalid difficulty level
+AssertionError: expected 'Invalid enum value. Expected \'beginn…' to contain 'difficulty'
+
+Expected: [32m"difficulty"[39m
+Received: [31m"Invalid enum value. Expected 'beginner' | 'intermediate' | 'advanced' | 'expert', received 'easy'"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:126:37
+    124| 
+    125|   expect(result.valid).toBe(false);
+    126|   expect(result.errors[0]?.message).toContain('difficulty');
+       |                                     ^
+    127|  });
+    128| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkillMetadata > should reject negative estimatedTokens
+AssertionError: expected 'Number must be greater than 0' to contain 'estimatedTokens'
+
+Expected: [32m"estimatedTokens"[39m
+Received: [31m"Number must be greater than 0"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:134:37
+    132| 
+    133|   expect(result.valid).toBe(false);
+    134|   expect(result.errors[0]?.message).toContain('estimatedTokens');
+       |                                     ^
+    135|  });
+    136| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkillMetadata > should reject excessive estimatedTokens
+AssertionError: expected 'Number must be less than or equal to …' to contain 'estimatedTokens'
+
+Expected: [32m"estimatedTokens"[39m
+Received: [31m"Number must be less than or equal to 10000"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:142:37
+    140| 
+    141|   expect(result.valid).toBe(false);
+    142|   expect(result.errors[0]?.message).toContain('estimatedTokens');
+       |                                     ^
+    143|  });
+    144| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[57/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkillMetadata > should reject too many requiredTools
+AssertionError: expected 'Array must contain at most 50 element…' to contain 'requiredTools'
+
+Expected: [32m"requiredTools"[39m
+Received: [31m"Array must contain at most 50 element(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:172:37
+    170| 
+    171|   expect(result.valid).toBe(false);
+    172|   expect(result.errors[0]?.message).toContain('requiredTools');
+       |                                     ^
+    173|  });
+    174| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[58/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkill > should reject invalid skill ID format
+AssertionError: expected 'ID must start with "skill-" followed …' to contain 'id'
+
+Expected: [32m"id"[39m
+Received: [31m"ID must start with "skill-" followed by kebab-case"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:195:37
+    193| 
+    194|   expect(result.valid).toBe(false);
+    195|   expect(result.errors[0]?.message).toContain('id');
+       |                                     ^
+    196|   expect(result.errors[0]?.message).toContain('skill-');
+    197|  });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[59/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkill > should reject short skill name
+AssertionError: expected 'String must contain at least 3 charac…' to contain 'name'
+
+Expected: [32m"name"[39m
+Received: [31m"String must contain at least 3 character(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:204:37
+    202| 
+    203|   expect(result.valid).toBe(false);
+    204|   expect(result.errors[0]?.message).toContain('name');
+       |                                     ^
+    205|  });
+    206| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[60/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkill > should reject short description
+AssertionError: expected 'String must contain at least 10 chara…' to contain 'description'
+
+Expected: [32m"description"[39m
+Received: [31m"String must contain at least 10 character(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:212:37
+    210| 
+    211|   expect(result.valid).toBe(false);
+    212|   expect(result.errors[0]?.message).toContain('description');
+       |                                     ^
+    213|  });
+    214| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[61/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkill > should reject short content
+AssertionError: expected 'String must contain at least 50 chara…' to contain 'content'
+
+Expected: [32m"content"[39m
+Received: [31m"String must contain at least 50 character(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:220:37
+    218| 
+    219|   expect(result.valid).toBe(false);
+    220|   expect(result.errors[0]?.message).toContain('content');
+       |                                     ^
+    221|  });
+    222| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[62/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkill > should reject excessive content length
+AssertionError: expected 'String must contain at most 50000 cha…' to contain 'content'
+
+Expected: [32m"content"[39m
+Received: [31m"String must contain at most 50000 character(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:231:37
+    229| 
+    230|   expect(result.valid).toBe(false);
+    231|   expect(result.errors[0]?.message).toContain('content');
+       |                                     ^
+    232|  });
+    233| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[63/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkill > should reject missing successCriteria
+AssertionError: expected 'Array must contain at least 1 element…' to contain 'successCriteria'
+
+Expected: [32m"successCriteria"[39m
+Received: [31m"Array must contain at least 1 element(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:239:37
+    237| 
+    238|   expect(result.valid).toBe(false);
+    239|   expect(result.errors[0]?.message).toContain('successCriteria');
+       |                                     ^
+    240|  });
+    241| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[64/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkill > should reject too many examples
+AssertionError: expected 'Array must contain at most 10 element…' to contain 'examples'
+
+Expected: [32m"examples"[39m
+Received: [31m"Array must contain at most 10 element(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:273:37
+    271| 
+    272|   expect(result.valid).toBe(false);
+    273|   expect(result.errors[0]?.message).toContain('examples');
+       |                                     ^
+    274|  });
+    275| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[65/68]⎯
+
+ FAIL  src/skills/__tests__/skill-validator.test.ts > validateSkill - persuasiveFraming > should reject excessive persuasive framing text
+AssertionError: expected 'String must contain at most 500 chara…' to contain 'authority'
+
+Expected: [32m"authority"[39m
+Received: [31m"String must contain at most 500 character(s)"[39m
+
+ ❯ src/skills/__tests__/skill-validator.test.ts:331:37
+    329| 
+    330|   expect(result.valid).toBe(false);
+    331|   expect(result.errors[0]?.message).toContain('authority');
+       |                                     ^
+    332|  });
+    333| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[66/68]⎯
+
+
+ Test Files  14 failed | 8 passed (22)
+      Tests  62 failed | 204 passed (266)
+   Start at  22:58:14
+   Duration  10.29s (transform 487ms, setup 0ms, collect 10.18s, tests 218ms, environment 2ms, prepare 836ms)
+
+ FAIL  Tests failed. Watching for file changes...
+       press h to show help, press q to quit

@@ -13,6 +13,23 @@ Assess the current Observability package surface (events, logging, metrics, trac
 
 ---
 
+## Quick Start Validation Checklist
+
+To reproduce the baseline evidence for this review, run the following commands from the repository root and persist their structured logs for attachment in PRs and reviews:
+
+1. `pnpm structure:validate`
+2. `pnpm security:scan`
+3. `pnpm models:health && pnpm models:smoke`
+
+Expected log artifacts (checked into `logs/observability/` or attached to the PR evidence bundle):
+
+- `logs/observability/structure-validate.log`
+- `logs/observability/security-scan.log`
+- `logs/observability/models-health.log`
+- `logs/observability/models-smoke.log`
+
+---
+
 ## Current State Observations
 
 ### Existing Implementation

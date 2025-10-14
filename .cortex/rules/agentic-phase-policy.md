@@ -40,6 +40,7 @@
 - **HITL only at REVIEW.** Any `human_input` before REVIEW is a policy violation.
 - **Governance required.** Load the nearest `AGENTS.md` and record its SHA in `.cortex/run.yaml`; include it in the first `vibe_check` log.
 - **Hybrid model = Live only.** No stubs/recordings/"dry_run" for embeddings/rerankers/generation. Engines must be **live** (MLX, Ollama, Frontier).
+- **Secret retrieval via 1Password CLI.** Agents obtain API keys, SSH keys, and tokens on-demand with `op` and must not cache them in shell profiles, long-lived env vars, or repository artifacts.
 - **Time Freshness Guard.** Anchor dates to harness "today"; surface **ISO-8601** in specs/PRs/logs; treat "latest/current" as freshness checks.
 
 ---

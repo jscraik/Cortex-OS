@@ -177,7 +177,7 @@ Attach TDD evidence + results links in the PR.
 
 ## 9) Security, Supply Chain, Compliance
 
-- Secrets: use env/secret managers. No hard-coded secrets.
+- Secrets: fetch API keys, SSH keys, and tokens on-demand with the 1Password CLI (`op`). No hard-coded secrets or long-lived copies in dotfiles, env vars, or repo artifacts.
 - Scanners: Semgrep (block on ERROR), gitleaks (block on ANY), OSV/audit per lockfile.
 - SBOM: CycloneDX per artifact; provenance via SLSA/in-toto; sign images with Cosign.
 - Containers: minimal base, pinned digests, non-root user, read-only FS, drop caps.
@@ -298,7 +298,7 @@ Deterministic output is mandatory; attach tool logs as PR evidence. Prefer agent
 **Environment loading**
 - Use the shared loader (scripts/utils/dotenv-loader.mjs or @cortex-os/utils) for every runtime.
 - Do not call dotenv.config() directly.
-- Secrets are distributed via 1Password export. See docs/development/1password-env.md (op run --env-file=... -- pnpm <task>). Optionally set BRAINWAV_ENV_FILE to the exported path.
+- Secrets must be sourced via the 1Password CLI (`op`). For automation, follow docs/development/1password-env.md and use `op run --env-file=... -- pnpm <task>` so credentials remain ephemeral; do not persist exported values beyond the command scope. Optionally set `BRAINWAV_ENV_FILE` to point to the short-lived export path when required.
 
 **Port registry**
 - config/ports.env is authoritative; mirror in config/dev/ports.env and docker/env/ports.env after changes.
@@ -329,7 +329,28 @@ Deterministic output is mandatory; attach tool logs as PR evidence. Prefer agent
 
 ---
 
-## 21) Quick Command Index
+## 21) Frontend Development Guidelines
+
+### Angular CLI Usage
+
+**Use Angular CLI Directually:**
+```bash
+# Instead of extension, use CLI in terminal
+ng serve                    # Development server
+ng build                    # Build project
+ng test                     # Run tests
+```
+
+**VS Code Extensions:**
+- Angular Language Service - Better TypeScript support
+- Angular Snippets - Code templates
+- ESLint + Prettier - Code formatting
+
+**For Your Workflow:**
+Since you disabled the problematic extension, you can still:
+1. Use Angular CLI in terminals - More control and debugging
+2. Run ng serve manually - When developing Angular apps
+3. Use ng build - When building for production
 
 ```bash
 # Affected workflows
@@ -350,11 +371,16 @@ pnpm mcp:start && pnpm mcp:smoke && pnpm mcp:test
 # Toolkit helpers
 just scout "<pattern>" .
 just codemod 'find(:[x])' 'replace(:[x])' .
+
+# Angular development
+ng serve                    # Development server
+ng build                    # Build project
+ng test                     # Run tests
 ```
 
 ---
 
-## 22) Where to Look Next
+## 23) Where to Look Next
 
 - Governance Pack (authoritative):
   - /.cortex/rules/vision.md
@@ -375,7 +401,7 @@ Agents must cite relevant section IDs from these documents in every PR review an
 
 ---
 
-## 23) Time Freshness & Date Handling
+## 24) Time Freshness & Date Handling
 
 - Anchor all reasoning to the harness-provided timezone and "today".
 - Treat "latest/current" queries as freshness checks; verify sources or clarify.
@@ -384,13 +410,13 @@ Agents must cite relevant section IDs from these documents in every PR review an
 
 ---
 
-## 24) Local Memory (operational default)
+## 25) Local Memory (operational default)
 
 Proactively use Local Memory MCP to store, retrieve, update, and analyze memories to maintain context and build expertise over time. Persist key insights (lessons learned, architectural decisions, strategies, outcomes). Use semantic search and relationship mapping across projects/sessions. Agents must store decisions/rationales as described in §15 and maintain MCP/REST parity.
 
 ---
 
-## 25) Hybrid Model Solution — Live Only (MLX / Ollama / Frontier)
+## 26) Hybrid Model Solution — Live Only (MLX / Ollama / Frontier)
 
 **Hard rules**
 - No fakes, no stubs, no recorded outputs, no "dry_run" modes for embeddings, rerankers, or generation. All inference must run against live engines (MLX on-device, Ollama local server, or approved Frontier APIs).
@@ -415,7 +441,7 @@ GEN_MODEL=frontier:gpt-5
 
 ---
 
-## 26) Code Review Checklist — Enforcement
+## 27) Code Review Checklist — Enforcement
 
 **Source of truth:** /.cortex/rules/code-review-checklist.md
 

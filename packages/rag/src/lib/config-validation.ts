@@ -294,6 +294,133 @@ export const generationConfigSchema = z.object({
 	frequencyPenalty: z.number().min(-2).max(2).optional(),
 });
 
+// REF‑RAG configuration schemas
+export const refRagBandBudgetsSchema = z.object({
+	bandA: z.number().int().positive().max(50000),
+	bandB: z.number().int().positive().max(100000),
+	bandC: z.number().int().positive().max(5000),
+	overrides: z
+		.object({
+			maxBandAChunks: z.number().int().positive().max(1000).optional(),
+			maxBandBChunks: z.number().int().positive().max(2000).optional(),
+			maxBandCFacts: z.number().int().positive().max(1000).optional(),
+		})
+		.optional(),
+});
+
+export const refRagRiskClassBudgetsSchema = z.object({
+	low: refRagBandBudgetsSchema,
+	medium: refRagBandBudgetsSchema,
+	high: refRagBandBudgetsSchema,
+	critical: refRagBandBudgetsSchema,
+});
+
+export const refRagQueryGuardSchema = z.object({
+	enableKeywordDetection: z.boolean(),
+	enableDomainClassification: z.boolean(),
+	enableEntityExtraction: z.boolean(),
+	customRiskKeywords: z.record(z.array(z.string().max(100))).optional(),
+});
+
+export const refRagRelevancePolicySchema = z.object({
+	enableDuplicationPenalty: z.boolean(),
+	enableFreshnessBonus: z.boolean(),
+	enableDomainBonus: z.boolean(),
+	similarityWeight: z.number().min(0).max(1),
+	freshnessWeight: z.number().min(0).max(1),
+	diversityWeight: z.number().min(0).max(1),
+}).refine(
+	(config) => {
+		const sum = config.similarityWeight + config.freshnessWeight + config.diversityWeight;
+		return Math.abs(sum - 1.0) < 0.1;
+	},
+	{
+		message: 'Relevance policy weights must sum to approximately 1.0',
+		path: ['similarityWeight', 'freshnessWeight', 'diversityWeight'],
+	},
+);
+
+export const refRagExpansionSchema = z.object({
+	enableMandatoryExpansion: z.boolean(),
+	maxDiversityEnforcement: z.number().min(0).max(1),
+	minRelevanceThreshold: z.number().min(0).max(1),
+});
+
+export const refRagVerificationSchema = z.object({
+	enablePostGenerationCheck: z.boolean(),
+	enableNumericalTrace: z.boolean(),
+	enableCitationValidation: z.boolean(),
+	maxEscalationAttempts: z.number().int().nonnegative().max(5),
+	confidenceThreshold: z.number().min(0).max(1),
+});
+
+export const refRagFactExtractionSchema = z.object({
+	enableNumericExtraction: z.boolean(),
+	enableQuoteExtraction: z.boolean(),
+	enableCodeExtraction: z.boolean(),
+	enableDateExtraction: z.boolean(),
+	confidenceThreshold: z.number().min(0).max(1),
+});
+
+export const refRagVirtualTokensSchema = z.object({
+	enableCompression: z.boolean(),
+	compressionMethod: z.enum(['projection', 'quantization', 'hybrid']),
+	targetCompressionRatio: z.number().min(0.01).max(0.99),
+	projectionWeightsPath: z.string().max(1000).optional(),
+});
+
+export const refRagConfigSchema = z.object({
+	enabled: z.boolean(),
+	budgets: refRagRiskClassBudgetsSchema,
+	queryGuard: refRagQueryGuardSchema,
+	relevancePolicy: refRagRelevancePolicySchema,
+	expansion: refRagExpansionSchema,
+	verification: refRagVerificationSchema,
+	factExtraction: refRagFactExtractionSchema,
+	virtualTokens: refRagVirtualTokensSchema,
+}).refine(
+	(config) => {
+		// Validate budget constraints
+		for (const [riskClass, budget] of Object.entries(config.budgets)) {
+			// Band A should be reasonable compared to Band B
+			const ratio = budget.bandA / budget.bandB;
+			if (ratio > 2.0 || ratio < 0.25) {
+				return false;
+			}
+
+			// Band C should not exceed reasonable limits
+			if (budget.bandC > budget.bandA * 0.5) {
+				return false;
+			}
+		}
+		return true;
+	},
+	{
+		message: 'Budget constraints violate recommended ratios',
+		path: ['budgets'],
+	},
+).refine(
+	(config) => {
+		// If compression is enabled, projection weights path should be provided for projection method
+		if (config.virtualTokens.enableCompression &&
+			config.virtualTokens.compressionMethod === 'projection' &&
+			!config.virtualTokens.projectionWeightsPath) {
+			return false;
+		}
+		return true;
+	},
+	{
+		message: 'Projection compression method requires projectionWeightsPath',
+		path: ['virtualTokens', 'projectionWeightsPath'],
+	},
+);
+
+// Enhanced RAG configuration schema with REF‑RAG support
+export const enhancedRAGConfigWithRefRagSchema = enhancedRAGConfigSchema
+	.extend({
+		refRag: refRagConfigSchema.optional(),
+	});
+
 /**
  * Validate a configuration object against a schema.
  * @param schema - Zod schema to validate against
