@@ -11,6 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+#### Critical Security Vulnerability Fixes (2025-01-14) ✅
+
+**9 CodeQL Security Alerts Resolved**
+- 🔒 **ReDoS Vulnerabilities (6 fixed)**: Protected against Regular Expression Denial of Service attacks
+  - `packages/rag/src/ref-rag/fact-extractor.ts`: Added input length validation (100-1000 char limits)
+  - `packages/rag/src/ref-rag/query-guard.ts`: Bounded greedy quantifiers, simplified SQL injection patterns
+  - Replaced ambiguous `(.*)` with bounded `[^x]{0,N}` patterns
+  - Changed `.match()` to `.test()` for performance and safety
+- 🔒 **Bad HTML Filtering (1 fixed)**: Script tag detection now handles edge cases like `</script foo="bar">`
+- 🔒 **Incomplete Sanitization (3 fixed)**: 
+  - Event handler removal now applies repeatedly to prevent reintroduction
+  - Fixed backslash escaping order in auth headers (backslash → quote)
+  - Prevents bypass attempts like `ononclick` → `onclick`
+
+**Security Improvements**
+- ✅ Input length validation before all regex operations
+- ✅ Non-capturing groups `(?:...)` replace capturing groups
+- ✅ Iterative sanitization loops until stable
+- ✅ Proper escape sequence ordering
+- ✅ All fixes include brAInwav branding and comply with production standards
+
+**Alerts Resolved**: #270, #273, #274, #275, #276, #279, #173, #174  
+**Commit**: d000af31f  
+**Documentation**: `tasks/security-vulnerabilities-fix-2025-01/`
+
 ### Added
 
 #### brAInwav Structured Telemetry System (2025-01-12) - PRODUCTION READY ✅
