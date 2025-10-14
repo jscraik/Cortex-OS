@@ -42,8 +42,8 @@ Document the current performance characteristics and bottlenecks within the `@co
 2. **Fastify Lifecycle Hooks** — Recommend dedicated plugins for metrics and instrumentation to prevent per-request closure allocations.
 
 ### brAInwav References
-1. **Cortex-OS Performance Optimization Guide** — Highlights connection pooling, batching, and worker fan-out as baseline strategies for latency-sensitive services.【F:PERFORMANCE_OPTIMIZATION_GUIDE.md†L1-L84】
-2. **Performance Implementation Summary** — Captures organization-wide focus on async batching and pooling for network-bound workloads, which should extend to gateway MCP proxying.【F:PERFORMANCE_IMPLEMENTATION_SUMMARY.md†L1-L40】
+1. **Cortex-OS Performance Optimization Guide** — Highlights connection pooling, batching, and worker fan-out as baseline strategies for latency-sensitive services.【F:project-documentation/PERFORMANCE_OPTIMIZATION_GUIDE.md†L1-L84】
+2. **Performance Implementation Summary** — Captures organization-wide focus on async batching and pooling for network-bound workloads, which should extend to gateway MCP proxying.【F:project-documentation/PERFORMANCE_IMPLEMENTATION_SUMMARY.md†L1-L40】
 
 ### Libraries / Tools
 - `undici` Agent pooling (via `@cortex-os/mcp-core`) for HTTP MCP transports.
