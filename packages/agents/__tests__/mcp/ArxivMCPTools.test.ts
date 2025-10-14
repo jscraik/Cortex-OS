@@ -21,11 +21,11 @@ describe('ArxivMCPTools', () => {
 	let mockMcpClient: any;
 	let mockRegistry: any;
 
-	beforeEach(async () => {
-		vi.clearAllMocks();
+        beforeEach(async () => {
+                vi.clearAllMocks();
 
-		// Mock MCP client
-		mockMcpClient = {
+                // Mock MCP client
+                mockMcpClient = {
 			callTool: vi.fn(),
 			listTools: vi.fn(),
 			close: vi.fn(),
@@ -47,18 +47,25 @@ describe('ArxivMCPTools', () => {
 		const { createEnhancedClient } = await import('@cortex-os/mcp-core/client');
 		(createEnhancedClient as any).mockReturnValue(mockMcpClient);
 
-		const { readAll } = await import('@cortex-os/mcp-registry/fs-store');
-		(readAll as any).mockResolvedValue(mockRegistry);
+                const { readAll } = await import('@cortex-os/mcp-registry/fs-store');
+                (readAll as any).mockResolvedValue(mockRegistry);
 
-		// Mock console methods
-		vi.spyOn(console, 'log').mockImplementation(() => {});
-		vi.spyOn(console, 'error').mockImplementation(() => {});
-		vi.spyOn(console, 'warn').mockImplementation(() => {});
-	});
+                // Mock console methods
+                vi.spyOn(console, 'log').mockImplementation(() => {});
+                vi.spyOn(console, 'error').mockImplementation(() => {});
+                vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-	afterEach(() => {
-		vi.restoreAllMocks();
-	});
+                ArxivMCPTools.resetCache();
+                delete process.env.ARXIV_CACHE_TTL_MS;
+                delete process.env.ARXIV_CACHE_MAX_ENTRIES;
+        });
+
+        afterEach(() => {
+                vi.restoreAllMocks();
+                ArxivMCPTools.resetCache();
+                delete process.env.ARXIV_CACHE_TTL_MS;
+                delete process.env.ARXIV_CACHE_MAX_ENTRIES;
+        });
 
 	describe('Initialization', () => {
 		it('should initialize with default configuration', async () => {
@@ -258,11 +265,11 @@ describe('ArxivMCPTools', () => {
 			await arxivTools.initialize();
 		});
 
-		describe('arxiv_search tool', () => {
-			it('should execute search tool successfully', async () => {
-				const mockSearchResponse = {
-					success: true,
-					data: [
+                describe('arxiv_search tool', () => {
+                        it('should execute search tool successfully', async () => {
+                                const mockSearchResponse = {
+                                        success: true,
+                                        data: [
 						{
 							id: '2301.00001',
 							title: 'Machine Learning Advances',
@@ -365,12 +372,65 @@ describe('ArxivMCPTools', () => {
 					// max_results not specified
 				});
 
-				expect(mockMcpClient.callTool).toHaveBeenCalledWith('search_papers', {
-					query: 'test query',
-					max_results: 5, // Default value
-				});
-			});
-		});
+                                expect(mockMcpClient.callTool).toHaveBeenCalledWith('search_papers', {
+                                        query: 'test query',
+                                        max_results: 5, // Default value
+                                });
+                        });
+
+                        it('should return cached results for identical queries within TTL', async () => {
+                                process.env.ARXIV_CACHE_TTL_MS = '1000';
+                                mockMcpClient.callTool.mockResolvedValue({
+                                        success: true,
+                                        data: [{ id: 'cache-hit' }],
+                                });
+
+                                const tools = arxivTools.getTools();
+                                const searchTool = tools.find((t) => t.name === 'arxiv_search')!;
+
+                                const first = await searchTool.handler({ query: 'cache me' });
+                                expect(first).toMatchObject({ success: true });
+                                expect(mockMcpClient.callTool).toHaveBeenCalledTimes(1);
+
+                                const second = await searchTool.handler({ query: 'cache me' });
+                                expect(second).toEqual(first);
+                                expect(mockMcpClient.callTool).toHaveBeenCalledTimes(1);
+                        });
+
+                        it('should refresh cache after TTL expires', async () => {
+                                process.env.ARXIV_CACHE_TTL_MS = '5';
+                                vi.useFakeTimers();
+                                vi.setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
+
+                                const tools = arxivTools.getTools();
+                                const searchTool = tools.find((t) => t.name === 'arxiv_search')!;
+
+                                mockMcpClient.callTool.mockResolvedValue({ success: true, data: [{ id: 'initial' }] });
+                                await searchTool.handler({ query: 'ttl test' });
+                                expect(mockMcpClient.callTool).toHaveBeenCalledTimes(1);
+
+                                vi.setSystemTime(new Date('2024-01-01T00:00:00.010Z'));
+                                mockMcpClient.callTool.mockResolvedValue({ success: true, data: [{ id: 'refreshed' }] });
+                                await searchTool.handler({ query: 'ttl test' });
+                                expect(mockMcpClient.callTool).toHaveBeenCalledTimes(2);
+
+                                vi.useRealTimers();
+                        });
+
+                        it('should avoid caching unsuccessful responses', async () => {
+                                const tools = arxivTools.getTools();
+                                const searchTool = tools.find((t) => t.name === 'arxiv_search')!;
+
+                                mockMcpClient.callTool.mockResolvedValueOnce({ success: false, error: 'bad request' });
+                                const failed = await searchTool.handler({ query: 'unstable query' });
+                                expect(failed).toMatchObject({ success: false });
+
+                                mockMcpClient.callTool.mockResolvedValueOnce({ success: true, data: [{ id: 'fresh' }] });
+                                const succeeded = await searchTool.handler({ query: 'unstable query' });
+                                expect(succeeded).toMatchObject({ success: true });
+                                expect(mockMcpClient.callTool).toHaveBeenCalledTimes(2);
+                        });
+                });
 
 		describe('arxiv_download tool', () => {
 			it('should execute download tool successfully', async () => {
