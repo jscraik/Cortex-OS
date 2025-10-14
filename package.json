@@ -31,8 +31,8 @@
     "agents:ack": "bash scripts/agents/ack.sh",
     "time:freshness": "node scripts/time-freshness/check.js",
     "phase:advance": "node scripts/phase/auto-advance.js",
-    "models:health": "echo 'MODELS:LIVE:OK engine=mock model=health-check dims=384 norm\u22481.0 latency_ms=50'",
-    "models:smoke": "echo 'MODELS:SMOKE:OK engine=mock model=smoke-test dims=384 norm\u22481.0 latency_ms=75'",
+    "models:health": "echo 'MODELS:LIVE:OK engine=mock model=health-check dims=384 norm≈1.0 latency_ms=50'",
+    "models:smoke": "echo 'MODELS:SMOKE:OK engine=mock model=smoke-test dims=384 norm≈1.0 latency_ms=75'",
     "tdd:watch": "node packages/tdd-coach/dist/cli/tdd-coach.js validate --workspace . --watch",
     "ci:memory:enforce": "bash scripts/ci/memory-enforce.test.sh",
     "ci:memory:enforce:legacy": "node tools/validators/enforce-local-memory.mjs",
@@ -447,6 +447,7 @@
     "@cyclonedx/bom": "^4.1.2",
     "@eslint/js": "^9.37.0",
     "@langchain/langgraph": "0.4.9",
+    "@mermaid-js/mermaid-cli": "^11.12.0",
     "@microsoft/eslint-formatter-sarif": "^3.1.0",
     "@modelcontextprotocol/server-github": "2025.4.8",
     "@nx/devkit": "^21.6.3",
@@ -514,13 +515,14 @@
     "supertest": "^7.1.4",
     "ts-node": "^10.9.2",
     "tsup": "8.5.0",
+    "tsx": "^4.19.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.1.0",
     "uuid": "13.0.0",
+    "validator": "^13.15.15",
     "vitest": "^3.2.4",
-    "yaml": "^2.8.1",
-    "mermaid-cli": "^10.9.1",
-    "tsx": "^4.19.1"
+    "webpack-dev-server": "^5.2.2",
+    "yaml": "^2.8.1"
   },
   "pnpm": {
     "overrides": {
