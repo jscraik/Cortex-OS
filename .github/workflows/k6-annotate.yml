@@ -12,7 +12,7 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
         with:
           version: 9
       - run: pnpm install --frozen-lockfile
