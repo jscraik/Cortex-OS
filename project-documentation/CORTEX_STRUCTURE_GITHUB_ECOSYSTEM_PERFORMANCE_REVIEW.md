@@ -69,13 +69,14 @@ Document the current performance profile of the Cortex Structure GitHub package 
 - Capture `clone.duration_ms`, `validation.duration_ms`, and `octokit.reaction.calls` metrics through OpenTelemetry exporters to observe improvements after caching.
 - Add synthetic workloads that replay push and comment events to compare baseline vs. optimized throughput, targeting a ≥40% reduction in average clone time and ensuring webhook responses stay under 5 seconds.
 - Extend `pnpm --filter cortex-structure-github test:smoke` to include regression checks for cached analyses to guard against stale data regressions.
+- **TODO:** Replace all estimated baseline metrics in the Benchmarks table with actual measured values once instrumentation is complete.
 
 ### Benchmarks
 
 | Scenario | Baseline (Current) | Target |
 |----------|--------------------|--------|
 | Push event processing large repo (10k files) | >60 s end-to-end due to fresh clone + full traversal | <20 s with mirror fetch + diff-based analysis |
-| Comment command response | 15–25 s owing to clone + context analyzer scans | <5 s with cached metadata + batched reactions |
+| Comment command response | 15–25 s (estimate; to be validated with instrumentation) owing to clone + context analyzer scans | <5 s with cached metadata + batched reactions |
 | Auto-fix execution of 20 violations | Sequential 20× fs operations | Batched execution completing in <3 s |
 
 ### Screenshots/Diagrams
