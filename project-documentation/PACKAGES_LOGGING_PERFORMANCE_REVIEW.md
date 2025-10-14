@@ -17,15 +17,15 @@ Evaluate the `packages/cortex-logging` ecosystem to identify performance bottlen
 
 ### Existing Implementation
 - **Location**: `packages/cortex-logging/src/logger.ts`
-- **Current Approach**: Exposes `createLogger` which wraps [`pino`](https://github.com/pinojs/pino) with module metadata, ISO timestamps, and optional custom streams. Log level defaults to `debug` outside production and `info` in production. Structured context objects are forwarded as the first argument to preserve JSON payloads.【F:packages/cortex-logging/src/logger.ts†L1-L48】
+- **Current Approach**: Exposes `createLogger` which wraps [`pino`](https://github.com/pinojs/pino) with module metadata, ISO timestamps, and optional custom streams. Log level defaults to `debug` outside production and `info` in production. Structured context objects are forwarded as the first argument to preserve JSON payloads. (See `packages/cortex-logging/src/logger.ts`, lines 1–48.)
 - **Limitations**:
   - No asynchronous transport or worker thread, so JSON serialization and writes occur on the main event loop, increasing tail latency under load.
   - Lack of backpressure handling for slow destinations; `pino` defaults to synchronous `stdout` writes unless `thread-stream` or `transport` options are configured.
   - Context merge strategy only inspects the first variadic argument, potentially triggering hidden object allocations or causing log metadata drops when multiple context objects are supplied.
 
 ### Related Components
-- **Event Contracts**: `packages/cortex-logging/src/events/cortex-logging-events.ts` defines A2A schemas for log creation, streaming, archival, and error pattern detection. These events are schema-validated but do not define batching semantics or throttling rules, leading to potential fan-out overhead when high-volume streams emit per log entry events.【F:packages/cortex-logging/src/events/cortex-logging-events.ts†L1-L83】
-- **MCP Surface**: `packages/cortex-logging/src/mcp/tools.ts` declares MCP tool schemas for creating loggers, logging messages, querying, and reconfiguring loggers. The definitions capture input validation but omit performance guardrails such as rate limits, pagination strategies beyond a hard cap of 1000 results, and streaming responses for large queries.【F:packages/cortex-logging/src/mcp/tools.ts†L1-L66】
+- **Event Contracts**: `packages/cortex-logging/src/events/cortex-logging-events.ts` defines A2A schemas for log creation, streaming, archival, and error pattern detection. These events are schema-validated but do not define batching semantics or throttling rules, leading to potential fan-out overhead when high-volume streams emit per log entry events. (See `packages/cortex-logging/src/events/cortex-logging-events.ts`, lines 1–83.)
+- **MCP Surface**: `packages/cortex-logging/src/mcp/tools.ts` declares MCP tool schemas for creating loggers, logging messages, querying, and reconfiguring loggers. The definitions capture input validation but omit performance guardrails such as rate limits, pagination strategies beyond a hard cap of 1000 results, and streaming responses for large queries. (See `packages/cortex-logging/src/mcp/tools.ts`, lines 1–66.)
 
 ### brAInwav-Specific Context
 - **MCP Integration**: The MCP toolset implies server-side operations that may instantiate loggers dynamically. Without connection pooling or transport caching, repeated tool invocations may duplicate logger instances and flush logs synchronously, stressing I/O.
