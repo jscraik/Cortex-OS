@@ -871,3 +871,37 @@
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
   },
 }
+
+  // Performance Optimizations - Added 2025-01-14
+  "typescript.tsserver.maxTsServerMemory": 8192,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.tsserver.useSyntaxServer": "auto",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/out": true,
+    "**/.nx": true,
+    "**/coverage": true,
+    "**/htmlcov": true,
+    "**/.venv": true,
+    "**/target": true,
+    "**/__tests__": true,
+    "**/test-results": true,
+    "**/playwright-report": true,
+    "**/pnpm-lock.yaml": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.nx/**": true,
+    "**/dist/**": true,
+    "**/out/**": true,
+    "**/coverage/**": true,
+    "**/htmlcov/**": true,
+    "**/.venv/**": true,
+    "**/target/**": true,
+    "**/__tests__/**": true,
+    "**/test-results/**": true,
+    "**/playwright-report/**": true
+  }
+}
