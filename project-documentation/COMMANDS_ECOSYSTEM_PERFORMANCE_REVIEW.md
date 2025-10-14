@@ -55,12 +55,12 @@
    - Introduce concurrency limits or resource pools inside `expandBangs`/`expandAtRefs` so many inclusions execute predictably, and ensure byte counters remain accurate under asynchronous execution.
 
 ## Implementation Roadmap
-| Phase | Target Date | Key Tasks | Dependencies |
+| Phase | Timeframe | Key Tasks | Dependencies |
 | --- | --- | --- | --- |
-| 1 — Profiling & Telemetry | 2025-10-20 | Wire OTEL spans, latency histograms, and cache hit counters inside loader and runner paths. Establish baseline metrics dashboards. | `@cortex-os/observability` updates for new metrics namespace |
-| 2 — Command Cache & Parallel Loader | 2025-10-27 | Implement session cache with watcher/TTL invalidation, refactor loader to use bounded concurrency, add unit coverage for reload semantics. | File watching via `chokidar` (existing dependency check) |
-| 3 — Adapter Process Pooling | 2025-11-03 | Stand up shared worker for `pnpm` operations, add request queueing, and expose health endpoints/logging for long-running tasks. | Coordination with Dev Productivity to host shared runner |
-| 4 — Template Memoization & Concurrency Guards | 2025-11-10 | Add memoization layer for render pipeline, enforce inclusion concurrency limits, expand tests for byte-cap accuracy. | Cache invalidation heuristics + config surfacing |
+| 1 — Profiling & Telemetry | Week 1 | Wire OTEL spans, latency histograms, and cache hit counters inside loader and runner paths. Establish baseline metrics dashboards. | `@cortex-os/observability` updates for new metrics namespace |
+| 2 — Command Cache & Parallel Loader | Week 2 | Implement session cache with watcher/TTL invalidation, refactor loader to use bounded concurrency, add unit coverage for reload semantics. | File watching via `chokidar` (existing dependency check) |
+| 3 — Adapter Process Pooling | Week 3 | Stand up shared worker for `pnpm` operations, add request queueing, and expose health endpoints/logging for long-running tasks. | Coordination with Dev Productivity to host shared runner |
+| 4 — Template Memoization & Concurrency Guards | Week 4 | Add memoization layer for render pipeline, enforce inclusion concurrency limits, expand tests for byte-cap accuracy. | Cache invalidation heuristics + config surfacing |
 
 ## Risks & Considerations
 - Cache invalidation errors could expose stale commands; pair caching rollout with config toggles and telemetry to detect misses quickly.
