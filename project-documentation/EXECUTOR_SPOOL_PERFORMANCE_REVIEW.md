@@ -17,16 +17,16 @@ Provide a focused performance assessment of the `@cortex-os/executor-spool` pack
 
 ### Existing Implementation
 - **Location**: `packages/executor-spool/src/spool.ts`
-- **Current Approach**: Maintains an in-memory `Map` of file snapshots, eagerly reading entire files on first touch and re-writing whole contents for each mutation before producing per-file diffs with `@cortex-os/patchkit`. Commits iterate serially through tracked entries, re-applying validators and optional commit gates prior to mutating on-disk state. 【F:packages/executor-spool/src/spool.ts†L1-L205】
+- **Current Approach**: Maintains an in-memory `Map` of file snapshots, eagerly reading entire files on first touch and re-writing whole contents for each mutation before producing per-file diffs with `@cortex-os/patchkit`. Commits iterate serially through tracked entries, re-applying validators and optional commit gates prior to mutating on-disk state. ([packages/executor-spool/src/spool.ts](../../packages/executor-spool/src/spool.ts#L1-L205))
 - **Limitations**:
   - Full-file reads/writes on every operation cause quadratic behavior when manipulating large assets; there is no chunking or streaming diff support.
   - `diff()` recalculates `createDiff` for every touched entry on demand, which scales poorly for large batches and re-runs validators with identical inputs.
   - `batch()` executes sequentially without short-circuiting for idempotent operations or coalescing of same-file updates, amplifying I/O churn.
-  - `reset()` rewrites every tracked entry even when unchanged since last commit, extending rollback latency under heavy workloads. 【F:packages/executor-spool/src/spool.ts†L131-L204】
+  - `reset()` rewrites every tracked entry even when unchanged since last commit, extending rollback latency under heavy workloads. ([packages/executor-spool/src/spool.ts](../../packages/executor-spool/src/spool.ts#L131-L204))
 
 ### Related Components
-- **Persistent Shell**: `packages/executor-spool/src/shell.ts` — Provides a long-lived bash process with serialized command execution through a promise chain, sentinel-based completion detection, and 2 MB aggregate stdout buffering. 【F:packages/executor-spool/src/shell.ts†L1-L216】
-- **Restricted Fetch**: `packages/executor-spool/src/fetch.ts` — Wraps global `fetch` with host allowlists, simple token-bucket rate limiting, and eager buffering of entire response bodies into memory. 【F:packages/executor-spool/src/fetch.ts†L1-L108】
+- **Persistent Shell**: `packages/executor-spool/src/shell.ts` — Provides a long-lived bash process with serialized command execution through a promise chain, sentinel-based completion detection, and 2 MB aggregate stdout buffering. ([packages/executor-spool/src/shell.ts](../../packages/executor-spool/src/shell.ts#L1-L216))
+- **Restricted Fetch**: `packages/executor-spool/src/fetch.ts` — Wraps global `fetch` with host allowlists, simple token-bucket rate limiting, and eager buffering of entire response bodies into memory. ([packages/executor-spool/src/fetch.ts](../../packages/executor-spool/src/fetch.ts#L1-L108))
 
 ### brAInwav-Specific Context
 - **MCP Integration**: Executor spool backs MCP tool execution, so filesystem diffs gate outbound mutations while persistent shells execute toolchains with policy enforcement.
