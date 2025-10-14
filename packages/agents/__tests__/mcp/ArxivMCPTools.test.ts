@@ -158,11 +158,11 @@ describe('ArxivMCPTools', () => {
 			expect(downloadTool?.schema.parse).toBeDefined();
 		});
 
-		it('should validate search tool parameters', () => {
-			const tools = arxivTools.getTools();
-			const searchTool = tools.find((t) => t.name === 'arxiv_search');
+                it('should validate search tool parameters', () => {
+                        const tools = arxivTools.getTools();
+                        const searchTool = tools.find((t) => t.name === 'arxiv_search');
 
-			expect(
+                        expect(
 				searchTool?.schema.parse({
 					query: 'machine learning',
 					max_results: 5,
@@ -218,13 +218,42 @@ describe('ArxivMCPTools', () => {
 					paper_id: '2301.00001',
 					format: 'invalid', // Should be one of the enum values
 				}),
-			).toThrow();
-		});
-	});
+                        ).toThrow();
+                });
 
-	describe('Tool Execution', () => {
-		beforeEach(async () => {
-			arxivTools = new ArxivMCPTools();
+                it('should accept advanced search modifiers', () => {
+                        const tools = arxivTools.getTools();
+                        const searchTool = tools.find((t) => t.name === 'arxiv_search');
+
+                        expect(
+                                searchTool?.schema.parse({
+                                        query: 'graph transformers',
+                                        field: 'title',
+                                        sort_by: 'lastUpdatedDate',
+                                }),
+                        ).toEqual({
+                                query: 'graph transformers',
+                                field: 'title',
+                                sort_by: 'lastUpdatedDate',
+                        });
+
+                        expect(
+                                searchTool?.schema.parse({
+                                        query: 'graph transformers',
+                                        field: 'author',
+                                        sort_by: 'submittedDate',
+                                }),
+                        ).toEqual({
+                                query: 'graph transformers',
+                                field: 'author',
+                                sort_by: 'submittedDate',
+                        });
+                });
+        });
+
+        describe('Tool Execution', () => {
+                beforeEach(async () => {
+                        arxivTools = new ArxivMCPTools();
 			mockMcpClient.listTools.mockResolvedValue({ success: true });
 			await arxivTools.initialize();
 		});

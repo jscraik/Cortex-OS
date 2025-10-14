@@ -97,6 +97,56 @@ export { memoryStore } from './store/memory.js';
 export { createWorkspaceManager, WorkspaceManager } from './workspace/manager.js';
 export { createScopedStore, ScopedStore } from './workspace/scoped-store.js';
 
+// REF‑RAG exports
+export {
+	// Core types and enums
+	RiskClass,
+	ContextBand,
+	type RefRagConfig,
+	type RefRagProcessOptions,
+	type HybridContextPack,
+	type QueryGuardResult,
+	type RelevanceScore,
+	type ExpansionPlan,
+	type VerificationResult,
+	type EscalationTrace,
+	type TriBandGenerationRequest,
+	// Configuration and budgets
+	DEFAULT_REF_RAG_CONFIG,
+	createRefRagConfig,
+	validateRefRagConfig,
+	isRefRagReady,
+	getRefRagStatus,
+	DEFAULT_BUDGETS,
+	CONSERVATIVE_BUDGETS,
+	AGGRESSIVE_BUDGETS,
+	getBudgetForRiskClass,
+	validateBudgets,
+	createCustomBudgets,
+	BudgetEstimator,
+	getEnvironmentBudgets,
+	type BudgetProfile,
+	type RiskClassBudgets,
+	type BandBudgets,
+	// Core components
+	FactExtractor,
+	CompressionEncoder,
+	QueryGuard,
+	RelevancePolicy,
+	RefRagPipelineImpl,
+	// Factory functions
+	createFactExtractor,
+	createCompressionEncoder,
+	createQueryGuard,
+	createRelevancePolicy,
+	createRefRagPipeline,
+	// Type exports
+	type FactExtractorConfig,
+	type QueryGuardConfig,
+	type RelevancePolicyConfig,
+	type RefRagPipeline,
+} from './ref-rag/index.js';
+
 const InputSchema = z.object({
 	config: AgentConfigSchema,
 	query: RAGQuerySchema,

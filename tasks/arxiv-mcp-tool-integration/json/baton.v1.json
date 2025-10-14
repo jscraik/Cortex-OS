@@ -1,0 +1,58 @@
+{
+  "version": "v1.1",
+  "task_id": "arxiv-mcp-tool-integration",
+  "created": "2025-01-12T22:50:00Z",
+  "status": "active",
+  "goal": "Integrate arXiv MCP as a tool available to LangGraph agents",
+  "entry_points": [
+    "packages/agent-toolkit/src/mcp/arxiv/",
+    "apps/agents/researcher/src/graph/graph.ts"
+  ],
+  "stack": [
+    "TypeScript",
+    "LangGraph",
+    "@langchain/mcp-adapters",
+    "Zod validation",
+    "Vitest testing"
+  ],
+  "constraints": [
+    "Follow brAInwav branding standards",
+    "Use named exports only",
+    "Functions ≤ 40 lines",
+    "90%+ test coverage",
+    "Live model requirements only"
+  ],
+  "testing": {
+    "coverage_target": "≥90% global, ≥95% changed lines",
+    "types": ["unit", "integration"],
+    "frameworks": ["vitest", "jest-axe"]
+  },
+  "planner": {
+    "plan_paths": {
+      "implementation_plan_md": "~/tasks/arxiv-mcp-tool-integration/implementation-plan.md",
+      "tdd_plan_md": "~/tasks/arxiv-mcp-tool-integration/tdd-plan.md", 
+      "checklist_md": "~/tasks/arxiv-mcp-tool-integration/implementation-checklist.md",
+      "summary_md": "~/tasks/arxiv-mcp-tool-integration/SUMMARY.md"
+    },
+    "file_tree": [
+      "packages/agent-toolkit/src/mcp/arxiv/index.ts",
+      "packages/agent-toolkit/src/mcp/arxiv/schema.ts",
+      "packages/agent-toolkit/src/mcp/arxiv/normalize.ts",
+      "packages/agent-toolkit/src/mcp/arxiv/rateLimit.ts",
+      "packages/agent-toolkit/__tests__/mcp/arxiv.test.ts",
+      "apps/agents/researcher/src/graph/graph.ts",
+      "apps/agents/researcher/src/config/arxiv.ts",
+      "apps/agents/researcher/__tests__/arxiv-mcp.integration.test.ts",
+      "docs/adr/002-arxiv-mcp-as-tool.md",
+      ".env.example"
+    ],
+    "commands": {
+      "install": "pnpm i",
+      "lint": "pnpm lint:smart",
+      "typecheck": "pnpm typecheck:smart", 
+      "test": "pnpm test:smart -- --coverage"
+    },
+    "coverage_target": "≥ 90% global, ≥ 95% changed lines",
+    "conventional_commits": true
+  }
+}

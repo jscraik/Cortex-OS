@@ -9,7 +9,7 @@
 
 ### 1. Security Fix ✅
 **File**: `packages/mcp-registry/src/providers/mcpmarket.ts:49`  
-**Issue**: Hardcoded absolute path `/Users/jamiecraik/.Cortex-OS/arxiv-mcp-wrapper.sh`  
+**Issue**: Hardcoded absolute path `/Users/jamiecraik/.Cortex-OS/scripts/arxiv-mcp-wrapper.sh`  
 **Fix**: `command: process.env.ARXIV_WRAPPER_PATH || './scripts/arxiv-mcp-wrapper.sh'`  
 **Status**: ✅ APPLIED
 

@@ -25,7 +25,7 @@ Cortex-OS is a self-contained, local-first **Agentic Second Brain Runtime (ASBR)
 - **Deterministic & evidence-backed.** Reproducible runs; artifacted logs, traces, SBOM/provenance.
 - **Single integration hub.** Exactly one MCP server; Tools/Resources/Prompts are **registered** (not embedded).
 - **Tight domain boundaries.** No cross-domain imports; communicate via A2A topics or declared contracts/schemas.
-- **Security, A11y, Observability by default.** API-key/OAuth, WCAG 2.2 AA, structured logs + OTel.
+- **Security, A11y, Observability by default.** API-key/OAuth, WCAG 2.2 AA, structured logs + OTel; secrets retrieved on-demand via the 1Password CLI (`op`) with no long-lived copies.
 - **Small, shippable steps.** Quality gates: coverage/mutation, a11y, security, structure guard.
 - **Time Freshness Guard.** All dates anchored to harness "today"; ISO-8601 surfaced to users.
 - **Hybrid Model — Live Only.** Embeddings/rerankers/generation must hit **live** MLX/Ollama/frontier engines (no stubs/recordings/dry-runs).

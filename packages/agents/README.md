@@ -95,6 +95,24 @@ npm start
 - **`call_mcp_tool`**: Call a tool on a specific MCP server
 - **`get_mcp_server_capabilities`**: Get detailed capabilities of a specific MCP server
 
+#### arXiv Advanced Search Guidance
+
+The ToolLayer agent recognizes lightweight phrases and maps them to the structured parameters expected by the `arxiv_search`
+tool. Prompt engineers can combine these modifiers with a standard research request:
+
+| Phrase | Parsed Parameter | Notes |
+| --- | --- | --- |
+| `title-only`, `search titles only`, `title field` | `field: "title"` | Limits the query to paper titles. |
+| `author-only`, `by author` | `field: "author"` | Restricts the search to author metadata. |
+| `abstract-only`, `summary only` | `field: "abstract"` | Focuses the search on abstracts/summaries. |
+| `subject category`, `category only` | `field: "category"` | Targets arXiv subject classifications. |
+| `sort by latest`, `latest updates`, `most recent` | `sort_by: "lastUpdatedDate"` | Returns the newest revisions first. |
+| `sort by submission date`, `chronological order` | `sort_by: "submittedDate"` | Orders by original submission time. |
+| `sort by relevance`, `best match` | `sort_by: "relevance"` | Explicitly request relevance ranking (default). |
+
+Example prompt: `run a title-only arxiv search for "federated learning" and sort by latest updates` → the agent calls
+`arxiv_search` with `{ query: "federated learning", field: "title", sort_by: "lastUpdatedDate" }`.
+
 ### Memory Management Tools
 
 - **`store_memory`**: Store a memory in the Cortex-OS memory system

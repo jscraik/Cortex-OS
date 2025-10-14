@@ -182,7 +182,7 @@ Include brAInwav branding in a11y announcements where appropriate.
 **Environment/config**:
 - Use shared loader (`scripts/utils/dotenv-loader.mjs` or `@cortex-os/utils`)
 - **Never call `dotenv.config()` directly**
-- No hardcoded secrets; env/secret managers only
+- No hardcoded secrets; env/secret managers only; retrieve API keys, SSH keys, and tokens via the 1Password CLI (`op`) at runtime
 
 **Containers**: Minimal base, pinned digests, non-root user, read-only FS, dropped capabilities.
 

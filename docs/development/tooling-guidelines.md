@@ -213,6 +213,29 @@ All code must pass these automated checks before merge:
 - [Architecture Guide](../architecture/README.md)
 - [Testing Guide](../testing.md)
 
+## Frontend Development Guidelines
+
+### Angular CLI Usage
+
+**Use Angular CLI Directually:**
+```bash
+# Instead of extension, use CLI in terminal
+ng serve                    # Development server
+ng build                    # Build project
+ng test                     # Run tests
+```
+
+**VS Code Extensions:**
+- Angular Language Service - Better TypeScript support
+- Angular Snippets - Code templates
+- ESLint + Prettier - Code formatting
+
+**For Your Workflow:**
+Since you disabled the problematic extension, you can still:
+1. Use Angular CLI in terminals - More control and debugging
+2. Run ng serve manually - When developing Angular apps
+3. Use ng build - When building for production
+
 ## Policy Updates
 
 This policy is version-controlled and changes require:
@@ -222,11 +245,11 @@ This policy is version-controlled and changes require:
 3. Update to validator implementation (if needed)
 4. Communication to #brAInwav-engineering channel
 
-**Policy Version:** 1.0  
-**Effective Date:** 2025-10-05  
+**Policy Version:** 1.0
+**Effective Date:** 2025-10-05
 **Next Review:** 2025-11-05
 
 ---
 
-**Maintained by:** brAInwav Engineering Team  
+**Maintained by:** brAInwav Engineering Team
 **Questions:** #brAInwav-engineering or open an issue

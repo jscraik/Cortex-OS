@@ -1,0 +1,99 @@
+[
+  {
+    "file": "packages/agent-toolkit/src/mcp/arxiv/schema.ts",
+    "line": 190,
+    "end_line": 194,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Default export used instead of named exports, violating brAInwav coding standards",
+    "evidence": "export default {\n  RemoteToolSchema,\n  RemoteToolManifestSchema,\n  validateRemoteToolManifest,\n  validateRemoteToolManifestSync,\n  validateRemoteTool,\n};",
+    "fix": "Remove default export and use named exports only. Users should import specific functions.",
+    "tests_to_add": "Test that verifies all exports are named (no default export present)",
+    "rule": "brainwav.no-default-exports",
+    "standards": [
+      "codestyle:2.1-named-exports-only",
+      "governance:constitution#brainwav-standards",
+      "checklist:2.1-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/agent-toolkit/src/mcp/arxiv/rateLimit.ts",
+    "line": 105,
+    "end_line": 187,
+    "severity": "medium",
+    "category": "codestyle",
+    "description": "Function processQueue exceeds 40-line limit (82 lines), violating brAInwav function size standard",
+    "evidence": "const processQueue = async (\n  clientKey: string,\n  state: RateLimiterState\n): Promise<void> => {\n  // ... 82 lines of implementation ...\n};",
+    "fix": "Split into smaller functions: extractRequestFromQueue(), executeRequestWithRetry(), handleRequestError()",
+    "tests_to_add": "Test each extracted function independently for single responsibility",
+    "rule": "brainwav.function-size-limit",
+    "standards": [
+      "codestyle:2.2-function-size-40-lines",
+      "checklist:2.1-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/agent-toolkit/src/mcp/arxiv/normalize.ts",
+    "line": 231,
+    "end_line": 281,
+    "severity": "medium", 
+    "category": "codestyle",
+    "description": "Function normalizeArxivEntry exceeds 40-line limit (50 lines), violating brAInwav function size standard",
+    "evidence": "const normalizeArxivEntry = (\n  entry: ArxivMcpEntry\n): ArxivPaperItemType | null => {\n  // ... 50 lines of implementation ...\n};",
+    "fix": "Split into validateRequiredFields(), extractAndValidateUrls(), buildNormalizedEntry()",
+    "tests_to_add": "Test each validation step independently with focused test cases",
+    "rule": "brainwav.function-size-limit",
+    "standards": [
+      "codestyle:2.2-function-size-40-lines",
+      "checklist:2.1-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/agent-toolkit/src/mcp/arxiv/normalize.ts",
+    "line": 312,
+    "end_line": 405,
+    "severity": "medium",
+    "category": "codestyle", 
+    "description": "Function normalizeArxivResponse exceeds 40-line limit (93 lines), violating brAInwav function size standard",
+    "evidence": "export const normalizeArxivResponse = (\n  mcpResponse: unknown\n): ArxivSearchOutputType => {\n  // ... 93 lines of implementation ...\n};",
+    "fix": "Split into validateMcpResponse(), extractRawEntries(), processEntries(), buildFinalOutput()",
+    "tests_to_add": "Test each processing step independently with edge cases",
+    "rule": "brainwav.function-size-limit",
+    "standards": [
+      "codestyle:2.2-function-size-40-lines",
+      "checklist:2.1-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/agent-toolkit/src/mcp/arxiv/index.ts",
+    "line": 58,
+    "end_line": 106,
+    "severity": "medium",
+    "category": "codestyle",
+    "description": "Function makeArxivRequest exceeds 40-line limit (48 lines), violating brAInwav function size standard", 
+    "evidence": "const makeArxivRequest = async (\n  config: ArxivMcpConfig,\n  input: ArxivSearchInputType\n): Promise<unknown> => {\n  // ... 48 lines of implementation ...\n};",
+    "fix": "Split into prepareRequest(), executeHttpRequest(), handleResponse()",
+    "tests_to_add": "Test request preparation, HTTP execution, and response handling separately",
+    "rule": "brainwav.function-size-limit", 
+    "standards": [
+      "codestyle:2.2-function-size-40-lines",
+      "checklist:2.1-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/agent-toolkit/src/mcp/arxiv/index.ts",
+    "line": 113,
+    "end_line": 157,
+    "severity": "medium",
+    "category": "codestyle",
+    "description": "Function createArxivSearchTool exceeds 40-line limit (44 lines), violating brAInwav function size standard",
+    "evidence": "const createArxivSearchTool = (config: ArxivMcpConfig): DynamicStructuredTool => {\n  // ... 44 lines of implementation ...\n};",
+    "fix": "Split into createToolConfig(), createToolFunction(), handleToolExecution()",
+    "tests_to_add": "Test tool configuration, function creation, and execution handling separately",
+    "rule": "brainwav.function-size-limit",
+    "standards": [
+      "codestyle:2.2-function-size-40-lines", 
+      "checklist:2.1-constitutional-compliance"
+    ]
+  }
+]

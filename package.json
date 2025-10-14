@@ -31,8 +31,8 @@
     "agents:ack": "bash scripts/agents/ack.sh",
     "time:freshness": "node scripts/time-freshness/check.js",
     "phase:advance": "node scripts/phase/auto-advance.js",
-    "models:health": "echo 'MODELS:LIVE:OK engine=mock model=health-check dims=384 norm≈1.0 latency_ms=50'",
-    "models:smoke": "echo 'MODELS:SMOKE:OK engine=mock model=smoke-test dims=384 norm≈1.0 latency_ms=75'",
+    "models:health": "echo 'MODELS:LIVE:OK engine=mock model=health-check dims=384 norm\u22481.0 latency_ms=50'",
+    "models:smoke": "echo 'MODELS:SMOKE:OK engine=mock model=smoke-test dims=384 norm\u22481.0 latency_ms=75'",
     "tdd:watch": "node packages/tdd-coach/dist/cli/tdd-coach.js validate --workspace . --watch",
     "ci:memory:enforce": "bash scripts/ci/memory-enforce.test.sh",
     "ci:memory:enforce:legacy": "node tools/validators/enforce-local-memory.mjs",
@@ -75,6 +75,11 @@
     "memory:daemon": "bash scripts/memory-monitor.sh daemon",
     "memory:clean": "bash scripts/memory-manager.sh --aggressive",
     "memory:clean:gentle": "bash scripts/memory-manager.sh --gentle",
+    "process:health": "bash scripts/process-health-monitor.sh",
+    "session:manager": "bash scripts/session-manager.sh",
+    "session:shutdown": "bash scripts/session-manager.sh shutdown",
+    "session:restart-mcp": "bash scripts/session-manager.sh restart-mcp",
+    "session:restart-dev": "bash scripts/session-manager.sh restart-dev",
     "vscode:optimize": "echo 'VS Code optimization disabled for stability'",
     "vscode:optimize:gentle": "echo 'VS Code optimization disabled for stability'",
     "test": "node scripts/nx-smart.mjs test",
@@ -139,6 +144,14 @@
     "security:scan:brainwav": "uv run semgrep --config semgrep/brainwav.yml --error --json --output reports/semgrep-brainwav-results.json",
     "security:scan:brainwav:diff": "uv run semgrep --config semgrep/brainwav.yml --baseline reports/semgrep-brainwav-baseline.json --json --output reports/semgrep-brainwav-current.json || true",
     "security:scan:brainwav:baseline": "uv run semgrep --config semgrep/brainwav.yml --json --output reports/semgrep-brainwav-baseline.json",
+    "ops:cache:stats": "node scripts/ops-cli.mjs cache stats",
+    "ops:cache:clean": "node scripts/ops-cli.mjs cache clean",
+    "ops:cache:reset": "node scripts/ops-cli.mjs cache clean --reset",
+    "ops:perf:optimize": "node scripts/ops-cli.mjs perf optimize",
+    "ops:system:info": "node scripts/ops-cli.mjs info system",
+    "ops:env:info": "node scripts/ops-cli.mjs info env",
+    "ops:monitor:start": "bash scripts/performance-monitor.sh",
+    "ops:monitor:check": "bash scripts/performance-monitor.sh | head -50",
     "security:snyk:auth": "snyk auth --quiet || true",
     "security:snyk:deps": "mkdir -p reports && snyk test --all-projects --detection-depth=4 --json-file-output=reports/snyk-deps.json || true",
     "security:snyk:code": "mkdir -p reports && snyk code test --severity-threshold=medium --json-file-output=reports/snyk-code.json || true",
@@ -372,7 +385,9 @@
     "performance:analytics": "tsx scripts/performance/analytics-engine.ts",
     "performance:router": "tsx scripts/performance/intelligent-router.ts",
     "performance:gpu": "tsx scripts/performance/gpu-manager.ts",
-    "performance:alerts": "tsx scripts/performance/alerting-system.ts"
+    "performance:alerts": "tsx scripts/performance/alerting-system.ts",
+    "config:validate": "tsx packages/router/scripts/validate-config.ts",
+    "diagram:build": "mermaid --theme docs/architecture/mermaid.theme.cortex.json -i docs/architecture/route-by-tier.mmd -o docs/architecture/route-by-tier.svg"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",
@@ -503,7 +518,9 @@
     "typescript-eslint": "^8.1.0",
     "uuid": "13.0.0",
     "vitest": "^3.2.4",
-    "yaml": "^2.8.1"
+    "yaml": "^2.8.1",
+    "mermaid-cli": "^10.9.1",
+    "tsx": "^4.19.1"
   },
   "pnpm": {
     "overrides": {

@@ -3,7 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { safeFetchJson } from '@cortex-os/utils';
 import { runProcess } from '../lib/run-process.js';
-import type { ChatMessage, GenerationConfig, Generator } from './index.js';
+import type {
+	ChatMessage,
+	GenerationConfig,
+	Generator,
+	TriBandGenerationConfig,
+	TriBandGenerationResponse
+} from './index.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -207,7 +213,8 @@ export class MultiModelGenerator implements Generator {
 		model: ModelSpec,
 		prompt: string,
 		config: Partial<GenerationConfig>,
-	): Promise<string> {
+		triBandConfig?: TriBandGenerationConfig,
+	): Promise<{ text: string; bandUsage?: any; virtualTokenMode?: string }> {
 		const pythonScript = this.getMLXPythonScript();
 		const input = JSON.stringify({
 			model: model.model,
@@ -215,14 +222,24 @@ export class MultiModelGenerator implements Generator {
 			max_tokens: config.maxTokens,
 			temperature: config.temperature,
 			top_p: config.topP,
+			// REF‑RAG tri-band context
+			bandA: triBandConfig?.bandA,
+			bandB: triBandConfig?.bandB ? Array.from(triBandConfig.bandB) : [],
+			bandC: triBandConfig?.bandC || [],
+			virtualTokenMode: triBandConfig?.virtualTokenMode || 'pass-through',
+			enableStructuredOutput: triBandConfig?.enableStructuredOutput || false,
 		});
-		const result = await runProcess<{ text?: string; error?: string }>(
+		const result = await runProcess<{ text?: string; error?: string; bandUsage?: any; virtualTokenMode?: string }>(
 			'python3',
 			['-c', pythonScript],
 			{ input, timeoutMs: this.timeout },
 		);
 		if (result.error) throw new Error(`MLX error: ${result.error}`);
-		return result.text || '';
+		return {
+			text: result.text || '',
+			bandUsage: result.bandUsage,
+			virtualTokenMode: result.virtualTokenMode,
+		};
 	}
 
 	/**
@@ -261,6 +278,225 @@ export class MultiModelGenerator implements Generator {
 	private getMLXPythonScript(): string {
 		const scriptPath = path.join(packageRoot, 'python', 'mlx_generate.py');
 		return readFileSync(scriptPath, 'utf8');
+	}
+
+	/**
+	 * Generate response with tri-band context
+	 */
+	async generateWithBands(
+		query: string,
+		config: TriBandGenerationConfig,
+	): Promise<TriBandGenerationResponse> {
+		const startTime = Date.now();
+
+		// Build enhanced prompt with tri-band context
+		const enhancedPrompt = this.buildTriBandPrompt(query, config);
+
+		// Calculate token usage for bands
+		const bandUsage = this.calculateBandUsage(config);
+
+		// Generate response using backend that supports tri-band context
+		let baseResponse: GenerationResponse;
+		let backendBandUsage: any;
+		let virtualTokenMode: string = config.virtualTokenMode || 'pass-through';
+
+		if (this.model.backend === 'mlx') {
+			// Use MLX with tri-band support
+			const mlxResult = await this.generateWithMLX(this.model, enhancedPrompt, config, config);
+			baseResponse = {
+				content: mlxResult.text,
+				provider: this.model.backend,
+				usage: this.estimateUsage(enhancedPrompt, mlxResult.text),
+			};
+			backendBandUsage = mlxResult.bandUsage;
+			virtualTokenMode = mlxResult.virtualTokenMode || virtualTokenMode;
+		} else {
+			// Use other backends with standard generation
+			baseResponse = await this.generate(enhancedPrompt, {
+				maxTokens: config.maxTokens,
+				temperature: config.temperature,
+				topP: config.topP,
+			});
+
+			// Handle virtual tokens for non-MLX backends
+			if (config.bandB && config.virtualTokenMode !== 'ignore') {
+				baseResponse = await this.handleVirtualTokens(
+					baseResponse,
+					config.bandB,
+					config.virtualTokenMode || 'pass-through',
+				);
+			}
+		}
+
+		// Post-process structured facts if enabled
+		let processedResponse = baseResponse;
+		if (config.enableStructuredOutput && config.bandC) {
+			processedResponse = await this.processStructuredFacts(
+				baseResponse,
+				config.bandC,
+			);
+		}
+
+		const processingTime = Date.now() - startTime;
+
+		// Use backend band usage if available, otherwise calculate locally
+		const finalBandUsage = backendBandUsage || bandUsage;
+
+		return {
+			...processedResponse,
+			bandUsage: finalBandUsage,
+			contextMetadata: {
+				riskClass: 'medium', // Would be passed from context pack
+				totalChunks: (finalBandUsage.bandAChars > 0 ? 1 : 0) + (finalBandUsage.bandCFacts > 0 ? 1 : 0),
+				expansionRatio: finalBandUsage.bandAChars > 0 ?
+					finalBandUsage.bandAChars / (finalBandUsage.bandAChars + finalBandUsage.bandBVirtualTokens * 4 + finalBandUsage.bandCFacts * 10) : 0.3,
+			},
+			usage: {
+				...processedResponse.usage,
+				totalTokens: (processedResponse.usage?.totalTokens || 0) +
+					Math.floor(finalBandUsage.bandBVirtualTokens * 0.5), // Estimate virtual token contribution
+			},
+		};
+	}
+
+	/**
+	 * Estimate token usage for response
+	 */
+	private estimateUsage(prompt: string, response: string) {
+		return {
+			promptTokens: Math.floor(prompt.length / 4),
+			completionTokens: Math.floor(response.length / 4),
+			totalTokens: Math.floor((prompt.length + response.length) / 4),
+		};
+	}
+
+	/**
+	 * Build enhanced prompt with tri-band context
+	 */
+	private buildTriBandPrompt(query: string, config: TriBandGenerationConfig): string {
+		let prompt = query;
+
+		// Add Band A context (full text)
+		if (config.bandA) {
+			prompt += `\n\nContext:\n${config.bandA}`;
+		}
+
+		// Add Band C context (structured facts)
+		if (config.bandC && config.bandC.length > 0) {
+			prompt += '\n\nKey Facts:\n';
+			config.bandC.forEach(fact => {
+				const confidenceStr = fact.confidence > 0.8 ? '' : ` (confidence: ${Math.round(fact.confidence * 100)}%)`;
+				prompt += `- ${fact.type}: ${fact.value}${confidenceStr}\n`;
+			});
+		}
+
+		// Add instructions based on available context
+		if (config.bandA || config.bandC) {
+			prompt += '\n\nPlease provide a comprehensive answer based on the provided context. ';
+			if (config.bandC && config.bandC.length > 0) {
+				prompt += 'Pay special attention to the numerical facts and structured data provided. ';
+			}
+			prompt += 'Cite your sources when appropriate.';
+		}
+
+		return prompt;
+	}
+
+	/**
+	 * Calculate band usage statistics
+	 */
+	private calculateBandUsage(config: TriBandGenerationConfig) {
+		return {
+			bandAChars: config.bandA ? config.bandA.length : 0,
+			bandBVirtualTokens: config.bandB ? config.bandB.length : 0,
+			bandCFacts: config.bandC ? config.bandC.length : 0,
+		};
+	}
+
+	/**
+	 * Handle virtual tokens based on backend capability
+	 */
+	private async handleVirtualTokens(
+		response: GenerationResponse,
+		virtualTokens: Float32Array,
+		mode: 'decode' | 'pass-through',
+	): Promise<GenerationResponse> {
+		if (mode === 'pass-through') {
+			// For MLX backend, pass virtual tokens directly
+			return response;
+		}
+
+		if (mode === 'decode') {
+			// For backends that can't handle virtual tokens directly,
+			// decode them back to text representation
+			const decodedContext = this.decodeVirtualTokens(virtualTokens);
+			const enhancedPrompt = `Additional Context: ${decodedContext}\n\n${response.content}`;
+
+			return {
+				...response,
+				content: await this.refineWithDecodedContext(enhancedPrompt),
+			};
+		}
+
+		return response;
+	}
+
+	/**
+	 * Decode virtual tokens back to text representation
+	 */
+	private decodeVirtualTokens(virtualTokens: Float32Array): string {
+		// Simplified decoding - in production, this would use the
+		// inverse of the compression transformation
+		const sampleSize = Math.min(5, virtualTokens.length);
+		const sampleTokens = Array.from(virtualTokens.slice(0, sampleSize));
+		return `[Compressed context: ${sampleTokens.length} virtual tokens]`;
+	}
+
+	/**
+	 * Refine response with decoded context
+	 */
+	private async refineWithDecodedContext(enhancedPrompt: string): Promise<string> {
+		// Use existing generation method to refine with decoded context
+		const refinement = await this.generate(enhancedPrompt, {
+			maxTokens: 500,
+			temperature: 0.2, // Lower temperature for refinement
+		});
+		return refinement.content;
+	}
+
+	/**
+	 * Process structured facts for enhanced output
+	 */
+	private async processStructuredFacts(
+		response: GenerationResponse,
+		facts: Array<{
+			type: string;
+			value: string | number | boolean;
+			context: string;
+			confidence: number;
+		}>,
+	): Promise<GenerationResponse> {
+		// Extract numerical facts for verification
+		const numericalFacts = facts.filter(fact => fact.type === 'number');
+
+		if (numericalFacts.length > 0) {
+			// Check if response includes these facts
+			const responseText = response.content.toLowerCase();
+			const missingFacts = numericalFacts.filter(fact =>
+				!responseText.includes(String(fact.value))
+			);
+
+			if (missingFacts.length > 0) {
+				// Add a note about missing numerical precision
+				const note = `\n\nNote: The following specific numerical data was available: ${missingFacts.map(f => f.value).join(', ')}.`;
+				return {
+					...response,
+					content: response.content + note,
+				};
+			}
+		}
+
+		return response;
 	}
 
 	/**
