@@ -207,11 +207,11 @@ describe('ToolLayerAgent arXiv Integration', () => {
 			}
 		});
 
-		it('should extract search parameters correctly', async () => {
-			const result = await agent.execute('search for "quantum computing" papers, max 10 results');
+                it('should extract search parameters correctly', async () => {
+                        const result = await agent.execute('search for "quantum computing" papers, max 10 results');
 
-			const searchTool = result.selectedTools.find((t) => t.name === 'arxiv_search');
-			expect(searchTool?.parameters).toEqual(
+                        const searchTool = result.selectedTools.find((t) => t.name === 'arxiv_search');
+                        expect(searchTool?.parameters).toEqual(
 				expect.objectContaining({
 					query: 'quantum computing',
 					max_results: 10,
@@ -236,13 +236,69 @@ describe('ToolLayerAgent arXiv Integration', () => {
 			const searchTool = result.selectedTools.find((t) => t.name === 'arxiv_search');
 			expect(searchTool).toBeDefined();
 			expect(searchTool?.parameters).toEqual(
-				expect.objectContaining({
-					query: 'machine learning research',
-					max_results: 5,
-				}),
-			);
-		});
-	});
+                                expect.objectContaining({
+                                        query: 'machine learning research',
+                                        max_results: 5,
+                                }),
+                        );
+                });
+
+                it('should map title-only latest searches to structured parameters', async () => {
+                        const mockSearchHandler = mockArxivMCPTools
+                                .getTools()
+                                .find((t: any) => t.name === 'arxiv_search')?.handler;
+                        mockSearchHandler.mockResolvedValue({ success: true, data: [] });
+
+                        const result = await agent.execute(
+                                'run a title-only arxiv search for "federated learning" and sort by latest updates',
+                        );
+
+                        const searchTool = result.selectedTools.find((t) => t.name === 'arxiv_search');
+                        expect(searchTool?.parameters).toEqual(
+                                expect.objectContaining({
+                                        query: 'federated learning',
+                                        max_results: 5,
+                                        field: 'title',
+                                        sort_by: 'lastUpdatedDate',
+                                }),
+                        );
+
+                        expect(mockSearchHandler).toHaveBeenCalledWith(
+                                expect.objectContaining({
+                                        query: 'federated learning',
+                                        field: 'title',
+                                        sort_by: 'lastUpdatedDate',
+                                }),
+                        );
+                });
+
+                it('should map author submission sorting phrases to arXiv parameters', async () => {
+                        const mockSearchHandler = mockArxivMCPTools
+                                .getTools()
+                                .find((t: any) => t.name === 'arxiv_search')?.handler;
+                        mockSearchHandler.mockResolvedValue({ success: true, data: [] });
+
+                        const result = await agent.execute(
+                                'find author-only arxiv papers on reinforcement learning, sort by submission date',
+                        );
+
+                        const searchTool = result.selectedTools.find((t) => t.name === 'arxiv_search');
+                        expect(searchTool?.parameters).toEqual(
+                                expect.objectContaining({
+                                        query: 'reinforcement learning',
+                                        field: 'author',
+                                        sort_by: 'submittedDate',
+                                }),
+                        );
+
+                        expect(mockSearchHandler).toHaveBeenCalledWith(
+                                expect.objectContaining({
+                                        field: 'author',
+                                        sort_by: 'submittedDate',
+                                }),
+                        );
+                });
+        });
 
 	describe('Tool Execution', () => {
 		beforeEach(() => {
