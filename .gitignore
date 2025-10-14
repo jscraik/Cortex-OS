@@ -113,7 +113,6 @@ pnpm-lock.yaml.bak
 infra/mcp/*.plist
 
 # Package-specific directories
-packages/mcp-server/data/
 packages/mcp-server/docs/
 
 # Memory logs
@@ -150,3 +149,5 @@ logs/*.log
 .vscode/settings.optimized.json
 .vscode/performance.json
 emergency-code.sh
+packages/mcp-server/data/*.db*
+!packages/mcp-server/data/README.md

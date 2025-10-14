@@ -7,8 +7,13 @@ export type WwwAuthenticateParams = {
 	scope?: string | string[];
 };
 
+/**
+ * Properly escape quotes in authentication header values
+ * brAInwav: Fixed incomplete sanitization - now escapes backslashes first
+ */
 function quote(value: string): string {
-	const safe = value.replace(/"/g, '\\"');
+	// Must escape backslashes FIRST, then quotes to prevent bypass
+	const safe = value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 	return `"${safe}"`;
 }
 

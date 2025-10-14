@@ -54,12 +54,10 @@
         "packages/hooks/src/*"
       ],
       "@cortex-os/contracts": [
-        "libs/typescript/contracts/dist/src/index.d.ts",
-        "libs/typescript/contracts/dist/src/index.js"
+        "libs/typescript/contracts/src/index.ts"
       ],
       "@cortex-os/contracts/*": [
-        "libs/typescript/contracts/dist/src/*.d.ts",
-        "libs/typescript/contracts/dist/src/*"
+        "libs/typescript/contracts/src/*"
       ],
       "@cortex-os/kernel": [
         "packages/kernel/src/index.ts"
@@ -112,20 +110,18 @@
         "packages/cortex-sec/src/*"
       ],
       "@cortex-os/utils": [
-        "libs/typescript/utils/dist/src/index.d.ts",
-        "libs/typescript/utils/dist/src/index.js"
+        "libs/typescript/utils/dist/index.d.ts",
+        "libs/typescript/utils/dist/index.js"
       ],
       "@cortex-os/utils/*": [
-        "libs/typescript/utils/dist/src/*.d.ts",
-        "libs/typescript/utils/dist/src/*"
+        "libs/typescript/utils/dist/*.d.ts",
+        "libs/typescript/utils/dist/*"
       ],
-      "@cortex-os/security": [
-        "packages/security/dist/index.d.ts",
-        "packages/security/dist/index.js"
+      "@brainwav/telemetry": [
+        "packages/telemetry/src/index.ts"
       ],
-      "@cortex-os/security/*": [
-        "packages/security/dist/*.d.ts",
-        "packages/security/dist/*"
+      "@brainwav/telemetry/*": [
+        "packages/telemetry/src/*"
       ]
     },
     "noEmit": true,

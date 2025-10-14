@@ -68,6 +68,7 @@ Enforcement through automated checks:
 - Schema validation for agent configurations
 - Documentation synchronization checks
 - Pull request descriptions must follow `.github/pull_request_template.md`; the `review-automation` workflow fails otherwise
+- Secrets: fetch API keys, SSH keys, and tokens on-demand with the 1Password CLI (`op`); never persist credentials in files or long-lived environment variables.
 
 ## Agent Toolkit
 

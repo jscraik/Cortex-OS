@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentEvent",
+  "description": "brAInwav Cortex-OS structured agent telemetry event for vendor-neutral observability",
+  "type": "object",
+  "required": ["timestamp", "agentId", "phase", "event", "correlationId"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when the event occurred"
+    },
+    "agentId": {
+      "type": "string",
+      "description": "Unique identifier for the brAInwav agent generating this event"
+    },
+    "phase": {
+      "type": "string",
+      "enum": ["planning", "execution", "completion"],
+      "description": "Workflow phase when the event occurred"
+    },
+    "event": {
+      "type": "string",
+      "enum": ["run_started", "run_finished", "plan_created", "plan_revised", "reroute", "tool_invoked", "tool_result"],
+      "description": "Type of agent event being reported"
+    },
+    "correlationId": {
+      "type": "string",
+      "description": "Correlation ID for tracking related events across the brAInwav system"
+    },
+    "labels": {
+      "type": "object",
+      "description": "Optional metadata labels (may be redacted for privacy)",
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Optional performance and operational metrics",
+      "additionalProperties": true
+    },
+    "outcome": {
+      "type": "object",
+      "description": "Optional outcome data for completed operations",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "timestamp": "2025-01-12T10:00:00Z",
+      "agentId": "brAInwav-cortex-agent-1",
+      "phase": "execution",
+      "event": "tool_invoked",
+      "correlationId": "brAInwav-session-123",
+      "labels": {
+        "tool": "arxiv-search",
+        "brAInwav": "tool-invocation"
+      },
+      "metrics": {
+        "duration_ms": 150
+      }
+    }
+  ]
+}

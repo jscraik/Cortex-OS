@@ -113,6 +113,7 @@ pnpm --filter apps/chatgpt-dashboard build && pnpm --filter apps/chatgpt-dashboa
 ## 7) Security & Compliance
 
 - No secrets or tokens inside bundle code.
+- Secrets: fetch API keys, SSH keys, and tokens on-demand with the 1Password CLI (`op`); never persist credentials in code, repo artifacts, or long-lived environment variables.
 - Sanitize all untrusted data from connectors API before rendering.
 - Use CSP-friendly patterns; avoid inline scripts by default.
 - Document telemetry events and ensure they include `brand:"brAInwav"`.

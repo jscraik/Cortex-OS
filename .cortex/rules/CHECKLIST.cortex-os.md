@@ -11,6 +11,7 @@ alwaysApply: true
 - **G0 Security**
   - [ ] API-key auth enabled by default on external surfaces (MCP HTTP/SSE, REST).
   - [ ] Secrets not logged; .env handling verified; CORS/Host allowlists set.
+  - [ ] Secrets fetched on-demand with the 1Password CLI (`op`); no long-lived copies in files or persistent env vars.
   - [ ] Cloudflare Tunnel policies reviewed; 403s only on invalid/unauthorized requests.
 - **G1 Build & Types**
   - [ ] `pnpm -w build` green; type-check passes across workspaces.

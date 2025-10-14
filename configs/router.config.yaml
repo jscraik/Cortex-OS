@@ -1,0 +1,58 @@
+version: 1
+id: genai-routing-default
+routing:
+  order: [privacy, capability, latency, cost]
+  privacy:
+    pii_scrub: true
+    pii_classifier: mlx/presidio-mini
+    actions:
+      - type: mask
+        fields: [email, phone, nhs_number, address]
+      - type: drop
+        fields: [credit_card]
+  capability:
+    local_ok_models: [mlx-phi-3-mini, mlx-nano-embed]
+    tool_allowed_tiers:
+      code_exec: [ollama, cloud]
+      web_fetch: [ollama, cloud]
+      retrieval: [cloud]
+  budgets:
+    request:
+      max_input_tokens: 4096
+      max_output_tokens: 1024
+      hard_cost_cap: 0.05
+      soft_cost_cap: 0.03
+    per_tool:
+      web_fetch: { max_calls: 3, max_tokens: 1500 }
+      retrieval: { max_calls: 2, max_tokens: 2000 }
+  latency_slo:
+    p95_ms: 1500
+    first_token_ms: 400
+  circuit_breakers:
+    timeouts_ms: { mlx: 800, ollama: 1200, cloud: 2500 }
+    runaway_output_factor: 1.5
+    retries: { mlx: 0, ollama: 1, cloud: 1 }
+tiers:
+  mlx:
+    adapter: packages/router/src/adapters/mlxAdapter.ts
+    models: [mlx-phi-3-mini, mlx-nano-embed]
+  ollama:
+    adapter: packages/router/src/adapters/ollamaAdapter.ts
+    models: [llama3.1:8b-instruct-q4, qwen2.5-coder:7b-q4]
+  cloud:
+    adapter: packages/router/src/adapters/responsesAdapter.ts
+    models:
+      - frontier: "gpt-frontier-2025"
+      - alt_frontier: "sonnet-2025"
+telemetry:
+  exporter: prometheus
+  resource:
+    service.name: cortex-router
+    service.version: 0.1.0
+  sampling:
+    type: parentbased_traceidratio
+    ratio: 0.25
+audit:
+  sink: file
+  path: ./reports/audit/genai-routing.ndjson
+  redact_fields: [inputs, pii_raw]

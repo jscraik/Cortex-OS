@@ -200,6 +200,7 @@ All tasks must follow this standardized folder structure within `~/tasks/[featur
 ### During Task Execution
 
 - Update files as you progress through phases
+- Fetch API keys, SSH keys, and tokens on-demand with the 1Password CLI (`op`); never embed secrets in task artifacts or long-lived env files.
 - Keep `implementation-log.md` current with real-time notes
 - Create subfolders as needed before adding files to them
 - Mark checklist items in `implementation-checklist.md` as completed

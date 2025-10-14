@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.1",
+  "task_slug": "structured-telemetry-implementation",
+  "task_dir": "tasks/structured-telemetry-implementation",
+  "baton_path": "tasks/structured-telemetry-implementation/json/baton.v1.json",
+  "created": "2025-01-12",
+  "status": "planning",
+  "goal": "Implement comprehensive structured telemetry system for brAInwav Cortex-OS with vendor-neutral AgentEvent schema, A2A integration, and MCP/orchestration bridge support",
+  "entry_points": [
+    "packages/telemetry/src/emitter.ts",
+    "apps/cortex-os/src/runtime.ts", 
+    "packages/orchestration/src/service.ts",
+    "schemas/agent-event.schema.json"
+  ],
+  "stack": ["TypeScript", "Vitest", "Zod", "A2A", "MCP", "OpenTelemetry"],
+  "constraints": [
+    "Functions ≤40 lines",
+    "Named exports only", 
+    "brAInwav branding in all outputs",
+    "No mock/placeholder code in production",
+    "Coverage ≥90% global, ≥95% changed lines",
+    "WCAG 2.2 AA compliance if UI",
+    "Privacy-first redaction by design"
+  ],
+  "testing": "Unit tests (vitest), integration tests, A2A event validation, contract compliance",
+  "non_goals": [
+    "Performance tuning beyond basic optimization",
+    "Advanced analytics features",
+    "External vendor integrations"
+  ],
+  "planner": {
+    "plan_paths": {
+      "implementation_plan_md": "tasks/structured-telemetry-implementation/implementation-plan.md",
+      "tdd_plan_md": "tasks/structured-telemetry-implementation/tdd-plan.md", 
+      "checklist_md": "tasks/structured-telemetry-implementation/implementation-checklist.md",
+      "summary_md": "tasks/structured-telemetry-implementation/SUMMARY.md"
+    },
+    "file_tree": [
+      "schemas/agent-event.schema.json",
+      "schemas/README.md",
+      "tsconfig.base.json",
+      "pnpm-lock.yaml",
+      "packages/telemetry/AGENTS.md",
+      "packages/telemetry/README.md",
+      "packages/telemetry/package.json",
+      "packages/telemetry/project.json",
+      "packages/telemetry/tsconfig.json",
+      "packages/telemetry/vitest.config.ts",
+      "packages/telemetry/src/index.ts",
+      "packages/telemetry/src/emitter.ts",
+      "packages/telemetry/src/types.ts",
+      "packages/telemetry/tests/emitter.test.ts",
+      "apps/cortex-os/package.json",
+      "apps/cortex-os/src/a2a.ts",
+      "apps/cortex-os/src/runtime.ts",
+      "apps/cortex-os/src/services.ts",
+      "apps/cortex-os/tests/telemetry.integration.test.ts",
+      "packages/orchestration/package.json",
+      "packages/orchestration/src/index.ts",
+      "packages/orchestration/src/service.ts",
+      "packages/orchestration/src/observability/structured-telemetry.ts",
+      "packages/orchestration/tests/telemetry/structured-telemetry.test.ts"
+    ],
+    "commands": {
+      "install": "pnpm i",
+      "lint": "pnpm lint:smart",
+      "typecheck": "pnpm typecheck:smart", 
+      "test": "pnpm test:smart -- --coverage"
+    },
+    "coverage_target": "≥90% global, ≥95% changed lines",
+    "conventional_commits": true
+  }
+}

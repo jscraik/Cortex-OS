@@ -158,11 +158,11 @@ describe('ArxivMCPTools', () => {
 			expect(downloadTool?.schema.parse).toBeDefined();
 		});
 
-		it('should validate search tool parameters', () => {
-			const tools = arxivTools.getTools();
-			const searchTool = tools.find((t) => t.name === 'arxiv_search');
+                it('should validate search tool parameters', () => {
+                        const tools = arxivTools.getTools();
+                        const searchTool = tools.find((t) => t.name === 'arxiv_search');
 
-			expect(
+                        expect(
 				searchTool?.schema.parse({
 					query: 'machine learning',
 					max_results: 5,
@@ -218,13 +218,42 @@ describe('ArxivMCPTools', () => {
 					paper_id: '2301.00001',
 					format: 'invalid', // Should be one of the enum values
 				}),
-			).toThrow();
-		});
-	});
+                        ).toThrow();
+                });
 
-	describe('Tool Execution', () => {
-		beforeEach(async () => {
-			arxivTools = new ArxivMCPTools();
+                it('should accept advanced search modifiers', () => {
+                        const tools = arxivTools.getTools();
+                        const searchTool = tools.find((t) => t.name === 'arxiv_search');
+
+                        expect(
+                                searchTool?.schema.parse({
+                                        query: 'graph transformers',
+                                        field: 'title',
+                                        sort_by: 'lastUpdatedDate',
+                                }),
+                        ).toEqual({
+                                query: 'graph transformers',
+                                field: 'title',
+                                sort_by: 'lastUpdatedDate',
+                        });
+
+                        expect(
+                                searchTool?.schema.parse({
+                                        query: 'graph transformers',
+                                        field: 'author',
+                                        sort_by: 'submittedDate',
+                                }),
+                        ).toEqual({
+                                query: 'graph transformers',
+                                field: 'author',
+                                sort_by: 'submittedDate',
+                        });
+                });
+        });
+
+        describe('Tool Execution', () => {
+                beforeEach(async () => {
+                        arxivTools = new ArxivMCPTools();
 			mockMcpClient.listTools.mockResolvedValue({ success: true });
 			await arxivTools.initialize();
 		});
@@ -345,7 +374,7 @@ describe('ArxivMCPTools', () => {
 
 		describe('arxiv_download tool', () => {
 			it('should execute download tool successfully', async () => {
-				const mockDownloadResponse = {
+			const mockDownloadResponse = {
 					success: true,
 					data: {
 						paper_id: '2301.00001',
@@ -430,10 +459,39 @@ describe('ArxivMCPTools', () => {
 					// format not specified
 				});
 
-				expect(mockMcpClient.callTool).toHaveBeenCalledWith('download_paper', {
-					paper_id: '2301.00001',
-					format: 'pdf', // Default value
-				});
+			expect(mockMcpClient.callTool).toHaveBeenCalledWith('download_paper', {
+			paper_id: '2301.00001',
+			format: 'pdf', // Default value
+			});
+			});
+		});
+
+		it('should call MCP tools using injected registry names', async () => {
+			arxivTools = new ArxivMCPTools({
+			searchToolName: 'registry.search',
+			downloadToolName: 'registry.download',
+			});
+
+			mockMcpClient.listTools.mockResolvedValue({ success: true });
+			await arxivTools.initialize();
+
+			const tools = arxivTools.getTools();
+			const searchTool = tools.find((t) => t.name === 'arxiv_search')!;
+			const downloadTool = tools.find((t) => t.name === 'arxiv_download')!;
+
+			mockMcpClient.callTool.mockResolvedValue({ success: true, data: [] });
+			await searchTool.handler({ query: 'quantum computing' });
+			expect(mockMcpClient.callTool).toHaveBeenCalledWith('registry.search', {
+			query: 'quantum computing',
+			max_results: 5,
+			});
+
+			mockMcpClient.callTool.mockClear();
+			mockMcpClient.callTool.mockResolvedValue({ success: true, data: {} });
+			await downloadTool.handler({ paper_id: '2301.00001' });
+			expect(mockMcpClient.callTool).toHaveBeenCalledWith('registry.download', {
+			paper_id: '2301.00001',
+			format: 'pdf',
 			});
 		});
 	});

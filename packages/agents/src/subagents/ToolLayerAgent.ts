@@ -100,6 +100,7 @@ export interface ToolLayerConfig {
 	enableArxivResearch: boolean;
 	arxivServerSlug?: string;
 	arxivSearchTool?: string;
+	arxivDownloadTool?: string;
 	arxivMaxResults?: number;
 }
 
@@ -140,6 +141,8 @@ export class ToolLayerAgent extends EventEmitter {
 		if (this.config.enableArxivResearch) {
 			this.arxivMCPTools = new ArxivMCPTools({
 				serverSlug: this.config.arxivServerSlug,
+				searchToolName: this.config.arxivSearchTool,
+				downloadToolName: this.config.arxivDownloadTool,
 				defaultMaxResults: this.config.arxivMaxResults,
 			});
 			// Register tools asynchronously in the background
@@ -761,31 +764,30 @@ function selectToolsForTask(content: string): Array<{
 	}
 
 	// arXiv research tool selection
-	if (
-		keywords.includes('research') ||
-		keywords.includes('paper') ||
-		keywords.includes('arxiv') ||
-		keywords.includes('academic') ||
-		keywords.includes('scholar') ||
-		keywords.includes('literature') ||
-		keywords.includes('citation')
-	) {
-		if (keywords.includes('search') || keywords.includes('find')) {
-			tools.push({
-				name: 'arxiv_search',
-				description: 'Search for academic papers on arXiv',
-				parameters: {
-					query: extractSearchQuery(content) || content.trim(),
-					max_results: extractMaxResults(content) || 5,
-				},
-			});
-		}
+        if (
+                keywords.includes('research') ||
+                keywords.includes('paper') ||
+                keywords.includes('arxiv') ||
+                keywords.includes('academic') ||
+                keywords.includes('scholar') ||
+                keywords.includes('literature') ||
+                keywords.includes('citation')
+        ) {
+                const arxivSearchParameters = createArxivSearchParameters(content);
 
-		if (
-			keywords.includes('download') ||
-			keywords.includes('pdf') ||
-			keywords.includes('full text')
-		) {
+                if (keywords.includes('search') || keywords.includes('find')) {
+                        tools.push({
+                                name: 'arxiv_search',
+                                description: 'Search for academic papers on arXiv',
+                                parameters: arxivSearchParameters,
+                        });
+                }
+
+                if (
+                        keywords.includes('download') ||
+                        keywords.includes('pdf') ||
+                        keywords.includes('full text')
+                ) {
 			tools.push({
 				name: 'arxiv_download',
 				description: 'Download arXiv paper PDF or source',
@@ -796,18 +798,15 @@ function selectToolsForTask(content: string): Array<{
 			});
 		}
 
-		// If research is mentioned but no specific action, add search by default
-		if (!tools.some((t) => t.name.startsWith('arxiv_'))) {
-			tools.push({
-				name: 'arxiv_search',
-				description: 'Search for academic papers on arXiv',
-				parameters: {
-					query: extractSearchQuery(content) || content.trim(),
-					max_results: 5,
-				},
-			});
-		}
-	}
+                // If research is mentioned but no specific action, add search by default
+                if (!tools.some((t) => t.name.startsWith('arxiv_'))) {
+                        tools.push({
+                                name: 'arxiv_search',
+                                description: 'Search for academic papers on arXiv',
+                                parameters: arxivSearchParameters,
+                        });
+                }
+        }
 
 	// Default to validator if no specific tools identified
 	if (tools.length === 0) {
@@ -918,6 +917,7 @@ export function createToolLayerAgent(config?: Partial<ToolLayerConfig>): ToolLay
 		enableArxivResearch: true,
 		arxivServerSlug: 'arxiv-1',
 		arxivSearchTool: 'search_papers',
+		arxivDownloadTool: 'download_paper',
 		arxivMaxResults: 5,
 		...config,
 	};
@@ -1078,9 +1078,9 @@ function extractFilesToValidate(content: string): string[] | null {
  * Extract search query from content string
  */
 function extractSearchQuery(content: string): string | null {
-	// Look for quoted strings that might be search queries
-	const quotedMatch = content.match(/["']([^"']+)["']/);
-	if (quotedMatch) return quotedMatch[1];
+        // Look for quoted strings that might be search queries
+        const quotedMatch = content.match(/["']([^"']+)["']/);
+        if (quotedMatch) return quotedMatch[1];
 
 	// Look for 'search for X' patterns
 	const searchMatch = content.match(/(?:search\s+(?:for|on)\s+)([\w\s]+)/i);
@@ -1116,14 +1116,50 @@ function extractSearchQuery(content: string): string | null {
 				].includes(word),
 		);
 
-	return words.slice(0, 5).join(' ') || null;
+        return words.slice(0, 5).join(' ') || null;
+}
+
+type ArxivSearchField =
+        | 'all'
+        | 'title'
+        | 'author'
+        | 'abstract'
+        | 'comments'
+        | 'journal_ref'
+        | 'acm_class'
+        | 'msc_class'
+        | 'report_num'
+        | 'category'
+        | 'id';
+
+type ArxivSortOrder = 'relevance' | 'lastUpdatedDate' | 'submittedDate';
+
+interface ArxivSearchParameters {
+        query: string;
+        max_results: number;
+        field?: ArxivSearchField;
+        sort_by?: ArxivSortOrder;
+}
+
+function createArxivSearchParameters(content: string): ArxivSearchParameters {
+        const query = extractSearchQuery(content) || content.trim();
+        const maxResults = extractMaxResults(content) || 5;
+        const field = extractArxivField(content);
+        const sortBy = extractArxivSort(content);
+
+        return {
+                query,
+                max_results: maxResults,
+                ...(field ? { field } : {}),
+                ...(sortBy ? { sort_by: sortBy } : {}),
+        };
 }
 
 /**
  * Extract maximum results from content string
  */
 function extractMaxResults(content: string): number | null {
-	// Look for number patterns
+        // Look for number patterns
 	const numberMatch = content.match(/(\d+)\s*(?:results?|papers?|articles?)/i);
 	if (numberMatch) {
 		const num = parseInt(numberMatch[1], 10);
@@ -1137,14 +1173,139 @@ function extractMaxResults(content: string): number | null {
 		return Math.min(Math.max(num, 1), 20);
 	}
 
-	return null;
+        return null;
+}
+
+function extractArxivField(content: string): ArxivSearchField | null {
+        const normalized = content.toLowerCase();
+
+        const mappings: Array<{ value: ArxivSearchField; patterns: RegExp[] }> = [
+                {
+                        value: 'title',
+                        patterns: [
+                                /title[-\s]?only/,
+                                /titles?\s+only/,
+                                /just\s+the\s+title/,
+                                /title\s+(?:search|field|filter)/,
+                                /search\s+(?:in\s+)?titles?/,
+                        ],
+                },
+                {
+                        value: 'author',
+                        patterns: [
+                                /author[-\s]?only/,
+                                /authors?\s+only/,
+                                /by\s+author/,
+                                /author\s+(?:field|filter|search)/,
+                        ],
+                },
+                {
+                        value: 'abstract',
+                        patterns: [
+                                /abstract[-\s]?only/,
+                                /abstracts?\s+only/,
+                                /just\s+the\s+abstract/,
+                                /abstract\s+(?:field|filter|search)/,
+                                /summary\s+only/,
+                        ],
+                },
+                {
+                        value: 'comments',
+                        patterns: [/comments?\s+only/, /comment\s+field/, /search\s+comments/],
+                },
+                {
+                        value: 'journal_ref',
+                        patterns: [/journal\s+(?:ref|reference)/, /journal[-\s]?only/],
+                },
+                {
+                        value: 'acm_class',
+                        patterns: [/acm\s+class/, /acm\s+classification/],
+                },
+                {
+                        value: 'msc_class',
+                        patterns: [/msc\s+class/, /mathematics\s+subject\s+classification/],
+                },
+                {
+                        value: 'report_num',
+                        patterns: [/report\s+(?:num|number)/, /technical\s+report/],
+                },
+                {
+                        value: 'category',
+                        patterns: [
+                                /category[-\s]?only/,
+                                /subject\s+(?:area|category)/,
+                                /primary\s+category/,
+                        ],
+                },
+                {
+                        value: 'id',
+                        patterns: [/id\s+only/, /identifier[-\s]?only/, /search\s+by\s+id/],
+                },
+                {
+                        value: 'all',
+                        patterns: [/all\s+fields?/, /search\s+everything/, /entire\s+(?:record|entry)/],
+                },
+        ];
+
+        for (const mapping of mappings) {
+                if (mapping.patterns.some((pattern) => pattern.test(normalized))) {
+                        return mapping.value;
+                }
+        }
+
+        return null;
+}
+
+function extractArxivSort(content: string): ArxivSortOrder | null {
+        const normalized = content.toLowerCase();
+
+        const mappings: Array<{ value: ArxivSortOrder; patterns: RegExp[] }> = [
+                {
+                        value: 'lastUpdatedDate',
+                        patterns: [
+                                /sort\s+by\s+latest/,
+                                /latest\s+(?:papers|results|updates)/,
+                                /most\s+recent/,
+                                /recently\s+updated/,
+                                /last\s+updated/,
+                                /newest\s+(?:papers|results)/,
+                        ],
+                },
+                {
+                        value: 'submittedDate',
+                        patterns: [
+                                /sort\s+by\s+submitted/,
+                                /submission\s+date/,
+                                /chronological\s+order/,
+                                /original\s+submission/,
+                                /by\s+submission/,
+                        ],
+                },
+                {
+                        value: 'relevance',
+                        patterns: [
+                                /sort\s+by\s+relevance/,
+                                /most\s+relevant/,
+                                /best\s+match/,
+                                /relevance\s+order/,
+                        ],
+                },
+        ];
+
+        for (const mapping of mappings) {
+                if (mapping.patterns.some((pattern) => pattern.test(normalized))) {
+                        return mapping.value;
+                }
+        }
+
+        return null;
 }
 
 /**
  * Extract arXiv paper ID from content string
  */
 function extractPaperId(content: string): string | null {
-	// Look for standard arXiv ID patterns (e.g., 2301.00001, math/0309135)
+        // Look for standard arXiv ID patterns (e.g., 2301.00001, math/0309135)
 	const arxivIdMatch = content.match(/\b(\d{4}\.\d{4,5}|[a-z-]+\/\d{7})\b/);
 	if (arxivIdMatch) return arxivIdMatch[1];
 

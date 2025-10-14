@@ -206,15 +206,26 @@ export class ContentSecurityPolicy {
 			sanitized = sanitized.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
 		}
 
-		// Strip event handlers - comprehensive approach
+		// Strip event handlers - comprehensive approach with repeated application
+		// brAInwav: Fixed incomplete multi-character sanitization vulnerability
 		if (this.config.xss.stripEventHandlers) {
-			// Remove all on* attributes in various formats - ReDoS safe
-			sanitized = sanitized.replace(/\s+on\w+\s*=\s*["'][^"']{0,100}["']/gi, '');
-			sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^>\s]{1,50}/gi, '');
-			// Also handle specific cases
+			// Apply repeatedly until no more matches to prevent reintroduction
+			let previous: string;
+			do {
+				previous = sanitized;
+				// Remove all on* attributes in various formats - ReDoS safe with length limits
+				sanitized = sanitized.replace(/\s+on\w+\s*=\s*["'][^"']{0,100}["']/gi, '');
+				sanitized = sanitized.replace(/\s+on\w+\s*=\s*[^>\s]{1,50}/gi, '');
+			} while (sanitized !== previous);
+			
+			// Also handle specific known handlers
 			for (const handler of EVENT_HANDLERS) {
-				const regex = new RegExp(`\\s*${handler}\\s*=\\s*["'][^"']{0,100}["']`, 'gi');
-				sanitized = sanitized.replace(regex, '');
+				let previousHandler: string;
+				do {
+					previousHandler = sanitized;
+					const regex = new RegExp(`\\s*${handler}\\s*=\\s*["'][^"']{0,100}["']`, 'gi');
+					sanitized = sanitized.replace(regex, '');
+				} while (sanitized !== previousHandler);
 			}
 		}
 

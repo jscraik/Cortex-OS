@@ -81,6 +81,22 @@ export interface IModelRouter {
 	generateChat(
 		request: z.infer<typeof ChatRequestSchema>,
 	): Promise<{ content: string; model: string }>;
+	generateChatWithBands(
+		request: z.infer<typeof ChatRequestSchema> & {
+			triBandContext?: {
+				bandA?: string;
+				bandB?: number[];
+				bandC?: Array<{
+					type: string;
+					value: string | number | boolean;
+					context: string;
+					confidence: number;
+				}>;
+				virtualTokenMode?: 'ignore' | 'decode' | 'pass-through';
+				enableStructuredOutput?: boolean;
+			};
+		},
+	): Promise<{ content: string; model: string; bandUsage?: any; virtualTokenMode?: string; structuredFactsProcessed?: boolean }>;
 	rerank(
 		request: z.infer<typeof RerankRequestSchema>,
 	): Promise<{ documents: string[]; scores: number[]; model: string }>;
@@ -847,6 +863,129 @@ export class ModelRouter implements IModelRouter {
 			primary_model: primary.model,
 			verification_model: verification.model,
 		};
+	}
+
+	/**
+	 * Generate chat with REF‑RAG tri-band context support
+	 */
+	async generateChatWithBands(
+		request: z.infer<typeof ChatRequestSchema> & {
+			triBandContext?: {
+				bandA?: string;
+				bandB?: number[];
+				bandC?: Array<{
+					type: string;
+					value: string | number | boolean;
+					context: string;
+					confidence: number;
+				}>;
+				virtualTokenMode?: 'ignore' | 'decode' | 'pass-through';
+				enableStructuredOutput?: boolean;
+			};
+		},
+	): Promise<{ content: string; model: string; bandUsage?: any; virtualTokenMode?: string; structuredFactsProcessed?: boolean }> {
+		const model = this.selectModel('chat', request.model);
+		if (!model) throw new Error('No chat models available');
+
+		// If no tri-band context, use standard chat
+		if (!request.triBandContext) {
+			return await this.generateChat(request);
+		}
+
+		const { triBandContext } = request;
+
+		// Prefer MLX for tri-band context processing
+		if (model.provider === 'mlx') {
+			try {
+				// Use MLX adapter's tri-band support
+				const response = await this.mlxAdapter.generateChatWithBands({
+					messages: request.messages as unknown as Message[],
+					model: model.name,
+					bandA: triBandContext.bandA,
+					bandB: triBandContext.bandB,
+					bandC: triBandContext.bandC,
+					virtualTokenMode: triBandContext.virtualTokenMode || 'pass-through',
+					enableStructuredOutput: triBandContext.enableStructuredOutput || false,
+					max_tokens: request.max_tokens,
+					temperature: request.temperature,
+				});
+
+				return {
+					content: response.content,
+					model: model.name,
+					bandUsage: response.bandUsage,
+					virtualTokenMode: response.virtualTokenMode,
+					structuredFactsProcessed: response.structuredFactsProcessed,
+				};
+			} catch (error) {
+				console.warn('MLX tri-band chat failed, falling back to standard chat:', error);
+				// Fallback to standard chat
+				return await this.generateChat({
+					messages: request.messages,
+					model: request.model,
+					max_tokens: request.max_tokens,
+					temperature: request.temperature,
+				});
+			}
+		} else {
+			// For non-MLX models, embed tri-band context in messages
+			const enhancedMessages = this.enhanceMessagesWithTriBand(
+				request.messages,
+				triBandContext,
+			);
+
+			return await this.generateChat({
+				messages: enhancedMessages,
+				model: request.model,
+				max_tokens: request.max_tokens,
+				temperature: request.temperature,
+			});
+		}
+	}
+
+	/**
+	 * Enhance chat messages with tri-band context for non-MLX models
+	 */
+	private enhanceMessagesWithTriBand(
+		messages: z.infer<typeof ChatRequestSchema>['messages'],
+		triBandContext: any,
+	): z.infer<typeof ChatRequestSchema>['messages'] {
+		const enhancedMessages = [...messages];
+
+		// Find the last user message to augment with tri-band context
+		const lastUserIndex = enhancedMessages
+			.map((m, idx) => (m.role === 'user' ? idx : -1))
+			.filter(idx => idx >= 0)
+			.pop();
+
+		if (lastUserIndex >= 0) {
+			const lastUserMessage = enhancedMessages[lastUserIndex];
+			let enhancedContent = lastUserMessage.content;
+
+			// Add Band A context
+			if (triBandContext.bandA) {
+				enhancedContent += `\n\nContext:\n${triBandContext.bandA}`;
+			}
+
+			// Add Band C facts
+			if (triBandContext.bandC && triBandContext.bandC.length > 0) {
+				enhancedContent += '\n\nKey Facts:\n';
+				triBandContext.bandC.forEach(fact => {
+					const confidenceStr = fact.confidence < 0.8 ? ` (${Math.round(fact.confidence * 100)}% confidence)` : '';
+					enhancedContent += `- ${fact.type}: ${fact.value}${confidenceStr}\n`;
+				});
+			}
+
+			// Add instructions
+			enhancedContent += '\n\nPlease use the provided context and facts to provide a comprehensive answer.';
+
+			enhancedMessages[lastUserIndex] = {
+				...lastUserMessage,
+				content: enhancedContent,
+			};
+		}
+
+		return enhancedMessages;
 	}
 
 	// Add privacy mode methods

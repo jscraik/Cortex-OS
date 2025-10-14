@@ -122,7 +122,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 APPS_BUNDLE_DIR=dist/apps/chatgpt-dashboard
 ```
 
-- **Secrets** via 1Password/secret manager only — never commit to the repo.  
+- **Secrets**: fetch API keys, SSH keys, and tokens on-demand with the 1Password CLI (`op`); never store credentials in code, repo artifacts, or persistent environment variables.
 - Document overrides and defaults in `README.md` and `docs/env.md`.
 
 ---

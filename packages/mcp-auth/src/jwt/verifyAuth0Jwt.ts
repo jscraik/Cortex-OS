@@ -1,5 +1,6 @@
 import { createLocalJWKSet, createRemoteJWKSet, errors, jwtVerify } from 'jose';
-import type { JWTPayload, JWTVerifyOptions, JWKS, RemoteJWKSet } from 'jose';
+import type { JWTPayload, JWTVerifyOptions, JSONWebKeySet } from 'jose';
+import type { KeyLike } from 'jose';
 import {
 	type Auth0JwtConfig,
 	type Auth0JwtError,
@@ -9,7 +10,8 @@ import {
 
 const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 const DEFAULT_CLOCK_TOLERANCE_SEC = 5;
-const jwksCache = new Map<string, RemoteJWKSet>();
+type RemoteJWKResolver = ReturnType<typeof createRemoteJWKSet<KeyLike>>;
+const jwksCache = new Map<string, RemoteJWKResolver>();
 
 function normalizeDomain(domain: string): string {
 	const trimmed = domain.trim();
@@ -42,19 +44,10 @@ function toConfig(options: VerifyAuth0JwtOptions): Auth0JwtConfig {
 	};
 }
 
-function createFetcher(signalResolver: () => AbortSignal | undefined) {
-    return async (url: URL, init?: RequestInit) => {
-        const signal = init?.signal ?? signalResolver();
-        return fetch(url, { ...init, signal });
-    };
-}
-
 function getJwks(
 	config: Auth0JwtConfig,
-	signal: AbortSignal | undefined,
-overrideFetcher?: (url: URL, init?: RequestInit) => Promise<Response>,
-	overrideSet?: JWKS,
-): RemoteJWKSet {
+	overrideSet?: JSONWebKeySet,
+): RemoteJWKResolver {
 	const cacheKey = `${config.issuer}:${config.jwksCacheTtlMs}`;
 	const cached = jwksCache.get(cacheKey);
 	if (cached) {
@@ -65,12 +58,10 @@ overrideFetcher?: (url: URL, init?: RequestInit) => Promise<Response>,
 		jwksCache.set(cacheKey, local);
 		return local;
 	}
-	const fetcher = overrideFetcher ?? createFetcher(() => signal);
-	const remote = createRemoteJWKSet(new URL(config.jwksUrl), {
-		cache: true,
+	const remote = createRemoteJWKSet<KeyLike>(new URL(config.jwksUrl), {
 		cacheMaxAge: config.jwksCacheTtlMs,
 		cooldownDuration: 5_000,
-		fetcher,
+		timeoutDuration: 5_000,
 	});
 	jwksCache.set(cacheKey, remote);
 	return remote;
@@ -191,7 +182,7 @@ export async function verifyAuth0Jwt(
 	}
 	const config = toConfig(options);
 	try {
-		const jwks = getJwks(config, options.signal, options.fetcher, options.jwks);
+		const jwks = getJwks(config, options.jwks);
 		const verifyOptions: JWTVerifyOptions = {
 			issuer: config.issuer,
 			audience: config.audience,

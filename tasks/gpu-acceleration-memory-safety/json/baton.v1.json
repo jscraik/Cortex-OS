@@ -1,0 +1,59 @@
+{
+  "version": "1.1",
+  "task_slug": "gpu-acceleration-memory-safety",
+  "task_dir": "~/tasks/gpu-acceleration-memory-safety/",
+  "baton_path": "~/tasks/gpu-acceleration-memory-safety/json/baton.v1.json",
+  "created": "2025-10-12T22:00:00Z",
+  "objective": "Fix GPU memory leaks by implementing deterministic memory reservation/cleanup in GPUAcceleration.ts and ensuring GraphRAGService.close() properly shuts down GPU manager",
+  "scope": "Memory leak fix with TDD approach - deterministic GPU memory management",
+  "entry_points": [
+    "packages/memory-core/src/acceleration/GPUAcceleration.ts",
+    "packages/memory-core/src/services/GraphRAGService.ts"
+  ],
+  "stack": ["TypeScript", "GPU/CUDA", "Vitest", "Prisma"],
+  "constraints": [
+    "No breaking API changes",
+    "Must maintain backward compatibility",
+    "Deterministic memory release",
+    "Production safety requirements"
+  ],
+  "testing": {
+    "coverage_target": "≥92% package / ≥95% changed lines",
+    "test_types": ["unit", "memory-leak", "integration"],
+    "mutation_target": "≥90%"
+  },
+  "non_goals": [
+    "GPU architecture changes",
+    "New CUDA features",
+    "Performance optimization",
+    "External dependency updates"
+  ],
+  "repo_primer": {
+    "memory_core_package": "packages/memory-core/",
+    "existing_gpu_manager": "src/acceleration/GPUAcceleration.ts",
+    "graphrag_service": "src/services/GraphRAGService.ts",
+    "conventions": "AGENTS.md + CODESTYLE.md + brAInwav branding"
+  },
+  "planner": {
+    "plan_paths": {
+      "implementation_plan_md": "~/tasks/gpu-acceleration-memory-safety/implementation-plan.md",
+      "tdd_plan_md": "~/tasks/gpu-acceleration-memory-safety/tdd-plan.md",
+      "checklist_md": "~/tasks/gpu-acceleration-memory-safety/implementation-checklist.md",
+      "summary_md": "~/tasks/gpu-acceleration-memory-safety/SUMMARY.md"
+    },
+    "file_tree": [
+      "packages/memory-core/src/acceleration/GPUAcceleration.ts",
+      "packages/memory-core/src/services/GraphRAGService.ts",
+      "packages/memory-core/__tests__/acceleration/GPUAcceleration.memory.test.ts",
+      "packages/memory-core/__tests__/services/GraphRAGService.gpu-shutdown.test.ts"
+    ],
+    "commands": {
+      "install": "pnpm install --filter memory-core",
+      "lint": "pnpm --filter memory-core lint",
+      "typecheck": "pnpm --filter memory-core typecheck",
+      "test": "pnpm --filter memory-core test:coverage"
+    },
+    "coverage_target": "≥92% package / ≥95% changed lines",
+    "conventional_commits": true
+  }
+}
