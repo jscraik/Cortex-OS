@@ -506,6 +506,29 @@ npx tsx scripts/performance/benchmark-graphrag.ts
 # Includes latency percentiles, throughput, and cache performance
 ```
 
+#### Running with production embeddings (real data mode)
+```bash
+# Enable production embeddings via MLX adapter (defaults shown)
+export GRAPHRAG_BENCH_USE_PROD_EMBEDDINGS=true
+export GRAPHRAG_BENCH_EMBED_ADAPTER=mlx
+export GRAPHRAG_BENCH_EMBED_MODEL=qwen3-embedding-4b-mlx
+export GRAPHRAG_BENCH_ARTIFACT_PATH=benchmark-results.json
+
+npx tsx scripts/performance/benchmark-graphrag.ts
+```
+
+When `GRAPHRAG_BENCH_USE_PROD_EMBEDDINGS=true`, the benchmark calls the live
+embedding pipeline (currently the MLX adapter) and records detailed latency
+samples for both dense and sparse paths. If the adapter fails to initialize the
+script automatically falls back to synthetic embeddings and captures the error
+inside the artifact.
+
+> **Tip:** The exported artifact now includes `performanceMetrics` (raw counters
+> from the GraphRAG performance monitor) and `embeddingSummary` (dense/sparse
+> latency statistics, adapter metadata, and any initialization errors). These
+> fields power the observability dashboards and help correlate cache behaviour
+> with end-to-end latency.
+
 #### Benchmark Results Example
 ```json
 {
@@ -525,9 +548,61 @@ npx tsx scripts/performance/benchmark-graphrag.ts
     "cacheEnabledLatency": 198,
     "cacheDisabledLatency": 567,
     "speedupRatio": 2.86
+  },
+  "performanceMetrics": {
+    "queryCount": 75,
+    "averageQueryTime": 234.5,
+    "cacheHitRatio": 0.67,
+    "totalCacheHits": 45,
+    "totalCacheMisses": 30,
+    "memoryUsageMB": 156,
+    "externalProviderStats": {}
+  },
+  "embeddingSummary": {
+    "mode": "production",
+    "adapter": "mlx:qwen3-embedding-4b-mlx",
+    "dense": {
+      "count": 75,
+      "min": 42.1,
+      "max": 73.4,
+      "average": 51.2,
+      "p50": 49.8,
+      "p95": 70.6,
+      "p99": 72.9,
+      "metadata": {
+        "model": "qwen3-embedding-4b-mlx",
+        "provider": "mlx"
+      }
+    },
+    "sparse": {
+      "count": 75,
+      "min": 8.4,
+      "max": 16.3,
+      "average": 11.2,
+      "p50": 10.8,
+      "p95": 15.7,
+      "p99": 16.1,
+      "metadata": {
+        "strategy": "hash",
+        "bucketSize": "2048"
+      }
+    },
+    "errors": []
   }
 }
 ```
+
+#### Interpreting cache & embedding telemetry
+
+- **performanceMetrics.cacheHitRatio** surfaces the live cache effectiveness
+  observed during the benchmark. Compare it against the TTL cache counters
+  emitted by the agents service (see `arxiv.cache.events` and
+  `arxiv.cache.hit_ratio` gauges) to understand real arXiv hit/miss behaviour.
+- **embeddingSummary.mode** reports whether production embeddings were active.
+  When `mode` is `synthetic`, review `embeddingSummary.errors` for the reason
+  the live pipeline was skipped.
+- **dense/sparse statistics** help correlate embedding latency with the GraphRAG
+  query percentiles shown earlier in the artifact.
 
 ### Performance Optimization Checklist
 
