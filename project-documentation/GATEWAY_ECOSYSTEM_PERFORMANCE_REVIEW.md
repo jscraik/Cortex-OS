@@ -85,7 +85,7 @@ Prioritize a two-phase remediation plan:
    - Wrap RAG event bindings in a helper that auto-unsubscribes once the matching response arrives or on timeout, and add metrics for orphaned listeners.
 
 2. **Phase 2 — Validation & Backpressure Hardening**
-   - Precompile Zod schemas (e.g., via `schema.strict().describe()` caching) and benchmark payload-heavy endpoints; if CPU remains high, offload to a worker pool sized per CPU core.
+   - Precompile Zod schemas by creating and storing schema objects at module load (e.g., define and reuse the schema instance across requests) and benchmark payload-heavy endpoints; if CPU remains high, offload to a worker pool sized per CPU core.
    - Integrate Fastify `under-pressure` to emit gateway backpressure events that reuse the existing `RateLimitExceeded` schema for governance visibility.
 
 This sequence unlocks immediate latency savings from pooling while setting the stage for sustainable load management.
