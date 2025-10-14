@@ -6,7 +6,7 @@ This playbook documents the fastest feedback loop for day-to-day development in 
 
 1. **Compile incrementally with `pnpm build:smart`.** This target scopes builds to the packages affected by your working tree, allowing you to surface type and bundling issues quickly without paying for a full repo rebuild.
 2. **Exercise targeted tests with `pnpm test:smart`.** Run this immediately after the smart build to execute only the suites touched by your changes. Pair the command with watch mode when iterating on a feature to keep the red/green signal tight.
-3. **Finish each iteration with the Just recipes.** Use `just scout "<pattern>" <path>` for deterministic search, `just codemod 'find(:[x])' 'replace(:[x])' <path>` for structured edits, and `just verify changed.txt` before staging. These recipes are the required entry points for the agent-toolkit and keep local validation aligned with CI.
+3. **Finish each iteration with the Just recipes.** Use `just scout "<pattern>" <path>` for deterministic search, `just codemod 'find(:[x])' 'replace(:[x])' <path>` for structured edits, and `just verify changed.txt` before staging (generate `changed.txt` with `git diff --name-only > changed.txt` to list your modified files). These recipes are the required entry points for the agent-toolkit and keep local validation aligned with CI.
 
 ## TDD Coach Integration
 
