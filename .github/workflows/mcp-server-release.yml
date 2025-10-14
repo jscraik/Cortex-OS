@@ -117,7 +117,7 @@ jobs:
           output-file: sbom-mcp-server-${{ steps.version.outputs.version }}.spdx.json
 
       - name: Sign image with Cosign
-        uses: sigstore/cosign-installer@v3.4.0
+        uses: sigstore/cosign-installer@v3.10.0
 
       - name: Sign the published Docker image
         run: |

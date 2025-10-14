@@ -12,7 +12,7 @@ jobs:
         with:
           node-version: 22
           cache: 'pnpm'
-      - uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
         with:
           version: 9
       - run: pnpm install --frozen-lockfile
@@ -23,7 +23,7 @@ jobs:
       - name: Wait for gateway
         run: npx wait-on http://localhost:3333/openapi.json || true
       - name: Setup k6
-        uses: grafana/setup-k6-action@98db1bcacc2d06234a3cade8629ebc97e0130ec2
+        uses: grafana/setup-k6-action@ffe7d7290dfa715e48c2ccc924d068444c94bde2
       - name: Run k6 quick
         run: k6 run --summary-export k6-summary.json k6/quick.js
       - name: Upload k6 summary

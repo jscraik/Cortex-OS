@@ -78,22 +78,26 @@ export function LazyOnView<Props extends object>({
 		}
 	}, [LazyComp, id, shouldLoad]);
 
-	return (
-		<section
-			id={id}
-			ref={sectionRef as React.MutableRefObject<HTMLElement>}
-			className={className}
-			style={{ scrollMarginTop: '80px' }}
-			aria-busy={isLoading}
-		>
-			<h2 className="text-xl font-semibold text-neutral-900 mb-4" tabIndex={-1}>
-				{title}
-			</h2>
-			<React.Suspense fallback={skeleton}>
-			{shouldLoad
-				? React.createElement(LazyComp as unknown as React.ComponentType<Props>, componentProps)
-				: skeleton}
-		</React.Suspense>
-	</section>
-);
+        const content = shouldLoad ? (
+                <React.Suspense fallback={skeleton}>
+                        {React.createElement(LazyComp as unknown as React.ComponentType<Props>, componentProps)}
+                </React.Suspense>
+        ) : (
+                skeleton
+        );
+
+        return (
+                <section
+                        id={id}
+                        ref={sectionRef as React.MutableRefObject<HTMLElement>}
+                        className={className}
+                        style={{ scrollMarginTop: '80px' }}
+                        aria-busy={isLoading}
+                >
+                        <h2 className="text-xl font-semibold text-neutral-900 mb-4" tabIndex={-1}>
+                                {title}
+                        </h2>
+                        {content}
+                </section>
+        );
 }
