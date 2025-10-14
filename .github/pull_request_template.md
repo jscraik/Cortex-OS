@@ -10,6 +10,12 @@ assignees: ''
 
 <!-- Provide a brief summary of your changes -->
 
+## 🗂 Task & Governance Links
+
+- Task folder: <!-- Paste the direct link to `~/tasks/[feature]/` -->
+- Code review checklist comment: <!-- Paste the URL of the top-level checklist comment -->
+- Governance evidence pointers: <!-- List links to vibe-check logs, verification artifacts, and stored templates -->
+
 ## 🎯 Type of Change
 
 - [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
