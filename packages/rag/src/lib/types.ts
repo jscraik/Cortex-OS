@@ -17,6 +17,68 @@ export interface Chunk {
 	score?: number;
 }
 
+// REF‑RAG metadata that can be attached to chunks
+export interface RefRagChunkMetadata {
+	/** Dual embeddings for tri-band context */
+	dualEmbeddings?: {
+		/** Standard embedding for similarity search */
+		standard: number[];
+		/** Compressed embedding for Band B virtual tokens */
+		compressed?: number[];
+		/** Compression metadata */
+		compression?: {
+			method: 'projection' | 'quantization' | 'hybrid';
+			originalDimensions: number;
+			compressedDimensions: number;
+			compressionRatio: number;
+		};
+	};
+	/** Extracted structured facts for Band C */
+	structuredFacts?: StructuredFact[];
+	/** Fact extraction metadata */
+	factExtraction?: {
+		timestamp: number;
+		method: 'regex' | 'parser' | 'ml';
+		confidence: number;
+		factCount: number;
+	};
+	/** Risk classification for this chunk */
+	riskClass?: 'low' | 'medium' | 'high' | 'critical';
+	/** Content analysis metadata */
+	contentAnalysis?: {
+		hasNumbers: boolean;
+		hasQuotes: boolean;
+		hasCode: boolean;
+		hasDates: boolean;
+		hasEntities: boolean;
+		domains: string[];
+		entities: string[];
+	};
+	/** Quality and relevance metrics */
+	qualityMetrics?: {
+		freshnessScore: number;
+		diversityScore: number;
+		completenessScore: number;
+		accuracyScore: number;
+	};
+}
+
+// Structured fact interface (simplified version for lib/types)
+export interface StructuredFact {
+	id: string;
+	type: 'number' | 'quote' | 'code' | 'date' | 'entity' | 'measurement';
+	value: string | number | boolean;
+	context: string;
+	chunkId: string;
+	confidence: number;
+	metadata?: {
+		unit?: string;
+		precision?: number;
+		source?: string;
+		[C: string]: unknown;
+	};
+}
+
 export interface Citation {
 	id: string;
 	source?: string;

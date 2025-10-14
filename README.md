@@ -61,6 +61,7 @@ Built as a governed monorepo with strict architectural boundaries, Cortex-OS pro
 - **🔄 Unified Workflow Engine** – Integrated PRP Runner and Task Management with state machine orchestration
 - **🧠 Multimodal AI Processing** – Support for images, audio, PDFs with OCR, vision analysis, and cross-modal search
 - **🔍 Advanced RAG System** – Retrieval-Augmented Generation with unified embeddings and citation tracking
+- **🌟 REF‑RAG Tri-Band Context** – Risk-Enhanced Fact Retrieval with intelligent context bands and verification
 - **🌟 Wikidata Semantic Integration** – Production-ready wikidata workflow with vector search, claims, and SPARQL enrichment
 - **🔌 MCP Integration** – Standardized tool integration via Model Context Protocol with FastMCP v3
 - **📊 Observability** – OpenTelemetry instrumentation, distributed tracing, and comprehensive monitoring
@@ -312,6 +313,7 @@ just verify changed.txt                        # Auto-validation
 ### Architecture & Design
 
 - **[Architecture Overview](./docs/architecture-overview.md)** – System design and principles
+- **[REF‑RAG System](./docs/ref-rag.md)** – Risk-Enhanced Fact Retrieval with tri-band context
 - **[Python Integration](./docs/python-integration.md)** – Python packages and workflows
 - **[Memory Architecture](./docs/memory-architecture.md)** – Unified memory system
 - **[MCP Integration](./docs/mcp-integration.md)** – Model Context Protocol details
@@ -343,7 +345,7 @@ just verify changed.txt                        # Auto-validation
 |---------|-------------|---------------|
 | `cortex-ai-github` | AI-powered GitHub automation | [README](./packages/cortex-ai-github/README.md) |
 | `agents` | Core AI agent behaviors | [README](./packages/agents/README.md) |
-| `rag` | Retrieval-Augmented Generation | [README](./packages/rag/README.md) |
+| `rag` | REF‑RAG: Risk-Enhanced Fact Retrieval with tri-band context | [README](./packages/rag/README.md) |
 | `orchestration` | Multi-agent workflows | [README](./packages/orchestration/README.md) |
 
 ### Communication & Integration

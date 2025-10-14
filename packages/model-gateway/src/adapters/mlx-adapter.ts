@@ -18,38 +18,165 @@ function runPython(
 		python?: string;
 		setModulePath?: string;
 		envOverrides?: Record<string, string>;
+		input?: string;
+		timeout?: number;
 	},
 ): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const pythonBin = options.python || 'python3';
+		const timeout = options.timeout || 60000; // 1 minute default timeout
 		const env = { ...process.env, ...options.envOverrides };
+
 		if (options.setModulePath) {
 			env.PYTHONPATH = options.setModulePath;
 		}
 
-		const child = spawn(pythonBin, [scriptPath, ...args], { env });
-		let output = '';
-		let error = '';
+		// Validate script path
+		if (!scriptPath || typeof scriptPath !== 'string') {
+			reject(new Error('Invalid script path: must be a non-empty string'));
+			return;
+		}
 
-		child.stdout?.on('data', (data) => {
-			output += data.toString();
-		});
+		const startTime = Date.now();
+		let isResolved = false;
+		let child: any;
 
-		child.stderr?.on('data', (data) => {
-			error += data.toString();
-		});
-
-		child.on('close', (code) => {
-			if (code === 0) {
-				resolve(output.trim());
-			} else {
-				reject(new Error(`Python script failed with code ${code}: ${error}`));
+		// Timeout handler
+		const timeoutHandle = setTimeout(() => {
+			if (!isResolved) {
+				isResolved = true;
+				if (child) {
+					child.kill('SIGTERM');
+					// Force kill if it doesn't terminate gracefully
+					setTimeout(() => {
+						try {
+							child.kill('SIGKILL');
+						} catch (e) {
+							// Ignore errors when killing process
+						}
+					}, 5000);
+				}
+				reject(new Error(`Python script execution timed out after ${timeout}ms`));
 			}
-		});
+		}, timeout);
 
-		child.on('error', (err) => {
-			reject(new Error(`Failed to start Python process: ${err.message}`));
-		});
+		try {
+			child = spawn(pythonBin, [scriptPath, ...args], {
+				env,
+				stdio: ['pipe', 'pipe', 'pipe'],
+				// Set resource limits if needed
+				// detached: false,
+			});
+
+			let output = '';
+			let error = '';
+			let outputBuffer: Buffer[] = [];
+			let errorBuffer: Buffer[] = [];
+
+			// Collect stdout data
+			child.stdout?.on('data', (data) => {
+				outputBuffer.push(data);
+			});
+
+			// Collect stderr data
+			child.stderr?.on('data', (data) => {
+				errorBuffer.push(data);
+			});
+
+			// Handle process completion
+			child.on('close', (code, signal) => {
+				if (isResolved) return;
+
+				clearTimeout(timeoutHandle);
+				isResolved = true;
+
+				// Combine buffered data
+				output = Buffer.concat(outputBuffer).toString();
+				error = Buffer.concat(errorBuffer).toString();
+
+				const executionTime = Date.now() - startTime;
+
+				if (signal) {
+					// Process was killed by signal
+					if (signal === 'SIGTERM' || signal === 'SIGKILL') {
+						reject(new Error(`Python script terminated by signal ${signal} (likely timeout)`));
+					} else {
+						reject(new Error(`Python script terminated by signal ${signal}`));
+					}
+					return;
+				}
+
+				if (code === 0) {
+					// Success
+					resolve(output.trim());
+				} else {
+					// Error - provide detailed error information
+					let errorMessage = `Python script failed with exit code ${code}`;
+
+					if (error) {
+						errorMessage += `\nStderr: ${error}`;
+					}
+
+					// Add common error suggestions
+					if (error.includes('ModuleNotFoundError')) {
+						errorMessage += '\nSuggestion: Check that required Python modules are installed';
+					} else if (error.includes('FileNotFoundError') || error.includes('No such file or directory')) {
+						errorMessage += `\nSuggestion: Check script path: ${scriptPath}`;
+					} else if (error.includes('Permission denied')) {
+						errorMessage += '\nSuggestion: Check file permissions for Python script';
+					} else if (error.includes('MLX not available') || error.includes('mlx')) {
+						errorMessage += '\nSuggestion: Install MLX and mlx_lm: pip install mlx mlx_lm';
+					}
+
+					errorMessage += `\nExecution time: ${executionTime}ms`;
+					errorMessage += `\nCommand: ${pythonBin} ${scriptPath} ${args.join(' ')}`;
+
+					reject(new Error(errorMessage));
+				}
+			});
+
+			// Handle process spawn errors
+			child.on('error', (err) => {
+				if (isResolved) return;
+
+				clearTimeout(timeoutHandle);
+				isResolved = true;
+
+				let errorMessage = `Failed to start Python process: ${err.message}`;
+
+				if (err.message.includes('ENOENT')) {
+					errorMessage += `\nSuggestion: Python binary '${pythonBin}' not found. Check Python installation.`;
+				} else if (err.message.includes('EACCES')) {
+					errorMessage += '\nSuggestion: Check permissions for Python binary';
+				}
+
+				reject(new Error(errorMessage));
+			});
+
+			// Write input to stdin if provided
+			if (options.input) {
+				try {
+					child.stdin?.write(options.input);
+					child.stdin?.end();
+				} catch (stdinError) {
+					if (!isResolved) {
+						clearTimeout(timeoutHandle);
+						isResolved = true;
+						reject(new Error(`Failed to write to Python stdin: ${stdinError instanceof Error ? stdinError.message : 'Unknown'}`));
+					}
+				}
+			} else {
+				// Close stdin if no input provided
+				child.stdin?.end();
+			}
+
+		} catch (spawnError) {
+			if (!isResolved) {
+				clearTimeout(timeoutHandle);
+				isResolved = true;
+				reject(new Error(`Failed to spawn Python process: ${spawnError instanceof Error ? spawnError.message : 'Unknown'}`));
+			}
+		}
 	});
 }
 
@@ -249,6 +376,22 @@ export interface MLXAdapterApi {
 		max_tokens?: number;
 		temperature?: number;
 	}): Promise<{ content: string; model: string }>;
+	generateChatWithBands(request: {
+		messages: ChatMessage[];
+		model?: string;
+		bandA?: string;
+		bandB?: number[];
+		bandC?: Array<{
+			type: string;
+			value: string | number | boolean;
+			context: string;
+			confidence: number;
+		}>;
+		virtualTokenMode?: 'ignore' | 'decode' | 'pass-through';
+		enableStructuredOutput?: boolean;
+		max_tokens?: number;
+		temperature?: number;
+	}): Promise<{ content: string; model: string; bandUsage?: any; virtualTokenMode?: string; structuredFactsProcessed?: boolean }>;
 	rerank(query: string, documents: string[], model?: string): Promise<{ scores: number[] }>;
 	isAvailable(): Promise<boolean>;
 }
@@ -289,32 +432,122 @@ export function createMLXAdapter(): MLXAdapterApi {
 	const generateEmbedding = async (request: MLXEmbeddingRequest): Promise<MLXEmbeddingResponse> => {
 		const modelName = request.model || 'qwen3-embedding-4b-mlx';
 		const modelConfig = MLX_MODELS[modelName];
+
+		// Enhanced validation
 		if (!modelConfig) {
-			throw new Error(`Unsupported MLX model: ${modelName}`);
-		}
-		if (modelConfig.type !== 'embedding') {
-			throw new Error(`Model ${modelName} is not an embedding model`);
-		}
-
-		try {
-			const result = await executePythonScript([request.text, '--model', modelName, '--json-only']);
-			const data = JSON.parse(result);
-
-			return {
-				embedding: data[0], // Python script returns array of arrays, take first
-				model: modelName,
-				dimensions: modelConfig.dimensions,
-				usage: {
-					tokens: estimateTokenCount(request.text),
-					cost: 0, // Local inference has no API cost
-				},
-			};
-		} catch (error) {
-			console.error('brAInwav MLX embedding generation failed:', error);
+			const availableModels = Object.keys(MLX_MODELS).filter(name => MLX_MODELS[name].type === 'embedding');
 			throw new Error(
-				`brAInwav MLX embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				`Unsupported MLX model: ${modelName}. Available embedding models: ${availableModels.join(', ')}`
 			);
 		}
+		if (modelConfig.type !== 'embedding') {
+			throw new Error(`Model ${modelName} is not an embedding model (type: ${modelConfig.type})`);
+		}
+
+		// Input validation
+		if (!request.text || typeof request.text !== 'string') {
+			throw new Error(`Invalid text input: must be a non-empty string, got ${typeof request.text}`);
+		}
+		if (request.text.length > 1000000) { // 1M character limit
+			throw new Error(`Text too long: ${request.text.length} characters (max 1000000)`);
+		}
+
+		const startTime = Date.now();
+		let retryCount = 0;
+		const maxRetries = 3;
+
+		while (retryCount <= maxRetries) {
+			try {
+				const result = await executePythonScript([request.text, '--model', modelName, '--json-only']);
+
+				// Validate response format
+				if (!result || typeof result !== 'string') {
+					throw new Error('Empty or invalid response from MLX script');
+				}
+
+				let data;
+				try {
+					data = JSON.parse(result);
+				} catch (parseError) {
+					throw new Error(`Invalid JSON response from MLX script: ${parseError instanceof Error ? parseError.message : 'Unknown'}`);
+				}
+
+				// Validate embedding data
+				if (!Array.isArray(data) || data.length === 0) {
+					throw new Error('Invalid embedding response: expected non-empty array');
+				}
+
+				const embedding = data[0];
+				if (!Array.isArray(embedding) || embedding.length === 0) {
+					throw new Error('Invalid embedding format: expected non-empty array of numbers');
+				}
+
+				// Validate dimensions
+				if (embedding.length !== modelConfig.dimensions) {
+					console.warn(`Embedding dimension mismatch: expected ${modelConfig.dimensions}, got ${embedding.length}`);
+				}
+
+				const processingTime = Date.now() - startTime;
+
+				return {
+					embedding,
+					model: modelName,
+					dimensions: embedding.length, // Use actual length
+					usage: {
+						tokens: estimateTokenCount(request.text),
+						cost: 0, // Local inference has no API cost
+						processing_time_ms: processingTime,
+					},
+				};
+
+			} catch (error) {
+				retryCount++;
+
+				// Log detailed error information
+				const errorDetails = {
+					modelName,
+					textLength: request.text.length,
+					retryCount,
+					error: error instanceof Error ? error.message : 'Unknown error',
+					errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+					timestamp: new Date().toISOString(),
+				};
+
+				console.error(`brAInwav MLX embedding generation failed (attempt ${retryCount}/${maxRetries + 1}):`, errorDetails);
+
+				// Check if error is retryable
+				const isRetryable = error instanceof Error && (
+					error.message.includes('timeout') ||
+					error.message.includes('memory') ||
+					error.message.includes('resource') ||
+					error.message.includes('connection')
+				);
+
+				if (retryCount > maxRetries || !isRetryable) {
+					// Provide enhanced error message with suggestions
+					let errorMessage = `brAInwav MLX embedding failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
+
+					if (error instanceof Error) {
+						if (error.message.includes('MLX not available')) {
+							errorMessage += '\nSuggestion: Install MLX and mlx_lm dependencies';
+						} else if (error.message.includes('No such file or directory')) {
+							errorMessage += `\nSuggestion: Check model path: ${modelConfig.path}`;
+						} else if (error.message.includes('memory')) {
+							errorMessage += '\nSuggestion: Try with a smaller model or free up memory';
+						}
+					}
+
+					throw new Error(errorMessage);
+				}
+
+				// Exponential backoff before retry
+				const backoffMs = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
+				await new Promise(resolve => setTimeout(resolve, backoffMs));
+			}
+		}
+
+		// This should never be reached
+		throw new Error(`Failed to generate embedding after ${maxRetries + 1} attempts`);
 	};
 
 	const generateEmbeddings = async (
@@ -443,6 +676,221 @@ export function createMLXAdapter(): MLXAdapterApi {
 		}
 	};
 
+	const generateChatWithBands = async (request: {
+		messages: ChatMessage[];
+		model?: string;
+		bandA?: string;
+		bandB?: number[];
+		bandC?: Array<{
+			type: string;
+			value: string | number | boolean;
+			context: string;
+			confidence: number;
+		}>;
+		virtualTokenMode?: 'ignore' | 'decode' | 'pass-through';
+		enableStructuredOutput?: boolean;
+		max_tokens?: number;
+		temperature?: number;
+	}): Promise<{ content: string; model: string; bandUsage?: any; virtualTokenMode?: string; structuredFactsProcessed?: boolean }> => {
+		const modelName = request.model || 'qwen3-coder-30b-mlx';
+		const modelConfig = MLX_MODELS[modelName];
+
+		// Enhanced validation
+		if (!modelConfig || modelConfig.type !== 'chat') {
+			const availableModels = Object.keys(MLX_MODELS).filter(name => MLX_MODELS[name].type === 'chat');
+			throw new Error(
+				`Unsupported MLX chat model: ${modelName}. Available chat models: ${availableModels.join(', ')}`
+			);
+		}
+
+		// Validate messages
+		if (!request.messages || !Array.isArray(request.messages) || request.messages.length === 0) {
+			throw new Error('Invalid or empty messages array');
+		}
+
+		// Validate tri-band context
+		const bandA = request.bandA || '';
+		const bandB = request.bandB || [];
+		const bandC = request.bandC || [];
+
+		if (typeof bandA !== 'string') {
+			throw new Error(`Invalid bandA: expected string, got ${typeof bandA}`);
+		}
+		if (!Array.isArray(bandB)) {
+			throw new Error(`Invalid bandB: expected array, got ${typeof bandB}`);
+		}
+		if (!Array.isArray(bandC)) {
+			throw new Error(`Invalid bandC: expected array, got ${typeof bandC}`);
+		}
+
+		// Check if tri-band context is actually provided
+		const hasTriBandContext = bandA.length > 0 || bandB.length > 0 || bandC.length > 0;
+
+		// If no tri-band context, use standard generation
+		if (!hasTriBandContext) {
+			console.log('No tri-band context provided, using standard MLX chat generation');
+			return await generateChat({
+				messages: request.messages,
+				model: request.model,
+				max_tokens: request.max_tokens,
+				temperature: request.temperature,
+			}).then(result => ({
+				...result,
+				bandUsage: { bandAChars: 0, bandBVirtualTokens: 0, bandCFacts: 0 },
+				virtualTokenMode: request.virtualTokenMode || 'pass-through',
+				structuredFactsProcessed: false,
+			}));
+		}
+
+		// Use RAG Python script for tri-band support
+		const ragScriptPath = path.resolve(
+			path.dirname(new URL(import.meta.url).pathname),
+			'../../../../packages/rag/python/mlx_generate.py',
+		);
+
+		const startTime = Date.now();
+		let retryCount = 0;
+		const maxRetries = 2; // Fewer retries for tri-band as it's more complex
+
+		while (retryCount <= maxRetries) {
+			try {
+				const prompt = request.messages.map((msg) => `${msg.role}: ${msg.content}`).join('\n');
+
+				// Validate prompt length
+				if (prompt.length > 500000) { // 500K character limit for tri-band
+					throw new Error(`Prompt too long for tri-band generation: ${prompt.length} characters`);
+				}
+
+				// Build input for tri-band generation
+				const inputData = {
+					model: modelConfig.path, // Use local path for MLX models
+					prompt,
+					max_tokens: Math.min(request.max_tokens || 1000, 2048), // Cap for tri-band
+					temperature: Math.max(0.1, Math.min(request.temperature || 0.7, 1.0)), // Clamp temperature
+					// REF‑RAG tri-band context
+					bandA,
+					bandB,
+					bandC,
+					virtualTokenMode: request.virtualTokenMode || 'pass-through',
+					enableStructuredOutput: Boolean(request.enableStructuredOutput),
+					request_id: `triband_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+				};
+
+				const result = await runPython(ragScriptPath, [], {
+					python: pythonPath,
+					setModulePath: path.resolve(process.cwd(), 'packages/rag/python'),
+					envOverrides: {
+						// Use same environment as regular MLX
+						HF_HOME: process.env.HF_HOME || '/Volumes/ExternalSSD/huggingface_cache',
+						TRANSFORMERS_CACHE: process.env.TRANSFORMERS_CACHE || '/Volumes/ExternalSSD/ai-cache/huggingface/transformers',
+						MLX_CACHE_DIR: process.env.MLX_CACHE_DIR || '/Volumes/ExternalSSD/ai-cache',
+						MLX_MODEL_PATH: process.env.MLX_MODEL_PATH || '/Volumes/ExternalSSD/ai-models',
+						// Add timeout for tri-band generation
+						PYTHONUNBUFFERED: '1',
+					},
+					input: JSON.stringify(inputData),
+					timeout: 120000, // 2 minute timeout for tri-band generation
+				});
+
+				// Validate response
+				if (!result || typeof result !== 'string') {
+					throw new Error('Empty or invalid response from tri-band generation script');
+				}
+
+				let data;
+				try {
+					data = JSON.parse(result);
+				} catch (parseError) {
+					throw new Error(`Invalid JSON response from tri-band script: ${parseError instanceof Error ? parseError.message : 'Unknown'}`);
+				}
+
+				// Check for error in response
+				if (data.error) {
+					throw new Error(`Tri-band generation script error: ${data.error}`);
+				}
+
+				// Validate response content
+				if (!data.text && typeof data.text !== 'string') {
+					throw new Error('Invalid tri-band response: missing or invalid text field');
+				}
+
+				const processingTime = Date.now() - startTime;
+
+				return {
+					content: data.text || 'No response generated',
+					model: modelName,
+					bandUsage: data.bandUsage || { bandAChars: bandA.length, bandBVirtualTokens: bandB.length, bandCFacts: bandC.length },
+					virtualTokenMode: data.virtualTokenMode || request.virtualTokenMode || 'pass-through',
+					structuredFactsProcessed: Boolean(data.structuredFactsProcessed),
+					usage: {
+						processing_time_ms: processingTime,
+						bandA_chars: bandA.length,
+						bandB_tokens: bandB.length,
+						bandC_facts: bandC.length,
+					},
+				};
+
+			} catch (error) {
+				retryCount++;
+
+				// Enhanced error logging
+				const errorDetails = {
+					modelName,
+					bandALength: bandA.length,
+					bandBLength: bandB.length,
+					bandCLength: bandC.length,
+					retryCount,
+					error: error instanceof Error ? error.message : 'Unknown error',
+					errorType: error instanceof Error ? error.constructor.name : 'Unknown',
+					timestamp: new Date().toISOString(),
+				};
+
+				console.error(`MLX tri-band generation failed (attempt ${retryCount}/${maxRetries + 1}):`, errorDetails);
+
+				// Check if we should fallback to standard generation
+				const shouldFallback = retryCount > maxRetries || (
+					error instanceof Error && (
+						error.message.includes('script not found') ||
+						error.message.includes('module not found') ||
+						error.message.includes('import error')
+					)
+				);
+
+				if (shouldFallback) {
+					console.warn('Falling back to standard MLX chat without tri-band context due to tri-band failure');
+					try {
+						const fallbackResult = await generateChat({
+							messages: request.messages,
+							model: request.model,
+							max_tokens: request.max_tokens,
+							temperature: request.temperature,
+						});
+
+						return {
+							...fallbackResult,
+							bandUsage: { bandAChars: 0, bandBVirtualTokens: 0, bandCFacts: 0 },
+							virtualTokenMode: request.virtualTokenMode || 'pass-through',
+							structuredFactsProcessed: false,
+							fallback_used: true,
+							fallback_reason: error instanceof Error ? error.message : 'Unknown tri-band error',
+						};
+
+					} catch (fallbackError) {
+						// If even fallback fails, throw the original error
+						throw new Error(`Both tri-band and standard generation failed. Tri-band error: ${error instanceof Error ? error.message : 'Unknown'}. Fallback error: ${fallbackError instanceof Error ? fallbackError.message : 'Unknown'}`);
+					}
+				}
+
+				// Exponential backoff for retryable errors
+				const backoffMs = Math.min(1000 * Math.pow(2, retryCount - 1), 3000);
+				await new Promise(resolve => setTimeout(resolve, backoffMs));
+			}
+		}
+
+		// This should never be reached due to fallback logic
+		throw new Error(`Failed to generate tri-band response after ${maxRetries + 1} attempts`);
+	};
+
 	const isAvailable = async (): Promise<boolean> => {
 		try {
 			// Test with a simple text to check if MLX is available
@@ -457,6 +905,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 		generateEmbedding,
 		generateEmbeddings,
 		generateChat,
+		generateChatWithBands,
 		rerank,
 		isAvailable,
 	};
@@ -479,6 +928,24 @@ export class MLXAdapter implements MLXAdapterApi {
 		temperature?: number;
 	}): Promise<{ content: string; model: string }> {
 		return this.impl.generateChat(request);
+	}
+	generateChatWithBands(request: {
+		messages: ChatMessage[];
+		model?: string;
+		bandA?: string;
+		bandB?: number[];
+		bandC?: Array<{
+			type: string;
+			value: string | number | boolean;
+			context: string;
+			confidence: number;
+		}>;
+		virtualTokenMode?: 'ignore' | 'decode' | 'pass-through';
+		enableStructuredOutput?: boolean;
+		max_tokens?: number;
+		temperature?: number;
+	}): Promise<{ content: string; model: string; bandUsage?: any; virtualTokenMode?: string; structuredFactsProcessed?: boolean }> {
+		return this.impl.generateChatWithBands(request);
 	}
 	rerank(query: string, documents: string[], model?: string): Promise<{ scores: number[] }> {
 		return this.impl.rerank(query, documents, model);

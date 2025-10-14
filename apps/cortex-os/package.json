@@ -26,6 +26,7 @@
     "@cortex-os/rag": "workspace:*",
     "@cortex-os/simlab": "workspace:*",
     "@cortex-os/utils": "workspace:*",
+    "@brainwav/telemetry": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "archiver": "^7.0.1",
     "inversify": "6.0.1",

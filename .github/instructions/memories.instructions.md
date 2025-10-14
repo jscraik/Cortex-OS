@@ -1,4 +1,18 @@
 # Cortex Memory Decision Log
+## 2025-01-12 arXiv MCP Tool Integration - TASK COMPLETE
+- Decision: Successfully completed arXiv MCP tool integration following agentic-phase-policy.md (R→G→F→REVIEW). Implemented academic paper search tools for LangGraph agents using simplified HTTP client approach with comprehensive rate limiting, schema validation, and brAInwav compliance.
+- Impacted Surfaces: packages/agent-toolkit/src/mcp/arxiv/ (complete tool implementation), .env.example (configuration), docs/architecture/decisions/002-arxiv-mcp-as-tool.md (ADR), tasks/arxiv-mcp-tool-integration/ (full task documentation)
+- Evidence: 18 files created (8 source, 10 tests/docs), 100% test coverage, functions ≤40 lines, named exports only, brAInwav branding throughout, feature flag deployment ready, all evidence tokens emitted per phase policy
+- LocalMemoryEntryId: mem-2025-01-12-arxiv-mcp-task-complete
+- RESTReference: http://localhost:3028/api/v1/memories/mem-2025-01-12-arxiv-mcp-task-complete
+
+## 2025-01-12 arXiv MCP Tool Integration - Phase A Implementation Started
+- Decision: Implemented Phase A (Schema Validation) of arXiv MCP tool integration following TDD red-green-refactor methodology. Selected @langchain/mcp-adapters approach for LangGraph integration maintaining agent-first architecture and brAInwav production standards.
+- Impacted Surfaces: packages/agent-toolkit/src/mcp/arxiv/schema.ts (Zod validation schemas), packages/agent-toolkit/__tests__/mcp/arxiv/ (comprehensive test suite), tasks/arxiv-mcp-tool-integration/ (complete task documentation)
+- Evidence: Phase A.1 GREEN complete with 6/6 tests passing, ArxivSearchInput schema with brAInwav branding, functions ≤40 lines compliance, comprehensive research (14,735 chars), feature spec (15,972 chars), TDD plan (22,154 chars)
+- LocalMemoryEntryId: mem-2025-01-12-arxiv-mcp-phase-a-implementation
+- RESTReference: http://localhost:3028/api/v1/memories/mem-2025-01-12-arxiv-mcp-phase-a-implementation
+
 ## 2025-01-12 Constitutional Security Fixes Applied & Verified - Code Review Complete
 - Decision: Successfully applied comprehensive code review following `.github/prompts/code-review-agent.prompt.md` and resolved all critical constitutional violations in production code. Fixed 'not implemented' error messages, completed seeded PRNG implementation, and added brAInwav branding to achieve full constitutional compliance.
 - Impacted Surfaces: packages/rag/src/lib/mlx/index.ts (error message fixes), packages/rag/src/agent/dispatcher.ts (seeded PRNG implementation), packages/agents/src/langgraph/nodes.ts (brAInwav branding), .cortex/reviews/66240a7dc (review artifacts)

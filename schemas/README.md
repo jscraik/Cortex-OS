@@ -73,6 +73,7 @@ API documentation and validation:
 - **MCP Protocol Schemas** - Model Context Protocol definitions
 - **API Request/Response** - HTTP API schemas
 - **WebSocket Messages** - Real-time communication
+- **agent-event.schema.json** - brAInwav structured agent telemetry events for vendor-neutral observability via A2A topic `cortex.telemetry.agent.event`
 
 ### Domain-Specific Schemas
 

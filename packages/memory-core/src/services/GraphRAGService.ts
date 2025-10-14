@@ -30,7 +30,11 @@ import { MCPKnowledgeProvider } from './external/MCPKnowledgeProvider.js';
 import { performanceMonitor } from '../monitoring/PerformanceMonitor.js';
 import { getQueryPrecomputer, type PrecomputationConfig } from '../precomputation/QueryPrecomputer.js';
 import { getStreamingResponse, type StreamingOptions, type StreamingConfig } from '../streaming/StreamingResponse.js';
-import { getGPUAccelerationManager, type GPUAccelerationConfig } from '../acceleration/GPUAcceleration.js';
+import { 
+	getGPUAccelerationManager, 
+	stopGPUAccelerationManager,
+	type GPUAccelerationConfig 
+} from '../acceleration/GPUAcceleration.js';
 import { getAutoScalingManager, type AutoScalingConfig } from '../scaling/AutoScalingManager.js';
 import { getMLOptimizationManager, type MLOptimizationConfig } from '../ml/MLOptimizationManager.js';
 import { getCDNCacheManager, type CDNConfig } from '../cdn/CDNCacheManager.js';
@@ -1350,6 +1354,20 @@ export class GraphRAGService {
 		await this.qdrant.close();
 		await this.externalKg?.driver.close();
 		await this.externalProvider?.dispose?.();
+		
+		// Shutdown GPU acceleration manager (singleton cleanup)
+		try {
+			await stopGPUAccelerationManager();
+		} catch (error) {
+			console.error('[brAInwav] Failed to stop GPU acceleration manager', {
+				brand: 'brAInwav',
+				timestamp: new Date().toISOString(),
+				error: error instanceof Error ? error.message : String(error),
+				context: 'GraphRAGService.close'
+			});
+			// Don't throw - continue with other cleanup
+		}
+		
 		await shutdownPrisma();
 		if (this.config.branding.enabled) {
 			console.info('brAInwav GraphRAG service closed', {

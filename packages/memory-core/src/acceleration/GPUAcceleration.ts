@@ -80,6 +80,16 @@ export interface GPUMetrics {
 }
 
 /**
+ * Memory reservation tracking for deterministic GPU memory management
+ */
+export interface MemoryReservation {
+	device: GPUDeviceInfo;
+	bytes: number;
+	batchId: string;
+	timestamp: number;
+}
+
+/**
  * GPU Acceleration Manager for brAInwav GraphRAG Embeddings
  */
 export class GPUAccelerationManager {
@@ -88,6 +98,7 @@ export class GPUAccelerationManager {
 	private isInitialized = false;
 	private requestQueue: EmbeddingRequest[] = [];
 	private processingBatches = new Map<string, Promise<EmbeddingResult[]>>();
+	private activeReservations = new Map<string, MemoryReservation>();
 	private metrics: GPUMetrics = {
 		totalRequests: 0,
 		gpuRequests: 0,
@@ -308,7 +319,7 @@ export class GPUAccelerationManager {
 			let results: EmbeddingResult[];
 
 			// Determine processing strategy
-			if (this.shouldUseGPU(texts.length, options.priority, options.preferGPU)) {
+			if (this.shouldUseGPU(texts.length, options.priority || 'normal', options.preferGPU)) {
 				results = await this.processWithGPU(texts, batchId);
 				this.metrics.gpuRequests += texts.length;
 			} else {
@@ -402,59 +413,134 @@ export class GPUAccelerationManager {
 		);
 	}
 
+	/**
+	 * Reserves GPU device memory for a batch operation with automatic cleanup
+	 * 
+	 * @param device - Target GPU device to reserve memory on
+	 * @param bytes - Memory amount to reserve in megabytes  
+	 * @param batchId - Unique identifier for tracking this reservation
+	 * @returns Release function that must be called to free memory
+	 * @throws Error if insufficient memory available
+	 * 
+	 * @example
+	 * const reservation = this.reserveDeviceMemory(device, 256, 'batch-123');
+	 * try {
+	 *   await processEmbeddings();
+	 *   reservation.release(true);
+	 * } catch (error) {
+	 *   reservation.release(false);
+	 *   throw error;
+	 * }
+	 */
+	private reserveDeviceMemory(
+		device: GPUDeviceInfo,
+		bytes: number, 
+		batchId: string
+	): { release: (success: boolean) => void } {
+		if (device.memoryFree < bytes) {
+			throw new Error(`brAInwav: Insufficient GPU memory: need ${bytes}MB, have ${device.memoryFree}MB`);
+		}
+		
+		// Update device memory counters atomically
+		device.memoryUsed += bytes;
+		device.memoryFree -= bytes;
+		
+		// Track reservation for cleanup and leak detection
+		const reservation: MemoryReservation = { 
+			device, 
+			bytes, 
+			batchId, 
+			timestamp: Date.now() 
+		};
+		this.activeReservations.set(batchId, reservation);
+		
+		console.debug('[brAInwav] GPU memory reserved', {
+			brand: 'brAInwav',
+			timestamp: new Date().toISOString(),
+			batchId,
+			reservedBytes: bytes,
+			deviceMemoryUsed: device.memoryUsed,
+			deviceMemoryFree: device.memoryFree,
+			activeReservations: this.activeReservations.size
+		});
+		
+		return {
+			release: (success: boolean) => {
+				// Idempotent release - check existence before cleanup
+				if (this.activeReservations.has(batchId)) {
+					device.memoryUsed -= bytes;
+					device.memoryFree += bytes;
+					this.activeReservations.delete(batchId);
+					
+					console.debug('[brAInwav] GPU memory released', {
+						brand: 'brAInwav',
+						timestamp: new Date().toISOString(),
+						batchId,
+						releasedBytes: bytes,
+						success,
+						deviceMemoryUsed: device.memoryUsed,
+						deviceMemoryFree: device.memoryFree,
+						remainingReservations: this.activeReservations.size
+					});
+				}
+			}
+		};
+	}
+
 	private async processWithGPU(texts: string[], batchId: string): Promise<EmbeddingResult[]> {
 		const startTime = Date.now();
 		const device = this.getAvailableGPUDevice();
 
 		if (!device) {
-			throw new Error('No available GPU devices');
+			throw new Error('brAInwav: No available GPU devices');
 		}
 
-		// Memory management: Check available memory before processing with safety margins
+		// Calculate memory requirements with safety margin
 		const estimatedMemoryUsage = texts.length * 4 * 384; // 4 bytes per dimension, 384 dimensions
+		const safetyMarginMultiplier = 1.25; // brAInwav policy: 25% safety margin
+		const requiredMemoryMB = Math.ceil(estimatedMemoryUsage / (1024 * 1024) * safetyMarginMultiplier);
 
-		// brAInwav policy: Add 25% safety margin to memory usage calculations
-		const safetyMarginMultiplier = 1.25;
-		const requiredMemoryWithMargin = Math.ceil(estimatedMemoryUsage * safetyMarginMultiplier);
-
-		if (requiredMemoryWithMargin > device.memoryFree) {
-			throw new Error(
-				`Insufficient GPU memory: need ${requiredMemoryWithMargin} (with safety margin), have ${device.memoryFree} - brAInwav safety policy enforced`,
-			);
-		}
+		// Reserve memory with deterministic cleanup
+		const reservation = this.reserveDeviceMemory(device, requiredMemoryMB, batchId);
 
 		try {
 			// Simulate GPU processing (in practice, this would use CUDA/WebGL)
+			if (!this.denseEmbedder) {
+				throw new Error('brAInwav: Dense embedder not initialized');
+			}
+			
 			const embeddings = await this.denseEmbedder(texts);
 			const processingTime = Date.now() - startTime;
 
-			// Update device metrics with bounds checking using safety-margin adjusted memory
+			// Update device utilization metrics
 			device.utilization = Math.min(100, device.utilization + 10);
-			const actualMemoryUsage = Math.min(requiredMemoryWithMargin, device.memoryFree);
-			device.memoryUsed += actualMemoryUsage;
-			device.memoryFree = Math.max(0, device.memoryTotal - device.memoryUsed);
 
-			// Memory cleanup: Force garbage collection if memory usage is high
-			if (device.memoryUsed > this.config.cuda.maxMemoryUsage * 0.8) {
-				if (global.gc) {
-					global.gc();
-				}
-			}
-
-			return embeddings.map((embedding, index) => ({
+			// Create results with GPU device info
+			const results: EmbeddingResult[] = embeddings.map((embedding, index) => ({
 				embedding,
-				device: 'gpu' as const,
+				device: 'gpu',
 				deviceId: device.id,
-				processingTime: processingTime / texts.length,
-				batchId,
+				processingTime: processingTime / embeddings.length,
+				batchId
 			}));
+
+			// Memory released successfully
+			reservation.release(true);
+			return results;
+
 		} catch (error) {
-			// Memory cleanup on error using safety-margin adjusted memory
-			device.memoryUsed = Math.max(0, device.memoryUsed - requiredMemoryWithMargin);
-			device.memoryFree = Math.min(
-				device.memoryTotal,
-				device.memoryFree + requiredMemoryWithMargin,
-			);
+			// Ensure memory is released even on failure
+			reservation.release(false);
+			
+			console.error('[brAInwav] GPU processing failed', {
+				brand: 'brAInwav',
+				timestamp: new Date().toISOString(),
+				batchId,
+				error: error instanceof Error ? error.message : String(error),
+				deviceId: device.id,
+				requiredMemoryMB
+			});
+			
 			throw error;
 		}
 	}
@@ -468,6 +554,9 @@ export class GPUAccelerationManager {
 
 		for (let i = 0; i < texts.length; i += batchSize) {
 			const batch = texts.slice(i, i + batchSize);
+			if (!this.denseEmbedder) {
+				throw new Error('brAInwav: Dense embedder not initialized');
+			}
 			const batchEmbeddings = await this.denseEmbedder(batch);
 			allEmbeddings.push(...batchEmbeddings);
 		}
@@ -591,9 +680,33 @@ export class GPUAccelerationManager {
 	}
 
 	/**
-	 * Stop GPU acceleration manager
+	 * Stop GPU acceleration manager with comprehensive cleanup
 	 */
 	async stop(): Promise<void> {
+		console.info('[brAInwav] GPU Acceleration Manager stopping', {
+			brand: 'brAInwav',
+			timestamp: new Date().toISOString(),
+			activeReservations: this.activeReservations.size,
+			processingBatches: this.processingBatches.size
+		});
+
+		// Clean up any remaining reservations and log leaks
+		if (this.activeReservations.size > 0) {
+			console.warn('[brAInwav] GPU reservations leaked during shutdown', {
+				brand: 'brAInwav',
+				timestamp: new Date().toISOString(),
+				leakedCount: this.activeReservations.size,
+				reservations: Array.from(this.activeReservations.keys())
+			});
+			
+			// Force cleanup leaked reservations
+			for (const [batchId, reservation] of this.activeReservations) {
+				reservation.device.memoryUsed -= reservation.bytes;
+				reservation.device.memoryFree += reservation.bytes;
+			}
+			this.activeReservations.clear();
+		}
+
 		// Clear timers to prevent memory leaks
 		if (this.metricsTimer) {
 			clearInterval(this.metricsTimer);
@@ -629,7 +742,7 @@ export class GPUAccelerationManager {
 		this.requestQueue.length = 0; // More efficient than reassignment
 		this.processingBatches.clear();
 
-		// Reset device states and release GPU memory
+		// Reset device states and release GPU memory to baseline
 		for (const device of this.gpuDevices) {
 			device.utilization = 0;
 			device.memoryUsed = 0;

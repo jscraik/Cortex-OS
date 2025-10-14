@@ -1,0 +1,83 @@
+{
+    "schemaVersion": "1.1",
+    "taskId": "ref-rag-hybrid-tdd-plan",
+    "taskSlug": "ref-rag-hybrid-tdd-plan",
+    "taskDir": "~/tasks/ref-rag-hybrid-tdd-plan/",
+    "batonPath": "~/tasks/ref-rag-hybrid-tdd-plan/json/baton.v1.json",
+    "goal": "Implement REF-RAG hybrid context system with tri-band architecture for enhanced retrieval precision",
+    "entryPoints": [
+        "packages/rag/src/ref-rag/pipeline.ts",
+        "packages/model-gateway/src/server.ts",
+        "apps/cortex-py/src/mlx/mlx_unified.py"
+    ],
+    "stack": [
+        "TypeScript",
+        "Python",
+        "MLX",
+        "Vitest",
+        "Pytest",
+        "Zod",
+        "FastAPI"
+    ],
+    "constraints": [
+        "Backward compatibility with existing RAG pipeline",
+        "Performance budget: virtual tokens ≤10% of real tokens",
+        "Memory budget: Band B compression ≤50% original size",
+        "Security: no PII leakage in structured facts"
+    ],
+    "testing": {
+        "coverage": "≥95%",
+        "types": [
+            "unit",
+            "integration",
+            "e2e"
+        ],
+        "frameworks": [
+            "vitest",
+            "pytest"
+        ]
+    },
+    "nonGoals": [
+        "Real-time inference optimization",
+        "Advanced RL-based relevance scoring",
+        "Cross-document relationship modeling"
+    ],
+    "repoStructure": {
+        "packages": [
+            "rag",
+            "model-gateway",
+            "cortex-mcp"
+        ],
+        "apps": [
+            "cortex-py"
+        ],
+        "libs": [
+            "typescript",
+            "python"
+        ]
+    },
+    "planner": {
+        "planPaths": {
+            "implementationPlanMd": "~/tasks/ref-rag-hybrid-tdd-plan/implementation-plan.md",
+            "tddPlanMd": "~/tasks/ref-rag-hybrid-tdd-plan/tdd-plan.md",
+            "checklistMd": "~/tasks/ref-rag-hybrid-tdd-plan/implementation-checklist.md",
+            "summaryMd": "~/tasks/ref-rag-hybrid-tdd-plan/SUMMARY.md"
+        },
+        "fileTree": [
+            "packages/rag/src/ref-rag/",
+            "packages/rag/src/lib/types.ts",
+            "packages/rag/src/index.ts",
+            "packages/model-gateway/src/server.ts",
+            "packages/model-gateway/src/adapters/types.ts",
+            "apps/cortex-py/src/mlx/mlx_unified.py"
+        ],
+        "commands": {
+            "install": "pnpm i",
+            "lint": "pnpm lint:smart",
+            "typecheck": "pnpm typecheck:smart",
+            "test": "pnpm test:smart -- --coverage"
+        },
+        "coverageTarget": "≥95%",
+        "conventionalCommits": true
+    }
+}

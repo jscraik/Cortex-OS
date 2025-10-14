@@ -1,0 +1,41 @@
+{
+  "name": "@brainwav/telemetry",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/telemetry/src",
+  "projectType": "library",
+  "tags": ["scope:telemetry", "type:library"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/telemetry",
+        "main": "packages/telemetry/src/index.ts",
+        "tsConfig": "packages/telemetry/tsconfig.json",
+        "assets": ["packages/telemetry/*.md"]
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.coverage}"],
+      "options": {
+        "config": "packages/telemetry/vitest.config.ts",
+        "coverage": "coverage/packages/telemetry"
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/telemetry/**/*.ts"]
+      }
+    },
+    "typecheck": {
+      "executor": "@nx/js:tsc",
+      "options": {
+        "tsConfig": "packages/telemetry/tsconfig.json",
+        "noEmit": true
+      }
+    }
+  }
+}

@@ -52,6 +52,17 @@ const ChatBodySchema = z.object({
 		)
 		.min(1, 'msgs must be a non-empty array'),
 	tools: z.unknown().optional(),
+	// REF‑RAG tri-band context support
+	bandA: z.string().optional(),
+	bandB: z.array(z.number()).optional(),
+	bandC: z.array(z.object({
+		type: z.string(),
+		value: z.union([z.string(), z.number(), z.boolean()]),
+		context: z.string(),
+		confidence: z.number().min(0).max(1),
+	})).optional(),
+	virtualTokenMode: z.enum(['ignore', 'decode', 'pass-through']).optional(),
+	enableStructuredOutput: z.boolean().optional(),
 });
 
 // inferred types are validated at the handler level; explicit aliases not exported to avoid unused warnings
@@ -337,6 +348,17 @@ export function createServer(
 		const body = validation.data;
 		req.log.debug({ body }, 'Received chat request');
 
+		// Log REF‑RAG tri-band context usage
+		if (body.bandA || body.bandB || body.bandC) {
+			req.log.info({
+				hasBandA: !!body.bandA,
+				bandBLength: body.bandB?.length || 0,
+				bandCFacts: body.bandC?.length || 0,
+				virtualTokenMode: body.virtualTokenMode,
+				enableStructuredOutput: body.enableStructuredOutput,
+			}, 'REF‑RAG tri-band context detected');
+		}
+
 		// Use advanced policy router for enhanced policy enforcement
 		try {
 			await advancedPolicyRouter.enforce('model-gateway', 'chat', body);
@@ -369,21 +391,55 @@ export function createServer(
 				endTimer();
 				return reply.status(503).send({ error: 'No chat models available' });
 			}
-			const result = await modelRouter.generateChat({
-				messages: body.msgs,
-				model: body.model,
-				max_tokens: 1000,
-				temperature: 0.7,
-			});
+
+			// Prepare tri-band context for model router
+			const triBandContext = (body.bandA || body.bandB || body.bandC) ? {
+				bandA: body.bandA,
+				bandB: body.bandB,
+				bandC: body.bandC,
+				virtualTokenMode: body.virtualTokenMode || 'pass-through',
+				enableStructuredOutput: body.enableStructuredOutput || false,
+			} : undefined;
+
+			// Generate chat with optional tri-band context
+			const result = triBandContext
+				? await modelRouter.generateChatWithBands({
+						messages: body.msgs,
+						model: body.model,
+						max_tokens: 1000,
+						temperature: 0.7,
+						triBandContext,
+					})
+				: await modelRouter.generateChat({
+						messages: body.msgs,
+						model: body.model,
+						max_tokens: 1000,
+						temperature: 0.7,
+					});
 
 			const lastUser = [...body.msgs].reverse().find((m) => m.role === 'user');
-			const resBody = {
+
+			// Build evidence including tri-band context
+			const evidenceItems = [
+				lastUser?.content && { text: lastUser.content },
+				body.bandA && { text: `Band A context (${body.bandA.length} chars)` },
+				body.bandB && { text: `Band B context (${body.bandB.length} virtual tokens)` },
+				body.bandC && { text: `Band C context (${body.bandC.length} facts)` },
+			].filter(Boolean) as Array<{ text?: string; uri?: string }>;
+
+			const resBody: any = {
 				content: result.content,
 				modelUsed: result.model,
-				evidence: buildEvidence(
-					[lastUser?.content && { text: lastUser.content }].filter(Boolean) as any,
-				),
+				evidence: buildEvidence(evidenceItems),
 			};
+
+			// Add tri-band metadata if available
+			if (triBandContext && (result as any).bandUsage) {
+				resBody.bandUsage = (result as any).bandUsage;
+				resBody.virtualTokenMode = (result as any).virtualTokenMode;
+				resBody.structuredFactsProcessed = (result as any).structuredFactsProcessed;
+			}
+
 			reqCounter.inc({ route: 'chat', status: '200' });
 			endTimer();
 			return reply.send(resBody);
