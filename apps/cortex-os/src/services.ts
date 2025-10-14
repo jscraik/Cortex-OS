@@ -5,6 +5,7 @@ import {
 import type { PromptCapture } from '@cortex-os/prompts';
 import { isPrivateHostname, safeFetchJson } from '@cortex-os/utils';
 import { trace } from '@opentelemetry/api';
+import type { Telemetry } from '@brainwav/telemetry';
 import { createMcpGateway, type McpGateway, type MemoriesLike } from './mcp/gateway.js';
 import { ArtifactRepository } from './persistence/artifact-repository.js';
 import { EvidenceRepository } from './persistence/evidence-repository.js';
@@ -192,25 +193,40 @@ export function provideMemories(): MemoryService {
 
 export function provideOrchestration(): OrchestrationFacade {
 	const facade = coreProvideOrchestration();
+	currentOrchestrationFacade = facade;
+	
+	// Set telemetry if available
+	if (globalTelemetryEmitter && 'setTelemetry' in facade) {
+		(facade as any).setTelemetry(globalTelemetryEmitter);
+	}
+	
 	return {
 		...facade,
 		run: async (task, agents, context = {}, subAgents = []) => {
 			const runId =
 				task.id ?? `run-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-			const bundle = await initRunBundle({ id: runId, rootDir: RUNS_ROOT });
-			const contextSnapshot =
-				context && typeof context === 'object' && !Array.isArray(context)
-					? { ...(context as Record<string, unknown>), subAgents }
-					: { value: context, subAgents };
-			const recorder = new RunBundleRecorder({
-				runId,
-				writer: bundle,
-				task,
-				agents,
-				context: contextSnapshot,
-			});
+			
+			// brAInwav telemetry instrumentation
+			const agentId = agents[0]?.id || 'brAInwav-cortex-orchestrator';
+			const runPhase = globalTelemetryEmitter?.phase('orchestration-run');
+			
+			try {
+				runPhase?.started();
+				
+				const bundle = await initRunBundle({ id: runId, rootDir: RUNS_ROOT });
+				const contextSnapshot =
+					context && typeof context === 'object' && !Array.isArray(context)
+						? { ...(context as Record<string, unknown>), subAgents }
+						: { value: context, subAgents };
+				const recorder = new RunBundleRecorder({
+					runId,
+					writer: bundle,
+					task,
+					agents,
+					context: contextSnapshot,
+				});
 
-			await recorder.start();
+				await recorder.start();
 			await recorder.recordPrompts([]);
 
 			try {
@@ -231,6 +247,15 @@ export function provideOrchestration(): OrchestrationFacade {
 					: [];
 				await recorder.recordPrompts(promptCaptures);
 				await recorder.complete(result);
+				
+				// brAInwav telemetry success
+				runPhase?.finished({ 
+					status: 'success', 
+					runId,
+					agentId,
+					brAInwav: 'orchestration-complete' 
+				});
+				
 				return result;
 			} catch (error) {
 				try {
@@ -238,6 +263,16 @@ export function provideOrchestration(): OrchestrationFacade {
 				} catch (recordError) {
 					console.warn('cortex-os run bundle recorder failed to persist error state', recordError);
 				}
+				
+				// brAInwav telemetry error
+				runPhase?.finished({ 
+					status: 'error', 
+					error: error instanceof Error ? error.message : String(error),
+					runId,
+					agentId,
+					brAInwav: 'orchestration-failed' 
+				});
+				
 				throw error;
 			}
 		},
@@ -267,12 +302,27 @@ let globalPublishToolEvent:
 	| ((evt: { type: string; payload: Record<string, unknown> }) => void)
 	| undefined;
 
+// brAInwav telemetry state management
+let globalTelemetryEmitter: Telemetry | undefined;
+let currentOrchestrationFacade: OrchestrationFacade | undefined;
+
 export function setA2aPublishers(publishers: {
 	publishMcpEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void;
 	publishToolEvent?: (evt: { type: string; payload: Record<string, unknown> }) => void;
 }) {
 	globalPublishMcpEvent = publishers.publishMcpEvent ?? globalPublishMcpEvent;
 	globalPublishToolEvent = publishers.publishToolEvent ?? globalPublishToolEvent;
+}
+
+/**
+ * Set brAInwav telemetry emitter for structured agent observability
+ */
+export function setTelemetryEmitter(emitter: Telemetry): void {
+	globalTelemetryEmitter = emitter;
+	// Propagate to current orchestration facade if available
+	if (currentOrchestrationFacade && 'setTelemetry' in currentOrchestrationFacade) {
+		(currentOrchestrationFacade as any).setTelemetry(emitter);
+	}
 }
 
 export function provideMCP(opts?: {

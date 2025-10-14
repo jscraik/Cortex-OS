@@ -66,6 +66,20 @@ export const CortexOsToolExecutionCompletedSchema = z.object({
 	errorMessage: z.string().optional(),
 });
 
+/**
+ * brAInwav structured agent telemetry event schema for vendor-neutral observability
+ */
+export const CortexOsTelemetryEventSchema = z.object({
+	timestamp: z.string().datetime(),
+	agentId: z.string(),
+	phase: z.enum(['planning', 'execution', 'completion']),
+	event: z.enum(['run_started', 'run_finished', 'plan_created', 'plan_revised', 'reroute', 'tool_invoked', 'tool_result']),
+	correlationId: z.string(),
+	labels: z.record(z.unknown()).optional(),
+	metrics: z.record(z.unknown()).optional(),
+	outcome: z.record(z.unknown()).optional(),
+});
+
 const DEFAULT_CORTEX_OS_ACL: TopicACL = {
 	'cortex.health.check': { publish: true, subscribe: true },
 	'cortex.mcp.event': { publish: true, subscribe: true },
@@ -73,6 +87,7 @@ const DEFAULT_CORTEX_OS_ACL: TopicACL = {
 	'cortex.service.status': { publish: true, subscribe: true },
 	'cortex.mcp.tool.execution.started': { publish: true, subscribe: true },
 	'cortex.mcp.tool.execution.completed': { publish: true, subscribe: true },
+	'cortex.telemetry.agent.event': { publish: true, subscribe: true },
 };
 
 function registerCortexOsSchema(
@@ -194,6 +209,40 @@ export function createCortexOsSchemaRegistry(): SchemaRegistry {
 				durationMs: 12,
 				status: 'success',
 			},
+		],
+	);
+
+	registerCortexOsSchema(
+		registry,
+		'cortex.telemetry.agent.event',
+		CortexOsTelemetryEventSchema,
+		'brAInwav structured agent telemetry events for vendor-neutral observability and workflow monitoring',
+		['telemetry', 'agents', 'brAInwav', 'observability'],
+		[
+			{
+				timestamp: new Date().toISOString(),
+				agentId: 'brAInwav-cortex-agent-1',
+				phase: 'execution',
+				event: 'tool_invoked',
+				correlationId: 'brAInwav-session-123',
+				labels: {
+					tool: 'arxiv-search',
+					brAInwav: 'tool-invocation'
+				},
+				metrics: {
+					duration_ms: 150
+				}
+			},
+			{
+				timestamp: new Date().toISOString(),
+				agentId: 'brAInwav-orchestrator',
+				phase: 'planning',
+				event: 'run_started',
+				correlationId: 'brAInwav-run-456',
+				labels: {
+					brAInwav: 'workflow-start'
+				}
+			}
 		],
 	);
 

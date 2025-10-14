@@ -1,0 +1,21 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#0B84F3",
+    "primaryBorderColor": "#0B84F3",
+    "primaryTextColor": "#FFFFFF",
+    "secondaryColor": "#111827",
+    "tertiaryColor": "#1F2937",
+    "lineColor": "#9CA3AF",
+    "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    "noteBkgColor": "#0B84F31A",
+    "textColor": "#E5E7EB",
+    "mainBkg": "#0B1220",
+    "clusterBkg": "#0B1220",
+    "nodeBkg": "#111827",
+    "altBackground": "#0B1220",
+    "edgeLabelBackground": "#0B1220",
+    "contrast": "#FFFFFF"
+  },
+  "gantt": { "axisFormat": "%m/%d/%Y" }
+}

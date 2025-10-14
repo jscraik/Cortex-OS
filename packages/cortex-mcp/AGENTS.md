@@ -117,7 +117,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 FEATURE_FLAGS=
 ```
 
-- **Secrets** via env/secret manager only — never in code or `.env.example`.  
+- **Secrets**: fetch API keys, SSH keys, and tokens on-demand with the 1Password CLI (`op`); never store credentials in code, repo artifacts, or persistent environment variables.
 - Provide `docs/env.md` with descriptions and defaults.
 
 ---

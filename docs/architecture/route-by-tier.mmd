@@ -1,0 +1,38 @@
+%% A11y: high-contrast palette; avoid color-only signaling
+%% You can force Mermaid theme variables in your site build if needed.
+flowchart LR
+    subgraph Client["User / Apps"]
+        UI[UI / CLI (cortex-cli)]
+    end
+
+    subgraph Router["Routing Middleware (packages/router)"]
+      DIR[Policy Engine\n(routeByTier)]
+      PII[Privacy & PII Filters\n(MLX classifiers)]
+      BUD[Budgets & Circuit Breakers]
+      OTel[OpenTelemetry SDK\n(Spans & Metrics)]
+      AUD[Audit Log\n(trace_id, route, tokens)]
+      DIR -->|decide| PII --> BUD
+      BUD --> OTel
+      BUD --> AUD
+    end
+
+    subgraph Local["Local Tier"]
+      MLX[mlxAdapter\n(on-device micro-LLMs,\nembeddings, classifiers)]
+      OLL[ollamaAdapter\n(local tools/agents)]
+    end
+
+    subgraph Cloud["Cloud Tier"]
+      RESP[responsesAdapter\n(frontier LLM / long ctx)]
+      RETR[RAG/Retrievers\n(vector store, http tools)]
+    end
+
+    UI --> Router
+    BUD -->|route: local| MLX
+    BUD -->|route: local| OLL
+    BUD -->|route: cloud| RESP
+    RESP --> RETR
+    MLX --> OTel
+    OLL --> OTel
+    RESP --> OTel
+    OTel -->|export| MON[Prometheus → Grafana]
+    AUD --> STOR[(Immutable Storage)]

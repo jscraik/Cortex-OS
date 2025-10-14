@@ -70,7 +70,7 @@ alwaysApply: true
 
 - [ ] **Docs updated:** READMEs/API/config/design artefacts.
 - [ ] **System impacts/back-compat** considered.
-- [ ] **[BLOCKER] Secrets/config:** No hard-coded secrets; secure env management.
+- [ ] **[BLOCKER] Secrets/config:** No hard-coded secrets; credentials retrieved via the 1Password CLI (`op`) at runtime; secure env management.
 - [ ] **[BLOCKER] Env loader:** Uses shared loader (`scripts/utils/dotenv-loader.mjs` or `@cortex-os/utils`); **no direct `dotenv.config()`**.
 - [ ] **Local Memory compliance:** `.github/instructions/memories.instructions.md` updated; MCP/REST parity observed; oversight log attached when AGENTS files changed.
 - [ ] **Vision & layout alignment** (package vision, directory structure, scaffolding).

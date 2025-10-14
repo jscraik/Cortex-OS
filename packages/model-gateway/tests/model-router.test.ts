@@ -233,4 +233,278 @@ describe('ModelRouter', () => {
 			expect(result.scores).toEqual([0.8, 0.6, 0.9]);
 		});
 	});
+
+	describe('tri-band chat generation', () => {
+		beforeEach(async () => {
+			(mockMLXAdapter.isAvailable as Mock).mockResolvedValue(true);
+			(mockOllamaAdapter.isAvailable as Mock).mockResolvedValue(true);
+			(mockOllamaAdapter.listModels as Mock).mockResolvedValue(['llama2']);
+
+			await modelRouter.initialize();
+		});
+
+		it('should use MLX for tri-band chat when available', async () => {
+			const mockTriBandResponse = {
+				content: 'Response with tri-band context',
+				model: 'qwen3-coder-30b-mlx',
+				bandUsage: {
+					bandAChars: 500,
+					bandBVirtualTokens: 25,
+					bandCFacts: 3
+				},
+				virtualTokenMode: 'pass-through',
+				structuredFactsProcessed: true
+			};
+			(mockMLXAdapter.generateChatWithBands as Mock).mockResolvedValue(mockTriBandResponse);
+
+			const result = await modelRouter.generateChatWithBands({
+				messages: [{ role: 'user', content: 'Hello with context' }],
+				triBandContext: {
+					bandA: 'Full text context here',
+					bandB: [0.1, 0.2, 0.3, 0.4, 0.5],
+					bandC: [
+						{
+							type: 'number',
+							value: 42,
+							context: 'test fact',
+							confidence: 0.95
+						}
+					],
+					virtualTokenMode: 'pass-through',
+					enableStructuredOutput: true
+				}
+			});
+
+			expect(mockMLXAdapter.generateChatWithBands).toHaveBeenCalledWith({
+				messages: [{ role: 'user', content: 'Hello with context' }],
+				model: undefined,
+				bandA: 'Full text context here',
+				bandB: [0.1, 0.2, 0.3, 0.4, 0.5],
+				bandC: [
+					{
+						type: 'number',
+						value: 42,
+						context: 'test fact',
+						confidence: 0.95
+					}
+				],
+				virtualTokenMode: 'pass-through',
+				enableStructuredOutput: true,
+				max_tokens: undefined,
+				temperature: undefined
+			});
+
+			expect(result.content).toBe('Response with tri-band context');
+			expect(result.model).toBe('qwen3-coder-30b-mlx');
+			expect(result.bandUsage).toBeDefined();
+			expect(result.virtualTokenMode).toBe('pass-through');
+			expect(result.structuredFactsProcessed).toBe(true);
+		});
+
+		it('should fall back to standard chat for non-MLX models', async () => {
+			// Mock MLX as unavailable
+			(mockMLXAdapter.isAvailable as Mock).mockResolvedValue(false);
+			await modelRouter.initialize();
+
+			const mockStandardResponse = { content: 'Standard response', model: 'llama2' };
+			(mockOllamaAdapter.generateChat as Mock).mockResolvedValue(mockStandardResponse);
+
+			const result = await modelRouter.generateChatWithBands({
+				messages: [{ role: 'user', content: 'Hello' }],
+				triBandContext: {
+					bandA: 'Some context',
+					bandC: [{ type: 'fact', value: 'test', context: 'demo', confidence: 0.8 }]
+				}
+			});
+
+			// Should have enhanced the message with tri-band context
+			expect(mockOllamaAdapter.generateChat).toHaveBeenCalledWith({
+				messages: expect.arrayContaining([
+					expect.objectContaining({
+						role: 'user',
+						content: expect.stringContaining('Some context')
+					})
+				]),
+				model: undefined,
+				max_tokens: undefined,
+				temperature: undefined
+			});
+
+			expect(result.content).toBe('Standard response');
+			expect(result.model).toBe('llama2');
+		});
+
+		it('should fall back to standard chat when MLX tri-band fails', async () => {
+			const mockStandardResponse = { content: 'Fallback response', model: 'qwen3-coder-30b-mlx' };
+			(mockMLXAdapter.generateChatWithBands as Mock).mockRejectedValue(new Error('Tri-band failed'));
+			(mockMLXAdapter.generateChat as Mock).mockResolvedValue(mockStandardResponse);
+
+			const result = await modelRouter.generateChatWithBands({
+				messages: [{ role: 'user', content: 'Hello' }],
+				triBandContext: {
+					bandA: 'Context that will fail'
+				}
+			});
+
+			expect(mockMLXAdapter.generateChatWithBands).toHaveBeenCalled();
+			expect(mockMLXAdapter.generateChat).toHaveBeenCalledWith({
+				messages: [{ role: 'user', content: 'Hello' }],
+				model: undefined,
+				max_tokens: undefined,
+				temperature: undefined
+			});
+
+			expect(result.content).toBe('Fallback response');
+		});
+
+		it('should handle requests without tri-band context', async () => {
+			const mockStandardResponse = { content: 'Standard response', model: 'qwen3-coder-30b-mlx' };
+			(mockMLXAdapter.generateChat as Mock).mockResolvedValue(mockStandardResponse);
+
+			const result = await modelRouter.generateChatWithBands({
+				messages: [{ role: 'user', content: 'Hello' }]
+				// No triBandContext
+			});
+
+			expect(mockMLXAdapter.generateChat).toHaveBeenCalledWith({
+				messages: [{ role: 'user', content: 'Hello' }],
+				model: undefined,
+				max_tokens: undefined,
+				temperature: undefined
+			});
+
+			expect(result.content).toBe('Standard response');
+		});
+
+		it('should enhance messages with tri-band context for non-MLX models', async () => {
+			(mockMLXAdapter.isAvailable as Mock).mockResolvedValue(false);
+			await modelRouter.initialize();
+
+			const mockStandardResponse = { content: 'Enhanced response', model: 'llama2' };
+			(mockOllamaAdapter.generateChat as Mock).mockResolvedValue(mockStandardResponse);
+
+			await modelRouter.generateChatWithBands({
+				messages: [
+					{ role: 'system', content: 'You are a helpful assistant.' },
+					{ role: 'user', content: 'What is the capital?' }
+				],
+				triBandContext: {
+					bandA: 'Paris is the capital of France.',
+					bandC: [
+						{ type: 'location', value: 'Paris', context: 'capital of France', confidence: 0.95 },
+						{ type: 'number', value: 2024, context: 'current year', confidence: 1.0 }
+					]
+				}
+			});
+
+			const enhancedMessage = (mockOllamaAdapter.generateChat as Mock).mock.calls[0][0].messages[1];
+			expect(enhancedMessage.content).toContain('Paris is the capital of France.');
+			expect(enhancedMessage.content).toContain('Key Facts:');
+			expect(enhancedMessage.content).toContain('location: Paris');
+			expect(enhancedMessage.content).toContain('number: 2024');
+			expect(enhancedMessage.content).toContain('comprehensive answer');
+		});
+
+		it('should handle empty tri-band context gracefully', async () => {
+			const mockStandardResponse = { content: 'Response', model: 'qwen3-coder-30b-mlx' };
+			(mockMLXAdapter.generateChatWithBands as Mock).mockResolvedValue(mockStandardResponse);
+
+			const result = await modelRouter.generateChatWithBands({
+				messages: [{ role: 'user', content: 'Hello' }],
+				triBandContext: {
+					// Empty bands
+					bandA: '',
+					bandB: [],
+					bandC: []
+				}
+			});
+
+			expect(result.content).toBe('Response');
+		});
+
+		it('should validate virtual token mode parameter', async () => {
+			const mockResponse = { content: 'Response', model: 'qwen3-coder-30b-mlx', bandUsage: {}, virtualTokenMode: 'decode' };
+			(mockMLXAdapter.generateChatWithBands as Mock).mockResolvedValue(mockResponse);
+
+			await modelRouter.generateChatWithBands({
+				messages: [{ role: 'user', content: 'Hello' }],
+				triBandContext: {
+					bandB: [0.1, 0.2, 0.3],
+					virtualTokenMode: 'decode'
+				}
+			});
+
+			expect(mockMLXAdapter.generateChatWithBands).toHaveBeenCalledWith(
+				expect.objectContaining({
+					triBandContext: expect.objectContaining({
+						virtualTokenMode: 'decode'
+					})
+				})
+			);
+		});
+
+		it('should handle structured output parameter', async () => {
+			const mockResponse = {
+				content: 'Structured response',
+				model: 'qwen3-coder-30b-mlx',
+				bandUsage: {},
+				virtualTokenMode: 'pass-through',
+				structuredFactsProcessed: true
+			};
+			(mockMLXAdapter.generateChatWithBands as Mock).mockResolvedValue(mockResponse);
+
+			const result = await modelRouter.generateChatWithBands({
+				messages: [{ role: 'user', content: 'Hello' }],
+				triBandContext: {
+					bandC: [{ type: 'fact', value: 'test', context: 'demo', confidence: 0.9 }],
+					enableStructuredOutput: true
+				}
+			});
+
+			expect(mockMLXAdapter.generateChatWithBands).toHaveBeenCalledWith(
+				expect.objectContaining({
+					triBandContext: expect.objectContaining({
+						enableStructuredOutput: true
+					})
+				})
+			);
+
+			expect(result.structuredFactsProcessed).toBe(true);
+		});
+	});
+
+	describe('privacy mode integration', () => {
+		it('should respect privacy mode for tri-band requests', async () => {
+			modelRouter.setPrivacyMode(true);
+
+			const mockStandardResponse = { content: 'Privacy mode response', model: 'qwen3-coder-30b-mlx' };
+			(mockMLXAdapter.generateChatWithBands as Mock).mockResolvedValue(mockStandardResponse);
+
+			const result = await modelRouter.generateChatWithBands({
+				messages: [{ role: 'user', content: 'Hello' }],
+				triBandContext: {
+					bandA: 'Sensitive context'
+				}
+			});
+
+			// Should still work with MLX in privacy mode
+			expect(result.content).toBe('Privacy mode response');
+			expect(modelRouter.isPrivacyModeEnabled()).toBe(true);
+		});
+
+		it('should prefer MLX models in privacy mode', async () => {
+			modelRouter.setPrivacyMode(true);
+
+			const mockResponse = { content: 'Private MLX response', model: 'qwen3-coder-30b-mlx' };
+			(mockMLXAdapter.generateChatWithBands as Mock).mockResolvedValue(mockResponse);
+
+			const result = await modelRouter.generateChatWithBands({
+				messages: [{ role: 'user', content: 'Hello' }],
+				triBandContext: { bandA: 'Context' }
+			});
+
+			expect(mockMLXAdapter.generateChatWithBands).toHaveBeenCalled();
+			expect(result.model).toBe('qwen3-coder-30b-mlx');
+		});
+	});
 });

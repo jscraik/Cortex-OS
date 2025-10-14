@@ -1,5 +1,7 @@
 import { createObservabilityBus, OBSERVABILITY_EVENT_TYPES } from '@cortex-os/observability';
 import { z } from 'zod';
+import { Telemetry } from '@brainwav/telemetry';
+import { OperationalService } from './operational/operational-service.js';
 import type { Envelope as A2AEnvelope } from './boot/a2a.js';
 import { wireA2A } from './boot/a2a.js';
 import { container } from './boot.js';
@@ -11,7 +13,7 @@ import type { EvidenceRepository } from './persistence/evidence-repository.js';
 import type { ProfileRepository } from './persistence/profile-repository.js';
 import type { TaskRepository } from './persistence/task-repository.js';
 import { startRagHttpSurface } from './rag/runtime-http.js';
-import { setA2aPublishers } from './services.js';
+import { setA2aPublishers, setTelemetryEmitter } from './services.js';
 import { TOKENS } from './tokens.js';
 
 export interface RuntimeHandle {
@@ -20,6 +22,7 @@ export interface RuntimeHandle {
 	ragUrl: string;
 	stop: () => Promise<void>;
 	events: EventManager;
+	operational: OperationalService;
 }
 
 export async function startRuntime(): Promise<RuntimeHandle> {
@@ -28,6 +31,55 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 		publishMcpEvent: wiring.publishMcpEvent,
 		publishToolEvent: wiring.publishToolEvent,
 	});
+
+	// brAInwav operational service initialization
+	const operational = new OperationalService({
+		healthCheckInterval: 60000, // 1 minute
+		cache: {
+			maxSizeBytes: 5 * 1024 * 1024 * 1024, // 5GB
+			maxAgeMs: 7 * 24 * 60 * 60 * 1000, // 7 days
+			autoCleanup: true,
+			cleanupInterval: 60 * 60 * 1000, // 1 hour
+		},
+	});
+
+	// Setup operational event handlers
+	operational.on('healthCheck', (health) => {
+		console.log(`[brAInwav] System health: ${health.overall} (${health.processes.healthy}/${health.processes.total} processes)`);
+	});
+
+	operational.on('processFailure', (data) => {
+		console.warn(`[brAInwav] Process failure detected: ${data.processId}`);
+	});
+
+	operational.on('cacheCleanup', (data) => {
+		console.log(`[brAInwav] Cache cleanup: ${data.filesRemoved} files, ${Math.round(data.spaceSaved / 1024 / 1024)}MB saved`);
+	});
+
+	// brAInwav telemetry initialization with enhanced redaction
+	const telemetryBus = {
+		publish: (topic: string, data: unknown) => {
+			wiring.publish(topic, data as Record<string, unknown>);
+		}
+	};
+	
+	const telemetry = new Telemetry(telemetryBus, {
+		topic: 'cortex.telemetry.agent.event',
+		redaction: (event) => {
+			const { labels, ...rest } = event;
+			return {
+				...rest,
+				labels: labels ? { 
+					...labels, 
+					prompt: '[brAInwav-REDACTED]',
+					query: '[brAInwav-REDACTED]',
+					input: '[brAInwav-REDACTED]'
+				} : { brAInwav: 'telemetry-initialized' }
+			};
+		}
+	});
+	
+	setTelemetryEmitter(telemetry);
 
 	const observabilityBus = createObservabilityBus({ source: 'urn:cortex-os:runtime' });
 
@@ -94,6 +146,57 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 			timestamp: envelope.occurredAt,
 		});
 		await publishObservabilityToolEvent(envelope);
+		
+		// brAInwav telemetry instrumentation with enhanced context
+		if (envelope.type === 'cortex.mcp.tool.execution.started') {
+			const payload = envelope.payload as { tool: string; correlationId: string; session?: string };
+			telemetry.emit({
+				event: 'tool_invoked',
+				agentId: payload.session || 'brAInwav-mcp-tool',
+				phase: 'execution',
+				correlationId: payload.correlationId,
+				labels: {
+					tool: payload.tool,
+					brAInwav: 'tool-invocation',
+					source: 'cortex-mcp-gateway'
+				},
+				metrics: {
+					event_source: 'a2a-envelope',
+					processing_stage: 'tool-start'
+				}
+			});
+		} else if (envelope.type === 'cortex.mcp.tool.execution.completed') {
+			const payload = envelope.payload as { 
+				tool: string; 
+				correlationId: string; 
+				durationMs: number; 
+				status: string;
+				session?: string;
+				resultSource?: string;
+			};
+			telemetry.emit({
+				event: 'tool_result',
+				agentId: payload.session || 'brAInwav-mcp-tool',
+				phase: 'execution',
+				correlationId: payload.correlationId,
+				labels: {
+					tool: payload.tool,
+					brAInwav: 'tool-completion',
+					source: 'cortex-mcp-gateway',
+					result_source: payload.resultSource || 'unknown'
+				},
+				metrics: {
+					duration_ms: payload.durationMs,
+					status: payload.status,
+					event_source: 'a2a-envelope',
+					processing_stage: 'tool-complete'
+				},
+				outcome: {
+					success: payload.status === 'success',
+					performance_tier: payload.durationMs < 100 ? 'fast' : payload.durationMs < 1000 ? 'medium' : 'slow'
+				}
+			});
+		}
 	};
 
 	const publishObservabilityToolEvent = async (envelope: A2AEnvelope) => {
@@ -242,9 +345,14 @@ export async function startRuntime(): Promise<RuntimeHandle> {
 		mcpUrl,
 		ragUrl,
 		events: eventManager,
+		operational,
 		stop: async () => {
 			process.removeListener('SIGTERM', onSignal);
 			process.removeListener('SIGINT', onSignal);
+			
+			// Shutdown operational service first for clean process management
+			await operational.shutdown();
+			
 			const results = await stop();
 			const incomplete = Object.entries(results).filter(([, result]) => !result.completed);
 			if (incomplete.length > 0) {

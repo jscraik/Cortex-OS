@@ -35,6 +35,8 @@ be stored in `~/tasks/[feature]/`, organized into subfolders and files named for
 - **Local Memory parity:** On each decision/refactor/rectification, append rationale + evidence to
   `.github/instructions/memories.instructions.md` **and** persist via Local Memory **MCP/REST dual-mode**.
   Reviewers confirm entries exist (see `docs/local-memory-fix-summary.md`).
+- **Secrets via 1Password CLI:** Fetch API keys, SSH keys, and tokens on-demand with the 1Password CLI (`op`);
+  never persist these secrets in dotfiles, long-lived env vars, or repository artifacts.
 - **Hybrid Model — Live-Only Rule:** Embeddings, rerankers, and generations must use **live engines** only
   (MLX, Ollama, or approved Frontier). **No stubs, no recorded outputs, no "dry_run" modes.**
   Pre-merge run `pnpm models:health && pnpm models:smoke`; attach logs (model IDs, vector norms/shape, latency).

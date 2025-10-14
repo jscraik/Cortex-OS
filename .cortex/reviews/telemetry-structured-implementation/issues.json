@@ -1,0 +1,41 @@
+[
+  {
+    "file": "packages/telemetry/vitest.config.ts",
+    "line": 4,
+    "end_line": 4,
+    "severity": "high",
+    "category": "quality",
+    "description": "Vitest config exports as const instead of default export, breaking module resolution",
+    "evidence": "export const vitestConfig = defineConfig",
+    "fix": "Change to default export: export default defineConfig",
+    "tests_to_add": "Verify test runner loads without config errors",
+    "rule": "module-resolution",
+    "standards": ["codestyle:3-javascript-typescript"]
+  },
+  {
+    "file": "packages/telemetry/src/utils.ts",
+    "line": 32,
+    "end_line": 32,
+    "severity": "low",
+    "category": "brainwav-branding",
+    "description": "Function generates correlation ID with brAInwav prefix but could be more consistent",
+    "evidence": "export function generateCorrelationId(prefix = 'brAInwav'): string",
+    "fix": "Consider enforcing brAInwav prefix more explicitly or document the pattern",
+    "tests_to_add": "Test correlation ID format validation",
+    "rule": "branding-consistency",
+    "standards": ["policy:RULES_OF_AI#branding"]
+  },
+  {
+    "file": "packages/telemetry/src/emitter.ts",
+    "line": 75,
+    "end_line": 110,
+    "severity": "medium",
+    "category": "quality",
+    "description": "emit() and safeEmit() methods could be combined for clarity",
+    "evidence": "emit(event: Partial<AgentEvent>): void { this.safeEmit(event); }",
+    "fix": "Merge emit and safeEmit into single method or clarify separation",
+    "tests_to_add": "Test error handling in emission process",
+    "rule": "code-clarity",
+    "standards": ["codestyle:1-general-principles"]
+  }
+]
