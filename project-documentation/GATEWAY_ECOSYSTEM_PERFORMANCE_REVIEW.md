@@ -19,18 +19,18 @@ Document the current performance characteristics and bottlenecks within the `@co
 - **Location**: `packages/gateway/src/server.ts`
 - **Current Approach**: Fastify server mounts `/mcp`, `/a2a`, `/rag`, and `/simlab` handlers through `createAgentRoute`, materializes an enhanced MCP client on each request, and exposes Prometheus metrics at `/metrics`.
 - **Limitations**:
-  1. `handleMCP` creates and tears down a fresh enhanced MCP client per call, even for HTTP transports, forcing TCP/TLS setup on every tool invocation and eliminating connection reuse opportunities.【F:packages/gateway/src/server.ts†L112-L140】
-  2. `handleRAGViaA2A` binds a new listener on the in-process bus for every query but never unregisters it, so concurrent workloads leak handlers and degrade throughput as the process runs longer.【F:packages/gateway/src/server.ts†L62-L110】【F:packages/gateway/src/a2a.ts†L118-L165】
-  3. `getMCPServerInfo` re-parses environment variables and runs `resolveTransport` for every request even though configuration is static after boot, adding synchronous overhead to the hot path.【F:packages/gateway/src/server.ts†L42-L86】
+  1. `handleMCP` creates and tears down a fresh enhanced MCP client per call, even for HTTP transports, forcing TCP/TLS setup on every tool invocation and eliminating connection reuse opportunities. [ref: packages/gateway/src/server.ts:112-140]
+  2. `handleRAGViaA2A` binds a new listener on the in-process bus for every query but never unregisters it, so concurrent workloads leak handlers and degrade throughput as the process runs longer. [ref: packages/gateway/src/server.ts:62-110] [ref: packages/gateway/src/a2a.ts:118-165]
+  3. `getMCPServerInfo` re-parses environment variables and runs `resolveTransport` for every request even though configuration is static after boot, adding synchronous overhead to the hot path. [ref: packages/gateway/src/server.ts:42-86]
 
 ### Related Components
-- **Gateway bus singleton**: `packages/gateway/src/a2a.ts` instantiates an in-memory bus with schema validation, which is reused via a module-level singleton but lacks backpressure or rate limiting when multiple RAG queries publish events simultaneously.【F:packages/gateway/src/a2a.ts†L7-L117】【F:packages/gateway/src/a2a.ts†L166-L176】
-- **Route factory**: `packages/gateway/src/lib/create-agent-route.ts` performs schema validation with Zod on each request and toggles JSON/plain text responses but has no caching of compiled schemas, adding CPU cost under high concurrency.【F:packages/gateway/src/lib/create-agent-route.ts†L1-L44】
-- **MCP tool definitions**: `packages/gateway/src/mcp/tools.ts` enumerates MCP tool schemas yet does not integrate with gateway routing, so there is no opportunity to reuse structured metadata for caching or scheduling decisions.【F:packages/gateway/src/mcp/tools.ts†L1-L66】
+- **Gateway bus singleton**: `packages/gateway/src/a2a.ts` instantiates an in-memory bus with schema validation, which is reused via a module-level singleton but lacks backpressure or rate limiting when multiple RAG queries publish events simultaneously. [ref: packages/gateway/src/a2a.ts:7-117] [ref: packages/gateway/src/a2a.ts:166-176]
+- **Route factory**: `packages/gateway/src/lib/create-agent-route.ts` performs schema validation with Zod on each request and toggles JSON/plain text responses but has no caching of compiled schemas, adding CPU cost under high concurrency. [ref: packages/gateway/src/lib/create-agent-route.ts:1-44]
+- **MCP tool definitions**: `packages/gateway/src/mcp/tools.ts` enumerates MCP tool schemas yet does not integrate with gateway routing, so there is no opportunity to reuse structured metadata for caching or scheduling decisions. [ref: packages/gateway/src/mcp/tools.ts:1-66]
 
 ### brAInwav-Specific Context
-- **MCP Integration**: Gateway proxies MCP requests to transports surfaced by `@cortex-os/mcp-core` which already supports HTTP keep-alive agents when reused; failing to reuse clients prevents us from realizing those optimizations.【F:packages/gateway/src/server.ts†L42-L140】
-- **A2A Events**: Gateway reuses the in-process transport which is optimal for tests but serializes all dispatch onto a single event loop; without worker fan-out, cross-package RAG requests compete for the same microtask queue.【F:packages/gateway/src/a2a.ts†L7-L165】
+- **MCP Integration**: Gateway proxies MCP requests to transports surfaced by `@cortex-os/mcp-core` which already supports HTTP keep-alive agents when reused; failing to reuse clients prevents us from realizing those optimizations. [ref: packages/gateway/src/server.ts:42-140]
+- **A2A Events**: Gateway reuses the in-process transport which is optimal for tests but serializes all dispatch onto a single event loop; without worker fan-out, cross-package RAG requests compete for the same microtask queue. [ref: packages/gateway/src/a2a.ts:7-165]
 - **Local Memory**: Current gateway routes do not emit local-memory telemetry, so we have no persisted evidence to correlate route-level latency with downstream bus pressure.
 
 ---
