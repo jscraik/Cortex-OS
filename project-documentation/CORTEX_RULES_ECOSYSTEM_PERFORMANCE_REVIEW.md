@@ -215,8 +215,12 @@ Evaluate the @cortex-os/cortex-rules JavaScript and Python toolchain to surface 
 
 ## Evidence & References
 
-- Source analysis references TypeScript `renderRule`, path resolution, and synchronous file reads in `packages/cortex-rules/src/index.ts` lines 23-121.【F:packages/cortex-rules/src/index.ts†L23-L121】
-- Python parity module repeating synchronous pattern captured in `packages/cortex-rules/src/python/cortex_rules.py` lines 10-86.【F:packages/cortex-rules/src/python/cortex_rules.py†L10-L86】
-- Test coverage gaps noted from `packages/cortex-rules/src/index.test.ts` lines 1-88 where no performance assertions exist.【F:packages/cortex-rules/src/index.test.ts†L1-L88】
-- Packaging mismatch identified from `packages/cortex-rules/package.json` lines 1-40 exposing a non-existent CLI path.【F:packages/cortex-rules/package.json†L1-L40】
+- Source analysis references TypeScript `renderRule`, path resolution, and synchronous file reads in `packages/cortex-rules/src/index.ts` lines 23-121.[^1]
+- Python parity module repeating synchronous pattern captured in `packages/cortex-rules/src/python/cortex_rules.py` lines 10-86.[^2]
+- Test coverage gaps noted from `packages/cortex-rules/src/index.test.ts` lines 1-88 where no performance assertions exist.[^3]
+- Packaging mismatch identified from `packages/cortex-rules/package.json` lines 1-40 exposing a non-existent CLI path.[^4]
 
+[^1]: `packages/cortex-rules/src/index.ts` lines 23–121
+[^2]: `packages/cortex-rules/src/python/cortex_rules.py` lines 10–86
+[^3]: `packages/cortex-rules/src/index.test.ts` lines 1–88
+[^4]: `packages/cortex-rules/package.json` lines 1–40
