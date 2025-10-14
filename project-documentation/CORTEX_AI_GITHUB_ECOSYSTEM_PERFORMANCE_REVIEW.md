@@ -38,7 +38,7 @@ The Cortex AI GitHub package wires an Express webhook server (`CortexWebhookServ
 
 ### 2.5 Memory pressure from rate limiter store
 
-- The in-memory `requestStore` map never prunes inactive keys beyond the sliding window filter; long-lived installations accumulate per-user arrays indefinitely, risking memory growth and GC churn during busy comment storms. 【F:packages/cortex-ai-github/src/lib/rate-limiter.ts†L12-L37】
+- The in-memory `requestStore` map never prunes inactive keys beyond the sliding window filter; long-lived installations accumulate per-user arrays indefinitely, risking memory growth and GC churn during busy comment storms. [packages/cortex-ai-github/src/lib/rate-limiter.ts L12–L37](../packages/cortex-ai-github/src/lib/rate-limiter.ts#L12-L37)
 
 ## 3. Recommended Remediations
 
