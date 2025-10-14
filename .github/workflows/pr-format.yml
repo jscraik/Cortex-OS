@@ -61,10 +61,7 @@ jobs:
               },
               {
                 name: 'Deployment notes section present',
-                check: /## 🚀 Deployment Notes/.test(body) &&
-                       /### Environment Variables/.test(body) &&
-                       /### Database Changes/.test(body) &&
-                       /### Configuration Changes/.test(body)
+                check: /## 🚀 Deployment Notes[\s\S]*?### Environment Variables[\s\S]*?### Database Changes[\s\S]*?### Configuration Changes/.test(body)
               },
               {
                 name: 'Security testing completed',
