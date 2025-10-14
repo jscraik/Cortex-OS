@@ -17,22 +17,22 @@ Evaluate the current GitHub ecosystem inside Cortex-OS to document performance b
 
 ### Existing Implementation
 - **Location**: `packages/github/src/client.rs`, `packages/github/src/rate_limiter.rs`
-  - **Current Approach**: Requests flow through a `GitHubClient` wrapper backed by a `reqwest::Client`, token manager, and an async rate limiter that serializes queued closures and enforces `sleep`-based pacing after each response.【F:packages/github/src/client.rs†L13-L205】【F:packages/github/src/rate_limiter.rs†L13-L154】
-  - **Limitations**: The rate limiter processes a single queue in FIFO order, introducing head-of-line blocking, and repeatedly clones headers/bodies for every closure execution without connection re-use tuning.【F:packages/github/src/rate_limiter.rs†L55-L132】【F:packages/github/src/client.rs†L70-L117】
+  - **Current Approach**: Requests flow through a `GitHubClient` wrapper backed by a `reqwest::Client`, token manager, and an async rate limiter that serializes queued closures and enforces `sleep`-based pacing after each response.
+  - **Limitations**: The rate limiter processes a single queue in FIFO order, introducing head-of-line blocking, and repeatedly clones headers/bodies for every closure execution without connection re-use tuning.
 - **Location**: `packages/github/src/auth.rs`
-  - **Current Approach**: `TokenManager` validates personal access tokens by calling `/user` whenever cached credentials expire and stores results in memory, while GitHub App tokens are refreshed per request path.【F:packages/github/src/auth.rs†L47-L164】
-  - **Limitations**: Validation runs synchronously under the same mutex, so concurrent callers serialize behind token refresh and can repeatedly hit `/user` on bursty workloads.【F:packages/github/src/auth.rs†L60-L106】
+  - **Current Approach**: `TokenManager` validates personal access tokens by calling `/user` whenever cached credentials expire and stores results in memory, while GitHub App tokens are refreshed per request path.
+  - **Limitations**: Validation runs synchronously under the same mutex, so concurrent callers serialize behind token refresh and can repeatedly hit `/user` on bursty workloads.
 - **Location**: `packages/github/src/events/github-events.ts`, `packages/github/src/mcp/tools.ts`
-  - **Current Approach**: A2A and MCP surfaces expose zod-validated schemas and synchronous factories invoked by upstream orchestrators.【F:packages/github/src/events/github-events.ts†L1-L63】【F:packages/github/src/mcp/tools.ts†L1-L54】
+  - **Current Approach**: A2A and MCP surfaces expose zod-validated schemas and synchronous factories invoked by upstream orchestrators.
   - **Limitations**: Event creation is cheap but downstream publishers rely on the Rust client’s sequential rate limiter, and MCP tools lack batching primitives so every call maps to a fresh HTTP request.
 
 ### Related Components
-- **A2A Publisher**: `GitHubA2APublisher` attaches to the client wrapper to emit events after REST calls, inheriting any latency from the core request path.【F:packages/github/src/lib.rs†L41-L100】
-- **Workflow APIs**: Actions and repository APIs reuse cloned `GitHubClient` instances, but clones rebuild rate limiters instead of sharing budget state, increasing risk of burst overruns when multiple APIs operate concurrently.【F:packages/github/src/lib.rs†L17-L86】
+- **A2A Publisher**: `GitHubA2APublisher` attaches to the client wrapper to emit events after REST calls, inheriting any latency from the core request path.
+- **Workflow APIs**: Actions and repository APIs reuse cloned `GitHubClient` instances, but clones rebuild rate limiters instead of sharing budget state, increasing risk of burst overruns when multiple APIs operate concurrently.
 
 ### brAInwav-Specific Context
-- **MCP Integration**: The package exports MCP tools that front the Rust HTTP client, so improvements must respect MCP contract stability and streaming semantics.【F:packages/github/src/index.ts†L7-L16】【F:packages/github/src/mcp/tools.ts†L1-L54】
-- **A2A Events**: Event fan-out must retain schema guarantees documented in the TypeScript definitions while avoiding extra serialization that would increase queue depth.【F:packages/github/src/events/github-events.ts†L1-L63】
+- **MCP Integration**: The package exports MCP tools that front the Rust HTTP client, so improvements must respect MCP contract stability and streaming semantics.
+- **A2A Events**: Event fan-out must retain schema guarantees documented in the TypeScript definitions while avoiding extra serialization that would increase queue depth.
 - **Local Memory**: GitHub event insights feed other agents through local memory; higher latency in repository polling slows memory updates, highlighting the importance of throughput gains.
 
 ---
