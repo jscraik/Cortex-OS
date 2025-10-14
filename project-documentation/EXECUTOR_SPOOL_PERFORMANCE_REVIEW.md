@@ -57,7 +57,7 @@ Provide a focused performance assessment of the `@cortex-os/executor-spool` pack
 |---------|---------|---------|---------|----------------|
 | `undici` | ^6.19.0 | HTTP client with keep-alive pooling | MIT | ✅ Use |
 | `p-limit` | ^5.0.0 | Promise concurrency limiting | MIT | ✅ Use |
-| `fs/promises` streaming APIs (`FileHandle.createWriteStream`) | Node 22 LTS | Incremental file writes | MIT-like (Node.js) | ✅ Use |
+| `fs/promises` streaming APIs (`FileHandle.createWriteStream`) | Node 22 LTS | Incremental file writes | [MIT](https://github.com/nodejs/node/blob/main/LICENSE) | ✅ Use |
 | `lru-cache` | ^11.0.0 | Memoize diffs/validators | ISC | ⚠️ Evaluate |
 
 ---
