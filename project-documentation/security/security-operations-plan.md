@@ -45,8 +45,8 @@ Cortex-OS supports releases according to the policy defined in [SECURITY.md](../
 | Version | Support Level | Commitment |
 | ------- | ------------- | ---------- |
 | 2.x.x   | Active        | Full security updates; monitored for framework compliance and patched as issues emerge. |
-| 1.5.x   | Active        | Full security updates through 2025-12-31, including emergency fixes within the disclosure window. |
-| 1.4.x   | Limited       | Critical fixes only through 2025-06-30; mitigations backported when severity warrants. |
+| 1.5.x   | Limited       | Critical fixes only for 6 months after the latest 2.x.x release; mitigations backported when severity warrants. |
+| 1.4.x   | Unsupported   | No security updates; customers must upgrade to a supported branch for protection. |
 | < 1.4   | Unsupported   | No security updates; customers must upgrade to a supported branch for protection. |
 
 Support level reviews occur quarterly. When a version transitions support state, the security team updates this plan, the public SECURITY.md table, and task evidence in `tasks/security-operations-plan/`.
