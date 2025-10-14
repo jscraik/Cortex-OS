@@ -17,18 +17,18 @@ Document the current performance profile of the Cortex Structure GitHub package 
 
 ### Existing Implementation
 - **Location**: `packages/cortex-structure-github/src/server/app.ts`
-- **Current Approach**: Every push, PR, and comment command handler performs a fresh `git clone --depth 1` followed by optional checkout before processing, regardless of repository size or recent clones.【F:packages/cortex-structure-github/src/server/app.ts†L319-L362】【F:packages/cortex-structure-github/src/server/app.ts†L1100-L1162】
+- **Current Approach**: Every push, PR, and comment command handler performs a fresh `git clone --depth 1` followed by optional checkout before processing, regardless of repository size or recent clones.  
 - **Limitations**:
   - Burst traffic triggers multiple concurrent clones with no throttling, introducing CPU, disk, and GitHub API pressure.
-  - Push events collect the entire repository file list via `getAllFiles`, forcing recursive reads even when only a handful of files changed.【F:packages/cortex-structure-github/src/server/app.ts†L334-L361】【F:packages/cortex-structure-github/src/server/app.ts†L1164-L1188】
-  - PR and comment workflows recompute structure scores by re-cloning and re-validating instead of reusing prior analysis artifacts, elongating `/webhook` handling time.【F:packages/cortex-structure-github/src/server/app.ts†L368-L520】
+  - Push events collect the entire repository file list via `getAllFiles`, forcing recursive reads even when only a handful of files changed.  
+  - PR and comment workflows recompute structure scores by re-cloning and re-validating instead of reusing prior analysis artifacts, elongating `/webhook` handling time.  
 
 ### Related Components
-- **Context Analyzer** (`packages/cortex-structure-github/src/lib/context-analyzer.ts`): Performs repeated `fs.pathExists`, `fs.readJson`, and recursive `fs.readdir` scans for each command invocation, re-deriving repository metadata without caching.【F:packages/cortex-structure-github/src/lib/context-analyzer.ts†L42-L188】【F:packages/cortex-structure-github/src/lib/context-analyzer.ts†L225-L339】
-- **Auto-Fix Engine** (`packages/cortex-structure-github/src/core/auto-fix-engine.ts`): Executes fix actions sequentially and synchronously, lacking batching or concurrency controls when multiple violations are auto-fixable.【F:packages/cortex-structure-github/src/core/auto-fix-engine.ts†L1-L120】
+- **Context Analyzer** (`packages/cortex-structure-github/src/lib/context-analyzer.ts`): Performs repeated `fs.pathExists`, `fs.readJson`, and recursive `fs.readdir` scans for each command invocation, re-deriving repository metadata without caching.  
+- **Auto-Fix Engine** (`packages/cortex-structure-github/src/core/auto-fix-engine.ts`): Executes fix actions sequentially and synchronously, lacking batching or concurrency controls when multiple violations are auto-fixable.  
 
 ### brAInwav-Specific Context
-- **MCP Integration**: No direct MCP surfaces, but webhook handlers publish GitHub reactions to emulate progressive status which can exceed GitHub rate limits under load.【F:packages/cortex-structure-github/src/server/app.ts†L368-L520】【F:packages/cortex-structure-github/src/server/app.ts†L1334-L1386】
+- **MCP Integration**: No direct MCP surfaces, but webhook handlers publish GitHub reactions to emulate progressive status which can exceed GitHub rate limits under load.  
 - **A2A Events**: Not currently emitting internal events; all work happens inline during webhook processing, increasing the risk of GitHub retrying events if requests exceed timeouts.
 - **Local Memory**: No persistence of previous analyses; repeated scans lose opportunity to warm caches or reuse heuristics between events.
 
