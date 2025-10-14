@@ -130,11 +130,7 @@ jobs:
       - name: OSV scan (JSON)
         uses: google/osv-scanner-action@c0e8a1142dcb3ae443d26c8f6a2b774db9f6c6ea
         with:
-          scan-args: |-
-            scan
-            --lockfile=pnpm-lock.yaml
-            --format=json
-            --output=osv-results.json
+          scan-args: scan --lockfile=pnpm-lock.yaml --format=json --output=osv-results.json
         continue-on-error: true
 
       - name: Ensure OSV results placeholder
