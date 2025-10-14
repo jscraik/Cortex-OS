@@ -27,11 +27,9 @@ Last updated: 2025-09-15
 - Use Agent Toolkit for search/mods/verification: `just scout`, `just codemod`, `just verify`.
 - Local Memory via `createStoreFromEnv()` when tests touch memories.
 
-### Task Execution Log Checklist
+## Governance Checkpoint — Live Evidence Gate
 
-- [ ] Smart targets recorded for the task (`pnpm build:smart`, `pnpm test:smart`, `pnpm lint:smart` or rationale for omissions)
-- [ ] TDD Coach checkpoints captured (red → green → refactor evidence and any waivers)
-- [ ] Performance budget validation noted (bundle/time/memory metrics with pass/fail outcome)
+- [ ] Block review until the associated task folder contains live model execution logs and Wikidata workflow evidence (vector search, claims, SPARQL) captured from a recorded `executeWikidataWorkflow` run.
 
 ## Coverage Assessment — Did the plan cover all gaps?
 

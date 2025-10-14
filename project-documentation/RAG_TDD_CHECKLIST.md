@@ -546,6 +546,7 @@ Notes:
 - **Feature flags:** Use for risky changes; document rollout/rollback
 - **Performance gates:** Establish baseline, detect regressions
 - **Security-first:** Every external input must be validated
+- **Hybrid knowledge gating:** Before implementation proceeds, capture a recorded `executeWikidataWorkflow` run against live engines (vector, claims, SPARQL) and a matching AgentMCPClientStub parity test to freeze expected behavior.
 - **Observability-driven:** If it moves, measure it
 
 ### Risk Mitigation
