@@ -73,9 +73,7 @@ jobs:
               },
               {
                 name: 'Reviewer guidance section present',
-                check: /## 👥 Reviewer Guidance/.test(body) &&
-                       /### Focus Areas/.test(body) &&
-                       /### Questions for Reviewers/.test(body)
+                check: /## 👥 Reviewer Guidance[\s\S]*?### Focus Areas[\s\S]*?### Questions for Reviewers/.test(body)
               },
               {
                 name: 'Post-merge tasks section present',
