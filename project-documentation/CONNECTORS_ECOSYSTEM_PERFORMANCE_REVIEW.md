@@ -1,4 +1,4 @@
-# Cortex-OS Connectors Ecosystem Performance Review
+# brAInwav Cortex-OS Connectors Ecosystem Performance Review
 
 ## Scope & Objectives
 - Assess current performance characteristics for the Connectors Python runtime, manifest pipeline, Apps widget serving, and MCP integrations.
