@@ -17,17 +17,17 @@ Assess the Cortex-OS memory ecosystem (client adapters, REST surface, and core i
 
 ### Existing Implementation
 - **Location**: `packages/memories/src/adapters/rest-api/`
-- **Current Approach**: `RestApiClient` wraps a Fetch-based HTTP client with per-request AbortControllers, sequential retry loops, and rate-limit backoff that sleeps for the entire reset window while honoring branding requirements.【F:packages/memories/src/adapters/rest-api/rest-adapter.ts†L35-L304】
-- **Limitations**: Lacks connection reuse/keep-alive, exposes latency spikes during rate-limit exhaustion because each caller awaits `sleep(waitTime)`, and depends on `safeFetch` without pipelining or request coalescing, preventing high-throughput workloads.【F:packages/memories/src/adapters/rest-api/http-client.ts†L8-L196】【F:packages/memories/src/adapters/rest-api/rest-adapter.ts†L254-L304】
+- **Current Approach**: `RestApiClient` wraps a Fetch-based HTTP client with per-request AbortControllers, sequential retry loops, and rate-limit backoff that sleeps for the entire reset window while honoring branding requirements.[source1]
+- **Limitations**: Lacks connection reuse/keep-alive, exposes latency spikes during rate-limit exhaustion because each caller awaits `sleep(waitTime)`, and depends on `safeFetch` without pipelining or request coalescing, preventing high-throughput workloads.[source2][source3]
 
 ### Related Components
-- **Component 1**: `packages/memory-core/src/services/GraphRAGIngestService.ts` sequentially embeds every chunk inside a `for...of` loop, so dense and sparse embeddings run per chunk instead of batching across the document, amplifying Qdrant ingest latency.【F:packages/memory-core/src/services/GraphRAGIngestService.ts†L270-L381】
-- **Component 2**: `packages/memory-core/src/retrieval/QdrantHybrid.ts` keeps an in-memory cache capped at 100 keys with no eviction once the cap is reached, while the distributed Redis cache polls metrics via `setInterval` without retaining handles for cleanup, leading to cache churn and timer leaks during long-running processes.【F:packages/memory-core/src/retrieval/QdrantHybrid.ts†L69-L155】【F:packages/memory-core/src/caching/DistributedCache.ts†L59-L151】
+- **Component 1**: `packages/memory-core/src/services/GraphRAGIngestService.ts` sequentially embeds every chunk inside a `for...of` loop, so dense and sparse embeddings run per chunk instead of batching across the document, amplifying Qdrant ingest latency.[source4]
+- **Component 2**: `packages/memory-core/src/retrieval/QdrantHybrid.ts` keeps an in-memory cache capped at 100 keys with no eviction once the cap is reached, while the distributed Redis cache polls metrics via `setInterval` without retaining handles for cleanup, leading to cache churn and timer leaks during long-running processes.[source5][source6]
 
 ### brAInwav-Specific Context
-- **MCP Integration**: Memory REST API bootstraps `GraphRAGService` with placeholder hash-based embeddings, forcing downstream MCP tooling to operate on low-signal vectors that inflate search traffic for relevant context.【F:packages/memory-rest-api/src/index.ts†L33-L256】
-- **A2A Events**: GraphRAG services emit branded completion/failure events but the ingest path blocks on sequential vectorization, delaying A2A visibility for large documents.【F:packages/memory-core/src/services/GraphRAGService.ts†L1520-L1606】【F:packages/memory-core/src/services/GraphRAGIngestService.ts†L332-L381】
-- **Local Memory**: `GraphRAGIngestService` removes all prior chunk IDs before writing replacements, so transient Qdrant or Redis slowdowns manifest as gaps in local-memory-backed recall until the full ingest completes.【F:packages/memory-core/src/services/GraphRAGIngestService.ts†L291-L305】
+- **MCP Integration**: Memory REST API bootstraps `GraphRAGService` with placeholder hash-based embeddings, forcing downstream MCP tooling to operate on low-signal vectors that inflate search traffic for relevant context.[source7]
+- **A2A Events**: GraphRAG services emit branded completion/failure events but the ingest path blocks on sequential vectorization, delaying A2A visibility for large documents.[source8][source9]
+- **Local Memory**: `GraphRAGIngestService` removes all prior chunk IDs before writing replacements, so transient Qdrant or Redis slowdowns manifest as gaps in local-memory-backed recall until the full ingest completes.[source10]
 
 ---
 
