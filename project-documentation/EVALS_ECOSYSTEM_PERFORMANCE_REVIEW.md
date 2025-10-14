@@ -5,7 +5,7 @@
 **Scope:** packages/evals/*, dependent runtime flows, and shared infrastructure touchpoints.
 
 ## 1. Executive Summary
-- The `runGate` coordinator executes enabled suites sequentially and rebuilds dependency wiring for each suite invocation, creating avoidable latency spikes and constraining throughput under multi-suite configurations.【F:packages/evals/src/index.ts†L9-L47】
+- The `runGate` coordinator executes enabled suites sequentially and rebuilds dependency wiring for each suite invocation, creating avoidable latency spikes and constraining throughput under multi-suite configurations. [See `index.ts` L9-L47](https://github.com/your-org/your-repo/blob/main/packages/evals/src/index.ts#L9-L47)
 - Retrieval evaluations repeatedly construct embedders and vector stores per run, forcing redundant model warm-ups and dataset hydration that dominate cold-start costs.【F:packages/evals/src/suites/rag.ts†L24-L63】
 - Router and MCP-oriented suites execute blocking network probes without timeout controls or concurrency, amplifying tail latencies and masking per-capability health regressions.【F:packages/evals/src/suites/router.ts†L21-L77】【F:packages/evals/src/suites/mcp-tools.ts†L21-L48】
 - A2A emission uses the in-process transport by default, registering schemas on every bus creation and limiting scalability once eval throughput requires cross-process dispatch.【F:packages/evals/src/a2a.ts†L1-L108】
