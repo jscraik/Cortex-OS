@@ -766,20 +766,27 @@ export class QueryGuard {
 		}
 
 		// Check for common injection patterns
+		// brAInwav: Fixed ReDoS vulnerabilities and improved script tag detection
 		const injectionPatterns = [
-			// Script injection attempts
-			/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-			// SQL injection patterns
-			/(union|select|insert|update|delete|drop|create|alter)\s+/gi,
-			// Command injection patterns
-			/(\$\(.*?\)|`.*?`|\|\s*[\w\s]+\s*\|)/g,
-			// Path traversal
+			// Script injection - properly handles edge cases like </script foo="bar">
+			/<script[\s\S]*?<\/script\s*(?:[^>]*)>/gi,
+			// SQL injection patterns - simplified to avoid ReDoS
+			/\b(?:union|select|insert|update|delete|drop|create|alter)\s+/gi,
+			// Command injection patterns - non-greedy and length-limited
+			/\$\([^)]{0,100}\)|`[^`]{0,100}`|\|\s*[\w\s]{0,50}\|/g,
+			// Path traversal - simple character sequence
 			/\.\.[/\\]/g,
-			// JavaScript attempts
-			/(javascript:|on\w+\s*=)/gi,
-			// HTML encoding attempts
-			/&[#\w]+;/g,
+			// JavaScript attempts - atomic pattern
+			/javascript:|on\w+\s*=/gi,
+			// HTML encoding - limited repetition
+			/&[#\w]{1,10};/g,
 		];
+
+		// Protect against ReDoS - limit input length before pattern matching
+		const MAX_INPUT_LENGTH = 10000;
+		if (original.length > MAX_INPUT_LENGTH) {
+			return true; // Consider overly long input suspicious
+		}
 
 		for (const pattern of injectionPatterns) {
 			if (pattern.test(original)) {

@@ -441,18 +441,25 @@ export class FactExtractor {
 
 	/**
 	 * Calculate confidence score for code
+	 * brAInwav: Protected against ReDoS attacks with input length validation
 	 */
 	private calculateCodeConfidence(code: string, context: string, style: string): number {
 		let confidence = 0.6; // Base confidence
 
-		// Code-specific factors
-		if (code.match(/function|def|class|var|let|const/)) confidence += 0.2;
-		if (code.match(/[{}();]/)) confidence += 0.1;
-		if (code.match(/\w+\.\w+/)) confidence += 0.05; // Method/property access
+		// Protect against ReDoS - limit input length
+		const MAX_LENGTH = 1000;
+		if (code.length > MAX_LENGTH || context.length > MAX_LENGTH) {
+			return confidence;
+		}
+
+		// Code-specific factors - use simpler, non-ambiguous patterns
+		if (/function|def|class|var|let|const/.test(code)) confidence += 0.2;
+		if (/[{}();]/.test(code)) confidence += 0.1;
+		if (/\w+\.\w+/.test(code)) confidence += 0.05; // Method/property access
 
 		// Context factors
-		if (context.match(/code|function|method|algorithm|implementation/i)) confidence += 0.15;
-		if (context.match(/example|snippet|listing/i)) confidence += 0.1;
+		if (/code|function|method|algorithm|implementation/i.test(context)) confidence += 0.15;
+		if (/example|snippet|listing/i.test(context)) confidence += 0.1;
 
 		// Style-specific adjustments
 		if (style === 'block') confidence += 0.1;
@@ -556,12 +563,16 @@ export class FactExtractor {
 
 	/**
 	 * Detect date format
+	 * brAInwav: Protected against ReDoS with input validation
 	 */
 	private detectDateFormat(date: string): string {
-		if (date.match(/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/)) return 'iso';
-		if (date.match(/^(Jan|Feb|Mar|...|Dec)/i)) return 'natural';
-		if (date.match(/\d{1,2}:\d{2}/)) return 'time';
-		if (date.match(/\d+\s+(day|week|month|year)/i)) return 'relative';
+		// Protect against ReDoS - limit input length
+		if (date.length > 100) return 'unknown';
+		
+		if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(date)) return 'iso';
+		if (/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i.test(date)) return 'natural';
+		if (/\d{1,2}:\d{2}/.test(date)) return 'time';
+		if (/\d+\s+(?:day|week|month|year)/i.test(date)) return 'relative';
 		return 'unknown';
 	}
 
@@ -586,15 +597,20 @@ export class FactExtractor {
 
 	/**
 	 * Validate entity format
+	 * brAInwav: Protected against ReDoS with input validation and atomic patterns
 	 */
 	private validateEntity(entity: string, subtype: string): boolean {
+		// Protect against ReDoS - limit input length
+		if (entity.length > 500) return false;
+		
 		switch (subtype) {
 			case 'email':
 				return /^[^@]+@[^@]+\.[^@]+$/.test(entity);
 			case 'url':
 				return /^https?:\/\/.+/.test(entity);
 			case 'version':
-				return /^\d+\.\d+(\.\d+)?([-.][a-zA-Z0-9]+)?$/.test(entity);
+				// Simplified non-ambiguous pattern
+				return /^\d+\.\d+(?:\.\d+)?(?:[-.][a-zA-Z0-9]+)?$/.test(entity);
 			default:
 				return true;
 		}
