@@ -2,6 +2,15 @@
 
 Last updated: 2025-09-15
 
+## Governance Artifact Template Map
+
+| Artifact | Template Path | Expected Storage Location |
+| --- | --- | --- |
+| Feature Specification | `/.cortex/templates/feature-spec-template.md` | `~/tasks/[feature]/feature-spec.md` (link in PR summary) |
+| Research Dossier | `/.cortex/templates/research-template.md` | `~/tasks/[feature]/research/` (include hybrid model logs) |
+| TDD Plan | `/.cortex/templates/tdd-plan-template.md` | `~/tasks/[feature]/planning/tdd-plan.md` (referenced in implementation log) |
+| Code Review Checklist | `/.cortex/rules/code-review-checklist.md` | Top-level PR comment + CI mirror at `.cortex/audit/reviews/` (link from task folder) |
+
 ## Status Legend
 
 - [ ] Todo
