@@ -328,7 +328,7 @@ Our security team conducts regular manual testing:
 | **V6 Stored Cryptography**                    | ✅ | ✅ | ⚠️ | KMS secrets, envelope encryption, rotation runbooks |
 | **V7 Error Handling & Logging**               | ✅ | ✅ | ✅ | Structured audit trails, privacy-aware logging |
 | **V8 Data Protection**                        | ✅ | ✅ | ⚠️ | Data classification, minimization, L3 encryption backlog |
-| **V9 Communications**                         | ✅ | ✅ | ✅ | TLS 1.3 everywhere, mTLS mesh enforcement |
+| **V9 Communications**                         | ✅ | ✅ | ✅ | Enforce TLS 1.3 + mTLS everywhere; any exceptions must follow the Escalation & Exceptions process and be explicitly approved |
 | **V10 Malicious Code & Configuration**        | ✅ | ✅ | ✅ | Semgrep OWASP/LLM, IaC policy scans, supply-chain attestations |
 | **V11 Business Logic**                        | ✅ | ✅ | ⚠️ | Abuse-case tests, workflow guardrails, manual approvals |
 | **V12 Files, Resources & APIs**               | ✅ | ✅ | ✅ | CSP + sandboxing, contract schemas, resource isolation |
