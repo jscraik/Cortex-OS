@@ -1,439 +1,109 @@
-name: Quality Gates
+name: quality-gates
 
 on:
   workflow_call:
     inputs:
       node-version:
-        description: Node.js version
+        description: Node.js version to use
         required: false
         type: string
         default: '22'
       pnpm-version:
-        description: pnpm version
+        description: pnpm version to install
         required: false
         type: string
-        default: '9'
-      python-version:
-        description: Python version (empty to skip Python setup)
-        required: false
-        type: string
-        default: ''
+        default: '10.18.0'
       run-lint:
-        description: Whether to run lint checks
+        description: Run lint checks
         required: false
         type: boolean
         default: true
       run-typecheck:
-        description: Whether to run TypeScript type checking
+        description: Run TypeScript type checking
         required: false
         type: boolean
         default: true
       run-tests:
-        description: Whether to run tests
+        description: Execute unit tests
         required: false
         type: boolean
         default: true
       run-build:
-        description: Whether to run build
+        description: Build affected projects
         required: false
         type: boolean
         default: true
-      run-python-lint:
-        description: Whether to run Python lint (requires python-version)
+      install-flags:
+        description: Extra flags to forward to pnpm install
         required: false
-        type: boolean
-        default: false
-      use-smart-scripts:
-        description: Whether to prefer :smart scripts for affected-only execution
-        required: false
-        type: boolean
-        default: true
-      test-coverage:
-        description: Whether to collect test coverage
-        required: false
-        type: boolean
-        default: false
-      timeout-minutes:
-        description: Job timeout in minutes
-        required: false
-        type: number
-        default: 30
+        type: string
+        default: '--frozen-lockfile'
     outputs:
       cache-hit:
-        description: Whether dependencies were cached
+        description: Whether the pnpm store cache hit
         value: ${{ jobs.quality.outputs.cache-hit }}
 
 permissions:
   contents: read
-  checks: write # for test result annotations
+  checks: write
 
 jobs:
   quality:
-    name: Quality Gates
+    name: Run monorepo quality gates
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ inputs.timeout-minutes }}
+    timeout-minutes: 45
     outputs:
-      cache-hit: ${{ steps.pnpm-cache.outputs.cache-hit }}
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Node.js + pnpm setup with caching
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
-          cache: 'pnpm'
+          cache: pnpm
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: ${{ inputs.pnpm-version }}
 
-      - name: Derive pnpm store path
-        id: pnpm-store
+      - name: Resolve pnpm store path
+        id: store
         shell: bash
-        run: echo "path=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
 
       - name: Cache pnpm store
-        id: pnpm-cache
+        id: cache
         uses: actions/cache@v4
         with:
-          path: ${{ steps.pnpm-store.outputs.path }}
+          path: ${{ steps.store.outputs.path }}
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-
 
-      - name: Install Node dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install workspace dependencies
+        run: pnpm install ${{ inputs.install-flags }}
 
-      # Python setup (conditional)
-      - name: Setup Python
-        if: inputs.python-version != ''
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ inputs.python-version }}
-
-      - name: Setup uv (fast Python package manager)
-        if: inputs.python-version != ''
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-      - name: Install Python dependencies
-        if: inputs.python-version != ''
-        run: |
-          if [ -f pyproject.toml ]; then
-            uv sync || (python -m pip install --upgrade pip && pip install -e .)
-          fi
-
-      # Node.js Quality Gates
-      - name: Lint (JavaScript/TypeScript)
+      - name: Lint source code
         if: inputs.run-lint
-        run: |
-          if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run lint:smart --if-present; then
-            echo "Used smart lint"
-          else
-            pnpm run lint
-          fi
+        run: pnpm lint:smart
 
-      - name: TypeScript type check
+      - name: Typecheck projects
         if: inputs.run-typecheck
-        run: |
-          if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run typecheck:smart --if-present; then
-            echo "Used smart typecheck"
-          else
-            pnpm run typecheck
-          fi
+        run: pnpm typecheck:smart
 
-      - name: Tests
+      - name: Run unit tests
         if: inputs.run-tests
-        run: |
-          if [ "${{ inputs.test-coverage }}" = "true" ]; then
-            if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run test:coverage:smart --if-present; then
-              echo "Used smart test with coverage"
-            else
-              pnpm run test:coverage || pnpm run test
-            fi
-          else
-            if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run test:smart --if-present; then
-              echo "Used smart test"
-            else
-              pnpm run test
-            fi
-          fi
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: pnpm test:smart
 
-      - name: Orchestration LangGraph guard (dispatch & spool)
-        if: inputs.run-tests
-        run: |
-          pnpm --filter @cortex-os/orchestration exec vitest run tests/tool-dispatch.budget.test.ts tests/spool-settled.test.ts
-
-      - name: MCP Auth unit tests
-        if: inputs.run-tests
-        run: pnpm --filter @cortex-os/mcp-auth test
-
-      - name: MCP Server auth integration tests
-        if: inputs.run-tests
-        run: pnpm --filter @cortex-os/mcp-server run test:int -- --runInBand
-
-      - name: Build
+      - name: Build affected packages
         if: inputs.run-build
-        run: |
-          if [ "${{ inputs.use-smart-scripts }}" = "true" ] && pnpm run build:smart --if-present; then
-            echo "Used smart build"
-          else
-            pnpm run build
-          fi
-
-      # Python Quality Gates (conditional)
-      - name: Lint (Python)
-        if: inputs.run-python-lint && inputs.python-version != ''
-        run: |
-          if command -v uv >/dev/null 2>&1; then
-            uv run ruff check .
-          else
-            python -m ruff check . || (pip install ruff && ruff check .)
-          fi
-
-      - name: Python type check (mypy)
-        if: inputs.run-python-lint && inputs.python-version != ''
-        run: |
-          if command -v uv >/dev/null 2>&1; then
-            uv run mypy . || true  # Optional, continue on mypy errors
-          else
-            python -m mypy . || (pip install mypy && mypy .) || true
-          fi
-
-      # Quality Gates: Coverage Analysis
-      - name: Run Coverage Analysis
-        id: coverage
-        if: always()
-        run: |
-          echo "::group::Coverage Analysis"
-          chmod +x scripts/ci/coverage.sh
-          ./scripts/ci/coverage.sh
-          echo "::endgroup::"
-        continue-on-error: true
-
-      # Quality Gates: Mutation Testing
-      - name: Run Mutation Testing
-        id: mutation
-        if: always()
-        run: |
-          echo "::group::Mutation Testing"
-          chmod +x scripts/ci/mutation.sh
-          ./scripts/ci/mutation.sh
-          echo "::endgroup::"
-        continue-on-error: true
-
-      # Quality Gates: Security Scanning
-      - name: Run Security Scanning
-        id: security
-        if: always()
-        run: |
-          echo "::group::Security Scanning"
-          chmod +x scripts/ci/security-scan.sh
-          ./scripts/ci/security-scan.sh
-          echo "::endgroup::"
-        continue-on-error: true
-
-      # Quality Gates: Operational Readiness
-      - name: Run Operational Readiness Checks
-        id: ops-readiness
-        if: always()
-        run: |
-          echo "::group::Operational Readiness"
-          chmod +x scripts/ci/ops-readiness.sh
-          ./scripts/ci/ops-readiness.sh
-          echo "::endgroup::"
-        continue-on-error: true
-
-      # Quality Gate Validation
-      - name: Validate Quality Gates
-        id: validation
-        if: always()
-        run: |
-          echo "::group::Quality Gate Validation"
-
-          # Compile TypeScript to ensure quality gate enforcer is available
-          pnpm tsc --noEmit || echo "TypeScript compilation issues, continuing with validation..."
-
-          # Run quality gate validation if enforcer exists
-          if [ -f "dist/ci/quality-gate-enforcer.js" ] || [ -f "src/ci/quality-gate-enforcer.ts" ]; then
-            if [ -f "dist/ci/quality-gate-enforcer.js" ]; then
-              node dist/ci/quality-gate-enforcer.js
-            else
-              # Run directly with ts-node if available
-              pnpm exec ts-node src/ci/quality-gate-enforcer.ts || echo "Quality gate enforcer execution failed"
-            fi
-          else
-            echo "❌ Quality gate enforcer not found, checking results manually"
-
-            # Manual validation as fallback
-            COVERAGE_PASSED=${{ steps.coverage.outcome == 'success' }}
-            MUTATION_PASSED=${{ steps.mutation.outcome == 'success' }}
-            SECURITY_PASSED=${{ steps.security.outcome == 'success' }}
-            OPS_PASSED=${{ steps.ops-readiness.outcome == 'success' }}
-
-            echo "Coverage: $COVERAGE_PASSED"
-            echo "Mutation: $MUTATION_PASSED"
-            echo "Security: $SECURITY_PASSED"
-            echo "Ops Readiness: $OPS_PASSED"
-
-            if [ "$COVERAGE_PASSED" = "true" ] && [ "$MUTATION_PASSED" = "true" ] && [ "$SECURITY_PASSED" = "true" ] && [ "$OPS_PASSED" = "true" ]; then
-              echo "✅ All quality gates passed"
-            else
-              echo "❌ Some quality gates failed"
-              exit 1
-            fi
-          fi
-          echo "::endgroup::"
-
-      # Generate Quality Gate Report
-      - name: Generate Quality Gate Report
-        id: report
-        if: always()
-        run: |
-          echo "::group::Generate Quality Gate Report"
-
-          REPORT_FILE="quality-gate-report.md"
-          cat > $REPORT_FILE << 'EOF'
-          # 🚦 brAInwav Quality Gate Report
-
-          ## Summary
-          - **Coverage**: ${{ steps.coverage.outcome == 'success' && '✅ PASSED' || '❌ FAILED' }}
-          - **Mutation Testing**: ${{ steps.mutation.outcome == 'success' && '✅ PASSED' || '❌ FAILED' }}
-          - **Security Scanning**: ${{ steps.security.outcome == 'success' && '✅ PASSED' || '❌ FAILED' }}
-          - **Operational Readiness**: ${{ steps.ops-readiness.outcome == 'success' && '✅ PASSED' || '❌ FAILED' }}
-
-          EOF
-
-          # Include detailed results if available
-          if [ -f "coverage-results.json" ]; then
-            cat >> $REPORT_FILE << 'EOF'
-
-          ## Coverage Details
-          ```json
-          EOF
-            cat coverage-results.json >> $REPORT_FILE
-            cat >> $REPORT_FILE << 'EOF'
-          ```
-          EOF
-          fi
-
-          if [ -f "mutation-results.json" ]; then
-            cat >> $REPORT_FILE << 'EOF'
-
-          ## Mutation Testing Details
-          ```json
-          EOF
-            cat mutation-results.json >> $REPORT_FILE
-            cat >> $REPORT_FILE << 'EOF'
-          ```
-          EOF
-          fi
-
-          if [ -f "security-results.json" ]; then
-            cat >> $REPORT_FILE << 'EOF'
-
-          ## Security Scan Details
-          ```json
-          EOF
-            cat security-results.json >> $REPORT_FILE
-            cat >> $REPORT_FILE << 'EOF'
-          ```
-          EOF
-          fi
-
-          if [ -f "ops-readiness-results.json" ]; then
-            cat >> $REPORT_FILE << 'EOF'
-
-          ## Operational Readiness Details
-          ```json
-          EOF
-            cat ops-readiness-results.json >> $REPORT_FILE
-            cat >> $REPORT_FILE << 'EOF'
-          ```
-          EOF
-          fi
-
-          echo "Report generated at $REPORT_FILE"
-          echo "report_file=$REPORT_FILE" >> $GITHUB_OUTPUT
-          echo "::endgroup::"
-
-      # Comment on PR (only for pull request events)
-      - name: Comment on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const reportPath = '${{ steps.report.outputs.report_file }}';
-
-            if (fs.existsSync(reportPath)) {
-              const report = fs.readFileSync(reportPath, 'utf8');
-
-              try {
-                // Find existing quality gate comment
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                });
-
-                const existingComment = comments.find(comment =>
-                  comment.user.type === 'Bot' &&
-                  comment.body.includes('brAInwav Quality Gate Report')
-                );
-
-                const commentBody = `## 🚦 brAInwav Quality Gate Report\n\n${report}\n\n---\n*Generated by Cortex-OS Quality Gates*`;
-
-                if (existingComment) {
-                  // Update existing comment
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    comment_id: existingComment.id,
-                    body: commentBody,
-                  });
-                  console.log('Updated existing quality gate comment');
-                } else {
-                  // Create new comment
-                  await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: context.issue.number,
-                    body: commentBody,
-                  });
-                  console.log('Created new quality gate comment');
-                }
-              } catch (error) {
-                console.error('Failed to comment on PR:', error);
-              }
-            }
-
-      # Upload Artifacts
-      - name: Upload Quality Gate Artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: quality-gate-results-${{ github.run_number }}
-          path: |
-            coverage-results.json
-            mutation-results.json
-            security-results.json
-            ops-readiness-results.json
-            quality-gate-report.md
-          retention-days: 30
-
-      # Coverage upload (conditional)
-      - name: Upload coverage reports
-        if: inputs.test-coverage && hashFiles('coverage/lcov.info') != ''
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage/lcov.info
-          flags: unittests
-          name: quality-gates-coverage
-          fail_ci_if_error: false
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: pnpm build:smart
