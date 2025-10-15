@@ -203,6 +203,9 @@ export class MemoryProviderStore implements MemoryStore {
 
         async list(_namespace?: string, _limit?: number, _offset?: number): Promise<Memory[]> {
                 // Provider API does not currently expose a list endpoint.
+                // Returning an empty array here may break pagination or cause unexpected behavior
+                // for callers expecting actual data. Callers should be aware that listing is not supported
+                // and handle this case appropriately.
                 return [];
         }
 
