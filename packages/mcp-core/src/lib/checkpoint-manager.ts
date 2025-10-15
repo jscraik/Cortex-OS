@@ -104,7 +104,7 @@ class InMemoryCheckpointManager implements CheckpointManager {
                         };
                         const record: StoredCheckpoint = {
                                 meta: clonedMeta,
-                                state: JSON.parse(JSON.stringify(source.state)) as CheckpointRecord['state'],
+                                state: structuredClone(source.state) as CheckpointRecord['state'],
                                 branchId,
                         };
                         this.store.set(record.meta.id, record);
