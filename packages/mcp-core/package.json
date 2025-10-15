@@ -24,6 +24,8 @@
     }
   },
   "scripts": {
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "prebuild": "pnpm run clean",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node ../../scripts/vitest-safe.mjs run",
@@ -32,7 +34,6 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
-    "@cortex-os/utils": "workspace:*",
     "ajv": "^8.17.1",
     "zod": "^3.25.76"
   },

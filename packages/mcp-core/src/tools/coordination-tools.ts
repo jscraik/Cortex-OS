@@ -20,6 +20,58 @@ import { ToolExecutionError } from '../tools.js';
 
 const sharedCoordinationSessionManager = new CoordinationSessionManager();
 
+function normalizeSecurityContext(
+        securityContext?: CreateCoordinationSessionInput['securityContext'],
+): SecurityContext {
+        const defaults: SecurityContext = {
+                isolationLevel: 'moderate',
+                permissions: {
+                        canCreateAgents: false,
+                        canManageWorkspace: false,
+                        canAccessHistory: true,
+                        canEmitEvents: true,
+                },
+                accessControls: {
+                        allowedAgentIds: [],
+                        restrictedResources: [],
+                        maxConcurrentOperations: 5,
+                },
+        };
+
+        if (!securityContext) {
+                return defaults;
+        }
+
+        return {
+                isolationLevel: securityContext.isolationLevel ?? defaults.isolationLevel,
+                permissions: {
+                        canCreateAgents:
+                                securityContext.permissions?.canCreateAgents ??
+                                defaults.permissions.canCreateAgents,
+                        canManageWorkspace:
+                                securityContext.permissions?.canManageWorkspace ??
+                                defaults.permissions.canManageWorkspace,
+                        canAccessHistory:
+                                securityContext.permissions?.canAccessHistory ??
+                                defaults.permissions.canAccessHistory,
+                        canEmitEvents:
+                                securityContext.permissions?.canEmitEvents ??
+                                defaults.permissions.canEmitEvents,
+                },
+                accessControls: {
+                        allowedAgentIds:
+                                securityContext.accessControls?.allowedAgentIds ??
+                                defaults.accessControls.allowedAgentIds,
+                        restrictedResources:
+                                securityContext.accessControls?.restrictedResources ??
+                                defaults.accessControls.restrictedResources,
+                        maxConcurrentOperations:
+                                securityContext.accessControls?.maxConcurrentOperations ??
+                                defaults.accessControls.maxConcurrentOperations,
+                },
+        };
+}
+
 const AgentSchema = z.object({
 	id: z.string().min(1),
 	name: z.string().min(1),
@@ -117,20 +169,7 @@ export class CreateCoordinationSessionTool
 
 			const coordinationId = `coord-${Date.now()}-${randomUUID().slice(0, 8)}`;
 
-			const securityContext: SecurityContext = input.securityContext || {
-				isolationLevel: 'moderate',
-				permissions: {
-					canCreateAgents: false,
-					canManageWorkspace: false,
-					canAccessHistory: true,
-					canEmitEvents: true,
-				},
-				accessControls: {
-					allowedAgentIds: [],
-					restrictedResources: [],
-					maxConcurrentOperations: 5,
-				},
-			};
+                        const securityContext = normalizeSecurityContext(input.securityContext);
 
 			const session: CoordinationSession = {
 				id: coordinationId,
@@ -264,15 +303,24 @@ export class RegisterAgentTool implements McpTool<RegisterAgentInput, RegisterAg
 				);
 			}
 
-			const { trustLevel, ...agentBase } = input.agent;
-			const agent: Agent = {
-				...agentBase,
-				metadata: {
-					createdBy: 'brAInwav',
-					lastActive: new Date(),
-					trustLevel: trustLevel ?? 5,
-				},
-			};
+                        const { trustLevel, ...agentInput } = input.agent;
+                        const baseAgent: Omit<Agent, 'metadata'> = {
+                                id: agentInput.id,
+                                name: agentInput.name,
+                                role: agentInput.role,
+                                status: agentInput.status,
+                                capabilities: agentInput.capabilities,
+                                workspaceId: agentInput.workspaceId,
+                                sessionId: agentInput.sessionId,
+                        };
+                        const agent: Agent = {
+                                ...baseAgent,
+                                metadata: {
+                                        createdBy: 'brAInwav',
+                                        lastActive: new Date(),
+                                        trustLevel: trustLevel ?? 5,
+                                },
+                        };
 
 			const updatedSession = {
 				...session,

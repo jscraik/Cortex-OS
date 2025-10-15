@@ -1,18 +1,20 @@
 import { randomUUID } from 'node:crypto';
 import {
-	CheckpointIdSchema,
-	CheckpointMetaSchema,
-	CheckpointRecordSchema,
-	StateEnvelopeSchema,
-} from '@cortex-os/contracts';
+        CheckpointIdSchema,
+        CheckpointMetaSchema,
+        CheckpointRecordSchema,
+        StateEnvelopeSchema,
+        type CheckpointBranchRequest,
+        type CheckpointContext,
+        type CheckpointListPage,
+        type CheckpointMeta,
+        type CheckpointRecord,
+        type CheckpointSnapshot,
+} from '../contracts/checkpoint.js';
 import {
-	type CheckpointBranchRequest,
-	type CheckpointContext,
-	type CheckpointListPage,
-	type CheckpointManager,
-	type CheckpointSnapshot,
-	createMemoryProviderFromEnv,
-} from '@cortex-os/memory-core';
+        type CheckpointManager,
+        createMemoryProviderFromEnv,
+} from '../lib/checkpoint-manager.js';
 import { z } from 'zod';
 import type { McpTool } from '../tools.js';
 import { McpToolError } from '../tools.js';
@@ -58,7 +60,7 @@ export const checkpointSaveTool: McpTool<CheckpointSaveInput, CheckpointSaveResu
 	inputSchema: CheckpointSaveInputSchema,
 	async execute({ record }): Promise<CheckpointSaveResult> {
 		const manager = ensureManager();
-		const metaInput = record.meta ?? {};
+                const metaInput: Partial<CheckpointMeta> = record.meta ?? {};
 		const normalized = {
 			meta: {
 				...metaInput,
@@ -67,7 +69,7 @@ export const checkpointSaveTool: McpTool<CheckpointSaveInput, CheckpointSaveResu
 			},
 			state: record.state,
 		};
-		const parsed = CheckpointRecordSchema.parse(normalized);
+                const parsed = CheckpointRecordSchema.parse(normalized) as CheckpointRecord;
 		const result = await manager.save(parsed);
 		return {
 			id: result.meta.id,
@@ -138,9 +140,9 @@ export const checkpointRollbackTool: McpTool<CheckpointRollbackInput, Checkpoint
 };
 
 const CheckpointBranchInputSchema = z.object({
-	from: CheckpointIdSchema,
-	count: z.number().int().positive().max(10).default(1),
-	labels: z.array(z.string()).optional(),
+        from: CheckpointIdSchema,
+        count: z.number().int().positive().max(10).optional(),
+        labels: z.array(z.string()).optional(),
 });
 
 type CheckpointBranchInput = z.infer<typeof CheckpointBranchInputSchema>;
@@ -156,11 +158,11 @@ export const checkpointBranchTool: McpTool<CheckpointBranchInput, CheckpointBran
 	inputSchema: CheckpointBranchInputSchema,
 	async execute({ from, count, labels }): Promise<CheckpointBranchResult> {
 		const manager = ensureManager();
-		const branchRequest: CheckpointBranchRequest = {
-			from,
-			count,
-			labels,
-		};
+                const branchRequest: CheckpointBranchRequest = {
+                        from,
+                        count: count ?? 1,
+                        labels,
+                };
 		const result = await manager.branch(branchRequest);
 		return {
 			branchId: result.branchId,
