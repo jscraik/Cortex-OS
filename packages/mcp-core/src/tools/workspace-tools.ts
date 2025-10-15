@@ -67,11 +67,7 @@ export class WorkspaceCreateTool implements McpTool<WorkspaceCreateInput, Worksp
 
 		try {
                         const permissions: WorkspacePermissions | undefined = input.permissions
-                                ? {
-                                        read: input.permissions.read,
-                                        write: input.permissions.write,
-                                        execute: input.permissions.execute,
-                                }
+                                ? { ...input.permissions }
                                 : undefined;
 
                         const { metadata, path } = await this.manager.createWorkspace({
