@@ -1,4 +1,5 @@
 import type { Memory, MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import { getIdentifierFactory } from '../utils/secure-random.js';
 
 export interface LifecycleStage {
 	name: string;
@@ -415,7 +416,7 @@ export class LifecycleMemoryStore implements MemoryStore {
 				memory.lifecycle = {
 					...memory.lifecycle!,
 					coldStorage: true,
-					coldStorageId: `cold-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                        coldStorageId: getIdentifierFactory().generateColdStorageId(),
 				};
 
 				await this.store.upsert(memory, namespace);
@@ -667,7 +668,7 @@ export class LifecycleMemoryStore implements MemoryStore {
 		const combinedText = memories.map((m) => m.text).join('; ');
 
 		const consolidated: Memory = {
-			id: `compacted_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                        id: getIdentifierFactory().generateCompactionId(),
 			kind: memories[0].kind,
 			text: combinedText,
 			tags: [...new Set(memories.flatMap((m) => m.tags))],

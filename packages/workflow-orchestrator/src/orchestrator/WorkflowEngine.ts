@@ -15,6 +15,7 @@ import type { GateId, PhaseId, WorkflowState } from '@cortex-os/workflow-common'
 import { enforcementProfileDefaults } from '@cortex-os/workflow-common';
 import type Database from 'better-sqlite3';
 import { getWorkflowByTaskId, saveStep, saveWorkflow } from '../persistence/sqlite.js';
+import { createTimestampedId } from '../utils/secure-random.js';
 
 /**
  * Workflow execution options
@@ -46,8 +47,8 @@ export interface WorkflowExecutionResult {
 /**
  * Generate unique workflow ID
  */
-function generateWorkflowId(): string {
-	return `wf-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+export function generateWorkflowId(): string {
+        return createTimestampedId('wf');
 }
 
 /**

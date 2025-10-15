@@ -13,6 +13,7 @@
  * - Integration with existing thermal management
  */
 
+import * as crypto from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	type ContextGraphOrchestrator,
@@ -140,7 +141,7 @@ describe('LangGraph.js Context Slice Node', () => {
 			expect(result.metadata.brainwavThermalManaged).toBe(true);
 		});
 
-		it('should handle evidence validation before slicing', async () => {
+                it('should handle evidence validation before slicing', async () => {
 			// Given
 			mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
 				currentTemp: 65,
@@ -193,8 +194,36 @@ describe('LangGraph.js Context Slice Node', () => {
 			expect(result.error).toContain('Evidence validation failed');
 			expect(result.stepHistory).toContain('slice');
 			expect(result.recoveryAttempts).toBe(1);
-		});
-	});
+                });
+
+                it('generates a secure ctx-prefixed request id when missing', async () => {
+                        const uuidSpy = vi.spyOn(crypto, 'randomUUID').mockReturnValue(
+                                '12345678-1234-1234-1234-1234567890ab',
+                        );
+
+                        mockThermalMonitor.getCurrentTemperature.mockResolvedValue({
+                                currentTemp: 65,
+                                zone: 'optimal',
+                                critical: false,
+                        });
+
+                        mockEvidenceGate.validateAccess.mockResolvedValue({ granted: true });
+                        mockContextSliceService.slice.mockResolvedValue({
+                                subgraph: { nodes: [], edges: [], metadata: {} },
+                                metadata: {},
+                        });
+
+                        const result = await orchestrator.execute({
+                                query: 'Secure request id',
+                                evidenceRequired: false,
+                                thermalConstraints: false,
+                        });
+
+                        expect(result.metadata?.requestId).toBe('ctx-123456781234123412341234567890ab');
+
+                        uuidSpy.mockRestore();
+                });
+        });
 
 	describe('Thermal-Aware Slicing', () => {
 		it('should apply thermal constraints when temperature is elevated', async () => {

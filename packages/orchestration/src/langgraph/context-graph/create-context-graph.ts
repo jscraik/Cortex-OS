@@ -22,6 +22,7 @@ import type { ThermalMonitor } from '@cortex-os/memory-core/src/thermal/ThermalM
 import type { HybridRoutingEngine } from '@cortex-os/model-gateway/src/hybrid-router/HybridRoutingEngine.js';
 import { END, StateGraph } from '@langchain/langgraph';
 import { z } from 'zod';
+import { createPrefixedId } from '../../lib/secure-random.js';
 
 export const ContextGraphStateSchema = z.object({
 	// Input state
@@ -103,8 +104,7 @@ export class ContextGraphOrchestrator {
 				metadata: {
 					...initialState.metadata,
 					startTime: Date.now(),
-					requestId:
-						initialState.requestId || `ctx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                                        requestId: initialState.requestId || createPrefixedId('ctx'),
 				},
 			});
 
