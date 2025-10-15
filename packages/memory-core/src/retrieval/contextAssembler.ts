@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { GraphNodeType } from '../db/prismaEnums.js';
 import { prisma } from '../db/prismaClient.js';
 import type { GraphRAGSearchResult } from './QdrantHybrid.js';

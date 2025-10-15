@@ -6,13 +6,8 @@
 import { createEnhancedClient } from '@cortex-os/mcp-core/client';
 import type { McpServerInfo } from '@cortex-os/mcp-core/types';
 import { readAll } from '@cortex-os/mcp-registry/fs-store';
-import type {
-	ExternalCitation,
-	ExternalCitationProvider,
-	ExternalProviderConfig,
-	McpProviderSettingsSchema,
-} from './ExternalKnowledge.js';
-import { normalizeCitation } from './ExternalKnowledge.js';
+import type { ExternalCitation, ExternalCitationProvider, ExternalProviderConfig } from './ExternalKnowledge.js';
+import { McpProviderSettingsSchema, normalizeCitation } from './ExternalKnowledge.js';
 
 /**
  * MCP tool invocation options
@@ -62,8 +57,8 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 			};
 		} else {
 			// Look up server in registry
-			const registry = await readAll();
-			const server = registry.servers.find((s) => s.slug === settings.slug);
+                        const registry = await readAll();
+                        const server = registry.servers.find((serverRecord) => serverRecord.slug === settings.slug);
 
 			if (!server) {
 				throw new Error(`MCP server not found in registry: ${settings.slug}`);
@@ -146,20 +141,22 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 			const normalizedCitations = citations.map(normalizeCitation);
 
 			// Cache results if cache isn't full
-			if (this.citationCache.size < this.MAX_CACHE_SIZE) {
-				this.citationCache.set(cacheKey, {
-					citations: normalizedCitations,
-					timestamp: Date.now(),
-				});
-			} else {
-				// Evict oldest entry
-				const oldestKey = this.citationCache.keys().next().value;
-				this.citationCache.delete(oldestKey);
-				this.citationCache.set(cacheKey, {
-					citations: normalizedCitations,
-					timestamp: Date.now(),
-				});
-			}
+                        if (this.citationCache.size < this.MAX_CACHE_SIZE) {
+                                this.citationCache.set(cacheKey, {
+                                        citations: normalizedCitations,
+                                        timestamp: Date.now(),
+                                });
+                        } else {
+                                // Evict oldest entry
+                                const oldestEntry = this.citationCache.keys().next();
+                                if (!oldestEntry.done && oldestEntry.value) {
+                                        this.citationCache.delete(oldestEntry.value);
+                                }
+                                this.citationCache.set(cacheKey, {
+                                        citations: normalizedCitations,
+                                        timestamp: Date.now(),
+                                });
+                        }
 
 			console.log('brAInwav GraphRAG MCP citation fetch completed', {
 				component: 'memory-core',
@@ -276,9 +273,14 @@ export class MCPKnowledgeProvider implements ExternalCitationProvider {
 	/**
 	 * Validate arXiv item structure
 	 */
-	private isValidArxivItem(item: unknown): item is any {
-		return item && typeof item === 'object' && 'id' in item && typeof (item as any).id === 'string';
-	}
+        private isValidArxivItem(item: unknown): item is { id: string } & Record<string, unknown> {
+                return (
+                        typeof item === 'object' &&
+                        item !== null &&
+                        'id' in item &&
+                        typeof (item as { id?: unknown }).id === 'string'
+                );
+        }
 
 	/**
 	 * Normalize date to ISO-8601 format

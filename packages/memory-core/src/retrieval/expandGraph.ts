@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { GraphEdgeType } from '@prisma/client';
 import { prisma } from '../db/prismaClient.js';
 

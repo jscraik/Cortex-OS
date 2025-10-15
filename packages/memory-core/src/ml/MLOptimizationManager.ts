@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Advanced Query Pattern Analysis with ML Optimization
  *

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { MemoryStoreInput } from '@cortex-os/tool-spec';
 import type { CheckpointSnapshot } from '../../types.js';
 

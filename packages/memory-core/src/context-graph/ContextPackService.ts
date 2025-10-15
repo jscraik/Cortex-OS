@@ -93,7 +93,7 @@ export class ContextPackService {
 
 		try {
 			// Validate options
-                        const validation = this.validatePackOptions(options);
+                        const validation = await this.validatePackOptions(options);
                         if (!validation.valid) {
                                 return this.createErrorResult(subgraph, validation.errors[0], startTime);
                         }
