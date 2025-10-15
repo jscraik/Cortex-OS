@@ -369,7 +369,7 @@ Our ASVS alignment work feeds into the MITRE ATLAS navigator to ensure adversari
 
 ### Infrastructure & Operations Checklist
 
-- [ ] Enforce TLS 1.3 + mTLS where supported, with automated certificate rotation.
+- [ ] Enforce TLS 1.3 + mTLS; any exceptions must follow the Escalation & Exceptions process and be explicitly approved. Ensure automated certificate rotation.
 - [ ] Confirm secret storage (Vault/KMS) policies and audit logs for administrative actions.
 - [ ] Run container and host vulnerability scans (CIS Benchmarks, Trivy, etc.) before promotion.
 - [ ] Validate network segmentation, egress policies, and zero-trust controls per ASVS V9 requirements.
