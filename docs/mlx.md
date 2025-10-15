@@ -13,7 +13,7 @@ longer installs it automatically because its native dependency
 ## Usage
 
 ```ts
-import { generateEmbedding, rerankDocuments } from '../src/lib/mlx';
+import { generateEmbedding, rerankDocuments } from '@frost-beta/clip';
 
 const vectors = await generateEmbedding(['hello', 'world']);
 const scores = await rerankDocuments('hello', ['hello world', 'hi there']);
