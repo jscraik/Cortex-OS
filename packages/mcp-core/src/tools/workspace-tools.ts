@@ -18,6 +18,12 @@ import { ToolExecutionError } from '../tools.js';
 
 const workspaceManager = new WorkspaceManager();
 
+const DEFAULT_WORKSPACE_PERMISSIONS: WorkspacePermissions = {
+        read: true,
+        write: true,
+        execute: false,
+};
+
 const WorkspacePermissionsSchema = z.object({
 	read: z.boolean(),
 	write: z.boolean(),
@@ -66,14 +72,22 @@ export class WorkspaceCreateTool implements McpTool<WorkspaceCreateInput, Worksp
 		}
 
 		try {
-			const { metadata, path } = await this.manager.createWorkspace({
-				name: input.name,
-				description: input.description,
-				agentId: input.agentId,
-				sessionId: input.sessionId,
-				isolationLevel: input.isolationLevel,
-				permissions: input.permissions,
-			});
+                        const permissions: WorkspacePermissions | undefined = input.permissions
+                                ? {
+                                        read: input.permissions.read,
+                                        write: input.permissions.write,
+                                        execute: input.permissions.execute,
+                                }
+                                : undefined;
+
+                        const { metadata, path } = await this.manager.createWorkspace({
+                                name: input.name,
+                                description: input.description,
+                                agentId: input.agentId,
+                                sessionId: input.sessionId,
+                                isolationLevel: input.isolationLevel,
+                                permissions: permissions ?? DEFAULT_WORKSPACE_PERMISSIONS,
+                        });
 
 			console.log(`brAInwav Workspace: Created nO workspace ${metadata.id} at ${path}`);
 

@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import {
-	CheckpointIdSchema,
-	CheckpointMetaSchema,
-	CheckpointRecordSchema,
-	StateEnvelopeSchema,
+        CheckpointIdSchema,
+        CheckpointMetaSchema,
+        CheckpointRecordSchema,
+        StateEnvelopeSchema,
+        type CheckpointMeta,
 } from '@cortex-os/contracts';
 import {
 	type CheckpointBranchRequest,
@@ -58,13 +59,13 @@ export const checkpointSaveTool: McpTool<CheckpointSaveInput, CheckpointSaveResu
 	inputSchema: CheckpointSaveInputSchema,
 	async execute({ record }): Promise<CheckpointSaveResult> {
 		const manager = ensureManager();
-		const metaInput = record.meta ?? {};
-		const normalized = {
-			meta: {
-				...metaInput,
-				id: metaInput.id ?? `ckpt_${randomUUID()}`,
-				createdAt: metaInput.createdAt ?? new Date().toISOString(),
-			},
+                const metaInput: Partial<CheckpointMeta> = record.meta ?? {};
+                const normalized = {
+                        meta: {
+                                ...metaInput,
+                                id: metaInput.id ?? `ckpt_${randomUUID()}`,
+                                createdAt: metaInput.createdAt ?? new Date().toISOString(),
+                        },
 			state: record.state,
 		};
 		const parsed = CheckpointRecordSchema.parse(normalized);

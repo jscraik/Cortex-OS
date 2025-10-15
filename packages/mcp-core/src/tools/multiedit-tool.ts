@@ -29,15 +29,7 @@ const MultiEditInputSchema = z.object({
 
 export type MultiEditInput = z.infer<typeof MultiEditInputSchema>;
 
-export interface FileEditOperation {
-	path: string;
-	edits: Array<{
-		oldText: string;
-		newText: string;
-		startLine?: number;
-		endLine?: number;
-	}>;
-}
+export type FileEditOperation = MultiEditInput['files'][number];
 
 export interface FileEditResult {
 	path: string;

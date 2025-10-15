@@ -20,6 +20,52 @@ import { ToolExecutionError } from '../tools.js';
 
 const sharedCoordinationSessionManager = new CoordinationSessionManager();
 
+const DEFAULT_SECURITY_CONTEXT: SecurityContext = {
+        isolationLevel: 'moderate',
+        permissions: {
+                canCreateAgents: false,
+                canManageWorkspace: false,
+                canAccessHistory: true,
+                canEmitEvents: true,
+        },
+        accessControls: {
+                allowedAgentIds: [],
+                restrictedResources: [],
+                maxConcurrentOperations: 5,
+        },
+};
+
+function createDefaultSecurityContext(): SecurityContext {
+        return {
+                ...DEFAULT_SECURITY_CONTEXT,
+                permissions: { ...DEFAULT_SECURITY_CONTEXT.permissions },
+                accessControls: { ...DEFAULT_SECURITY_CONTEXT.accessControls },
+        };
+}
+
+function normalizeSecurityContext(
+        securityContext?: CreateCoordinationSessionInput['securityContext'],
+): SecurityContext {
+        if (!securityContext) {
+                return createDefaultSecurityContext();
+        }
+
+        return {
+                isolationLevel: securityContext.isolationLevel,
+                permissions: {
+                        canCreateAgents: securityContext.permissions.canCreateAgents,
+                        canManageWorkspace: securityContext.permissions.canManageWorkspace,
+                        canAccessHistory: securityContext.permissions.canAccessHistory,
+                        canEmitEvents: securityContext.permissions.canEmitEvents,
+                },
+                accessControls: {
+                        allowedAgentIds: [...securityContext.accessControls.allowedAgentIds],
+                        restrictedResources: [...securityContext.accessControls.restrictedResources],
+                        maxConcurrentOperations: securityContext.accessControls.maxConcurrentOperations,
+                },
+        };
+}
+
 const AgentSchema = z.object({
 	id: z.string().min(1),
 	name: z.string().min(1),
@@ -115,22 +161,9 @@ export class CreateCoordinationSessionTool
 				});
 			}
 
-			const coordinationId = `coord-${Date.now()}-${randomUUID().slice(0, 8)}`;
+                        const coordinationId = `coord-${Date.now()}-${randomUUID().slice(0, 8)}`;
 
-			const securityContext: SecurityContext = input.securityContext || {
-				isolationLevel: 'moderate',
-				permissions: {
-					canCreateAgents: false,
-					canManageWorkspace: false,
-					canAccessHistory: true,
-					canEmitEvents: true,
-				},
-				accessControls: {
-					allowedAgentIds: [],
-					restrictedResources: [],
-					maxConcurrentOperations: 5,
-				},
-			};
+                        const securityContext = normalizeSecurityContext(input.securityContext);
 
 			const session: CoordinationSession = {
 				id: coordinationId,
@@ -264,15 +297,20 @@ export class RegisterAgentTool implements McpTool<RegisterAgentInput, RegisterAg
 				);
 			}
 
-			const { trustLevel, ...agentBase } = input.agent;
-			const agent: Agent = {
-				...agentBase,
-				metadata: {
-					createdBy: 'brAInwav',
-					lastActive: new Date(),
-					trustLevel: trustLevel ?? 5,
-				},
-			};
+                        const agent: Agent = {
+                                id: input.agent.id,
+                                name: input.agent.name,
+                                role: input.agent.role,
+                                status: input.agent.status,
+                                capabilities: input.agent.capabilities,
+                                workspaceId: input.agent.workspaceId,
+                                sessionId: input.agent.sessionId,
+                                metadata: {
+                                        createdBy: 'brAInwav',
+                                        lastActive: new Date(),
+                                        trustLevel: input.agent.trustLevel ?? 5,
+                                },
+                        };
 
 			const updatedSession = {
 				...session,
