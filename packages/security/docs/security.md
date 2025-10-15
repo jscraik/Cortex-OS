@@ -1,6 +1,6 @@
 # Security
 
-This package operationalizes Cortex-OS security controls in alignment with OWASP ASVS 4.0.3. The following conditions define the minimum bar for any change touching the security domain.
+This package operationalizes Cortex-OS security controls in alignment with [OWASP ASVS 4.0.3](https://github.com/OWASP/ASVS/tree/v4.0.3). The following conditions define the minimum bar for any change touching the security domain.
 
 ## Baseline Controls
 
