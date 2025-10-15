@@ -60,7 +60,7 @@ export const checkpointSaveTool: McpTool<CheckpointSaveInput, CheckpointSaveResu
 	inputSchema: CheckpointSaveInputSchema,
 	async execute({ record }): Promise<CheckpointSaveResult> {
 		const manager = ensureManager();
-                const metaInput: Partial<CheckpointMeta> = record.meta ?? {};
+                const metaInput: Partial<Pick<CheckpointMeta, 'id' | 'createdAt'>> = record.meta ?? {};
 		const normalized = {
 			meta: {
 				...metaInput,
