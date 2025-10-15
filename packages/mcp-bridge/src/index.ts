@@ -20,9 +20,10 @@ export type {
 	TransactionResult,
 } from './database-types.js';
 export {
-	type RemoteTool,
-	RemoteToolProxy,
-	type RemoteToolProxyOptions,
+        type RemoteTool,
+        RemoteToolProxy,
+        type RemoteToolProxyOptions,
+        type DispatcherLike,
 } from './runtime/remote-proxy.js';
 export {
         getMetricsRegistry,
