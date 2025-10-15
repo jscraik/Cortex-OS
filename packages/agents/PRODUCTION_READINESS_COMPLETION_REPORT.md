@@ -39,14 +39,14 @@ All direct dependency security vulnerabilities have been resolved:
 - **Containerization**: Production-ready Docker configuration
 
 ### Remaining Items (2/100 points)
-- **External Dependencies**: @voltagent/cli transitive dependencies (outside package control)
+- **External Dependencies**: Monitor third-party packages for transitive vulnerabilities (VoltAgent packages removed)
 - **TypeScript Errors**: Minor issues in subagents module (cosmetic, doesn't affect runtime)
 
 ## Next Steps for Production
 1. Deploy using provided Docker containers
 2. Set up monitoring with the configured metrics endpoints
 3. Configure authentication using API keys
-4. Monitor @voltagent/cli for security updates
+4. Monitor third-party dependency advisories for security updates
 
 ## Conclusion
 The packages/agents module is now **production-ready** and suitable for deployment. All critical security vulnerabilities have been fixed, and the package includes comprehensive production-grade features including high availability, security, monitoring, and documentation.

@@ -50,14 +50,14 @@ The packages/agents directory contains a well-structured AI agent framework buil
 - **Security vulnerabilities in direct dependencies** have been patched
   - express, express-rate-limit, body-parser, path-to-regexp, send, and serve-static updated to secure versions
   - Fixed packages copied to node_modules
-  - Remaining vulnerabilities are in @voltagent/cli transitive dependencies
-  - Team monitoring for @voltagent/cli updates
+  - Legacy VoltAgent CLI dependency removed to eliminate lingering transitive vulnerabilities
+  - Continue monitoring workspace dependencies for upstream patches
 
 ### ⚠️ External Dependencies
-- **@voltagent/cli contains some vulnerable transitive dependencies**
-  - This is external to the agents package
-  - Team has notified vendor and monitoring for updates
-  - No direct impact on package security
+- **Third-party packages require ongoing monitoring**
+  - VoltAgent packages removed from the dependency graph
+  - Team continues to monitor remaining upstream libraries for advisories
+  - No known unresolved vulnerabilities at this time
 
 ---
 
@@ -149,11 +149,11 @@ The packages/agents directory contains a well-structured AI agent framework buil
 1. **Dependency Vulnerabilities Fixed**
    - All direct dependencies updated to secure versions
    - express@4.20.0, express-rate-limit@7.4.0, body-parser@1.20.3, path-to-regexp@0.1.12, send@0.19.0, serve-static@1.16.0
-   - Only @voltagent/cli transitive dependencies remain (external to package)
+   - Legacy VoltAgent packages removed to avoid external transitive risk
 
 ### ⚠️ Monitoring
 2. **Monitor External Dependencies**
-   - Track @voltagent/cli for security updates
+   - Track remaining third-party libraries for security updates
    - Regular vulnerability scanning
    - Consider dependency pinning for stability
 

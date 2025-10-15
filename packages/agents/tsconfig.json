@@ -14,8 +14,7 @@
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    ".voltagent"
+    "dist"
   ],
   "references": [
     {

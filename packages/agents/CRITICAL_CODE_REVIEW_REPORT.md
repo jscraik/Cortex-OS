@@ -6,10 +6,10 @@ The migration successfully transferred functionality from agents-backup, but int
 ## Critical Issues (Must Fix)
 
 ### 1. Mock Implementations in Production Code
-**Files**: All files using `../mocks/voltagent-core.js`
+**Files**: All files using the legacy core mock from `../mocks`
 - **Issue**: Core interfaces (EventBus, Agent, Tool) are mocked
-- **Impact**: Code won't work with real @voltagent/core
-- **Fix**: Create proper abstractions or use real implementations
+- **Impact**: Code won't work with the real agents runtime abstractions
+- **Fix**: Create proper abstractions or use the production implementations maintained in this package
 
 ### 2. MLX Provider Implementation Issues
 **File**: `src/providers/mlx-provider/index.ts`
@@ -23,9 +23,9 @@ The migration successfully transferred functionality from agents-backup, but int
 - **Impact**: Expired entries won't be cleaned up properly
 
 ### 4. EventBus Import Error
-**Files**: Multiple files importing from `../mocks/voltagent-core.js`
+**Files**: Multiple files importing from the legacy core mock in `../mocks`
 - **Issue**: Using mock EventBus instead of real implementation
-- **Fix**: Need to determine if @voltagent/core provides EventBus or implement our own
+- **Fix**: Replace VoltAgent mocks with the agents package EventBus implementation
 
 ### 5. LangGraph Integration Not Working
 **File**: `src/workflows/langgraph-integration.ts`

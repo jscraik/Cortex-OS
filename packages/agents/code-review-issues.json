@@ -60,7 +60,7 @@
     "category": "type-safety",
     "description": "Function accepts 'any[]' for tools parameter",
     "evidence": "Line 457: tools: any[] - Should use proper Tool type",
-    "fix": "Replace 'any[]' with proper Tool[] type from @voltagent/core"
+    "fix": "Replace 'any[]' with the internal Tool[] type exposed by the agents package"
   },
   {
     "file": "/Users/jamiecraik/.Cortex-OS/packages/agents/src/utils/modelRouter.ts",
