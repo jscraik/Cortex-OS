@@ -10,8 +10,8 @@ export interface RemoteTool {
 
 type StructuredLogger = Pick<Logger, 'info' | 'warn' | 'error' | 'debug'>;
 
-export interface DispatcherLike {
-        dispatch(options: unknown, handler: unknown): Promise<unknown>;
+export interface DispatcherLike<O = unknown, H = unknown, R = unknown> {
+        dispatch(options: O, handler: H): Promise<R>;
 }
 
 export interface RemoteToolProxyOptions {
