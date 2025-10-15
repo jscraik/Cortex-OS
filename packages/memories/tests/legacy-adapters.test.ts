@@ -41,11 +41,24 @@ describe('legacy memory adapters', () => {
 		await expectLegacyError(() => new RAGIntegration());
 	});
 
-	it('store-from-env helpers throw with migration guidance', async () => {
-		expect(STORE_FROM_ENV_REMOVED).toBe(true);
-		expect(() => createStoreFromEnv()).toThrow(/@cortex-os\/memory-core/);
-		expect(() => createStoreForKind('local')).toThrow(/@cortex-os\/memory-core/);
-		expect(() => normalizeStoreKind('sqlite')).toThrow(/@cortex-os\/memory-core/);
-		expect(() => resolveStoreKindFromEnv()).toThrow(/@cortex-os\/memory-core/);
-	});
+        it('store-from-env helpers provide backward compatible stores', async () => {
+                expect(STORE_FROM_ENV_REMOVED).toBe(false);
+
+                const store = await createStoreFromEnv();
+                expect(store).toBeTruthy();
+
+                const normalized = normalizeStoreKind('external_sqlite');
+                expect(normalized).toBe('external-sqlite');
+
+                await expect(createStoreForKind('memory')).resolves.toBeTruthy();
+
+                const original = process.env.MEMORY_STORE;
+                process.env.MEMORY_STORE = 'memory';
+                expect(resolveStoreKindFromEnv()).toBe('memory');
+                if (original === undefined) {
+                        delete process.env.MEMORY_STORE;
+                } else {
+                        process.env.MEMORY_STORE = original;
+                }
+        });
 });
