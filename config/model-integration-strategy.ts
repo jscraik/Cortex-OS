@@ -14,9 +14,10 @@ export interface ModelIntegrationConfig {
 			primary: 'phi4-mini-reasoning:latest'; // Ollama - Fast decisions
 			fallback: 'phi4-mini-reasoning:3.8b'; // Ollama - Lightweight
 		};
-		multimodal: {
-			primary: 'qwen2.5-vl'; // MLX - Vision + Language
-		};
+                multimodal: {
+                        primary: 'qwen2.5-vl'; // MLX - Vision + Language
+                        conjunction?: 'qwen3-vl:235b-cloud';
+                };
 	};
 
 	// Orchestration Package Models
@@ -59,9 +60,10 @@ export const DEFAULT_MODEL_INTEGRATION: ModelIntegrationConfig = {
 			primary: 'phi4-mini-reasoning:latest',
 			fallback: 'phi4-mini-reasoning:3.8b',
 		},
-		multimodal: {
-			primary: 'qwen2.5-vl',
-		},
+                multimodal: {
+                        primary: 'qwen2.5-vl',
+                        conjunction: 'qwen3-vl:235b-cloud',
+                },
 	},
 	orchestration: {
 		coordinator: {
@@ -107,10 +109,10 @@ export function selectOptimalModel(
 	characteristics: TaskCharacteristics,
 	config: ModelIntegrationConfig = DEFAULT_MODEL_INTEGRATION,
 ): string {
-	const models = config[category] as Record<
-		string,
-		{ primary: string; fallback?: string; premium?: string }
-	>;
+        const models = config[category] as Record<
+                string,
+                { primary: string; fallback?: string; premium?: string; conjunction?: string }
+        >;
 	const modelGroup = models[subcategory];
 
 	if (!modelGroup) {
@@ -158,12 +160,13 @@ export const INTEGRATION_POINTS = {
 			'Workflow optimization',
 			'Resource allocation',
 		],
-		multimodal: [
-			'UI/UX analysis from screenshots',
-			'Diagram understanding',
-			'Visual coordination',
-			'Multi-modal task interpretation',
-		],
+                multimodal: [
+                        'UI/UX analysis from screenshots',
+                        'Diagram understanding',
+                        'Visual coordination',
+                        'Multi-modal task interpretation',
+                        'Cloud-enhanced visual reasoning',
+                ],
 	},
 	orchestration: {
 		coordinator: [

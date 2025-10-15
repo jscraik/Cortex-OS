@@ -12,11 +12,12 @@
 export interface OllamaV012IntegrationConfig {
 	version: string;
 	features: string[];
-	models: {
-		embedding: EmbeddingModelConfig;
-		toolCalling: ToolCallingModelConfig;
-		chat: ChatModelConfig;
-	};
+        models: {
+                embedding: EmbeddingModelConfig;
+                toolCalling: ToolCallingModelConfig;
+                chat: ChatModelConfig;
+                vision: VisionModelConfig;
+        };
 	routing: RoutingConfig;
 	performance: PerformanceConfig;
 }
@@ -34,9 +35,14 @@ export interface ToolCallingModelConfig {
 }
 
 export interface ChatModelConfig {
-	coding: ModelSpec;
-	general: ModelSpec;
-	lightweight: ModelSpec;
+        coding: ModelSpec;
+        general: ModelSpec;
+        lightweight: ModelSpec;
+}
+
+export interface VisionModelConfig {
+        primary: ModelSpec;
+        enhancement: ModelSpec;
 }
 
 export interface ModelSpec {
@@ -62,13 +68,14 @@ export interface PerformanceConfig {
 
 export const OLLAMA_V012_INTEGRATION: OllamaV012IntegrationConfig = {
 	version: 'v0.12.1+',
-	features: [
-		'qwen3_embedding',
-		'enhanced_tool_calling',
-		'improved_parsing',
-		'multilingual_support',
-		'state_of_art_performance',
-	],
+        features: [
+                'qwen3_embedding',
+                'enhanced_tool_calling',
+                'improved_parsing',
+                'multilingual_support',
+                'state_of_art_performance',
+                'cloud_multimodal_conjunction',
+        ],
 
 	models: {
 		// Enhanced embedding strategy with Qwen3 Embedding
@@ -118,29 +125,49 @@ export const OLLAMA_V012_INTEGRATION: OllamaV012IntegrationConfig = {
 			},
 		},
 
-		// Enhanced chat models
-		chat: {
-			coding: {
-				provider: 'ollama',
-				model: 'qwen3-coder:30b',
-				features: ['code_generation', 'architecture', 'tool_calling'],
-				priority: 100,
-				version: 'v0.12.1+',
-			},
-			general: {
-				provider: 'mlx',
-				model: 'glm-4.5',
-				features: ['local_execution', 'general_purpose', 'fast'],
-				priority: 95,
-			},
-			lightweight: {
-				provider: 'ollama',
-				model: 'phi4-mini-reasoning:latest',
-				features: ['quick_responses', 'lightweight', 'reasoning'],
-				priority: 90,
-			},
-		},
-	},
+                // Enhanced chat models
+                chat: {
+                        coding: {
+                                provider: 'ollama',
+                                model: 'qwen3-coder:30b',
+                                features: ['code_generation', 'architecture', 'tool_calling'],
+                                priority: 100,
+                                version: 'v0.12.1+',
+                        },
+                        general: {
+                                provider: 'mlx',
+                                model: 'glm-4.5',
+                                features: ['local_execution', 'general_purpose', 'fast'],
+                                priority: 95,
+                        },
+                        lightweight: {
+                                provider: 'ollama',
+                                model: 'phi4-mini-reasoning:latest',
+                                features: ['quick_responses', 'lightweight', 'reasoning'],
+                                priority: 90,
+                        },
+                },
+
+                // Multimodal routing between MLX and Ollama Cloud
+                vision: {
+                        primary: {
+                                provider: 'mlx',
+                                model: 'qwen2.5-vl',
+                                features: ['vision_language', 'local_execution', 'privacy'],
+                                priority: 95,
+                                supports: ['multimodal', 'ui_analysis'],
+                                version: 'v0.12.1+',
+                        },
+                        enhancement: {
+                                provider: 'cloud',
+                                model: 'qwen3-vl:235b-cloud',
+                                features: ['advanced_multimodal_reasoning', 'design_analysis', 'document_understanding'],
+                                priority: 90,
+                                supports: ['high_resolution_vision', 'spatial_reasoning'],
+                                version: 'v0.12.3+',
+                        },
+                },
+        },
 
 	routing: {
 		// Enhanced decision matrix for v0.12+ features
@@ -156,29 +183,36 @@ export const OLLAMA_V012_INTEGRATION: OllamaV012IntegrationConfig = {
 		},
 
 		// Enhanced task routing with new capabilities
-		taskRouting: {
-			embedding: {
-				highAccuracy: 'qwen3-embedding:latest',
-				multilingual: 'qwen3-embedding:latest',
-				production: 'qwen3-embedding:latest',
-				development: 'nomic-embed-text:v1.5',
-				verification: 'mlx:qwen3-4b',
-			},
-			toolCalling: {
-				primary: 'qwen3-coder:30b',
-				functionCalling: 'qwen3-coder:30b',
-				apiIntegration: 'qwen3-coder:30b',
-				orchestration: 'qwen3-coder:30b',
-				verification: 'mlx:qwen3-coder-30b',
-			},
-			coding: {
-				architecture: 'qwen3-coder:30b',
-				refactoring: 'mlx:glm-4.5',
-				debugging: 'mlx:glm-4.5',
-				generation: 'deepseek-coder:6.7b',
-				review: 'deepseek-coder:6.7b',
-			},
-		},
+                taskRouting: {
+                        embedding: {
+                                highAccuracy: 'qwen3-embedding:latest',
+                                multilingual: 'qwen3-embedding:latest',
+                                production: 'qwen3-embedding:latest',
+                                development: 'nomic-embed-text:v1.5',
+                                verification: 'mlx:qwen3-4b',
+                        },
+                        toolCalling: {
+                                primary: 'qwen3-coder:30b',
+                                functionCalling: 'qwen3-coder:30b',
+                                apiIntegration: 'qwen3-coder:30b',
+                                orchestration: 'qwen3-coder:30b',
+                                verification: 'mlx:qwen3-coder-30b',
+                        },
+                        coding: {
+                                architecture: 'qwen3-coder:30b',
+                                refactoring: 'mlx:glm-4.5',
+                                debugging: 'mlx:glm-4.5',
+                                generation: 'deepseek-coder:6.7b',
+                                review: 'deepseek-coder:6.7b',
+                        },
+                        vision: {
+                                primary: 'qwen2.5-vl',
+                                advanced: 'qwen3-vl:235b-cloud',
+                                uiAnalysis: 'qwen2.5-vl',
+                                documentUnderstanding: 'qwen3-vl:235b-cloud',
+                                verification: 'mlx:qwen2.5-vl',
+                        },
+                },
 
 		// Enhanced fallback chains
 		fallbackChains: {
@@ -194,35 +228,45 @@ export const OLLAMA_V012_INTEGRATION: OllamaV012IntegrationConfig = {
 				'mlx:qwen3-coder-30b',
 				'cloud:qwen3-coder:480b-cloud',
 			],
-			chat: [
-				'mlx:glm-4.5',
-				'ollama:qwen3-coder:30b',
-				'ollama:deepseek-coder:6.7b',
-				'ollama:phi4-mini-reasoning:latest',
-			],
-		},
+                        chat: [
+                                'mlx:glm-4.5',
+                                'ollama:qwen3-coder:30b',
+                                'ollama:deepseek-coder:6.7b',
+                                'ollama:phi4-mini-reasoning:latest',
+                        ],
+                        vision: [
+                                'mlx:qwen2.5-vl',
+                                'cloud:qwen3-vl:235b-cloud',
+                        ],
+                },
 	},
 
 	// Performance optimization for v0.12+ features
-	performance: {
-		caching: {
-			qwen3Embedding: {
-				enabled: true,
-				ttl: 3600, // 1 hour cache for embeddings
-				strategy: 'lru',
-			},
-			toolCalling: {
-				enabled: true,
-				ttl: 1800, // 30 minute cache for tool results
-				strategy: 'adaptive',
-			},
-		},
-		loadBalancing: {
-			qwen3EmbeddingPrimary: 100,
-			mlxVerification: 95,
-			ollamaFallback: 80,
-			adaptiveRouting: true,
-		},
+                performance: {
+                        caching: {
+                                qwen3Embedding: {
+                                        enabled: true,
+                                        ttl: 3600, // 1 hour cache for embeddings
+                                        strategy: 'lru',
+                                },
+                                toolCalling: {
+                                        enabled: true,
+                                        ttl: 1800, // 30 minute cache for tool results
+                                        strategy: 'adaptive',
+                                },
+                                visionConjunction: {
+                                        enabled: true,
+                                        ttl: 600, // 10 minute cache for multimodal enhancements
+                                        strategy: 'result_sharing',
+                                },
+                        },
+                        loadBalancing: {
+                                qwen3EmbeddingPrimary: 100,
+                                mlxVerification: 95,
+                                ollamaFallback: 80,
+                                visionEnhancement: 85,
+                                adaptiveRouting: true,
+                        },
 		healthChecks: {
 			interval: 30000, // 30 seconds
 			timeout: 5000, // 5 seconds

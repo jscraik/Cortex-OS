@@ -14,16 +14,23 @@ This document summarizes the comprehensive updates made to integrate Ollama v0.1
 - ✅ Enhanced **Qwen3-Coder** with tool calling support
 - ✅ Updated task routing for new capabilities
 - ✅ Improved hybrid routing configuration
+- ✅ Registered **Qwen3-VL:235B-Cloud** for hybrid vision conjunction
 
 **New Models Added:**
 
 ```json
 {
-  "qwen3-embed": {
-    "name": "Qwen/Qwen3-Embedding",
-    "model_tag": "qwen3-embedding:latest",
-    "priority": 1,
-    "features": ["state_of_art_performance", "multilingual_support"]
+"qwen3-embed": {
+  "name": "Qwen/Qwen3-Embedding",
+  "model_tag": "qwen3-embedding:latest",
+  "priority": 1,
+  "features": ["state_of_art_performance", "multilingual_support"]
+  },
+  "qwen3-vl-cloud": {
+    "name": "qwen3-vl:235b-cloud",
+    "model_tag": "qwen3-vl:235b-cloud",
+    "priority": 2,
+    "features": ["cloud_multimodal", "high_resolution_reasoning"]
   }
 }
 ```
@@ -36,6 +43,7 @@ This document summarizes the comprehensive updates made to integrate Ollama v0.1
 - ✅ Enhanced embedding strategy with Qwen3 support
 - ✅ New integration patterns for state-of-art capabilities
 - ✅ Updated decision matrix for v0.12+ features
+- ✅ Added cloud-enhanced vision routing alongside MLX privacy mode
 
 **New Routing Patterns:**
 
@@ -100,6 +108,13 @@ TypeScript configuration defining:
 - **Cloud enhancement** for complex operations
 - **Adaptive fallback chains** for high availability
 
+### 🖼️ Qwen3-VL Cloud Vision Conjunction
+
+- **Hybrid MLX + Cloud** vision reasoning with governed escalation
+- **Advanced UI/diagram understanding** using qwen3-vl:235b-cloud
+- **Structured document interpretation** beyond MLX-only capacity
+- **BrAInwav-branded telemetry** for multimodal compliance evidence
+
 ## Configuration Hierarchy
 
 ```
@@ -107,7 +122,8 @@ brAInwav Cortex-OS Hybrid Model Strategy
 ├── Primary: Ollama Qwen3 Embedding (State-of-art)
 ├── Verification: MLX Qwen3-4B (Privacy & Local)
 ├── Fallback: Ollama Nomic Embed (Reliable)
-└── Tool Calling: Ollama Qwen3-Coder (Enhanced)
+├── Tool Calling: Ollama Qwen3-Coder (Enhanced)
+└── Vision Conjunction: MLX Qwen2.5-VL ⇆ Cloud Qwen3-VL:235B
 ```
 
 ## Task Routing Matrix
@@ -119,6 +135,7 @@ brAInwav Cortex-OS Hybrid Model Strategy
 | **Privacy Mode** | MLX | qwen3-4b | Local execution, Verification |
 | **Code Generation** | Ollama | deepseek-coder:6.7b | Fast, Reliable |
 | **Architecture** | Ollama | qwen3-coder:30b | Complex reasoning, Large context |
+| **Vision Analysis** | Hybrid | qwen2.5-vl ⇆ qwen3-vl:235b-cloud | Multimodal, Cloud-enhanced |
 
 ## Performance Improvements
 
@@ -181,6 +198,7 @@ brAInwav Cortex-OS Hybrid Model Strategy
 - **Enhanced tool calling** capabilities
 - **Better multilingual** support
 - **Improved reliability** and performance
+- **Cloud-enhanced multimodal reviews** via qwen3-vl:235b-cloud
 
 ### For System Administrators
 
@@ -188,6 +206,7 @@ brAInwav Cortex-OS Hybrid Model Strategy
 - **Robust fallback** mechanisms
 - **Comprehensive monitoring** and alerting
 - **Easy migration** path from previous versions
+- **Governed MLX+cloud vision workflow** for regulated audits
 
 ### for brAInwav Cortex-OS
 
@@ -195,6 +214,7 @@ brAInwav Cortex-OS Hybrid Model Strategy
 - **Leverages best-in-class** models strategically
 - **Ensures high availability** through hybrid routing
 - **Provides enterprise-grade** reliability
+- **Delivers multimodal escalations** without compromising governance
 
 ## Next Steps
 
