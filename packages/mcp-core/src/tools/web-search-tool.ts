@@ -1,4 +1,4 @@
-import { safeFetch } from '@cortex-os/utils';
+import { safeFetch } from '../lib/safe-fetch.js';
 import { z } from 'zod';
 import type { McpTool, ToolExecutionContext } from '../tools.js';
 import { ToolExecutionError } from '../tools.js';

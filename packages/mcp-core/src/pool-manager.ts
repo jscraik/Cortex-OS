@@ -108,21 +108,21 @@ export class MCPServerPool extends EventEmitter {
 		const id = `brAInwav-mcp-${randomUUID()}`;
 		const port = await this.findAvailablePort();
 		
-		const process = spawn(this.config.command, [
-			...this.config.args,
-			'--port', port.toString()
-		], {
-			stdio: ['pipe', 'pipe', 'pipe'],
-			env: {
-				...process.env,
-				BRAINWAV_MCP_INSTANCE_ID: id,
-				BRAINWAV_POOL_MANAGED: 'true'
-			}
-		});
+                const childProcess = spawn(this.config.command, [
+                        ...this.config.args,
+                        '--port', port.toString()
+                ], {
+                        stdio: ['pipe', 'pipe', 'pipe'],
+                        env: {
+                                ...process.env,
+                                BRAINWAV_MCP_INSTANCE_ID: id,
+                                BRAINWAV_POOL_MANAGED: 'true'
+                        }
+                });
 
-		const instance: MCPServerInstance = {
-			id,
-			process,
+                const instance: MCPServerInstance = {
+                        id,
+                        process: childProcess,
 			port,
 			createdAt: new Date(),
 			lastUsedAt: new Date(),
@@ -133,14 +133,14 @@ export class MCPServerPool extends EventEmitter {
 		this.instances.set(id, instance);
 		
 		// Set up process event handlers
-		process.on('exit', (code) => {
-			this.handleInstanceExit(id, code);
-		});
+                childProcess.on('exit', (code) => {
+                        this.handleInstanceExit(id, code);
+                });
 
-		process.on('error', (error) => {
-			console.error(`[brAInwav] MCP instance ${id} error:`, error);
-			instance.isHealthy = false;
-		});
+                childProcess.on('error', (error) => {
+                        console.error(`[brAInwav] MCP instance ${id} error:`, error);
+                        instance.isHealthy = false;
+                });
 
 		this.emit('server-created', { instanceId: id, port });
 		return instance;

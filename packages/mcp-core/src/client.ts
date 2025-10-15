@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { safeFetch } from '@cortex-os/utils';
+import { safeFetch } from './lib/safe-fetch.js';
 import type WebSocket from 'ws';
 import { z } from 'zod';
 import type { ServerInfo } from './contracts.js';

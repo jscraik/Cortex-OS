@@ -66,14 +66,18 @@ export class WorkspaceCreateTool implements McpTool<WorkspaceCreateInput, Worksp
 		}
 
 		try {
-			const { metadata, path } = await this.manager.createWorkspace({
-				name: input.name,
-				description: input.description,
-				agentId: input.agentId,
-				sessionId: input.sessionId,
-				isolationLevel: input.isolationLevel,
-				permissions: input.permissions,
-			});
+                        const permissions: WorkspacePermissions | undefined = input.permissions
+                                ? { ...input.permissions }
+                                : undefined;
+
+                        const { metadata, path } = await this.manager.createWorkspace({
+                                name: input.name,
+                                description: input.description,
+                                agentId: input.agentId,
+                                sessionId: input.sessionId,
+                                isolationLevel: input.isolationLevel,
+                                permissions,
+                        });
 
 			console.log(`brAInwav Workspace: Created nO workspace ${metadata.id} at ${path}`);
 
