@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@cortex-os/agent-toolkit": "workspace:*",
+    "@cortex-os/security": "workspace:*",
     "@cortex-os/mcp-auth": "workspace:*",
     "@cortex-os/asbr": "workspace:*",
     "@cortex-os/mcp-bridge": "workspace:*",

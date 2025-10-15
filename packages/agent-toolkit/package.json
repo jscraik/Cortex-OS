@@ -16,6 +16,7 @@
   "dependencies": {
     "@cortex-os/a2a": "workspace:*",
     "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/utils": "workspace:*",
     "@cortex-os/security": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "zod": "^3.25.76"

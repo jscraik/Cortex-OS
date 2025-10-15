@@ -16,6 +16,8 @@
   "dependencies": {
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/contracts": "workspace:*",
+    "@cortex-os/prompts": "workspace:*",
+    "@cortex-os/utils": "workspace:*",
     "@cortex-os/types": "workspace:*",
     "@octokit/rest": "^20.0.2",
     "@octokit/webhooks": "^12.0.10",
