@@ -66,7 +66,8 @@
     },
     "vision": {
       "mlx_qwen2_5_vl": 100,
-      "cloud_multimodal": 80
+      "cloud_multimodal": 80,
+      "cloud_qwen3_vl_235b": 85
     }
   },
   "conjunction_patterns": {
@@ -129,6 +130,7 @@
         "granite-embedding:278m"
       ],
       "ollama_cloud": [
+        "qwen3-vl:235b-cloud",
         "kimi-k2:1t-cloud",
         "qwen3-coder:480b-cloud",
         "gpt-oss:120b-cloud",
@@ -175,7 +177,8 @@
         "mlx:qwen3-coder-30b"
       ],
       "vision": [
-        "mlx:qwen2.5-vl"
+        "mlx:qwen2.5-vl",
+        "cloud:qwen3-vl:235b-cloud"
       ]
     }
   },

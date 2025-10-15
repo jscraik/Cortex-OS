@@ -84,7 +84,14 @@
         "models": [
           "qwen2.5-vl"
         ],
-        "enhanced_by": "ollama_cloud:multimodal_models"
+        "enhanced_by": {
+          "cloud_conjunction": "qwen3-vl:235b-cloud",
+          "features": [
+            "multimodal_understanding",
+            "high_resolution_reasoning",
+            "design_system_analysis"
+          ]
+        }
       },
       "ultra_performance": {
         "condition": "requires_state_of_art",
@@ -93,6 +100,7 @@
           "mlx_primary": "qwen3-coder-30b",
           "cloud_verification": "qwen3-coder:480b-cloud",
           "moe_reasoning": "kimi-k2:1t-cloud",
+          "vision_cloud": "qwen3-vl:235b-cloud",
           "strategy": "consensus_or_cloud_override"
         },
         "tool_calling_support": true,
@@ -113,7 +121,8 @@
         "tool_calling_tasks": "ollama:qwen3-coder:30b",
         "embedding_tasks": "ollama:qwen3-embedding:latest",
         "moe_reasoning_tasks": "cloud:kimi-k2:1t-cloud",
-        "trillion_parameter_tasks": "cloud:kimi-k2:1t-cloud"
+        "trillion_parameter_tasks": "cloud:kimi-k2:1t-cloud",
+        "vision_tasks": "hybrid:qwen2.5-vl+qwen3-vl:235b-cloud"
       }
     }
   },
@@ -172,6 +181,15 @@
         "system_integration"
       ],
       "implementation": "task_decomposition"
+    },
+    "vision_cloud_conjunction": {
+      "description": "Combine MLX Qwen2.5-VL with cloud Qwen3-VL for advanced multimodal reasoning",
+      "use_cases": [
+        "complex_ui_review",
+        "design_system_analysis",
+        "document_visual_understanding"
+      ],
+      "implementation": "mlx_primary_with_cloud_enhancement"
     }
   },
   "performance_optimization": {

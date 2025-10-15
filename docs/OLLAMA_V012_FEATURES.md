@@ -38,6 +38,36 @@ This document outlines the new features introduced in Ollama v0.12.0, v0.12.1, a
 - **Multi-domain expertise** for complex problem solving
 - **Large system analysis** with extensive context requirements
 
+### Qwen3-VL 235B Cloud Multimodal Model (v0.12.23)
+
+**Description**: Qwen3-VL:235B-Cloud is the flagship vision-language service exposed in Ollama v0.12.23. It combines trillion-scale language capacity with high-fidelity visual understanding to power enterprise-grade multimodal analysis while preserving Cortex-OS governance controls.
+
+**Configuration**:
+
+```json
+{
+  "name": "qwen3-vl:235b-cloud",
+  "model_tag": "qwen3-vl:235b-cloud",
+  "context_length": 131072,
+  "type": "vision_cloud",
+  "supports_vision": true
+}
+```
+
+**Key Benefits**:
+
+- **Cloud-scale multimodal reasoning** across UI mockups, diagrams, and documents
+- **High-resolution visual comprehension** with a governed 131k token window
+- **Spatial and layout awareness** for accessibility and design system audits
+- **BrAInwav-branded telemetry** through the hybrid conjunction pipeline
+
+**Usage in Cortex-OS**:
+
+- **Hybrid vision conjunction** with MLX Qwen2.5-VL for escalated analysis
+- **Enterprise UX reviews** requiring cloud verification of complex layouts
+- **Structured document understanding** for specifications and architecture diagrams
+- **Fallback path** when MLX-only privacy mode requires cloud corroboration
+
 ### Qwen3 Embedding Model (v0.12.1)
 
 **Description**: State-of-the-art open embedding model by the Qwen team that provides superior performance for semantic search and RAG applications.
@@ -131,6 +161,11 @@ This document outlines the new features introduced in Ollama v0.12.0, v0.12.1, a
 2. **Qwen3-Coder-30B** (MLX) - Local verification
 3. **Qwen3-Coder:480B** (Cloud) - Complex orchestration
 
+**Vision Routing Enhancements**:
+
+1. **Qwen2.5-VL** (MLX) - Primary privacy-first multimodal inference
+2. **Qwen3-VL:235B-Cloud** (Ollama Cloud) - High-fidelity conjunction for escalations
+
 ### Enhanced Decision Matrix
 
 ```json
@@ -158,6 +193,9 @@ ollama pull qwen3-embedding:latest
 
 # Updated Qwen3-Coder with tool calling
 ollama pull qwen3-coder:30b
+
+# Qwen3-VL cloud multimodal model
+ollama run qwen3-vl:235b-cloud --dry-run
 ```
 
 ### 2. Configuration Updates
@@ -167,12 +205,14 @@ ollama pull qwen3-coder:30b
 - Add Qwen3 embedding as primary embedding model
 - Enable tool calling features for Qwen3-Coder
 - Update task routing for new capabilities
+- Register Qwen3-VL:235B cloud entry for hybrid vision conjunction
 
 **Update Hybrid Strategy**:
 
 - Configure Qwen3 embedding routing
 - Add tool calling task routing
 - Enable enhanced decision matrix
+- Extend vision tasks with cloud conjunction metadata
 
 ### 3. Testing and Validation
 
@@ -204,6 +244,17 @@ const response = await modelGateway.generateChat({
   messages: [{ role: "user", content: "Call the weather API for New York" }],
   model: "qwen3-coder:30b",
   tools: [weatherTool]
+});
+```
+
+**Vision Conjunction Tests**:
+
+```typescript
+// Validate hybrid vision routing with cloud enhancement
+const analysis = await modelGateway.generateMultimodal({
+  model: "qwen3-vl:235b-cloud",
+  inputs: [screenshotBuffer],
+  conjunction: "qwen2.5-vl"
 });
 ```
 

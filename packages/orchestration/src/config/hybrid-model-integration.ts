@@ -50,18 +50,19 @@ export const createGLMModel = (): OrchestrationModelConfig => ({
  * Create Qwen2.5-VL vision model configuration
  */
 export const createVisionModel = (): OrchestrationModelConfig => ({
-	name: 'mlx-community/Qwen2.5-VL-3B-Instruct-6bit',
-	provider: 'mlx',
-	priority: 95,
-	capabilities: ['chat', 'vision'],
-	path: '/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit',
-	memory_gb: 6.0,
-	context_length: 32768,
-	supports_vision: true,
-	recommended_for: ['multimodal', 'vision_tasks', 'image_analysis'],
-	coding_tasks: ['ui_analysis', 'diagram_interpretation', 'visual_debugging'],
-	quantization: '6bit',
-	fallback: ['glm-4.5'],
+        name: 'mlx-community/Qwen2.5-VL-3B-Instruct-6bit',
+        provider: 'mlx',
+        priority: 95,
+        capabilities: ['chat', 'vision'],
+        path: '/Volumes/ExternalSSD/ai-cache/huggingface/hub/models--mlx-community--Qwen2.5-VL-3B-Instruct-6bit',
+        memory_gb: 6.0,
+        context_length: 32768,
+        supports_vision: true,
+        recommended_for: ['multimodal', 'vision_tasks', 'image_analysis'],
+        coding_tasks: ['ui_analysis', 'diagram_interpretation', 'visual_debugging'],
+        quantization: '6bit',
+        fallback: ['glm-4.5'],
+        conjunction: ['qwen3-vl:235b-cloud'],
 });
 
 /**
@@ -216,24 +217,29 @@ export const ORCHESTRATION_HYBRID_CONFIG = {
 		fallback: 'nomic-embed-text:v1.5', // Available Ollama fallback
 	},
 
-	conjunction_patterns: {
-		// When to use cloud models in conjunction
-		complex_analysis: {
-			mlx_primary: 'glm-4.5',
-			cloud_verification: 'qwen3-coder:480b-cloud',
-			context_threshold: 50000,
-		},
-		enterprise_tasks: {
-			mlx_primary: 'glm-4.5',
-			cloud_enhanced: 'qwen3-coder:480b-cloud',
-			complexity_threshold: 'enterprise',
-		},
-		repository_analysis: {
-			mlx_primary: 'glm-4.5',
-			cloud_specialized: 'qwen3-coder:480b-cloud',
-			context_threshold: 100000,
-		},
-	},
+        conjunction_patterns: {
+                // When to use cloud models in conjunction
+                complex_analysis: {
+                        mlx_primary: 'glm-4.5',
+                        cloud_verification: 'qwen3-coder:480b-cloud',
+                        context_threshold: 50000,
+                },
+                enterprise_tasks: {
+                        mlx_primary: 'glm-4.5',
+                        cloud_enhanced: 'qwen3-coder:480b-cloud',
+                        complexity_threshold: 'enterprise',
+                },
+                repository_analysis: {
+                        mlx_primary: 'glm-4.5',
+                        cloud_specialized: 'qwen3-coder:480b-cloud',
+                        context_threshold: 100000,
+                },
+                vision_analysis: {
+                        mlx_primary: 'qwen2.5-vl',
+                        cloud_enhancement: 'qwen3-vl:235b-cloud',
+                        modality: 'multimodal',
+                },
+        },
 
 	performance_tiers: {
 		ultra_fast: {

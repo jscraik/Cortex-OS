@@ -9,12 +9,13 @@ import {
 	createEmbeddingModel,
 	createGLMModel,
 	createLargeContextModel,
-	createLightweightModel,
-	createOrchestrationRouter,
-	createRerankingModel,
-	createVisionModel,
-	ORCHESTRATION_MODELS,
-	OrchestrationHybridRouter,
+        createLightweightModel,
+        createOrchestrationRouter,
+        createRerankingModel,
+        createVisionModel,
+        ORCHESTRATION_MODELS,
+        ORCHESTRATION_HYBRID_CONFIG,
+        OrchestrationHybridRouter,
 	selectModelForTask,
 	validateRequiredModels,
 } from '../hybrid-model-integration.js';
@@ -60,12 +61,13 @@ describe('OrchestrationHybridRouter', () => {
 	});
 
 	describe('getVisionModel', () => {
-		it('should return qwen2.5-vl vision model', () => {
-			const model = router.getVisionModel();
-			expect(model.name).toBe('mlx-community/Qwen2.5-VL-3B-Instruct-6bit');
-			expect(model.supports_vision).toBe(true);
-			expect(model.capabilities).toContain('vision');
-		});
+                it('should return qwen2.5-vl vision model', () => {
+                        const model = router.getVisionModel();
+                        expect(model.name).toBe('mlx-community/Qwen2.5-VL-3B-Instruct-6bit');
+                        expect(model.supports_vision).toBe(true);
+                        expect(model.capabilities).toContain('vision');
+                        expect(model.conjunction).toContain('qwen3-vl:235b-cloud');
+                });
 
 		it('should throw error if vision model not found', () => {
 			router['models'].delete('qwen2.5-vl');
@@ -172,14 +174,15 @@ describe('Model Factory Functions', () => {
 		});
 	});
 
-	describe('createVisionModel', () => {
-		it('should create vision model configuration', () => {
-			const model = createVisionModel();
-			expect(model.supports_vision).toBe(true);
-			expect(model.capabilities).toContain('vision');
-			expect(model.priority).toBe(95);
-		});
-	});
+        describe('createVisionModel', () => {
+                it('should create vision model configuration', () => {
+                        const model = createVisionModel();
+                        expect(model.supports_vision).toBe(true);
+                        expect(model.capabilities).toContain('vision');
+                        expect(model.priority).toBe(95);
+                        expect(model.conjunction).toContain('qwen3-vl:235b-cloud');
+                });
+        });
 
 	describe('createBalancedModel', () => {
 		it('should create balanced performance model', () => {
@@ -226,9 +229,20 @@ describe('Model Factory Functions', () => {
 });
 
 describe('Functional Utilities', () => {
-	describe('createOrchestrationRouter', () => {
-		it('should create a new router instance', () => {
-			const router = createOrchestrationRouter();
+        describe('conjunction patterns', () => {
+                it('should configure cloud enhancement for vision analysis', () => {
+                        expect(ORCHESTRATION_HYBRID_CONFIG.conjunction_patterns.vision_analysis).toEqual(
+                                expect.objectContaining({
+                                        mlx_primary: 'qwen2.5-vl',
+                                        cloud_enhancement: 'qwen3-vl:235b-cloud',
+                                }),
+                        );
+                });
+        });
+
+        describe('createOrchestrationRouter', () => {
+                it('should create a new router instance', () => {
+                        const router = createOrchestrationRouter();
 			expect(router).toBeInstanceOf(OrchestrationHybridRouter);
 		});
 	});
