@@ -106,7 +106,7 @@
     "line": 107,
     "end_line": 107,
     "severity": "high",
-    "category": "brainwav-prohibition",
+    "category": "brAInwav-prohibition",
     "description": "Context graph orchestrator seeds request IDs with Math.random(), breaching constitutional rules and undermining traceability across multi-agent workflows.",
     "evidence": "Line 107: initialState.requestId || `ctx-${Date.now()}-${Math.random()...}`",
     "fix": "Reuse orchestration's secure random helpers (createPrefixedId) for request IDs.",
