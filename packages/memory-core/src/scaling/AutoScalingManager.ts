@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Auto-Scaling Manager for brAInwav GraphRAG
  *

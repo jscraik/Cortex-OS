@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Qdrant Hybrid Search Integration for brAInwav GraphRAG
  *

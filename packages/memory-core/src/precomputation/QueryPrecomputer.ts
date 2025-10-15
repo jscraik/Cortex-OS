@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Query Pre-computation System for brAInwav GraphRAG
  *

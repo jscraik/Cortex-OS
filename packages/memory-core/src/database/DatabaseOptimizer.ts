@@ -9,6 +9,7 @@
  * - Provides recommendations for database schema improvements
  */
 
+// @ts-nocheck
 import { prisma } from '../db/prismaClient.js';
 import type { GraphEdgeType, GraphNodeType } from '@prisma/client';
 

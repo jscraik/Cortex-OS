@@ -87,6 +87,7 @@ declare module '@prisma/client' {
     };
     $transaction<T>(promises: Array<Promise<T>>): Promise<T[]>;
     $queryRaw<T = unknown>(query: TemplateStringsArray, ...values: unknown[]): Promise<T>;
+    $executeRaw(query: TemplateStringsArray, ...values: unknown[]): Promise<number>;
     $disconnect(): Promise<void>;
   }
 }
