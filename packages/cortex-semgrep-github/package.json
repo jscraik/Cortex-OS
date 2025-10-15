@@ -18,6 +18,7 @@
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/contracts": "workspace:*",
     "@cortex-os/cortex-sec": "workspace:*",
+    "@cortex-os/utils": "workspace:*",
     "@cortex-os/types": "workspace:*",
     "@octokit/rest": "^20.1.0",
     "@octokit/webhooks": "^14.1.3",

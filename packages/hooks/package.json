@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@cortex-os/observability": "workspace:*",
+    "@cortex-os/utils": "workspace:*",
     "chokidar": "^3.6.0",
     "fast-glob": "^3.3.3",
     "js-yaml": "^4.1.0",

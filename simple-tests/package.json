@@ -11,6 +11,7 @@
     "@cortex-os/kernel": "workspace:*",
     "@cortex-os/mcp-core": "workspace:*",
     "@cortex-os/observability": "workspace:*",
+    "@cortex-os/proof-artifacts": "workspace:*",
     "@cortex-os/rag": "workspace:*",
     "@cortex-os/utils": "workspace:*"
   }

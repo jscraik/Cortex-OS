@@ -58,6 +58,7 @@
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-transport": "workspace:*",
     "@cortex-os/telemetry": "workspace:*",
+    "@cortex-os/utils": "workspace:*",
     "@open-policy-agent/opa-wasm": "^1.6.0",
     "@types/bcrypt": "^5.0.2",
     "@types/shell-quote": "^1.7.5",

@@ -47,10 +47,11 @@
     "test:safe": "node ../../scripts/vitest-safe.mjs run"
   },
   "dependencies": {
-    "@cortex-os/kernel": "workspace:*",
-    "@cortex-os/prp-types": "workspace:*",
     "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",
-    "@cortex-os/a2a-transport": "workspace:*"
+    "@cortex-os/a2a-transport": "workspace:*",
+    "@cortex-os/kernel": "workspace:*",
+    "@cortex-os/prp-runner": "workspace:*",
+    "@cortex-os/prp-types": "workspace:*"
   }
 }

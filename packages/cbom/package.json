@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@cortex-os/a2a-core": "workspace:*",
+    "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/observability": "workspace:*",
     "@cortex-os/rag": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
