@@ -1,5 +1,6 @@
 import type { SecureContext } from '../domain/types.js';
 import type { Memory, MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import { getIdentifierFactory } from '../utils/secure-random.js';
 
 export interface SecureStoreConfig {
 	denyMessage?: string;
@@ -68,7 +69,7 @@ export class SecureMemoryStore implements MemoryStore {
 		// Ensure user has their role
 		await this.grantRole(context.subject, context.role);
 
-		const auditId = this.generateAuditId();
+                const auditId = getIdentifierFactory().generateAuditId();
 
 		try {
 			// Check write permission
@@ -142,7 +143,7 @@ export class SecureMemoryStore implements MemoryStore {
 		// Ensure user has their role
 		await this.grantRole(context.subject, context.role);
 
-		const auditId = this.generateAuditId();
+                const auditId = getIdentifierFactory().generateAuditId();
 
 		try {
 			const memory = await this.store.get(id, namespace);
@@ -213,7 +214,7 @@ export class SecureMemoryStore implements MemoryStore {
 		// Ensure user has their role
 		await this.grantRole(context.subject, context.role);
 
-		const auditId = this.generateAuditId();
+                const auditId = getIdentifierFactory().generateAuditId();
 
 		try {
 			const memory = await this.store.get(id, namespace);
@@ -275,7 +276,7 @@ export class SecureMemoryStore implements MemoryStore {
 		// Ensure user has their role
 		await this.grantRole(context.subject, context.role);
 
-		const auditId = this.generateAuditId();
+                const auditId = getIdentifierFactory().generateAuditId();
 
 		try {
 			const allResults = await this.store.searchByText(q, namespace);
@@ -326,7 +327,7 @@ export class SecureMemoryStore implements MemoryStore {
 		// Ensure user has their role
 		await this.grantRole(context.subject, context.role);
 
-		const auditId = this.generateAuditId();
+                const auditId = getIdentifierFactory().generateAuditId();
 
 		try {
 			const allResults = await this.store.searchByVector(q, namespace);
@@ -383,7 +384,7 @@ export class SecureMemoryStore implements MemoryStore {
 		// Ensure user has their role
 		await this.grantRole(context.subject, context.role);
 
-		const auditId = this.generateAuditId();
+                const auditId = getIdentifierFactory().generateAuditId();
 
 		try {
 			const allMemories = await this.store.list(namespace, limit, offset);
@@ -664,7 +665,4 @@ export class SecureMemoryStore implements MemoryStore {
 		}
 	}
 
-	private generateAuditId(): string {
-		return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-	}
 }

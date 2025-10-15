@@ -1,5 +1,6 @@
 import type { Memory } from '../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../ports/MemoryStore.js';
+import { getIdentifierFactory } from '../utils/secure-random.js';
 
 export interface ChangeEvent {
 	type: 'create' | 'update' | 'delete';
@@ -129,7 +130,7 @@ export class StreamingMemoryStore implements MemoryStore {
 		namespace: string | '*',
 		callback: (change: ChangeEvent) => void,
 	): Subscription {
-		const subscriptionId = Math.random().toString(36).substring(7);
+                const subscriptionId = getIdentifierFactory().generateSubscriptionId();
 
 		if (!this.subscribers.has(namespace)) {
 			this.subscribers.set(namespace, new Map());

@@ -1,6 +1,7 @@
 import { type Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { StoreError } from '../errors.js';
+import { getIdentifierFactory } from '../utils/secure-random.js';
 import type {
 	Memory,
 	MemorySearchOptions,
@@ -209,7 +210,7 @@ export class ExternalSqliteStore implements MemoryStore {
 	async upsert(memory: Omit<Memory, 'id'> & { id?: string }): Promise<Memory> {
 		if (!this.db) throw new Error('Database not initialized');
 
-		const id = memory.id || `mem_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const id = memory.id || getIdentifierFactory().generateMemoryId('mem');
 		const now = new Date().toISOString();
 
 		const fullMemory: Memory = {

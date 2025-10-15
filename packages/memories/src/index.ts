@@ -174,3 +174,15 @@ export {
 export * from './service/store-factory.js';
 export { type MigrationPlan, TemplateMigrationService } from './service/template-migration.js';
 export { TemplateRegistry } from './service/template-registry.js';
+export {
+        createIdentifierFactory,
+        createPrefixedId,
+        createSecureId,
+        getIdentifierFactory,
+        resetSecureRandomSource,
+        secureDelay,
+        secureInt,
+        secureRatio,
+        setSecureRandomSource,
+        withSecureRandomSource,
+} from './utils/secure-random.js';

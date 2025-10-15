@@ -1,6 +1,7 @@
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { z } from 'zod';
+import { createTimestampedId } from '../utils/secure-random.js';
 import type { McpTool, ToolExecutionContext } from '../tools.js';
 import { ToolExecutionError } from '../tools.js';
 
@@ -427,8 +428,8 @@ export class TodoWriteTool implements McpTool<TodoWriteInput, TodoWriteResult> {
 	}
 
 	private generateId(): string {
-		return `todo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-	}
+            return createTimestampedId('todo');
+        }
 }
 
 export const todoWriteTool = new TodoWriteTool();

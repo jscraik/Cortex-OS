@@ -1,3 +1,4 @@
+import { secureRatio } from '../../utils/secure-random.js';
 import { FetchHttpClient } from './http-client.js';
 import type {
 	HealthCheckResponse,
@@ -293,9 +294,9 @@ export class RestApiClient implements RestApiAdapter {
 					}
 				}
 
-				// Exponential backoff with jitter
-				const jitter = Math.random() * 0.1 * delay;
-				await this.sleep(delay + jitter);
+                                // Exponential backoff with jitter
+                                const jitter = secureRatio() * 0.1 * delay;
+                                await this.sleep(delay + jitter);
 				delay *= 2;
 			}
 		}

@@ -1,39 +1,62 @@
 import type { Attributes, Span, Tracer } from '@opentelemetry/api';
 import { context, SpanStatusCode, trace } from '@opentelemetry/api';
 import type {
-	MemoryMetrics,
-	MemorySpanAttributes,
-	ObservabilityConfig,
-	ObservabilityProvider,
+        MemoryMetrics,
+        MemorySpanAttributes,
+        ObservabilityConfig,
+        ObservabilityLogEntry,
+        ObservabilityLogger,
+        ObservabilityProvider,
+        ObservabilitySampler,
 } from './types.js';
+import { secureRatio } from '../utils/secure-random.js';
+
+type NormalizedConfig = Required<Omit<ObservabilityConfig, 'sampler' | 'logger'>> & {
+        sampler: ObservabilitySampler;
+        logger: ObservabilityLogger;
+};
+
+const defaultLogger: ObservabilityLogger = (entry) => {
+        console.log('brAInwav-observability', entry);
+};
 
 /**
  * Default observability configuration
  */
-const DEFAULT_CONFIG: Required<ObservabilityConfig> = {
-	tracing: true,
-	metrics: true,
-	logging: true,
-	sampleRate: 1.0,
-	serviceName: 'memories-service',
-	tags: {},
+const DEFAULT_CONFIG: NormalizedConfig = {
+        tracing: true,
+        metrics: true,
+        logging: true,
+        sampleRate: 1.0,
+        serviceName: 'memories-service',
+        tags: {},
+        sampler: secureRatio,
+        logger: defaultLogger,
 };
 
 /**
  * OpenTelemetry-based observability provider
  */
 export class OpenTelemetryObservabilityProvider implements ObservabilityProvider {
-	private readonly config: Required<ObservabilityConfig>;
-	private readonly tracer: Tracer;
-	private readonly metricsEnabled: boolean;
-	private readonly tracingEnabled: boolean;
+        private readonly config: NormalizedConfig;
+        private readonly tracer: Tracer;
+        private readonly metricsEnabled: boolean;
+        private readonly tracingEnabled: boolean;
 
-	constructor(config: ObservabilityConfig = {}) {
-		this.config = { ...DEFAULT_CONFIG, ...config };
-		this.tracer = trace.getTracer(this.config.serviceName, '0.1.0');
-		this.metricsEnabled = this.config.metrics;
-		this.tracingEnabled = this.config.tracing && this.config.sampleRate > 0;
-	}
+        constructor(config: ObservabilityConfig = {}) {
+                const sampleRate = Math.max(0, Math.min(1, config.sampleRate ?? DEFAULT_CONFIG.sampleRate));
+                this.config = {
+                        ...DEFAULT_CONFIG,
+                        ...config,
+                        sampleRate,
+                        tags: { ...DEFAULT_CONFIG.tags, ...(config.tags ?? {}) },
+                        sampler: config.sampler ?? DEFAULT_CONFIG.sampler,
+                        logger: config.logger ?? DEFAULT_CONFIG.logger,
+                };
+                this.tracer = trace.getTracer(this.config.serviceName, '0.1.0');
+                this.metricsEnabled = this.config.metrics;
+                this.tracingEnabled = this.config.tracing && this.config.sampleRate > 0;
+        }
 
 	/**
 	 * Get the tracer instance
@@ -55,9 +78,9 @@ export class OpenTelemetryObservabilityProvider implements ObservabilityProvider
 		}
 
 		// Apply sampling
-		if (Math.random() > this.config.sampleRate) {
-			return fn(NoopSpan.INSTANCE);
-		}
+                if (this.config.sampleRate < 1 && this.config.sampler() > this.config.sampleRate) {
+                        return fn(NoopSpan.INSTANCE);
+                }
 
 		const span = this.tracer.startSpan(name, {
 			attributes: this.formatAttributes(attributes),
@@ -90,13 +113,19 @@ export class OpenTelemetryObservabilityProvider implements ObservabilityProvider
 
 		// Log metrics for now - in a real implementation, this would use
 		// OpenTelemetry metrics API or a metrics provider
-		if (this.config.logging) {
-			console.log('[Memory Metrics]', {
-				...metrics,
-				timestamp: new Date().toISOString(),
-				service: this.config.serviceName,
-			});
-		}
+                if (this.config.logging) {
+                        const entry: ObservabilityLogEntry = {
+                                brand: 'brAInwav',
+                                service: this.config.serviceName,
+                                channel: 'observability',
+                                event: 'memory.metrics',
+                                timestamp: new Date().toISOString(),
+                                metrics,
+                                tags: this.config.tags,
+                        };
+
+                        this.config.logger(entry);
+                }
 
 		// NOTE: Metrics recording via OTEL metrics API can be wired when available.
 		// This would typically use:
@@ -202,19 +231,21 @@ export function createObservabilityProvider(config?: ObservabilityConfig): Obser
  * Create default observability configuration
  */
 export function createDefaultObservabilityConfig(): ObservabilityConfig {
-	return {
-		tracing: process.env.OTEL_TRACING_ENABLED === 'true',
-		metrics: process.env.OTEL_METRICS_ENABLED === 'true',
-		logging: process.env.OTEL_LOGGING_ENABLED !== 'false',
-		sampleRate: parseFloat(process.env.OTEL_SAMPLE_RATE || '1.0'),
-		serviceName: process.env.OTEL_SERVICE_NAME || 'memories-service',
-		tags: process.env.OTEL_RESOURCE_ATTRIBUTES
-			? Object.fromEntries(
-					process.env.OTEL_RESOURCE_ATTRIBUTES.split(',').map((attr) => {
-						const [key, value] = attr.split('=');
-						return [key, value];
-					}),
-				)
-			: {},
-	};
+        return {
+                tracing: process.env.OTEL_TRACING_ENABLED === 'true',
+                metrics: process.env.OTEL_METRICS_ENABLED === 'true',
+                logging: process.env.OTEL_LOGGING_ENABLED !== 'false',
+                sampleRate: parseFloat(process.env.OTEL_SAMPLE_RATE || '1.0'),
+                serviceName: process.env.OTEL_SERVICE_NAME || 'memories-service',
+                tags: process.env.OTEL_RESOURCE_ATTRIBUTES
+                        ? Object.fromEntries(
+                                        process.env.OTEL_RESOURCE_ATTRIBUTES.split(',').map((attr) => {
+                                                const [key, value] = attr.split('=');
+                                                return [key, value];
+                                        }),
+                                )
+                        : {},
+                sampler: secureRatio,
+                logger: defaultLogger,
+        };
 }

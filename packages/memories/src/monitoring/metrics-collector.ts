@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import type { MemorySearchOptions, MemoryStore } from '../ports/MemoryStore.js';
+import { secureRatio } from '../utils/secure-random.js';
 
 export interface MemoryMetrics {
 	operations: {
@@ -41,10 +42,11 @@ export interface OperationMetrics {
 }
 
 export interface MetricsCollectorConfig {
-	sampleRate: number;
-	maxSamples: number;
-	retentionPeriodMs: number;
-	enabledMetrics: string[];
+        sampleRate: number;
+        maxSamples: number;
+        retentionPeriodMs: number;
+        enabledMetrics: string[];
+        sampler: () => number;
 }
 
 export class MemoryMetricsCollector extends EventEmitter {
@@ -55,18 +57,19 @@ export class MemoryMetricsCollector extends EventEmitter {
 	private operationCounts: Map<string, number> = new Map();
 	private startTime: Date;
 
-	constructor(store: MemoryStore, config: Partial<MetricsCollectorConfig> = {}) {
-		super();
-		this.store = store;
-		this.startTime = new Date();
+        constructor(store: MemoryStore, config: Partial<MetricsCollectorConfig> = {}) {
+                super();
+                this.store = store;
+                this.startTime = new Date();
 
-		this.config = {
-			sampleRate: 0.1, // Sample 10% of operations
-			maxSamples: 1000,
-			retentionPeriodMs: 5 * 60 * 1000, // 5 minutes
-			enabledMetrics: ['operations', 'storage', 'errors', 'performance'],
-			...config,
-		};
+                const normalizedSampleRate = Math.max(0, Math.min(1, config.sampleRate ?? 0.1));
+                this.config = {
+                        sampleRate: normalizedSampleRate,
+                        maxSamples: config.maxSamples ?? 1000,
+                        retentionPeriodMs: config.retentionPeriodMs ?? 5 * 60 * 1000,
+                        enabledMetrics: config.enabledMetrics ?? ['operations', 'storage', 'errors', 'performance'],
+                        sampler: config.sampler ?? secureRatio,
+                };
 
 		this.metrics = this.initializeMetrics();
 
@@ -196,8 +199,12 @@ export class MemoryMetricsCollector extends EventEmitter {
 			return false;
 		}
 
-		return Math.random() < this.config.sampleRate;
-	}
+                if (this.config.sampleRate >= 1) {
+                        return true;
+                }
+
+                return this.config.sampler() < this.config.sampleRate;
+        }
 
 	/**
 	 * Record successful operation

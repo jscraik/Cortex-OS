@@ -4,19 +4,37 @@ import type { Span, Tracer } from '@opentelemetry/api';
  * Observability configuration options
  */
 export interface ObservabilityConfig {
-	/** Enable tracing */
-	tracing?: boolean;
-	/** Enable metrics collection */
-	metrics?: boolean;
-	/** Enable logging */
-	logging?: boolean;
-	/** Sample rate for tracing (0-1) */
-	sampleRate?: number;
-	/** Custom service name */
-	serviceName?: string;
-	/** Custom tags/attributes */
-	tags?: Record<string, string>;
+        /** Enable tracing */
+        tracing?: boolean;
+        /** Enable metrics collection */
+        metrics?: boolean;
+        /** Enable logging */
+        logging?: boolean;
+        /** Sample rate for tracing (0-1) */
+        sampleRate?: number;
+        /** Custom service name */
+        serviceName?: string;
+        /** Custom tags/attributes */
+        tags?: Record<string, string>;
+        /** Sampler used for trace/metric sampling */
+        sampler?: ObservabilitySampler;
+        /** Logger used for structured metric output */
+        logger?: ObservabilityLogger;
 }
+
+export type ObservabilitySampler = () => number;
+
+export interface ObservabilityLogEntry {
+        brand: 'brAInwav';
+        service: string;
+        channel: 'observability';
+        event: 'memory.metrics';
+        timestamp: string;
+        metrics: MemoryMetrics;
+        tags: Record<string, string>;
+}
+
+export type ObservabilityLogger = (entry: ObservabilityLogEntry) => void;
 
 /**
  * Memory operation metrics

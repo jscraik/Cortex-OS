@@ -1,5 +1,6 @@
 import type { Memory } from '../../domain/types.js';
 import type { MemoryStore, TextQuery, VectorQuery } from '../../ports/MemoryStore.js';
+import { getIdentifierFactory } from '../../utils/secure-random.js';
 import { RestApiClient } from './rest-adapter.js';
 import type { RestApiAdapter, RestApiConfig } from './types.js';
 
@@ -61,8 +62,8 @@ export class RestApiMemoryStore implements MemoryStore {
 				const response = await this.adapter.createMemory({
 					memory: {
 						...memory,
-						// Generate new ID if not provided
-						id: memory.id || `mem-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+                                                // Generate new ID if not provided
+                                                id: memory.id || getIdentifierFactory().generateMemoryId('mem'),
 					},
 					namespace,
 				});
@@ -80,8 +81,8 @@ export class RestApiMemoryStore implements MemoryStore {
 				const response = await this.adapter.createMemory({
 					memory: {
 						...memory,
-						// Generate new ID if not provided
-						id: memory.id || `mem-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+                                                // Generate new ID if not provided
+                                                id: memory.id || getIdentifierFactory().generateMemoryId('mem'),
 					},
 					namespace,
 				});

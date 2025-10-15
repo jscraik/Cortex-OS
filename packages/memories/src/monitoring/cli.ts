@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import table from 'tty-table';
 import { initializeExternalStorage } from '../adapters/external-storage.js';
 import { createStoreFromEnv } from '../config/store-from-env.js';
+import { secureInt } from '../utils/secure-random.js';
 import { MemoryHealthChecker } from './health-check.js';
 import { MemoryMetricsCollector } from './metrics-collector.js';
 import { OperationalDashboard } from './operaional-dashboard.js';
@@ -199,7 +200,7 @@ program
 				try {
 					switch (operationType) {
 						case 'upsert': {
-							const memory = testMemories[Math.floor(Math.random() * testMemories.length)];
+                                                        const memory = testMemories[secureInt(0, testMemories.length)];
 							await instrumentedStore.upsert({ ...memory, id: `${memory.id}-${Date.now()}` });
 							break;
 						}
@@ -210,19 +211,19 @@ program
 							});
 							break;
 						case 'get': {
-							const id = `stress-test-${Math.floor(Math.random() * 100)}`;
+                                                        const id = `stress-test-${secureInt(0, 100)}`;
 							await instrumentedStore.get(id);
 							break;
 						}
 						case 'mixed': {
-							const op = Math.floor(Math.random() * 3);
+                                                        const op = secureInt(0, 3);
 							if (op === 0) {
-								const memory = testMemories[Math.floor(Math.random() * testMemories.length)];
+                                                                const memory = testMemories[secureInt(0, testMemories.length)];
 								await instrumentedStore.upsert({ ...memory, id: `${memory.id}-${Date.now()}` });
 							} else if (op === 1) {
 								await instrumentedStore.search({ query: 'stress', limit: 5 });
 							} else {
-								const id = `stress-test-${Math.floor(Math.random() * 100)}`;
+                                                                const id = `stress-test-${secureInt(0, 100)}`;
 								await instrumentedStore.get(id);
 							}
 							break;

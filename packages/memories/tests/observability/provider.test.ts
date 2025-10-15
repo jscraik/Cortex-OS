@@ -119,28 +119,45 @@ describe('OpenTelemetry Observability Provider', () => {
 			expect(result).toBe('result');
 		});
 
-		it('should apply sampling', async () => {
-			// Given
-			provider = new OpenTelemetryObservabilityProvider({
-				tracing: true,
-				sampleRate: 0.001, // Very low sample rate
+                it('should apply sampling', async () => {
+                        // Given
+                        provider = new OpenTelemetryObservabilityProvider({
+                                tracing: true,
+                                sampleRate: 0.001, // Very low sample rate
 			});
 			const mockFn = vi.fn().mockResolvedValue('result');
 
 			// When
 			const result = await provider.createSpan('test-span', mockFn);
 
-			// Then - function should still execute even if span is not created
-			expect(result).toBe('result');
-			expect(mockFn).toHaveBeenCalled();
-		});
-	});
+                        // Then - function should still execute even if span is not created
+                        expect(result).toBe('result');
+                        expect(mockFn).toHaveBeenCalled();
+                });
 
-	describe('Metrics Recording', () => {
-		beforeEach(() => {
-			provider = new OpenTelemetryObservabilityProvider();
-			vi.spyOn(console, 'log').mockImplementation(() => {});
-		});
+                it('invokes custom sampler when provided', async () => {
+                        const sampler = vi.fn().mockReturnValue(1);
+                        provider = new OpenTelemetryObservabilityProvider({
+                                tracing: true,
+                                sampleRate: 0.2,
+                                sampler,
+                        });
+                        const mockFn = vi.fn().mockResolvedValue('result');
+
+                        const result = await provider.createSpan('sampled-span', mockFn);
+
+                        expect(result).toBe('result');
+                        expect(sampler).toHaveBeenCalled();
+                });
+        });
+
+        describe('Metrics Recording', () => {
+                let logger: ReturnType<typeof vi.fn>;
+
+                beforeEach(() => {
+                        logger = vi.fn();
+                        provider = new OpenTelemetryObservabilityProvider({ logger });
+                });
 
 		it('should record metrics when enabled', () => {
 			// Given
@@ -152,35 +169,37 @@ describe('OpenTelemetry Observability Provider', () => {
 			};
 
 			// When
-			provider.recordMetrics(metrics);
+                        provider.recordMetrics(metrics);
 
-			// Then
-			expect(console.log).toHaveBeenCalledWith(
-				'[Memory Metrics]',
-				expect.objectContaining({
-					...metrics,
-					service: 'memories-service',
-				}),
-			);
-		});
+                        // Then
+                        expect(logger).toHaveBeenCalledWith(
+                                expect.objectContaining({
+                                        brand: 'brAInwav',
+                                        channel: 'observability',
+                                        event: 'memory.metrics',
+                                        metrics: expect.objectContaining(metrics),
+                                        service: 'memories-service',
+                                }),
+                        );
+                });
 
-		it('should not record metrics when disabled', () => {
-			// Given
-			provider = new OpenTelemetryObservabilityProvider({ metrics: false });
-			const metrics = {
-				operation: 'test',
-				duration: 100,
-				success: true,
-				namespace: 'default',
-			};
+                it('should not record metrics when disabled', () => {
+                        // Given
+                        provider = new OpenTelemetryObservabilityProvider({ metrics: false, logger });
+                        const metrics = {
+                                operation: 'test',
+                                duration: 100,
+                                success: true,
+                                namespace: 'default',
+                        };
 
-			// When
-			provider.recordMetrics(metrics);
+                        // When
+                        provider.recordMetrics(metrics);
 
-			// Then
-			expect(console.log).not.toHaveBeenCalled();
-		});
-	});
+                        // Then
+                        expect(logger).not.toHaveBeenCalled();
+                });
+        });
 
 	describe('Environment Configuration', () => {
 		it('should create config from environment variables', () => {
@@ -195,17 +214,21 @@ describe('OpenTelemetry Observability Provider', () => {
 			const config = createDefaultObservabilityConfig();
 
 			// Then
-			expect(config).toEqual({
-				tracing: false,
-				metrics: true,
-				logging: true,
-				sampleRate: 0.5,
-				serviceName: 'env-service',
-				tags: {
-					env: 'value',
-					env2: 'value2',
-				},
-			});
+                        expect(config).toEqual(
+                                expect.objectContaining({
+                                        tracing: false,
+                                        metrics: true,
+                                        logging: true,
+                                        sampleRate: 0.5,
+                                        serviceName: 'env-service',
+                                        tags: {
+                                                env: 'value',
+                                                env2: 'value2',
+                                        },
+                                        sampler: expect.any(Function),
+                                        logger: expect.any(Function),
+                                }),
+                        );
 
 			// Cleanup
 			delete process.env.OTEL_TRACING_ENABLED;

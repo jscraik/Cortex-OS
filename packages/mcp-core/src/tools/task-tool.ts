@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { createTimestampedId } from '../utils/secure-random.js';
 import type { McpTool, ToolExecutionContext } from '../tools.js';
 import { ToolExecutionError, ToolRegistry } from '../tools.js';
 import { editTool } from './edit-tool.js';
@@ -270,9 +271,9 @@ export class TaskTool implements McpTool<TaskInput, TaskResult> {
 		}
 	}
 
-	private generateTaskId(): string {
-		return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-	}
+        private generateTaskId(): string {
+                return createTimestampedId('task');
+        }
 }
 
 export const taskTool = new TaskTool();
