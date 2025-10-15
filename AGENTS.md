@@ -201,7 +201,9 @@ Attach TDD evidence + result links in the PR.
 ## 11) Oversight Gate (formerly “Vibe Check MCP”)
 
 * All agents MUST call the Oversight tool **`vibe_check`** after planning and **before** file writes, network calls, or long executions.
-* Config: `VIBE_CHECK_HTTP_URL` (default `http://127.0.0.1:2091`). Logs/errors MUST include `brand:"brAInwav"`.
+* Config: `VIBE_CHECK_HTTP_URL` (default `http://127.0.0.1:2091`); HTTP clients MUST send `Accept: application/json, text/event-stream`. Logs/errors MUST include `brand:"brAInwav"`.
+* Execution: use `pnpm oversight:vibe-check --goal "<task>" --plan "<steps>" --session <id>` (or equivalent JSON-RPC call) and persist the response under `logs/vibe-check/` with the task artifacts.
+* Runbook + helper: see `docs/runbooks/vibe-check.md` for payload details, troubleshooting, and evidence requirements.
 * Constitution helpers: `update_constitution`, `reset_constitution`, `check_constitution`.
 * Evidence: PRs MUST attach logs containing `brAInwav-vibe-check` at plan→act gates; CI blocks otherwise.
 
@@ -339,6 +341,7 @@ Verify `.well-known/mcp.json` and port congruence (3024/3026/3028/39300) in PRs.
   * `/.cortex/templates/constitution-template.md`
 * `/CODESTYLE.md` — exact coding rules enforced by CI.
 * Model guides — adapter specifics without weakening rules.
+* `docs/agents/code-planner-agent.md` — planning playbook covering Wikidata + arXiv evidence requirements.
 * `PLAYBOOK.403-mcp.md` — quick response guide for auth failures.
 
 ---

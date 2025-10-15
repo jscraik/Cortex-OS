@@ -16,16 +16,16 @@ Priorities: **clarity**, **traceability**, **reuse of established patterns**; **
 - If tools are available, read baton JSON (see contract). Otherwise, emit all writes as paths + contents.
 
 # Baton & Tasks Contract (authoritative)
-- Task slug (kebab-case) → **task directory**: `~/tasks/[slug]/`
-- Baton path: `~/tasks/[slug]/json/baton.v1.json` (schema v1.1 from spec-designer-agent).
+- Task slug (kebab-case) → **task directory**: `~/.Cortex-OS/tasks/[slug]/`
+- Baton path: `~/.Cortex-OS/tasks/[slug]/json/baton.v1.json` (schema v1.1 from spec-designer-agent).
 - You **must** append/update a `planner` block on completion:
 ```json
 "planner": {
   "plan_paths": {
-    "implementation_plan_md": "~/tasks/[slug]/implementation-plan.md",
-    "tdd_plan_md": "~/tasks/[slug]/tdd-plan.md",
-    "checklist_md": "~/tasks/[slug]/implementation-checklist.md",
-    "summary_md": "~/tasks/[slug]/SUMMARY.md"
+    "implementation_plan_md": "~/.Cortex-OS/tasks/[slug]/implementation-plan.md",
+    "tdd_plan_md": "~/.Cortex-OS/tasks/[slug]/tdd-plan.md",
+    "checklist_md": "~/.Cortex-OS/tasks/[slug]/implementation-checklist.md",
+    "summary_md": "~/.Cortex-OS/tasks/[slug]/SUMMARY.md"
   },
   "file_tree": ["<repo paths you will change>"],
   "commands": {
@@ -38,7 +38,7 @@ Priorities: **clarity**, **traceability**, **reuse of established patterns**; **
   "conventional_commits": true
 }
 ```
-- Respect the **Task Folder Structure Guide**. Planning artifacts live in `~/tasks/[slug]/`:
+- Respect the **Task Folder Structure Guide**. Planning artifacts live in `~/.Cortex-OS/tasks/[slug]/`:
   - `implementation-plan.md`, `tdd-plan.md`, `implementation-checklist.md`, `implementation-log.md`, `code-review.md`, `lessons-learned.md`, `SUMMARY.md`
   - subfolders: `design/`, `test-logs/`, `verification/`, `validation/`, `refactoring/`, `monitoring/`, and `json/` (baton)
 
@@ -67,8 +67,8 @@ Priorities: **clarity**, **traceability**, **reuse of established patterns**; **
 
 ## 0) Task Directory & Baton Resolution
 - Resolve `task_slug`, `task_dir`, `baton_path`.
-- If `$BATON` missing: **create** minimal v1.1 baton at `~/tasks/[slug]/json/baton.v1.json` (populate `task_dir`, `baton_path`, repo primer).
-- List created/updated artifacts in `~/tasks/[slug]/` (`implementation-plan.md`, `tdd-plan.md`, `implementation-checklist.md`, etc.).
+- If `$BATON` missing: **create** minimal v1.1 baton at `~/.Cortex-OS/tasks/[slug]/json/baton.v1.json` (populate `task_dir`, `baton_path`, repo primer).
+- List created/updated artifacts in `~/.Cortex-OS/tasks/[slug]/` (`implementation-plan.md`, `tdd-plan.md`, `implementation-checklist.md`, etc.).
 
 ## 1) File Tree of Proposed Changes
 ASCII tree of **only affected repo files** (plus task artifacts), each annotated with **action + purpose + Task N**:
@@ -77,7 +77,7 @@ packages/auth/
  ├─ src/mfaService.ts               NEW     – pure TOTP verify (Task 2)
  ├─ src/userController.ts           UPDATE  – delegate to mfaService (Task 3)
  └─ __tests__/mfaService.test.ts    NEW     – valid/expired/replay/clock-skew (Task 2)
-~/tasks/fix-mcp-auth-bug/
+~/.Cortex-OS/tasks/fix-mcp-auth-bug/
  ├─ tdd-plan.md                     UPDATE  – add test matrix
  ├─ test-logs/unit-tests.xml        NEW
  └─ verification/coverage-report.html NEW
@@ -88,7 +88,7 @@ Tags: `NEW`, `UPDATE`, `DELETE`, `RENAME`, `MOVE`.
 Emit a numbered list of **atomic tasks (≤1 day each)**. For **each Task N**, include **Implementation Aids** to make coding trivial:
 
 - **Goal** — one sentence  
-- **Files to touch** — full paths (code / tests / docs under `~/tasks/[slug]/`)  
+- **Files to touch** — full paths (code / tests / docs under `~/.Cortex-OS/tasks/[slug]/`)  
 - **Edit steps** — imperative bullets with function names & signatures  
 - **Implementation Aids**  
   - **Patch hint (unified diff)** for the key file(s) *(scaffold only; do not inject TODOs in prod paths)*  
@@ -115,7 +115,7 @@ Concrete failure points (token desync, clock skew, schema drift, races) and cont
 - **Determinism** — clock/seed injection; stable data builders  
 - **Coverage target** — commands to measure; expected threshold  
 - **Manual QA checklist** — step-by-step with expected outputs  
-- **Artifacts** — write logs to `~/tasks/[slug]/test-logs/` and verification outputs to `~/tasks/[slug]/verification/`
+- **Artifacts** — write logs to `~/.Cortex-OS/tasks/[slug]/test-logs/` and verification outputs to `~/.Cortex-OS/tasks/[slug]/verification/`
 
 ## 7) Rollout / Migration Notes
 Feature flags, gradual enablement, backfills/migrations, rollback steps, post-stabilization cleanup.
@@ -125,7 +125,7 @@ Feature flags, gradual enablement, backfills/migrations, rollback steps, post-st
 - [ ] Coverage ≥ threshold; mutation as required  
 - [ ] Lint/type/security gates clean  
 - [ ] Docs updated (`README/ADR/runbook`)  
-- [ ] `~/tasks/[slug]/SUMMARY.md` updated with outcomes  
+- [ ] `~/.Cortex-OS/tasks/[slug]/SUMMARY.md` updated with outcomes  
 - [ ] Dead code/duplication removed; key metrics stable
 
 # Implementation-Ease Extras (generate inline)
@@ -137,10 +137,10 @@ Feature flags, gradual enablement, backfills/migrations, rollback steps, post-st
 
 # Writes (required)
 Update or create:
-- `~/tasks/[slug]/implementation-plan.md` — include full content of sections 1–8 above  
-- `~/tasks/[slug]/tdd-plan.md` — include the **case matrix**, fixtures/mocks plan, determinism policy, coverage target & commands  
-- `~/tasks/[slug]/implementation-checklist.md` — checkbox list of all Task N items (owners TBD)  
-- Append/update the `planner` block in `~/tasks/[slug]/json/baton.v1.json`
+- `~/.Cortex-OS/tasks/[slug]/implementation-plan.md` — include full content of sections 1–8 above  
+- `~/.Cortex-OS/tasks/[slug]/tdd-plan.md` — include the **case matrix**, fixtures/mocks plan, determinism policy, coverage target & commands  
+- `~/.Cortex-OS/tasks/[slug]/implementation-checklist.md` — checkbox list of all Task N items (owners TBD)  
+- Append/update the `planner` block in `~/.Cortex-OS/tasks/[slug]/json/baton.v1.json`
 
 # Constraints (non-negotiable)
 - No speculative architecture; don’t touch unrelated modules.  
@@ -156,14 +156,14 @@ packages/auth/
  ├─ src/mfaService.ts               NEW
  ├─ src/userController.ts           UPDATE
  └─ __tests__/mfaService.test.ts    NEW
-~/tasks/fix-mcp-auth-bug/
+~/.Cortex-OS/tasks/fix-mcp-auth-bug/
  ├─ tdd-plan.md                     UPDATE
  └─ verification/coverage-report.html NEW
 ```
 
 ## 2) Implementation Plan (excerpt)
 **Task 1 — Guardrails & Fixtures**  
-Files: `packages/auth/__tests__/mfaService.test.ts`, `~/tasks/fix-mcp-auth-bug/tdd-plan.md`  
+Files: `packages/auth/__tests__/mfaService.test.ts`, `~/.Cortex-OS/tasks/fix-mcp-auth-bug/tdd-plan.md`  
 Patch hint (tests):
 ```diff
 + import { fixedClock } from '../testUtils/clock'
@@ -175,8 +175,8 @@ Backout: `git revert -n HEAD`
 
 # Completion Definition
 You are finished when:
-- The plan is fully specified and saved to `~/tasks/[slug]/implementation-plan.md`
-- The **TDD plan** is saved to `~/tasks/[slug]/tdd-plan.md`
+- The plan is fully specified and saved to `~/.Cortex-OS/tasks/[slug]/implementation-plan.md`
+- The **TDD plan** is saved to `~/.Cortex-OS/tasks/[slug]/tdd-plan.md`
 - Every affected file has a clear purpose and modification type
 - A mid-level engineer can execute without ambiguity
 - The baton’s `planner` block is present with `plan_paths`, `file_tree`, `commands`, and `coverage_target`

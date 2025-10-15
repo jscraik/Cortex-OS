@@ -1,6 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { Logger } from 'pino';
+import type { Agent } from 'undici';
 
 export interface RemoteTool {
 	name: string;
@@ -8,16 +9,20 @@ export interface RemoteTool {
 	inputSchema: Record<string, unknown>;
 }
 
+type StructuredLogger = Pick<Logger, 'info' | 'warn' | 'error' | 'debug'>;
+
 export interface RemoteToolProxyOptions {
         endpoint: string;
         enabled: boolean;
-        logger: Logger;
+        logger: StructuredLogger;
         reconnectDelay?: number;
         serviceLabel?: string;
         unavailableErrorName?: string;
         unavailableErrorMessage?: string;
         onAvailabilityChange?: (up: boolean) => void;
         headers?: Record<string, string>;
+	agent?: Agent;
+	connectorId?: string;
 }
 
 const DEFAULT_RECONNECT_DELAY = 5_000;
@@ -51,19 +56,34 @@ export class RemoteToolProxy {
 
 	async connect(): Promise<void> {
 		if (!this.config.enabled) {
-			this.config.logger.info(`${this.config.serviceLabel} proxy disabled - skipping connection`);
+			this.config.logger.info(
+				{ brand: 'brAInwav', connectorId: this.config.connectorId },
+				`${this.config.serviceLabel} proxy disabled - skipping connection`,
+			);
 			this.signalAvailability(false);
 			return;
 		}
 
 		try {
 			this.config.logger.info(
-				{ endpoint: this.config.endpoint },
+				{
+					brand: 'brAInwav',
+					connectorId: this.config.connectorId,
+					endpoint: this.config.endpoint,
+				},
 				`Connecting to ${this.config.serviceLabel} MCP server...`,
 			);
 
+			const requestInit: RequestInit & { dispatcher?: Agent } = {
+				headers: this.config.headers,
+			};
+
+			if (this.config.agent) {
+				requestInit.dispatcher = this.config.agent;
+			}
+
                         this.transport = new SSEClientTransport(new URL(this.config.endpoint), {
-                                requestInit: { headers: this.config.headers },
+				requestInit,
                         });
 			this.client = new Client(
 				{
@@ -84,14 +104,23 @@ export class RemoteToolProxy {
 			this.lastFailureLoggedAt = null;
 			this.signalAvailability(true);
 			this.config.logger.info(
-				{ toolCount: this.remoteTools.length },
+				{
+					brand: 'brAInwav',
+					connectorId: this.config.connectorId,
+					toolCount: this.remoteTools.length,
+				},
 				`Successfully connected to ${this.config.serviceLabel} MCP server`,
 			);
 		} catch (error) {
 			this.connected = false;
 			this.signalAvailability(false);
 			this.config.logger.warn(
-				{ error: (error as Error).message, endpoint: this.config.endpoint },
+				{
+					brand: 'brAInwav',
+					connectorId: this.config.connectorId,
+					error: (error as Error).message,
+					endpoint: this.config.endpoint,
+				},
 				`Failed to connect to ${this.config.serviceLabel} MCP - will retry`,
 			);
 
@@ -113,12 +142,20 @@ export class RemoteToolProxy {
 			}));
 
 			this.config.logger.info(
-				{ tools: this.remoteTools.map((t) => t.name) },
+				{
+					brand: 'brAInwav',
+					connectorId: this.config.connectorId,
+					tools: this.remoteTools.map((t) => t.name),
+				},
 				`Discovered ${this.config.serviceLabel} MCP tools`,
 			);
 		} catch (error) {
 			this.config.logger.error(
-				{ error: (error as Error).message },
+				{
+					brand: 'brAInwav',
+					connectorId: this.config.connectorId,
+					error: (error as Error).message,
+				},
 				`Failed to discover tools from ${this.config.serviceLabel}`,
 			);
 			throw error;
@@ -134,7 +171,11 @@ export class RemoteToolProxy {
 
 		this.reconnectTimer = setTimeout(async () => {
 			this.config.logger.info(
-				{ delayMs: jitterDelay },
+				{
+					brand: 'brAInwav',
+					connectorId: this.config.connectorId,
+					delayMs: jitterDelay,
+				},
 				`Attempting to reconnect to ${this.config.serviceLabel} MCP...`,
 			);
 			await this.connect();
@@ -154,7 +195,11 @@ export class RemoteToolProxy {
 			const now = Date.now();
 			if (!this.lastFailureLoggedAt || now - this.lastFailureLoggedAt > 30_000) {
 				this.config.logger.warn(
-					{ tool: name },
+					{
+						brand: 'brAInwav',
+						connectorId: this.config.connectorId,
+						tool: name,
+					},
 					`${this.config.serviceLabel} MCP proxy is offline; returning service unavailable error`,
 				);
 				this.lastFailureLoggedAt = now;
@@ -167,7 +212,12 @@ export class RemoteToolProxy {
 
 		try {
 			this.config.logger.info(
-				{ tool: name, args },
+				{
+					brand: 'brAInwav',
+					connectorId: this.config.connectorId,
+					tool: name,
+					args,
+				},
 				`Calling remote ${this.config.serviceLabel} tool`,
 			);
 
@@ -177,7 +227,12 @@ export class RemoteToolProxy {
 			});
 		} catch (error) {
 			this.config.logger.error(
-				{ tool: name, error: (error as Error).message },
+				{
+					brand: 'brAInwav',
+					connectorId: this.config.connectorId,
+					tool: name,
+					error: (error as Error).message,
+				},
 				`Failed to call remote ${this.config.serviceLabel} tool`,
 			);
 			this.connected = false;
@@ -198,7 +253,11 @@ export class RemoteToolProxy {
 				await this.client.close();
 			} catch (error) {
 				this.config.logger.warn(
-					{ error: (error as Error).message },
+					{
+						brand: 'brAInwav',
+						connectorId: this.config.connectorId,
+						error: (error as Error).message,
+					},
 					`Error closing ${this.config.serviceLabel} MCP client`,
 				);
 			}
@@ -209,7 +268,10 @@ export class RemoteToolProxy {
 		this.connected = false;
 		this.signalAvailability(false);
 
-		this.config.logger.info(`Disconnected from ${this.config.serviceLabel} MCP server`);
+		this.config.logger.info(
+			{ brand: 'brAInwav', connectorId: this.config.connectorId },
+			`Disconnected from ${this.config.serviceLabel} MCP server`,
+		);
 	}
 
 	private signalAvailability(up: boolean) {

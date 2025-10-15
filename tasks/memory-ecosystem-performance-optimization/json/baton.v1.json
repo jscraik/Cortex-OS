@@ -1,0 +1,93 @@
+{
+    "version": "1.1",
+    "task_slug": "memory-ecosystem-performance-optimization",
+    "task_dir": "~/.Cortex-OS/tasks/memory-ecosystem-performance-optimization/",
+    "baton_path": "~/.Cortex-OS/tasks/memory-ecosystem-performance-optimization/json/baton.v1.json",
+    "goal": "Optimize memory ecosystem (REST adapter, GraphRAG ingest, cache hygiene) to reduce p95 latency, enable connection reuse, and implement parallel chunk processing with bounded concurrency",
+    "entry_points": [
+        "packages/memories/src/adapters/rest-api/",
+        "packages/memory-core/src/services/GraphRAGIngestService.ts",
+        "packages/memory-core/src/retrieval/QdrantHybrid.ts",
+        "packages/memory-core/src/caching/DistributedCache.ts"
+    ],
+    "stack": [
+        "TypeScript",
+        "Node.js 22 LTS",
+        "undici (HTTP/2 pooled client)",
+        "p-limit (concurrency control)",
+        "Qdrant (vector store)",
+        "Redis (distributed cache)",
+        "Vitest (testing)"
+    ],
+    "constraints": [
+        "Must honor brAInwav Constitution local-first mandate",
+        "Zero exfiltration - maintain allowlisted hosts via safeFetch",
+        "Preserve branded headers and A2A event semantics",
+        "Maintain backward compatibility for MCP clients",
+        "Function size ≤ 40 lines (CODESTYLE.md)",
+        "Named exports only (no default exports)",
+        "Coverage ≥ 92% global, ≥ 95% changed lines",
+        "Mutation score ≥ 75%",
+        "Node 20+ LTS compatibility"
+    ],
+    "testing": [
+        "Unit tests with Vitest for all new utilities",
+        "Integration tests for HTTP pooling with mock servers",
+        "Load tests for parallel ingest with k6 scenarios",
+        "Cache eviction tests with deterministic time injection",
+        "Coverage target: ≥ 95% for changed code",
+        "Mutation testing with Stryker for critical paths"
+    ],
+    "non_goals": [
+        "Full async offload service (BullMQ worker) - deferred to future phase",
+        "GPU acceleration pathways - already defined elsewhere",
+        "GraphQL API changes - out of scope",
+        "Breaking changes to public MCP interfaces"
+    ],
+    "repo_primer": {
+        "monorepo": "Nx/PNPM workspace",
+        "key_packages": [
+            "packages/memories - REST API client adapters",
+            "packages/memory-core - GraphRAG services, caching, retrieval",
+            "packages/memory-rest-api - REST server surface"
+        ],
+        "governance": [
+            "/.cortex/rules/vision.md",
+            "/.cortex/rules/agentic-coding-workflow.md",
+            "/.cortex/rules/code-review-checklist.md",
+            "/CODESTYLE.md",
+            "/AGENTS.md"
+        ]
+    },
+    "planner": {
+        "plan_paths": {
+            "implementation_plan_md": "~/.Cortex-OS/tasks/memory-ecosystem-performance-optimization/implementation-plan.md",
+            "tdd_plan_md": "~/.Cortex-OS/tasks/memory-ecosystem-performance-optimization/tdd-plan.md",
+            "checklist_md": "~/.Cortex-OS/tasks/memory-ecosystem-performance-optimization/implementation-checklist.md",
+            "summary_md": "~/.Cortex-OS/tasks/memory-ecosystem-performance-optimization/SUMMARY.md"
+        },
+        "file_tree": [
+            "packages/memories/src/adapters/rest-api/http-client.ts",
+            "packages/memories/src/adapters/rest-api/rest-adapter.ts",
+            "packages/memories/src/adapters/rest-api/index.ts",
+            "packages/memory-core/src/services/GraphRAGIngestService.ts",
+            "packages/memory-core/src/retrieval/QdrantHybrid.ts",
+            "packages/memory-core/src/caching/DistributedCache.ts",
+            "packages/memory-core/src/lib/concurrency.ts",
+            "packages/memory-core/src/lib/batch-processor.ts",
+            "packages/memories/__tests__/http-pooling.test.ts",
+            "packages/memory-core/__tests__/parallel-ingest.test.ts",
+            "packages/memory-core/__tests__/cache-eviction.test.ts"
+        ],
+        "commands": {
+            "install": "pnpm i",
+            "lint": "pnpm lint:smart",
+            "typecheck": "pnpm typecheck:smart",
+            "test": "pnpm test:smart -- --coverage",
+            "test_memories": "pnpm --filter memories test -- --coverage",
+            "test_memory_core": "pnpm --filter memory-core test -- --coverage"
+        },
+        "coverage_target": "≥ 95% changed lines",
+        "conventional_commits": true
+    }
+}

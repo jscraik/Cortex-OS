@@ -295,7 +295,7 @@ pnpm --filter @cortex-os/mcp test:coverage
 cat packages/mcp/coverage/coverage-summary.json | grep -A 3 '"total"'
 ```
 
-**Expected Output**: Coverage ≥80% for new modules
+**Expected Output**: Coverage ≥90% global / ≥95% changed lines for new modules
 
 ---
 
@@ -392,7 +392,7 @@ cp -r packages/mcp-registry/coverage/html ~/tasks/mcp-performance-optimization/v
 **Success Criteria**:
 
 - ✅ All tests pass
-- ✅ Coverage ≥80%
+- ✅ Coverage ≥90% global / ≥95% changed lines
 - ✅ No TypeScript errors
 - ✅ No lint errors
 - ✅ Benchmark shows ≥35% improvement
@@ -422,7 +422,7 @@ export MCP_CONNECTOR_REFRESH_SYNC=true
 pnpm --filter @cortex-os/mcp run build
 ```
 
-### Issue: Coverage below 80%
+### Issue: Coverage below 90% global or 95% changed lines
 
 **Solution**:
 

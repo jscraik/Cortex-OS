@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { JWTAuth } from '../auth/jwt-auth.js';
-import { HTTPException } from '../errors';
+import { HTTPException } from '../errors.js';
 
 // Mock environment variables
 process.env.MCP_JWT_SECRET = 'test-mcp-secret';

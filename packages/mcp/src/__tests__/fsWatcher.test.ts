@@ -26,6 +26,14 @@ describe('MCPFSWatcher', () => {
 	let watcher: MCPFSWatcher;
 	let tempDir: string;
 	let mockChokidar: any;
+	let emitCallback: ((event: string, filePath: string) => void) | undefined;
+
+	const emitEvent = (event: string, filePath: string) => {
+		if (!emitCallback) {
+			throw new Error('emit callback not initialised');
+		}
+		emitCallback(event, filePath);
+	};
 
 	beforeEach(async () => {
 		server = new Server();
@@ -39,6 +47,7 @@ describe('MCPFSWatcher', () => {
 		};
 		const { watch } = await import('chokidar');
 		(vi.mocked(watch) as any).mockReturnValue(mockChokidar);
+		emitCallback = undefined;
 
 		watcher = createMCPFSWatcher({
 			promptsPath: join(tempDir, 'prompts'),
@@ -94,18 +103,18 @@ describe('MCPFSWatcher', () => {
 		beforeEach(() => {
 			watcher.start(server);
 			const { watch } = require('chokidar');
-			const mockOn = mockChokidar.on;
-			emitCallback = mockOn.mock.calls.find((call) => call[0] === 'all')?.[1];
-			if (!emitCallback) {
-				throw new Error('Failed to find emitCallback in mock setup');
-			}
-		});
+		const mockOn = mockChokidar.on;
+		emitCallback = mockOn.mock.calls.find((call) => call[0] === 'all')?.[1];
+		if (!emitCallback) {
+			throw new Error('Failed to find emitCallback in mock setup');
+		}
+	});
 
 		it('should handle prompt file changes', () => {
 			const promptPath = join(tempDir, 'prompts', 'test.md');
 			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-			emitCallback('add', promptPath);
+		emitEvent('add', promptPath);
 
 			// Should log the notification emission
 			expect(consoleSpy).toHaveBeenCalledWith(
@@ -119,7 +128,7 @@ describe('MCPFSWatcher', () => {
 			const resourcePath = join(tempDir, 'resources', 'test.txt');
 			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-			emitCallback('change', resourcePath);
+		emitEvent('change', resourcePath);
 
 			// Should log both list_changed and updated notifications
 			expect(consoleSpy).toHaveBeenCalledWith(
@@ -133,7 +142,7 @@ describe('MCPFSWatcher', () => {
 			const toolPath = join(tempDir, 'tools', 'test.tool.json');
 			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-			emitCallback('unlink', toolPath);
+		emitEvent('unlink', toolPath);
 
 			expect(consoleSpy).toHaveBeenCalledWith(
 				expect.stringContaining('"event":"tools_list_changed_emitted"'),
@@ -146,7 +155,7 @@ describe('MCPFSWatcher', () => {
 			const outsidePath = join(tmpdir(), 'outside.txt');
 			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-			emitCallback('add', outsidePath);
+		emitEvent('add', outsidePath);
 
 			// Should not emit any notifications
 			expect(consoleSpy).not.toHaveBeenCalledWith(expect.stringContaining('_emitted"'));
@@ -158,7 +167,7 @@ describe('MCPFSWatcher', () => {
 			const dirPath = join(tempDir, 'prompts', 'new-dir');
 			const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-			emitCallback('addDir', dirPath);
+		emitEvent('addDir', dirPath);
 
 			expect(consoleSpy).toHaveBeenCalledWith(
 				expect.stringContaining('"event":"prompts_list_changed_emitted"'),
@@ -313,9 +322,9 @@ describe('MCPFSWatcher', () => {
 			const promptPath = join(tempDir, 'prompts', 'test.md');
 
 			// Simulate rapid changes
-			emitCallback('add', promptPath);
-			emitCallback('change', promptPath);
-			emitCallback('change', promptPath);
+		emitEvent('add', promptPath);
+		emitEvent('change', promptPath);
+		emitEvent('change', promptPath);
 
 			// Should still only emit one notification due to coalescing
 			expect(consoleSpy).toHaveBeenCalledWith(
@@ -333,9 +342,9 @@ describe('MCPFSWatcher', () => {
 			const resourcePath = join(tempDir, 'resources', 'test.txt');
 			const toolPath = join(tempDir, 'tools', 'test.tool.json');
 
-			emitCallback('add', promptPath);
-			emitCallback('add', resourcePath);
-			emitCallback('add', toolPath);
+		emitEvent('add', promptPath);
+		emitEvent('add', resourcePath);
+		emitEvent('add', toolPath);
 
 			// Should emit notifications for all three types
 			expect(consoleSpy).toHaveBeenCalledWith(

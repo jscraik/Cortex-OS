@@ -31,6 +31,8 @@
     "codemap": "python3 scripts/codemap.py --repo . --out out/codemap.json --md out/codemap.md",
     "agents:ack": "bash scripts/agents/ack.sh",
     "time:freshness": "node scripts/time-freshness/check.js",
+    "oversight:vibe-check": "node scripts/oversight/vibe-check-call.mjs",
+    "prp": "pnpm --filter @cortex-os/prp-cli run build && node tools/prp-cli/dist/index.js",
     "phase:advance": "node scripts/phase/auto-advance.js",
     "models:health": "echo 'MODELS:LIVE:OK engine=mock model=health-check dims=384 norm≈1.0 latency_ms=50'",
     "models:smoke": "echo 'MODELS:SMOKE:OK engine=mock model=smoke-test dims=384 norm≈1.0 latency_ms=75'",

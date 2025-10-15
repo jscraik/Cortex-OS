@@ -1,6 +1,6 @@
-import { promises as fs } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { type ServerInfo, ServerInfoSchema } from '@cortex-os/mcp-core';
+import { join } from 'node:path';
+import { type ServerInfo } from '@cortex-os/mcp-core';
+import { RegistryMemoryCache } from './memory-cache.js';
 
 function registryPath(): string {
 	const base =
@@ -11,65 +11,45 @@ function registryPath(): string {
 	return join(base, 'mcp', 'servers.json');
 }
 
-async function readJson<T>(file: string, fallback: T): Promise<T> {
-	try {
-		const buf = await fs.readFile(file, 'utf8');
-		return JSON.parse(buf) as T;
-	} catch (err) {
-		if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-			console.error(`Failed to read ${file}:`, err);
-		}
-		return fallback;
+let cachePromise: Promise<RegistryMemoryCache> | null = null;
+
+async function getCache(): Promise<RegistryMemoryCache> {
+	if (!cachePromise) {
+		const cache = new RegistryMemoryCache({ registryPath: registryPath() });
+		cachePromise = (async () => {
+			await cache.init();
+			return cache;
+		})();
 	}
+
+	return cachePromise;
 }
 
-async function writeJson(file: string, value: unknown): Promise<void> {
-	await fs.mkdir(dirname(file), { recursive: true });
-	const lock = `${file}.lock`;
-	const maxAttempts = 5;
-	let attempt = 0;
-	// Simple retry loop for transient contention
-	while (attempt < maxAttempts) {
-		const handle = await fs.open(lock, 'wx').catch((err) => {
-			if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
-				return null;
-			}
-			throw err;
-		});
-		if (!handle) {
-			attempt += 1;
-			await new Promise((r) => setTimeout(r, 10 * attempt));
-			continue;
-		}
-		try {
-			const tmp = `${file}.tmp-${process.pid}-${Date.now()}`;
-			await fs.writeFile(tmp, JSON.stringify(value, null, 2));
-			await fs.rename(tmp, file);
-			return; // success
-		} finally {
-			await handle.close();
-			await fs.unlink(lock).catch(() => {});
-		}
+export async function closeRegistryCache(): Promise<void> {
+	if (!cachePromise) {
+		return;
 	}
-	throw new Error('Registry file is locked');
+
+	const cache = await cachePromise;
+	cachePromise = null;
+	await cache.close();
+}
+
+export async function getRegistryCache(): Promise<RegistryMemoryCache> {
+	return getCache();
 }
 
 export async function readAll(): Promise<ServerInfo[]> {
-	const file = registryPath();
-	const data = await readJson<{ servers: ServerInfo[] }>(file, { servers: [] });
-	return data.servers.map((s) => ServerInfoSchema.parse(s));
+	const cache = await getCache();
+	return cache.getAll();
 }
 
 export async function upsert(si: ServerInfo): Promise<void> {
-	const servers = await readAll();
-	const next = servers.filter((s) => s.name !== si.name);
-	next.push(ServerInfoSchema.parse(si));
-	await writeJson(registryPath(), { servers: next });
+	const cache = await getCache();
+	cache.upsert(si);
 }
 
 export async function remove(name: string): Promise<boolean> {
-	const servers = await readAll();
-	const next = servers.filter((s) => s.name !== name);
-	await writeJson(registryPath(), { servers: next });
-	return next.length !== servers.length;
+	const cache = await getCache();
+	return cache.remove(name);
 }

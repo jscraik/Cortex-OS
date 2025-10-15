@@ -76,6 +76,13 @@ packages/mcp-registry/
 
 ## 2) Implementation Plan (Atomic Tasks)
 
+### Governance Alignment Snapshot
+- **Coverage (AGENTS §8):** Every code task enforces ≥90% global coverage with ≥95% on changed lines; tasks call out where evidence (coverage reports) lands in `verification/`.
+- **Deterministic Core (AGENTS §7):** Scheduler, cache, and bridge updates inject `Clock`/`RandomSource` dependencies so runtime never calls `Date.now()`/`Math.random()` directly; tests use the same interfaces for reproducibility.
+- **Branded Observability (AGENTS §§11–12):** All new logs include `{ brand: 'brAInwav' }` plus connector context to satisfy oversight evidence requirements.
+- **Supply Chain Hygiene (AGENTS §6 & §20):** Dependency additions include immediate `pnpm install` with `pnpm-lock.yaml` committed; no post-merge lockfile drift.
+- **Entry Point Parity (Baton Spec):** Plan tasks now cover `packages/mcp-bridge/src/runtime/remote-proxy.ts`, keeping implementation scope aligned with the baton file tree.
+
 ### Task 1 — Add Dependencies & Feature Flags
 
 **Goal**: Install `undici` and `p-limit` packages; add environment flags for gradual rollout.
@@ -90,6 +97,7 @@ packages/mcp-registry/
 1. Add `"undici": "^6.19.0"` and `"p-limit": "^5.0.0"` to `dependencies` in `packages/mcp/package.json`.
 2. In `manager.ts`, read `process.env.MCP_CONNECTOR_REFRESH_SYNC` (default `false`) and `process.env.MCP_CONNECTOR_REFRESH_INTERVAL_MS` (default `300000` = 5min).
 3. Export `ConnectorFeatureFlags` type with `asyncRefresh: boolean` and `refreshIntervalMs: number`.
+4. Run `pnpm install` immediately to refresh `pnpm-lock.yaml`; include the lockfile update in the feature branch.
 
 **Implementation Aids**:
 
@@ -166,18 +174,36 @@ Expected: No type errors; `node_modules/undici` and `node_modules/p-limit` prese
 // packages/mcp/src/connectors/refresh-scheduler.ts
 import type { Logger } from 'pino';
 
+export interface Clock {
+ now(): number;
+}
+
+export interface RandomSource {
+ next(): number;
+}
+
+const defaultClock: Clock = { now: () => Date.now() };
+const defaultRandom: RandomSource = { next: () => Math.random() };
+
 export interface RefreshSchedulerOptions {
  intervalMs: number;
  jitterFactor?: number;
  onRefresh: () => Promise<void>;
  logger: Logger;
+ clock?: Clock;
+ random?: RandomSource;
 }
 
 export class RefreshScheduler {
  private timer: NodeJS.Timeout | null = null;
  private running = false;
+ private readonly clock: Clock;
+ private readonly random: RandomSource;
 
- constructor(private readonly options: RefreshSchedulerOptions) {}
+ constructor(private readonly options: RefreshSchedulerOptions) {
+  this.clock = options.clock ?? defaultClock;
+  this.random = options.random ?? defaultRandom;
+ }
 
  start(): void {
   if (this.running) return;
@@ -200,15 +226,18 @@ export class RefreshScheduler {
  private scheduleNext(): void {
   if (!this.running) return;
   const jitter = this.options.jitterFactor ?? 0.2;
-  const delay = Math.floor(this.options.intervalMs * (1 + (Math.random() * 2 - 1) * jitter));
+  const sample = (this.random.next() * 2 - 1); // deterministic when injected
+  const delay = Math.floor(this.options.intervalMs * (1 + sample * jitter));
   this.timer = setTimeout(() => this.executeRefresh(), delay);
  }
 
  private async executeRefresh(): Promise<void> {
+  const startedAt = this.clock.now();
   try {
    await this.options.onRefresh();
+   this.options.logger.info({ brand: 'brAInwav', startedAt }, 'Refresh completed');
   } catch (error) {
-   this.options.logger.warn({ error: (error as Error).message }, 'Refresh failed');
+   this.options.logger.warn({ brand: 'brAInwav', error: (error as Error).message }, 'Refresh failed');
   } finally {
    this.scheduleNext();
   }
@@ -218,6 +247,10 @@ export class RefreshScheduler {
 
 ```typescript
 // packages/mcp/src/connectors/cache.ts
+import type { Clock } from './refresh-scheduler.js';
+
+const defaultClock: Clock = { now: () => Date.now() };
+
 export interface CachedValue<T> {
  value: T;
  expiresAt: number;
@@ -226,16 +259,21 @@ export interface CachedValue<T> {
 
 export class ManifestCache<T> {
  private cache: CachedValue<T> | null = null;
+ private readonly clock: Clock;
+
+ constructor(clock: Clock = defaultClock) {
+  this.clock = clock;
+ }
 
  get(): T | undefined {
   if (!this.cache) return undefined;
-  const now = Date.now();
+  const now = this.clock.now();
   if (now < this.cache.expiresAt) return this.cache.value;
   return this.cache.stale; // stale-on-error
  }
 
  set(value: T, ttlMs: number): void {
-  const now = Date.now();
+  const now = this.clock.now();
   this.cache = {
    value,
    expiresAt: now + ttlMs,
@@ -245,6 +283,46 @@ export class ManifestCache<T> {
 
  invalidate(): void {
   this.cache = null;
+ }
+}
+```
+
+```typescript
+// packages/mcp-bridge/src/runtime/remote-proxy.ts - reuse pooled agent
+import { Agent, Dispatcher } from 'undici';
+import type { Logger } from 'pino';
+import type { Clock } from '@cortex-os/mcp/src/connectors/refresh-scheduler.js';
+
+const defaultClock: Clock = { now: () => Date.now() };
+
+export interface RemoteProxyOptions {
+ readonly agent?: Agent | Dispatcher;
+ readonly clock?: Clock;
+ readonly logger: Logger;
+ readonly connectorId: string;
+ readonly url: string;
+}
+
+export class RemoteProxy {
+ private readonly agent: Agent | Dispatcher;
+ private readonly clock: Clock;
+
+ constructor(private readonly options: RemoteProxyOptions) {
+  this.agent = options.agent ?? new Agent({ connections: 10, pipelining: 1 });
+  this.clock = options.clock ?? defaultClock;
+ }
+
+ async forward(request: RequestInit): Promise<Response> {
+  const startedAt = this.clock.now();
+  const response = await fetch(this.options.url, { ...request, dispatcher: this.agent });
+  this.options.logger.debug({ brand: 'brAInwav', connectorId: this.options.connectorId, durationMs: this.clock.now() - startedAt }, 'Forwarded remote MCP request');
+  return response;
+ }
+
+ dispose(): void {
+  if (this.agent instanceof Agent) {
+   void this.agent.close();
+  }
  }
 }
 ```
@@ -341,13 +419,14 @@ Expected: No type errors.
 **Files to Touch**:
 
 - `packages/mcp/src/connectors/manager.ts`
+- `packages/mcp-bridge/src/runtime/remote-proxy.ts`
 
 **Edit Steps**:
 
-1. Import `Agent` from `undici`, `pLimit` from `p-limit`, `RefreshScheduler`, and `ManifestCache`.
-2. Add private fields: `agent: Agent`, `scheduler: RefreshScheduler`, `manifestCache: ManifestCache<ServiceMapPayload>`.
-3. In constructor, create `agent = new Agent({ connections: 10, pipelining: 1 })` and initialize `manifestCache`.
-4. If `flags.asyncRefresh === true`, start `scheduler` calling `this.syncInternal()`.
+1. Import `Agent` from `undici`, `pLimit` from `p-limit`, `RefreshScheduler`, and `ManifestCache` plus the shared `Clock` interface.
+2. Add private fields: `agent: Agent`, `scheduler: RefreshScheduler`, `manifestCache: ManifestCache<ServiceMapPayload>`, `clock: Clock`.
+3. In constructor, create `agent = new Agent({ connections: 10, pipelining: 1 })`, resolve `clock = options.clock ?? defaultClock`, and initialize `manifestCache` with that clock.
+4. If `flags.asyncRefresh === true`, start `scheduler` using the shared clock and calling `this.syncInternal()`.
 5. In `sync(force)`, check cache first; only call `loadConnectorServiceMap` if cache miss or force.
 6. Replace `for (const entry of ...)` loop with:
 
@@ -362,8 +441,9 @@ Expected: No type errors.
    // log failures but don't throw
    ```
 
-7. Update `ensureProxy` to pass `agent` to `loadConnectorServiceMap`.
-8. Add `disconnect()` method to stop scheduler and close agent.
+7. Update `ensureProxy` to pass `agent` to `loadConnectorServiceMap` and propagate the shared agent into bridge calls.
+8. Update `packages/mcp-bridge/src/runtime/remote-proxy.ts` to accept an injected `Agent`, reuse it for outbound fetches, and emit debug logs with `{ brand: 'brAInwav', connectorId }`.
+9. Add `disconnect()` method to stop scheduler, close agent, and instruct bridge proxies to release pooled resources.
 
 **Implementation Aids**:
 
@@ -371,8 +451,10 @@ Expected: No type errors.
 // packages/mcp/src/connectors/manager.ts - key changes
 import { Agent } from 'undici';
 import pLimit from 'p-limit';
-import { RefreshScheduler } from './refresh-scheduler.js';
+import { RefreshScheduler, Clock } from './refresh-scheduler.js';
 import { ManifestCache } from './cache.js';
+
+const defaultClock: Clock = { now: () => Date.now() };
 
 export class ConnectorProxyManager {
  private readonly options: ConnectorProxyManagerOptions;
@@ -380,18 +462,22 @@ export class ConnectorProxyManager {
  private readonly registeredTools = new Set<string>();
  private readonly agent: Agent;
  private readonly scheduler?: RefreshScheduler;
- private readonly manifestCache = new ManifestCache<ServiceMapPayload>();
+ private readonly manifestCache: ManifestCache<ServiceMapPayload>;
  private readonly flags: ConnectorFeatureFlags;
+ private readonly clock: Clock;
 
  constructor(options: ConnectorProxyManagerOptions) {
   this.options = options;
   this.flags = parseFeatureFlags();
   this.agent = new Agent({ connections: 10, pipelining: 1 });
+  this.clock = options.clock ?? defaultClock;
+  this.manifestCache = new ManifestCache<ServiceMapPayload>(this.clock);
 
   if (this.flags.asyncRefresh) {
    this.scheduler = new RefreshScheduler({
     intervalMs: this.flags.refreshIntervalMs,
     onRefresh: () => this.syncInternal(),
+    clock: this.clock,
     logger: this.options.logger,
    });
    this.scheduler.start();
@@ -401,7 +487,7 @@ export class ConnectorProxyManager {
  async sync(force = false): Promise<void> {
   const cached = this.manifestCache.get();
   if (!force && cached) {
-   this.options.logger.debug('Using cached manifest');
+   this.options.logger.debug({ brand: 'brAInwav' }, 'Using cached manifest');
    return;
   }
   await this.syncInternal();
@@ -409,11 +495,12 @@ export class ConnectorProxyManager {
 
  private async syncInternal(): Promise<void> {
   const result = await loadConnectorServiceMap({ ...this.options, agent: this.agent });
-  this.manifestCache.set(result.payload, (result.expiresAtMs - Date.now()));
-  
+  const ttl = Math.max(0, result.expiresAtMs - this.clock.now());
+  this.manifestCache.set(result.payload, ttl);
+
   const enabled = result.payload.connectors.filter(e => e.status === 'enabled');
   const limit = pLimit(4);
-  
+
   const results = await Promise.allSettled(
    enabled.map(entry => limit(async () => {
     setConnectorAvailabilityGauge(entry.id, true);
@@ -423,9 +510,9 @@ export class ConnectorProxyManager {
   );
 
   results.forEach((r, i) => {
-   if (r.status === 'rejected') {
-    this.options.logger.warn({ connector: enabled[i].id, error: r.reason }, 'Connector sync failed');
-   }
+    if (r.status === 'rejected') {
+     this.options.logger.warn({ brand: 'brAInwav', connector: enabled[i].id, error: r.reason }, 'Connector sync failed');
+    }
   });
  }
 
@@ -463,9 +550,9 @@ Expected: No type errors.
 
 **Edit Steps**:
 
-1. **refresh-scheduler.test.ts**: Mock clock with `vi.useFakeTimers()`; verify jitter range, error handling, stop behavior.
+1. **refresh-scheduler.test.ts**: Mock clock with `vi.useFakeTimers()` and pass deterministic `random.next()`; verify jitter range, error handling, stop behavior, and brand logging.
 2. **cache.test.ts**: Test TTL expiry, stale-on-error return, invalidation.
-3. **manager.test.ts**: Mock `loadConnectorServiceMap` and proxy factory; verify parallel execution (4 concurrent), failure isolation (one connector fails, others succeed).
+3. **manager.test.ts**: Mock `loadConnectorServiceMap` and proxy factory; verify parallel execution (4 concurrent), failure isolation (one connector fails, others succeed), and ensure every log includes `{ brand: 'brAInwav' }`.
 4. **service-map.test.ts**: Mock `undici.fetch` with agent; verify timeout, retry-free errors, signature validation.
 
 **Implementation Aids**:
@@ -486,27 +573,32 @@ describe('RefreshScheduler', () => {
 
  it('schedules refresh with jitter', async () => {
   const onRefresh = vi.fn().mockResolvedValue(undefined);
+  const clock = { now: () => Date.now() };
+  const logger = { info: vi.fn(), warn: vi.fn(), debug: vi.fn() };
   const scheduler = new RefreshScheduler({
    intervalMs: 1000,
    jitterFactor: 0.2,
    onRefresh,
-   logger: { info: vi.fn(), warn: vi.fn() } as any,
+   clock,
+   random: { next: () => 0.5 }, // deterministic jitter
+   logger: logger as any,
   });
 
   scheduler.start();
   await vi.advanceTimersByTimeAsync(1200); // max jitter = 1000 * 1.2
   expect(onRefresh).toHaveBeenCalledTimes(1);
+  expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ brand: 'brAInwav' }), 'Refresh completed');
   scheduler.stop();
  });
 
  it('handles refresh errors gracefully', async () => {
   const onRefresh = vi.fn().mockRejectedValue(new Error('fail'));
   const logger = { warn: vi.fn(), info: vi.fn() };
-  const scheduler = new RefreshScheduler({ intervalMs: 1000, onRefresh, logger: logger as any });
+  const scheduler = new RefreshScheduler({ intervalMs: 1000, onRefresh, logger: logger as any, clock: { now: () => Date.now() }, random: { next: () => 0.5 } });
 
   scheduler.start();
   await vi.advanceTimersByTimeAsync(1200);
-  expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ error: 'fail' }), 'Refresh failed');
+  expect(logger.warn).toHaveBeenCalledWith(expect.objectContaining({ brand: 'brAInwav', error: 'fail' }), 'Refresh failed');
   scheduler.stop();
  });
 });
@@ -522,7 +614,7 @@ pnpm --filter @cortex-os/mcp test -- service-map
 pnpm --filter @cortex-os/mcp test:coverage
 ```
 
-Expected: All tests pass; coverage ≥80%.
+Expected: All tests pass; coverage ≥90% global and ≥95% on changed lines.
 
 **Commit**: `test(mcp): add unit tests for async connector refresh`
 
@@ -583,12 +675,12 @@ export class RegistryMemoryCache {
    parsed.servers.forEach(s => this.cache.set(s.name, s));
   } catch (err) {
    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
-    this.options.logger.warn('Failed to load registry', err as Error);
+    this.options.logger.warn({ brand: 'brAInwav', error: err }, 'Failed to load registry');
    }
   }
 
   // Start periodic flush
-  this.flushTimer = setInterval(() => this.flush(), this.options.flushIntervalMs);
+  this.flushTimer = setInterval(() => { void this.flush(); }, this.options.flushIntervalMs);
  }
 
  getAll(): ServerInfo[] {
@@ -616,7 +708,7 @@ export class RegistryMemoryCache {
   await fs.rename(tmp, this.options.registryPath);
 
   this.dirty = false;
-  this.options.logger.info('Flushed registry to disk');
+  this.options.logger.info({ brand: 'brAInwav', servers: servers.length }, 'Flushed registry to disk');
  }
 
  async close(): Promise<void> {
@@ -766,8 +858,7 @@ describe('RegistryMemoryCache', () => {
  let registryPath: string;
 
  beforeEach(async () => {
-  tempDir = join(tmpdir(), `registry-test-${Date.now()}`);
-  await fs.mkdir(tempDir, { recursive: true });
+  tempDir = await fs.mkdtemp(join(tmpdir(), 'registry-test-'));
   registryPath = join(tempDir, 'servers.json');
  });
 
@@ -803,7 +894,7 @@ pnpm --filter @cortex-os/mcp-registry test -- fs-store
 pnpm --filter @cortex-os/mcp-registry test:coverage
 ```
 
-Expected: All tests pass; coverage ≥80%.
+Expected: All tests pass; coverage ≥90% global and ≥95% on changed lines.
 
 **Commit**: `test(mcp-registry): add memory cache unit tests`
 
@@ -974,7 +1065,7 @@ Expected: SUMMARY includes all metrics and links.
 
 ### Migration/Lockfile Notes
 
-- Run `pnpm install` after merging to update `pnpm-lock.yaml`.
+- Run `pnpm install` immediately so `pnpm-lock.yaml` is updated and included in the PR.
 - No database schema changes; filesystem layout unchanged (`.config/cortex-os/mcp/servers.json` path stable).
 
 ---
@@ -1024,18 +1115,18 @@ Expected: SUMMARY includes all metrics and links.
 
 - **HTTP**: Mock `undici.fetch` to return deterministic manifests; inject controlled latencies (100ms, 500ms, timeout).
 - **Clock**: `vi.useFakeTimers()` for scheduler; control refresh intervals and jitter.
-- **Filesystem**: `tmpdir()` for registry tests; verify atomic rename via file existence checks.
+- **Filesystem**: Use `await fs.mkdtemp(join(tmpdir(), "mcp-perf-"))` for registry tests; verify atomic rename via file existence checks.
 - **Logger**: Spy on `info` / `warn` calls to verify error logging without throwing.
 
 ### Determinism
 
 - **Clock injection**: All time-based logic accepts `now?: () => number` option.
-- **Seed/random**: Scheduler jitter uses `Math.random()`; tests use fixed seed via `vi.spyOn(Math, 'random').mockReturnValue(0.5)`.
+- **Seed/random**: Scheduler jitter consumes an injected `RandomSource`; tests pass `{ next: () => 0.5 }` to guarantee deterministic jitter.
 - **Stable data builders**: Factory functions for `ConnectorEntry`, `ServerInfo` with default values.
 
 ### Coverage Target
 
-- **Threshold**: ≥80% line/branch coverage for all modified modules.
+- **Threshold**: ≥90% global coverage with ≥95% changed-line coverage (enforced via coverage diff script).
 - **Commands**:
 
   ```bash
@@ -1101,7 +1192,7 @@ pm2 restart cortex-mcp
 
 - [x] Code merged to main branch
 - [ ] CI green (lint, typecheck, tests)
-- [ ] Coverage ≥80% for `@cortex-os/mcp` and `@cortex-os/mcp-registry`
+- [ ] Coverage ≥90% global / ≥95% changed-line coverage for `@cortex-os/mcp` and `@cortex-os/mcp-registry`
 - [ ] Mutation testing (if applicable) passes
 - [ ] Lint/type/security gates clean
 - [ ] Documentation updated:
@@ -1251,7 +1342,7 @@ export interface ConnectorServiceMapOptions {
 | Task 2 | Scheduler jitter verified; cache TTL expiry tested |
 | Task 3 | Service-map uses shared agent; typecheck passes |
 | Task 4 | Manager sync parallelizes 4 connectors; failures isolated |
-| Task 5 | All unit tests pass; coverage ≥80% |
+| Task 5 | All unit tests pass; coverage ≥90% global and ≥95% on changed lines |
 | Task 6 | Registry cache flushes atomically; periodic flush tested |
 | Task 7 | fs-store delegates to cache; lifecycle hooks verified |
 | Task 8 | Registry tests pass; cache recovery tested |
@@ -1272,6 +1363,7 @@ export interface ConnectorServiceMapOptions {
 - ✅ Maintain backward compatibility; no breaking API changes.
 - ✅ **DRY**: Extract shared agent/scheduler to standard locations.
 - ✅ **YAGNI**: Only implement async refresh and memory cache; defer streaming batching.
+- ✅ Coverage: Maintain ≥90% global and ≥95% changed-line coverage; raise targets if the baseline repo metrics exceed these thresholds.
 - ✅ **TDD**: Write failing tests before implementation; commit frequently.
 - ✅ **Conventional Commits**: Use `feat:`, `refactor:`, `test:`, `perf:`, `docs:` prefixes.
 - ✅ Follow **AGENTS.md**: Use branded logging `[brAInwav]`, structured errors, deterministic tests.

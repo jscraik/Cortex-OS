@@ -29,7 +29,7 @@
             "Feature-flagged rollout capability"
         ],
         "testing": {
-            "coverage_target": "≥80% line/branch coverage for modified modules",
+            "coverage_target": "≥90% global coverage and ≥95% changed-line coverage",
             "types": [
                 "unit",
                 "integration",
@@ -75,7 +75,7 @@
             "test_mcp": "pnpm --filter @cortex-os/mcp test",
             "test_registry": "pnpm --filter @cortex-os/mcp-registry test"
         },
-        "coverage_target": "≥80% line/branch coverage",
+        "coverage_target": "≥90% global coverage and ≥95% changed-line coverage",
         "conventional_commits": true
     }
 }

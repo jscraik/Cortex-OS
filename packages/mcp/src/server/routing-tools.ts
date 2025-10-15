@@ -1,4 +1,19 @@
-import type { PolicyRouter } from '@cortex-os/orchestration';
+type PolicyRouter = {
+	route: (input: {
+		interfaceId: string;
+		capabilities: string[];
+		tags: string[];
+		source: string;
+	}) => Promise<{
+		requestId: string;
+		selectedAgent: any;
+		candidates: any;
+		approval: any;
+		appliedRules: any;
+		policyVersion: any;
+	}>;
+	explain: (requestId: string) => any;
+};
 
 interface RoutingToolInput {
 	interfaceId: string;

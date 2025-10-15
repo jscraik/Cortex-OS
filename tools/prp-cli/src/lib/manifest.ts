@@ -8,12 +8,14 @@ import {
   StageStatusEnum,
   type RunManifest,
   type StageEntry,
-} from '@cortex-os/prp-runner';
+} from './prp-schema.js';
 
-export type ManifestLoadResult = {
+const BRAND = '[brAInwav]';
+
+export interface ManifestLoadResult {
   manifest: RunManifest;
   path: string;
-};
+}
 
 export async function loadManifest(manifestPath: string): Promise<ManifestLoadResult> {
   const raw = await readFile(manifestPath, 'utf8');
@@ -21,7 +23,7 @@ export async function loadManifest(manifestPath: string): Promise<ManifestLoadRe
   try {
     parsed = JSON.parse(raw);
   } catch (error) {
-    throw new Error(`prp: unable to parse manifest JSON (${(error as Error).message})`);
+    throw new Error(`${BRAND} prp: unable to parse manifest JSON (${(error as Error).message})`);
   }
   const manifest = RunManifestSchema.parse(parsed);
   return { manifest, path: manifestPath };
@@ -50,7 +52,7 @@ export interface ManifestSummary {
 }
 
 export function buildManifestSummary(manifest: RunManifest): ManifestSummary {
-  const staged = manifest.stages.map((stage) => ({
+  const staged = manifest.stages.map((stage): StageSummary => ({
     key: stage.key,
     title: stage.title,
     status: stage.status,
@@ -90,13 +92,13 @@ export function renderManifestSummary(summary: ManifestSummary, options: { stage
 
   const header = ['Stage', 'Title', 'Status', 'Approvals', 'Checks', 'Blocker'];
   const output: string[] = [];
-  output.push(chalk.bold(`Run Manifest: ${summary.manifestId}`));
-  output.push(`Run ID: ${summary.runId}`);
-  output.push(`Strict Mode: ${summary.strictMode ? chalk.green('enabled') : chalk.yellow('disabled')}`);
+  output.push(chalk.bold(`${BRAND} Run Manifest: ${summary.manifestId}`));
+  output.push(`${BRAND} Run ID: ${summary.runId}`);
+  output.push(`${BRAND} Strict Mode: ${summary.strictMode ? chalk.green('enabled') : chalk.yellow('disabled')}`);
   if (summary.telemetryDurationMs !== undefined) {
-    output.push(`Duration: ${(summary.telemetryDurationMs / 1000).toFixed(1)}s`);
+    output.push(`${BRAND} Duration: ${(summary.telemetryDurationMs / 1000).toFixed(1)}s`);
   }
-  output.push(`Status: ${colorStatus(summary.status)}`);
+  output.push(`${BRAND} Status: ${colorStatus(summary.status)}`);
   output.push('');
   output.push(
     table([header, ...rows], {
@@ -183,7 +185,7 @@ export function findStage(manifest: RunManifest, stageKey: string): StageEntry {
   const parsedKey = StageKeyEnum.parse(stageKey);
   const stage = manifest.stages.find((entry) => entry.key === parsedKey);
   if (!stage) {
-    throw new Error(`prp: stage ${stageKey} not found in manifest ${manifest.manifestId}`);
+    throw new Error(`${BRAND} prp: stage ${stageKey} not found in manifest ${manifest.manifestId}`);
   }
   return stage;
 }

@@ -1,6 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createServiceMapSignature } from '@cortex-os/protocol';
-import { ConnectorProxyManager } from './manager.js';
+import { ConnectorProxyManager, parseConnectorFeatureFlags } from './manager.js';
+import * as serviceMapModule from './service-map.js';
+import { Agent } from 'undici';
 import { getConnectorMetricsRegistry } from './metrics.js';
 import type { RemoteToolProxyOptions } from '@cortex-os/mcp-bridge/runtime/remote-proxy';
 import type { RemoteTool } from '@cortex-os/mcp-bridge/runtime/remote-proxy';
@@ -11,6 +13,7 @@ class StubProxy {
         public readonly config: RemoteToolProxyOptions;
         private readonly tools: RemoteTool[];
         public readonly callHistory: Array<{ tool: string; args: Record<string, unknown> }> = [];
+	public disconnectCalls = 0;
 
         constructor(options: RemoteToolProxyOptions, tools: RemoteTool[]) {
                 this.config = options;
@@ -29,7 +32,18 @@ class StubProxy {
                 this.callHistory.push({ tool, args });
                 return { ok: true };
         }
+
+	async disconnect(): Promise<void> {
+		this.disconnectCalls += 1;
+	}
 }
+
+const createLogger = () => ({
+	info: vi.fn(),
+	warn: vi.fn(),
+	error: vi.fn(),
+	debug: vi.fn(),
+});
 
 const buildConnectorEntry = () => ({
         id: 'demo',
@@ -45,36 +59,40 @@ const buildConnectorEntry = () => ({
 });
 
 const createManifest = (
-        signatureKey: string,
-        connectors: Array<ReturnType<typeof buildConnectorEntry>> = [buildConnectorEntry()],
+	signatureKey: string,
+	connectors: Array<ReturnType<typeof buildConnectorEntry>> = [buildConnectorEntry()],
 ) => {
-        const payload = {
-                id: '01HZ7ZWJ5XJ8W4T7N6MZ2V1PQB',
-                brand: 'brAInwav' as const,
-                generatedAt: new Date('2025-10-12T12:00:00.000Z').toISOString(),
-                ttlSeconds: 120,
-                connectors: [
-                        {
-                                id: 'demo',
-                                version: '1.0.0',
-                                name: 'Demo Connector',
-                                endpoint: 'https://connectors.invalid/v1/mcp',
-                                auth: { type: 'apiKey', headerName: 'X-Api-Key' },
-                                scopes: ['demo:read'],
-                                status: 'enabled' as const,
-                                ttl: 1760270520,
-                                metadata: { brand: 'brAInwav' },
-                        },
-                ],
-        };
+	const payload = {
+		id: '01HZ7ZWJ5XJ8W4T7N6MZ2V1PQB',
+		brand: 'brAInwav' as const,
+		generatedAt: new Date('2025-10-12T12:00:00.000Z').toISOString(),
+		ttlSeconds: 120,
+		connectors: connectors.map((entry) => ({
+			id: entry.id,
+			version: entry.version,
+			name: entry.displayName,
+			endpoint: entry.endpoint,
+			auth: entry.auth,
+			scopes: entry.scopes,
+			status: entry.enabled ? ('enabled' as const) : ('disabled' as const),
+			ttl: entry.ttlSeconds,
+			metadata: entry.metadata ?? { brand: 'brAInwav' },
+		})),
+	};
 
-        const signature = createServiceMapSignature(payload, signatureKey);
-        return { ...payload, signature };
+	const signature = createServiceMapSignature(payload, signatureKey);
+	return { ...payload, signature };
 };
 
 describe('ConnectorProxyManager', () => {
+	beforeEach(() => {
+		process.env.MCP_CONNECTOR_REFRESH_SYNC = 'true';
+	});
+
         afterEach(() => {
                         vi.restoreAllMocks();
+			delete process.env.MCP_CONNECTOR_REFRESH_SYNC;
+			delete process.env.MCP_CONNECTOR_REFRESH_INTERVAL_MS;
         });
 
         it('registers remote tools from manifest entries and updates metrics', async () => {
@@ -237,11 +255,243 @@ describe('ConnectorProxyManager', () => {
                 const wikidataMetadata = wikidataEntry?.metadata as
                         | { tools?: Array<{ name: string; description: string }> }
                         | undefined;
-                expect(wikidataMetadata?.tools).toEqual([
-                        { name: 'vector_search', description: 'Semantic entity lookup' },
-                        { name: 'sparql', description: 'Wikidata SPARQL execution' },
-                ]);
-        });
+		expect(wikidataMetadata?.tools).toEqual([
+			{ name: 'vector_search', description: 'Semantic entity lookup' },
+			{ name: 'sparql', description: 'Wikidata SPARQL execution' },
+		]);
+	});
+
+	it('serves stale manifest when refresh fails after expiry', async () => {
+		const signatureKey = 'stale-key';
+		const manifest = createManifest(signatureKey);
+		const logger = createLogger();
+		const loadSpy = vi
+			.spyOn(serviceMapModule, 'loadConnectorServiceMap')
+			.mockResolvedValueOnce({
+				payload: manifest,
+				expiresAtMs: 5_000,
+			})
+			.mockRejectedValueOnce(new Error('network down'));
+
+		let now = 0;
+		const manager = new ConnectorProxyManager({
+			serviceMapUrl: 'https://asbr.invalid/v1/connectors/service-map',
+			apiKey: 'asbr-token',
+			signatureKey,
+			connectorsApiKey: 'connectors-token',
+			registry: createVersionedToolRegistry(new Server()),
+			logger,
+			now: () => now,
+			createProxy: (options) => new StubProxy(options, []),
+		});
+
+		await manager.sync(true);
+		expect(manager.listConnectors()).toHaveLength(1);
+
+		now = 10_000;
+		await expect(manager.sync(true)).resolves.toBeUndefined();
+		expect(manager.listConnectors().map((connector) => connector.id)).toContain('demo');
+		expect(logger.warn).toHaveBeenCalledWith(
+			expect.objectContaining({ brand: 'brAInwav' }),
+			'Manifest refresh failed',
+		);
+
+		loadSpy.mockRestore();
+	});
+
+	it('forces refresh when force flag is true', async () => {
+		const signatureKey = 'force-key';
+		const manifestInitial = createManifest(signatureKey, [
+			{ ...buildConnectorEntry(), id: 'first' },
+		]);
+		const manifestUpdated = createManifest(signatureKey, [
+			{ ...buildConnectorEntry(), id: 'second' },
+		]);
+		const logger = createLogger();
+		const loadSpy = vi
+			.spyOn(serviceMapModule, 'loadConnectorServiceMap')
+			.mockResolvedValueOnce({ payload: manifestInitial, expiresAtMs: 5_000 })
+			.mockResolvedValueOnce({ payload: manifestUpdated, expiresAtMs: 10_000 });
+
+		const manager = new ConnectorProxyManager({
+			serviceMapUrl: 'https://example.invalid/connectors',
+			apiKey: 'token',
+			signatureKey,
+			connectorsApiKey: 'connectors-token',
+			registry: createVersionedToolRegistry(new Server()),
+			logger,
+			createProxy: (options) => new StubProxy(options, []),
+		});
+
+		await manager.sync(true);
+		expect(manager.listConnectors().map((entry) => entry.id)).toContain('first');
+
+		await manager.sync(true);
+		expect(manager.listConnectors().map((entry) => entry.id)).toContain('second');
+		expect(loadSpy).toHaveBeenCalledTimes(2);
+
+		loadSpy.mockRestore();
+	});
+
+	it('limits concurrent proxy hydration to four connectors', async () => {
+		const signatureKey = 'limit-key';
+		const connectorEntries = Array.from({ length: 6 }, (_, index) => ({
+			...buildConnectorEntry(),
+			id: `connector-${index}`,
+		}));
+		const manifest = createManifest(signatureKey, connectorEntries);
+		const logger = createLogger();
+		const loadSpy = vi
+			.spyOn(serviceMapModule, 'loadConnectorServiceMap')
+			.mockResolvedValue({
+				payload: manifest,
+				expiresAtMs: 5_000,
+			});
+
+		const manager = new ConnectorProxyManager({
+			serviceMapUrl: 'https://asbr.invalid/v1/connectors/service-map',
+			apiKey: 'token',
+			signatureKey,
+			connectorsApiKey: 'connectors-token',
+			registry: createVersionedToolRegistry(new Server()),
+			logger,
+			createProxy: (options) => new StubProxy(options, []),
+		});
+
+		const managerAny = manager as unknown as {
+			ensureProxy: (entry: ReturnType<typeof buildConnectorEntry>) => Promise<StubProxy>;
+		};
+
+		const originalEnsure = managerAny.ensureProxy.bind(managerAny);
+		let running = 0;
+		let peak = 0;
+
+		vi.spyOn(managerAny, 'ensureProxy').mockImplementation(async (entry) => {
+			running += 1;
+			peak = Math.max(peak, running);
+			await new Promise((resolve) => setTimeout(resolve, 5));
+			const result = await originalEnsure(entry);
+			running -= 1;
+			return result;
+		});
+
+		await manager.sync(true);
+
+		expect(peak).toBeLessThanOrEqual(4);
+		expect(peak).toBeGreaterThanOrEqual(2);
+		expect(loadSpy).toHaveBeenCalledTimes(1);
+		loadSpy.mockRestore();
+	});
+
+	it('continues syncing when a connector fails to hydrate', async () => {
+		const signatureKey = 'failure-key';
+		const connectorEntries = [
+			{ ...buildConnectorEntry(), id: 'stable' },
+			{ ...buildConnectorEntry(), id: 'flaky' },
+			{ ...buildConnectorEntry(), id: 'follow-up' },
+		];
+		const manifest = createManifest(signatureKey, connectorEntries);
+		const logger = createLogger();
+		const loadSpy = vi
+			.spyOn(serviceMapModule, 'loadConnectorServiceMap')
+			.mockResolvedValue({
+				payload: manifest,
+				expiresAtMs: 5_000,
+			});
+
+		const server = new Server();
+		const registry = createVersionedToolRegistry(server);
+
+		const manager = new ConnectorProxyManager({
+			serviceMapUrl: 'https://asbr.invalid/v1/connectors/service-map',
+			apiKey: 'token',
+			signatureKey,
+			connectorsApiKey: 'connectors-token',
+			registry,
+			logger,
+			createProxy: (options) => new StubProxy(options, [
+				{
+					name: 'ping',
+					description: 'Ping connector',
+					inputSchema: { type: 'object' },
+				},
+			]),
+		});
+
+		const managerAny = manager as unknown as {
+			ensureProxy: (entry: ReturnType<typeof buildConnectorEntry>) => Promise<StubProxy>;
+		};
+		const originalEnsure = managerAny.ensureProxy.bind(managerAny);
+
+		vi.spyOn(managerAny, 'ensureProxy').mockImplementation(async (entry) => {
+			if (entry.id === 'flaky') {
+				throw new Error('connector boom');
+			}
+			return originalEnsure(entry);
+		});
+
+		await expect(manager.sync(true)).resolves.toBeUndefined();
+
+		const registered = registry.listTools();
+		expect(registered.every((tool) => !tool.name.startsWith('flaky.'))).toBe(true);
+		expect(registered.length).toBeGreaterThan(0);
+		expect(logger.warn).toHaveBeenCalledWith(
+			expect.objectContaining({ brand: 'brAInwav', connectorId: 'flaky' }),
+			'Connector sync failed',
+		);
+
+		loadSpy.mockRestore();
+	});
+
+	it('disconnect stops proxies and closes the shared agent', async () => {
+		vi.useFakeTimers();
+		delete process.env.MCP_CONNECTOR_REFRESH_SYNC;
+		const signatureKey = 'disconnect-key';
+		const manifest = createManifest(signatureKey, [
+			{ ...buildConnectorEntry(), id: 'stop-me' },
+		]);
+		const logger = createLogger();
+		const loadSpy = vi
+			.spyOn(serviceMapModule, 'loadConnectorServiceMap')
+			.mockResolvedValue({ payload: manifest, expiresAtMs: 5_000 });
+		const agentCloseSpy = vi
+			.spyOn(Agent.prototype, 'close')
+			.mockImplementation(async () => undefined);
+
+		const proxies = new Map<string, StubProxy>();
+
+		const manager = new ConnectorProxyManager({
+			serviceMapUrl: 'https://example.invalid/connectors',
+			apiKey: 'token',
+			signatureKey,
+			connectorsApiKey: 'connectors-token',
+			registry: createVersionedToolRegistry(new Server()),
+			logger,
+			createProxy: (options) => {
+				const proxy = new StubProxy(options, [
+					{
+						name: 'ping',
+						description: 'Ping',
+						inputSchema: { type: 'object' },
+					},
+				]);
+				proxies.set(options.serviceLabel ?? 'unknown', proxy);
+				return proxy;
+			},
+		});
+
+		await manager.sync(true);
+		await manager.disconnect();
+
+		vi.runOnlyPendingTimers();
+		vi.useRealTimers();
+
+		expect(Array.from(proxies.values()).every((proxy) => proxy.disconnectCalls === 1)).toBe(true);
+		expect(agentCloseSpy).toHaveBeenCalled();
+
+		loadSpy.mockRestore();
+		agentCloseSpy.mockRestore();
+	});
 
 	describe('Tool Name Normalization (Phase B.1)', () => {
 		it('should normalize vector_search_items to wikidata.vector_search_items', async () => {
@@ -446,6 +696,37 @@ describe('ConnectorProxyManager', () => {
 				}),
 				'Loaded connectors manifest',
 			);
+		});
+	});
+});
+
+describe('parseConnectorFeatureFlags', () => {
+	it('returns defaults when env vars are unset', () => {
+		delete process.env.MCP_CONNECTOR_REFRESH_SYNC;
+		delete process.env.MCP_CONNECTOR_REFRESH_INTERVAL_MS;
+
+		expect(parseConnectorFeatureFlags()).toEqual({
+			asyncRefresh: true,
+			refreshIntervalMs: 300_000,
+		});
+	});
+
+	it('respects explicit env overrides', () => {
+		process.env.MCP_CONNECTOR_REFRESH_SYNC = 'true';
+		process.env.MCP_CONNECTOR_REFRESH_INTERVAL_MS = '120000';
+
+		expect(parseConnectorFeatureFlags()).toEqual({
+			asyncRefresh: false,
+			refreshIntervalMs: 120_000,
+		});
+	});
+
+	it('ignores invalid interval values and falls back to default', () => {
+		process.env.MCP_CONNECTOR_REFRESH_INTERVAL_MS = 'not-a-number';
+
+		expect(parseConnectorFeatureFlags()).toEqual({
+			asyncRefresh: true,
+			refreshIntervalMs: 300_000,
 		});
 	});
 });

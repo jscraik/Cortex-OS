@@ -22,6 +22,7 @@ Welcome to the Cortex-OS documentation hub. Cortex-OS is an **Autonomous Softwar
 ### 🏗️ Architecture
 - [System Architecture Overview](architecture/README.md)
 - [Agent Toolkit Integration](architecture/agent-toolkit-integration.md)
+- [Code Planner Agent Playbook](agents/code-planner-agent.md)
 - [Agent Toolkit Resolution](architecture/agent-toolkit-resolution.md)
 - [Agent Toolkit Review](architecture/agent-toolkit-review.md)
 - [Archon Integration](architecture/archon-integration.md)
@@ -40,6 +41,7 @@ Welcome to the Cortex-OS documentation hub. Cortex-OS is an **Autonomous Softwar
 - [CLI Tools Integration](reference/cli/cli-tools-integration.md)
 - [Development Tools Reference](reference/cli/dev-tools-reference.md)
 - [Cortex Code Model Picker](reference/cli/cortex-code-model-picker.md)
+- [Vibe Check Oversight Runbook](runbooks/vibe-check.md)
 
 ### 🔌 Integrations
 - **MCP (Model Context Protocol)**

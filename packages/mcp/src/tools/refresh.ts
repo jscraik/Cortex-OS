@@ -76,7 +76,7 @@ export class ManualRefreshTool {
 	/**
 	 * Handle refresh tool execution
 	 */
-	protected async handleRefresh(params: RefreshParams, context?: any): Promise<RefreshResult> {
+	public async handleRefresh(params: RefreshParams, context?: any): Promise<RefreshResult> {
 		const correlationId = params._meta?.correlationId || context?.correlationId || this.generateCorrelationId();
 		const scope = params.scope || 'all';
 		const force = params.force || false;

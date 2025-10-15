@@ -1,5 +1,4 @@
----
-trigger: always_on
+- **Vibe Check MCP (Oversight):** After planning and **before any file writes, network calls, or long runs**, call `vibe_check` (configured via `VIBE_CHECK_HTTP_URL`, default `http://127.0.0.1:2091`). Invoke `pnpm oversight:vibe-check --goal "<task>" --plan "<steps>" --session <id>` (or the equivalent JSON-RPC payload) so the request includes `Accept: application/json, text/event-stream`. Save the raw response to `logs/vibe-check/<task>.json`, note the session ID in the task log, and attach logs containing `"brAInwav-vibe-check"` to the task folder and PR. See `docs/runbooks/vibe-check.md` for the canonical payload and troubleshooting. Missing logs **blocks** merge.
 alwaysApply: true
 ---
 # 🔄 Agentic Coding Workflow (Oct 2025)
@@ -35,6 +34,11 @@ be stored in `~/tasks/[feature]/`, organized into subfolders and files named for
 - **Local Memory parity:** On each decision/refactor/rectification, append rationale + evidence to
   `.github/instructions/memories.instructions.md` **and** persist via Local Memory **MCP/REST dual-mode**.
   Reviewers confirm entries exist (see `docs/local-memory-fix-summary.md`).
+- **Knowledge connectors live-check:** Verify `WIKIDATA_MCP_URL` and `ARXIV_MCP_URL` endpoints respond before planning.
+  Run `curl -sSf ${WIKIDATA_MCP_URL:-http://127.0.0.1:3029}/healthz` and
+  `curl -sSf ${ARXIV_MCP_URL:-http://127.0.0.1:3041}/healthz` (or
+  `npx @cortex-os/mcp-registry test <slug>`). Store the timestamps and responses in
+  `research/connectors-health.log`; planning is blocked if either endpoint is down.
 - **Secrets via 1Password CLI:** Fetch API keys, SSH keys, and tokens on-demand with the 1Password CLI (`op`);
   never persist these secrets in dotfiles, long-lived env vars, or repository artifacts.
 - **Hybrid Model — Live-Only Rule:** Embeddings, rerankers, and generations must use **live engines** only
@@ -62,6 +66,7 @@ be stored in `~/tasks/[feature]/`, organized into subfolders and files named for
 ## 1. Research
 
 - **Semantic code search & reuse analysis.**
+- **Authoritative knowledge fetch:** Before drafting non-trivial plans, run live `executeWikidataWorkflow` (facts/claims) and `arxiv_search`/`arxiv_download` (papers) when task scope involves external knowledge, standards, or prior art. Capture the full JSON responses under `research/` with provenance (`logs/wikidata/*.json`, `logs/arxiv/*.json`) and cite QIDs/ArXiv IDs directly in the plan.
 - **Discovery:** Identify use cases and feasibility; reduce the high failure rate of AI projects
   [oai_citation:4‡botscrew.com][discovery-phase]. Archive findings under the task.
 - **Feasibility spikes:** Time-box spikes [oai_citation:5‡agileanalytics.cloud][tech-spike]; store setup/results.
@@ -79,6 +84,7 @@ be stored in `~/tasks/[feature]/`, organized into subfolders and files named for
 - **Review research artifacts** in the task folder; build a clear implementation plan.
 - **Implementation plan:** Objectives, tasks, dependencies and timelines (MoSCoW or similar).
   Save `implementation-plan.md`.
+- **Knowledge sources:** Reference every Wikidata and ArXiv call (QIDs, SPARQL queries, ArXiv IDs) inside the plan so reviewers can trace assumptions to evidence. Plans lacking live citations must block until evidence is attached.
 - **SRS:** Methodology, scope, architecture, technology choices
   [oai_citation:8‡botscrew.com][srs-example]; save `srs.md`.
 - **Design:** Diagrams, wireframes, integration maps → `design/`.

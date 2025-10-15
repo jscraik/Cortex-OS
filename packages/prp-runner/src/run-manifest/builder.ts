@@ -4,7 +4,6 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { structuredClone } from 'node:util';
 import type { GateResult, PRPState } from '@cortex-os/kernel';
 import type { RepoInfo } from '../runner.js';
 import {
@@ -119,7 +118,15 @@ function deriveStageStatusFromGates(
 
 function snapshotEnforcementProfile(state: PRPState): EnforcementProfileSnapshot | undefined {
 	if (!state.enforcementProfile) return undefined;
-	return structuredClone(state.enforcementProfile);
+	return cloneEnforcementProfile(state.enforcementProfile);
+}
+
+function cloneEnforcementProfile(profile: EnforcementProfileSnapshot): EnforcementProfileSnapshot {
+	if (typeof globalThis.structuredClone === 'function') {
+		return globalThis.structuredClone(profile);
+	}
+	// Fallback for runtimes without structuredClone (e.g., older Node.js versions used in tests)
+	return JSON.parse(JSON.stringify(profile)) as EnforcementProfileSnapshot;
 }
 
 function mapEvidenceIds(evidenceIds: string[]): StageEntry['evidence'] {

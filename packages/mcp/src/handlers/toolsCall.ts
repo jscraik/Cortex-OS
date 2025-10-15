@@ -41,6 +41,7 @@ export interface ToolCallResult {
  * Enhanced tool call handler with SEP-1575 version constraint support
  */
 export class VersionedToolCallHandler {
+	private server: Server;
 	private registry: any; // VersionedToolRegistry - avoid circular import
 	private versioningEnabled: boolean;
 

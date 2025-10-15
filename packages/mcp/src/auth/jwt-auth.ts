@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { HTTPException } from '../errors';
+import { HTTPException } from '../errors.js';
 
 interface JWTPayload {
 	userId: string;
@@ -77,7 +77,11 @@ export class JWTAuth {
 		if (!this.jwtAvailable) {
 			// Validate static token
 			if (token.startsWith('static-')) {
-				return { userId: token.split('-')[1], valid: true };
+				const [, userId = 'unknown', session = 'static'] = token.split('-');
+				return {
+					userId,
+					sessionId: session,
+				};
 			}
 			throw new HTTPException(401, 'Invalid static token');
 		}

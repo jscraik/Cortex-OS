@@ -39,7 +39,9 @@
         "@cortex-os/utils": "workspace:*",
         "jsonwebtoken": "^9.0.0",
         "lodash-es": "^4.17.21",
+        "p-limit": "^5.0.0",
         "semver": "^7.6.0",
+        "undici": "^6.19.0",
         "zod": "^3.25.76"
     },
     "devDependencies": {

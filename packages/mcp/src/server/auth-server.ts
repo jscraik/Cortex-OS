@@ -1,8 +1,16 @@
-import type { PolicyRouter } from '@cortex-os/orchestration';
+type PolicyRouter = {
+	route: (input: {
+		interfaceId: string;
+		capabilities: string[];
+		tags: string[];
+		source: string;
+	}) => Promise<any>;
+	explain: (requestId: string) => any;
+};
 
 import { createJWTAuth, type JWTAuth } from '../auth/jwt-auth.js';
-import { HTTPException } from '../errors';
-import { Server } from '../server';
+import { HTTPException } from '../errors.js';
+import { Server } from '../server.js';
 import { createRoutingTools } from './routing-tools.js';
 
 interface AuthServerConfig {

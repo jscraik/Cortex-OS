@@ -1,4 +1,6 @@
 import { RemoteToolProxy } from '@cortex-os/mcp-bridge/runtime/remote-proxy';
+import { Agent } from 'undici';
+import pLimit from 'p-limit';
 import type {
 	RemoteTool,
 	RemoteToolProxyOptions,
@@ -13,6 +15,26 @@ import {
 	loadConnectorServiceMap,
 } from './service-map.js';
 import { normalizeWikidataToolName } from './normalization.js';
+import { RefreshScheduler, type Clock } from './refresh-scheduler.js';
+import { ManifestCache } from './cache.js';
+
+export interface ConnectorFeatureFlags {
+	asyncRefresh: boolean;
+	refreshIntervalMs: number;
+}
+
+export const parseConnectorFeatureFlags = (): ConnectorFeatureFlags => {
+	const asyncRefresh = process.env.MCP_CONNECTOR_REFRESH_SYNC !== 'true';
+	const intervalValue = Number(process.env.MCP_CONNECTOR_REFRESH_INTERVAL_MS);
+	const refreshIntervalMs = Number.isFinite(intervalValue) && intervalValue > 0 ? intervalValue : 300_000;
+
+	return {
+		asyncRefresh,
+		refreshIntervalMs,
+	};
+};
+
+const defaultClock: Clock = { now: () => Date.now() };
 
 export interface ConnectorProxyManagerOptions extends ConnectorServiceMapOptions {
         connectorsApiKey: string;
@@ -20,6 +42,7 @@ export interface ConnectorProxyManagerOptions extends ConnectorServiceMapOptions
         logger: ServerLogger;
         now?: () => number;
         createProxy?: (config: RemoteToolProxyOptions) => RemoteToolProxy;
+	clock?: Clock;
 }
 
 const buildAuthHeaders = (entry: ConnectorEntry, apiKey: string): Record<string, string> => {
@@ -50,6 +73,11 @@ const buildAuthHeaders = (entry: ConnectorEntry, apiKey: string): Record<string,
 
 export class ConnectorProxyManager {
         private readonly options: ConnectorProxyManagerOptions;
+	private readonly featureFlags: ConnectorFeatureFlags;
+	private readonly manifestCache: ManifestCache<ServiceMapPayload>;
+	private readonly clock: Clock;
+	private readonly agent: Agent;
+	private readonly scheduler?: RefreshScheduler;
         private readonly proxies = new Map<string, RemoteToolProxy>();
         private readonly registeredTools = new Set<string>();
         private manifest?: ServiceMapPayload;
@@ -57,36 +85,109 @@ export class ConnectorProxyManager {
 
         constructor(options: ConnectorProxyManagerOptions) {
                 this.options = options;
+		this.featureFlags = parseConnectorFeatureFlags();
+		this.clock =
+			options.clock ??
+			(options.now
+				? {
+						now: options.now,
+				  }
+				: defaultClock);
+		this.manifestCache = new ManifestCache<ServiceMapPayload>(this.clock);
+		this.agent = new Agent({ connections: 10, pipelining: 1 });
+		if (this.featureFlags.asyncRefresh) {
+			this.scheduler = new RefreshScheduler({
+				intervalMs: this.featureFlags.refreshIntervalMs,
+				onRefresh: () => this.syncInternal(true),
+				logger: this.options.logger,
+				clock: this.clock,
+			});
+			this.scheduler.start();
+		}
         }
 
         async sync(force = false): Promise<void> {
-                const now = this.options.now?.() ?? Date.now();
-                if (!force && now < this.expiresAtMs) {
-                        return;
-                }
-
-                const result = await loadConnectorServiceMap(this.options);
-                this.manifest = result.payload;
-                this.expiresAtMs = result.expiresAtMs;
-                this.options.logger.info(
-                        {
-                                connectorCount: result.payload.connectors.length,
-                                expiresAtMs: result.expiresAtMs,
-                        },
-                        'Loaded connectors manifest',
-                );
-
-                for (const entry of result.payload.connectors) {
-                        const enabled = entry.status === 'enabled';
-                        setConnectorAvailabilityGauge(entry.id, enabled);
-                        if (!enabled) {
-                                continue;
-                        }
-
-                        const proxy = await this.ensureProxy(entry);
-                        await this.registerRemoteTools(entry, proxy);
-                }
+		await this.syncInternal(force);
         }
+
+	private async syncInternal(force: boolean): Promise<void> {
+		if (!force) {
+			const cached = this.manifestCache.get();
+			if (cached) {
+				this.manifest = cached;
+				return;
+			}
+		}
+
+		try {
+			const result = await loadConnectorServiceMap({ ...this.options, agent: this.agent });
+			this.manifest = result.payload;
+			this.expiresAtMs = result.expiresAtMs;
+			const ttlMs = Math.max(0, result.expiresAtMs - this.clock.now());
+			this.manifestCache.set(result.payload, ttlMs);
+			await this.hydrateConnectors(result.payload);
+			this.options.logger.info(
+				{
+					brand: 'brAInwav',
+					connectorCount: result.payload.connectors.length,
+					expiresAtMs: result.expiresAtMs,
+				},
+				'Loaded connectors manifest',
+			);
+		} catch (error) {
+			this.options.logger.warn(
+				{
+					brand: 'brAInwav',
+					error: error instanceof Error ? error.message : error,
+				},
+				'Manifest refresh failed',
+			);
+
+			const cached = this.manifestCache.get();
+			if (cached) {
+				this.manifest = cached;
+				return;
+			}
+
+			throw error;
+		}
+	}
+
+	private async hydrateConnectors(manifest: ServiceMapPayload): Promise<void> {
+		for (const entry of manifest.connectors) {
+			setConnectorAvailabilityGauge(entry.id, entry.status === 'enabled');
+		}
+
+		const enabled = manifest.connectors.filter((entry) => entry.status === 'enabled');
+		if (!enabled.length) {
+			return;
+		}
+
+		const limit = pLimit(4);
+		const results = await Promise.allSettled(
+			enabled.map((entry) =>
+				limit(async () => {
+					const proxy = await this.ensureProxy(entry);
+					await this.registerRemoteTools(entry, proxy);
+				}),
+			),
+		);
+
+		results.forEach((result, index) => {
+			if (result.status === 'rejected') {
+				const entry = enabled[index];
+				setConnectorAvailabilityGauge(entry.id, false);
+				this.options.logger.warn(
+					{
+						brand: 'brAInwav',
+						connectorId: entry.id,
+						error: result.reason instanceof Error ? result.reason.message : result.reason,
+					},
+					'Connector sync failed',
+				);
+			}
+		});
+	}
 
         listConnectors(): ConnectorEntry[] {
                 return this.manifest?.connectors ?? [];
@@ -98,12 +199,14 @@ export class ConnectorProxyManager {
                         return existing;
                 }
 
-                const proxyFactory =
-                        this.options.createProxy ?? ((config: RemoteToolProxyOptions) => new RemoteToolProxy(config));
-                const proxy = proxyFactory({
-                        endpoint: entry.endpoint,
-                        enabled: entry.status === 'enabled',
-                        logger: this.options.logger,
+	const proxyFactory =
+	        this.options.createProxy ?? ((config: RemoteToolProxyOptions) => new RemoteToolProxy(config));
+	const proxy = proxyFactory({
+	        endpoint: entry.endpoint,
+	        enabled: entry.status === 'enabled',
+	        logger: this.options.logger as unknown as import('pino').Logger,
+		agent: this.agent,
+		connectorId: entry.id,
                         headers: buildAuthHeaders(entry, this.options.connectorsApiKey),
                         serviceLabel: entry.name,
                         unavailableErrorName: `${entry.id}ConnectorUnavailableError`,
@@ -116,7 +219,7 @@ export class ConnectorProxyManager {
                 return proxy;
         }
 
-        private async registerRemoteTools(entry: ConnectorEntry, proxy: RemoteToolProxy): Promise<void> {
+	        private async registerRemoteTools(entry: ConnectorEntry, proxy: RemoteToolProxy): Promise<void> {
                 const tools: RemoteTool[] = proxy.getTools();
                 if (!tools.length) {
                         return;
@@ -130,22 +233,51 @@ export class ConnectorProxyManager {
                                 continue;
                         }
 
+			const metadataTags = Array.from(
+				new Set([
+					...(normalized.tags ?? []),
+					...(normalized.scopes ?? []).map((scope) => `scope:${scope}`),
+					`connector:${entry.id}`,
+					`connectorName:${entry.name}`,
+					'brand:brAInwav',
+				]),
+			);
+
+			const metadata =
+				metadataTags.length || entry.metadata?.brand
+					? {
+							tags: metadataTags.length ? metadataTags : undefined,
+							author: entry.metadata?.brand ?? undefined,
+					  }
+					: undefined;
+
                         this.options.registry.registerTool({
                                 name: fullName,
                                 description: tool.description,
                                 inputSchema: tool.inputSchema,
                                 handler: async (args: Record<string, unknown>) =>
                                         proxy.callTool(normalized.originalName, args),
-                                metadata: {
-                                        connectorId: entry.id,
-                                        connectorName: entry.name,
-                                        scopes: normalized.scopes,
-                                        tags: normalized.tags,
-                                        brand: 'brAInwav',
-                                },
+				metadata,
                         });
 
                         this.registeredTools.add(fullName);
                 }
         }
+
+	async disconnect(): Promise<void> {
+		this.scheduler?.stop();
+		const disconnects = Array.from(this.proxies.values()).map(async (proxy) => {
+			try {
+				await proxy.disconnect();
+			} catch (error) {
+				this.options.logger.warn(
+					{ brand: 'brAInwav', error: error instanceof Error ? error.message : error },
+					'Failed to disconnect proxy',
+				);
+			}
+		});
+
+		await Promise.allSettled(disconnects);
+		await this.agent.close();
+	}
 }

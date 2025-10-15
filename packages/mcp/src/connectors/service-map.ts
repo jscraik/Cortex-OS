@@ -1,4 +1,9 @@
-import { type ServiceMapPayload, serviceMapResponseSchema, verifyServiceMapSignature } from '@cortex-os/protocol';
+import {
+	type ServiceMapPayload,
+	serviceMapResponseSchema,
+	verifyServiceMapSignature,
+} from '@cortex-os/protocol';
+import { Agent, fetch as undiciFetch, type RequestInit as UndiciRequestInit } from 'undici';
 
 const DEFAULT_TIMEOUT_MS = 5_000;
 
@@ -8,6 +13,7 @@ export interface ConnectorServiceMapOptions {
         signatureKey: string;
         fetchImpl?: typeof fetch;
         timeoutMs?: number;
+	agent?: Agent;
 }
 
 export interface VerifiedServiceMap {
@@ -23,22 +29,33 @@ export class ConnectorManifestError extends Error {
 }
 
 const buildHeaders = (apiKey?: string): HeadersInit => {
-        const headers: Record<string, string> = { Accept: 'application/json' };
-        if (apiKey) {
-                headers.Authorization = `Bearer ${apiKey}`;
-        }
-        return headers;
+	const headers: Record<string, string> = { Accept: 'application/json', 'Cache-Control': 'no-cache' };
+	if (apiKey) {
+		headers.Authorization = `Bearer ${apiKey}`;
+	}
+	return headers;
 };
 
 const executeRequest = async (options: ConnectorServiceMapOptions): Promise<Response> => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+	const fetchFn: typeof fetch =
+		options.fetchImpl ??
+		(options.agent
+			? ((url: string, init: RequestInit) => {
+				const undiciInit: UndiciRequestInit = {
+					...(init as UndiciRequestInit),
+					dispatcher: options.agent,
+				};
+				return undiciFetch(url, undiciInit) as unknown as Promise<Response>;
+			})
+			: fetch);
 
         try {
-                const response = await (options.fetchImpl ?? fetch)(options.serviceMapUrl, {
-                        headers: buildHeaders(options.apiKey),
-                        signal: controller.signal,
-                });
+		const response = await fetchFn(options.serviceMapUrl, {
+			headers: buildHeaders(options.apiKey),
+			signal: controller.signal,
+		});
 
                 if (!response.ok) {
                         const detail = await response.text().catch(() => '');

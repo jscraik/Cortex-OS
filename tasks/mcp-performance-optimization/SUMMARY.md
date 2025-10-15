@@ -2,8 +2,8 @@
 
 **Task ID**: `mcp-performance-optimization`  
 **Created**: 2025-10-15  
-**Status**: Planning Complete - Ready for Implementation  
-**Duration**: TBD (Estimated 7.5 days)
+**Status**: Implementation In Progress  
+**Duration**: TBD (work actively underway)
 
 ---
 
@@ -85,6 +85,17 @@ packages/mcp-registry/
 
 ---
 
+## Current Progress (as of 2025-10-15)
+
+- ✅ Shared `undici.Agent`, TTL-aware manifest cache, and background scheduler wired into `ConnectorProxyManager`
+- ✅ Parallel connector hydration with failure isolation and new unit tests for scheduler/cache/manager/service-map
+- ✅ Registry memory cache with batched flush integrated into `fs-store`, plus accompanying unit tests
+- ✅ `@cortex-os/mcp-registry` typecheck now clean with the new cache wiring
+- 🚧 Benchmarks and doc refresh pending (to capture ≥35% cold-start reduction and document rollout)
+- ⚠️ `@cortex-os/mcp` typecheck still blocked by long-standing configuration and auth test errors unrelated to this change set
+
+---
+
 ## Technical Decisions
 
 ### Dependencies Added
@@ -112,9 +123,9 @@ packages/mcp-registry/
 
 ### Coverage Targets
 
-- **Line Coverage**: ≥80%
-- **Branch Coverage**: ≥80%
-- **Function Coverage**: ≥90%
+- **Line Coverage**: ≥90% global
+- **Branch Coverage**: ≥90% global
+- **Function Coverage**: ≥92% (matches package baseline)
 
 ### Test Types
 
@@ -180,7 +191,7 @@ pm2 restart cortex-mcp
 
 - [ ] Code merged to main branch
 - [ ] CI green (lint, typecheck, tests)
-- [ ] Coverage ≥80% for `@cortex-os/mcp` and `@cortex-os/mcp-registry`
+- [ ] Coverage ≥90% global / ≥95% changed-line coverage for `@cortex-os/mcp` and `@cortex-os/mcp-registry`
 - [ ] Performance benchmarks confirm ≥35% cold-start improvement
 - [ ] p95 tool call latency ≤250ms validated
 - [ ] Registry flush latency <50ms p95
@@ -202,14 +213,14 @@ pm2 restart cortex-mcp
 
 ### Test Coverage
 
-- **@cortex-os/mcp**: TBD% line / TBD% branch
-- **@cortex-os/mcp-registry**: TBD% line / TBD% branch
+- **@cortex-os/mcp**: Pending (new unit suites executed; coverage export TBD)
+- **@cortex-os/mcp-registry**: Pending (new unit suites executed; coverage export TBD)
 
 ### Code Quality
 
-- **Lint Errors**: 0
-- **Type Errors**: 0
-- **Conventional Commits**: 10/10
+- **Lint Status**: Pending (not executed yet in this iteration)
+- **Typecheck Status**: Blocked by pre-existing errors in `packages/mcp-registry/src/providers/mcpmarket.ts`
+- **Conventional Commits**: N/A (work staged locally; commits deferred until review)
 
 ---
 
@@ -320,7 +331,7 @@ pnpm --filter @cortex-os/mcp-registry test:coverage
 ---
 
 **Planning Status**: ✅ Complete  
-**Implementation Status**: ⏳ Not Started  
+**Implementation Status**: 🚧 In Progress  
 **Approval Status**: ⏳ Pending Stakeholder Review
 
 **Last Updated**: 2025-10-15  

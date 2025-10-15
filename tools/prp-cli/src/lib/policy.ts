@@ -5,7 +5,9 @@ import {
   StageKeyEnum,
   StageStatusEnum,
   type RunManifest,
-} from '@cortex-os/prp-runner';
+} from './prp-schema.js';
+
+const BRAND = '[brAInwav]';
 
 const StagePolicyRuleSchema = z.object({
   allowStatus: z.array(StageStatusEnum).optional(),
@@ -39,7 +41,7 @@ export async function loadPolicy(policyPath: string): Promise<Policy> {
   try {
     parsed = JSON.parse(raw);
   } catch (error) {
-    throw new Error(`prp: unable to parse policy JSON (${(error as Error).message})`);
+    throw new Error(`${BRAND} prp: unable to parse policy JSON (${(error as Error).message})`);
   }
   return PolicySchema.parse(parsed);
 }
@@ -48,18 +50,21 @@ export function evaluatePolicy(manifest: RunManifest, policy: Policy): PolicyEva
   const findings: PolicyFinding[] = [];
 
   if (policy.requireStrictMode && !manifest.strictMode) {
-    findings.push({ level: 'error', message: 'Manifest must be generated in strict mode' });
+    findings.push({ level: 'error', message: `${BRAND} Manifest must be generated in strict mode` });
   }
 
   const requiredStages = policy.requireCompletedStages ?? PRODUCT_TO_AUTOMATION_PIPELINE.map((stage) => stage.key);
   for (const stageKey of requiredStages) {
     const stage = manifest.stages.find((entry) => entry.key === stageKey);
     if (!stage) {
-      findings.push({ level: 'error', message: `Manifest missing required stage ${stageKey}` });
+      findings.push({ level: 'error', message: `${BRAND} Manifest missing required stage ${stageKey}` });
       continue;
     }
     if (stage.status !== 'passed' && stage.status !== 'skipped') {
-      findings.push({ level: 'error', message: `Stage ${stageKey} status ${stage.status} does not satisfy policy` });
+      findings.push({
+        level: 'error',
+        message: `${BRAND} Stage ${stageKey} status ${stage.status} does not satisfy policy`,
+      });
     }
   }
 
@@ -67,22 +72,25 @@ export function evaluatePolicy(manifest: RunManifest, policy: Policy): PolicyEva
     for (const [stageKey, rules] of Object.entries(policy.stageRules)) {
       const stage = manifest.stages.find((entry) => entry.key === stageKey);
       if (!stage) {
-        findings.push({ level: 'error', message: `Policy rule references missing stage ${stageKey}` });
+        findings.push({ level: 'error', message: `${BRAND} Policy rule references missing stage ${stageKey}` });
         continue;
       }
       if (rules.allowStatus && !rules.allowStatus.includes(stage.status)) {
         findings.push({
           level: 'error',
-          message: `Stage ${stageKey} status ${stage.status} not allowed (allowed: ${rules.allowStatus.join(', ')})`,
+          message: `${BRAND} Stage ${stageKey} status ${stage.status} not allowed (allowed: ${rules.allowStatus.join(', ')})`,
         });
       }
       if (rules.disallowStatus && rules.disallowStatus.includes(stage.status)) {
-        findings.push({ level: 'error', message: `Stage ${stageKey} status ${stage.status} is disallowed` });
+        findings.push({
+          level: 'error',
+          message: `${BRAND} Stage ${stageKey} status ${stage.status} is disallowed`,
+        });
       }
       if (typeof rules.requireApprovals === 'number' && stage.gate.approvals.length < rules.requireApprovals) {
         findings.push({
           level: 'error',
-          message: `Stage ${stageKey} requires at least ${rules.requireApprovals} approvals (found ${stage.gate.approvals.length})`,
+          message: `${BRAND} Stage ${stageKey} requires at least ${rules.requireApprovals} approvals (found ${stage.gate.approvals.length})`,
         });
       }
       if (
@@ -91,7 +99,7 @@ export function evaluatePolicy(manifest: RunManifest, policy: Policy): PolicyEva
       ) {
         findings.push({
           level: 'warn',
-          message: `Stage ${stageKey} expected ${rules.requireCompletedChecks} passing checks`,
+          message: `${BRAND} Stage ${stageKey} expected ${rules.requireCompletedChecks} passing checks`,
         });
       }
     }

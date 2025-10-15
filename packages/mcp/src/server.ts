@@ -509,7 +509,7 @@ export class Server {
 	/**
 	 * Emit notification (for real-time updates)
 	 */
-	protected emitNotification(method: string, params?: any): void {
+	public emitNotification(method: string, params?: any): void {
 		this.logStructured('notification_emitted', { method, params });
 		// Base implementation - override in transport-specific servers
 	}

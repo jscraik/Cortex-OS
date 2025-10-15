@@ -42,7 +42,9 @@ export class MarketplaceProviderError extends Error {
 	}
 }
 
-const FALLBACK_SERVERS: Record<string, ServerInfo> = {
+type MarketplaceServerInfo = ServerInfo & { metadata?: Record<string, unknown> };
+
+const FALLBACK_SERVERS: Record<string, MarketplaceServerInfo> = {
 	'arxiv-1': {
 		name: 'arxiv-1',
 		transport: 'stdio',

@@ -33,7 +33,12 @@ export function normalizeWikidataToolName(
 	const canonical = WIKIDATA_TOOL_MAPPINGS[toolName] ?? toolName;
 	const normalizedName = `wikidata.${canonical}`;
 
-	const remoteTool = entry.remoteTools?.find((t) => t.name === canonical);
+	const metadataTools = Array.isArray((entry.metadata as { tools?: unknown })?.tools)
+		? ((entry.metadata as { tools?: Array<{ name: string; tags?: string[]; scopes?: string[] }> })
+			.tools ?? [])
+		: [];
+
+	const remoteTool = metadataTools.find((tool) => tool.name === canonical);
 
 	return {
 		originalName: toolName,

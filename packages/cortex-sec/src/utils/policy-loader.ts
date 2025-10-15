@@ -111,7 +111,7 @@ export async function loadSecurityPolicies(
 				},
 				rulesetMapping: validated.ruleset_mapping,
 				riskWeights: validated.risk_weights,
-				exemptions: validated.exemptions,
+				exemptions: validated.exemptions as Array<{ patterns: string[]; reason: string }>,
 			});
 		}
 	} catch (error) {

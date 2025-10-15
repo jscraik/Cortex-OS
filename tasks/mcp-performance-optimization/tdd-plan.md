@@ -453,7 +453,7 @@ vi.spyOn(Math, 'random').mockReturnValue(0.5); // 0% jitter
 
 ### Filesystem Determinism
 
-- **Temp directories**: Use `tmpdir()` + timestamp to avoid collisions
+- **Temp directories**: Use `await fs.mkdtemp(join(tmpdir(), "mcp-perf-"))` for isolation (no ambient timestamps).
 - **Cleanup**: Always remove temp files in `afterEach`
 
 ---
@@ -462,9 +462,9 @@ vi.spyOn(Math, 'random').mockReturnValue(0.5); // 0% jitter
 
 ### Target
 
-- **Line Coverage**: ≥80%
-- **Branch Coverage**: ≥80%
-- **Function Coverage**: ≥90%
+- **Line Coverage**: ≥90% global
+- **Branch Coverage**: ≥90% global
+- **Function Coverage**: ≥92% (matches package baselines)
 
 ### Commands
 
@@ -497,7 +497,7 @@ cp -r packages/mcp-registry/coverage/html ~/tasks/mcp-performance-optimization/v
 
 - **JUnit XML**: `~/tasks/mcp-performance-optimization/test-logs/unit-tests.xml`
 - **HTML Reports**: `~/tasks/mcp-performance-optimization/verification/coverage-{mcp,registry}/`
-- **Summary**: Console output shows ≥80% for all metrics
+- **Summary**: Console output shows ≥90% global metrics and ≥95% changed-line coverage (use coverage diff tooling).
 
 ---
 
@@ -727,7 +727,7 @@ pnpm stryker run --mutate 'src/connectors/manager.ts,src/connectors/cache.ts'
 
 ## Success Criteria
 
-- [ ] All unit tests pass (≥80% coverage)
+- [ ] All unit tests pass (≥90% global / ≥95% changed-line coverage)
 - [ ] All integration tests pass
 - [ ] Performance benchmarks show ≥35% improvement
 - [ ] No flaky tests (run 10x to verify determinism)
