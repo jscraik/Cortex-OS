@@ -1,7 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { Logger } from 'pino';
-import type { Agent } from 'undici';
 
 export interface RemoteTool {
 	name: string;
@@ -10,6 +9,10 @@ export interface RemoteTool {
 }
 
 type StructuredLogger = Pick<Logger, 'info' | 'warn' | 'error' | 'debug'>;
+
+export interface DispatcherLike<O = unknown, H = unknown, R = unknown> {
+        dispatch(options: O, handler: H): Promise<R>;
+}
 
 export interface RemoteToolProxyOptions {
         endpoint: string;
@@ -21,36 +24,68 @@ export interface RemoteToolProxyOptions {
         unavailableErrorMessage?: string;
         onAvailabilityChange?: (up: boolean) => void;
         headers?: Record<string, string>;
-	agent?: Agent;
-	connectorId?: string;
+        agent?: DispatcherLike;
+        connectorId?: string;
 }
 
 const DEFAULT_RECONNECT_DELAY = 5_000;
+
+interface ResolvedRemoteToolProxyOptions {
+        endpoint: string;
+        enabled: boolean;
+        logger: StructuredLogger;
+        reconnectDelay: number;
+        serviceLabel: string;
+        unavailableErrorName: string;
+        unavailableErrorMessage: string;
+        onAvailabilityChange: (up: boolean) => void;
+        headers: Record<string, string>;
+        agent?: DispatcherLike;
+        connectorId?: string;
+}
+
 type RemoteToolDescriptor = {
-	name: string;
-	description?: string;
-	inputSchema: Record<string, unknown>;
+        name: string;
+        description?: string;
+        inputSchema: Record<string, unknown>;
 };
 
 export class RemoteToolProxy {
-	private client: Client | null = null;
-	private transport: SSEClientTransport | null = null;
-	private readonly config: Required<RemoteToolProxyOptions>;
-	private connected = false;
-	private reconnectTimer: NodeJS.Timeout | null = null;
-	private remoteTools: RemoteTool[] = [];
-	private lastFailureLoggedAt: number | null = null;
+        private client: Client | null = null;
+        private transport: SSEClientTransport | null = null;
+        private readonly config: ResolvedRemoteToolProxyOptions;
+        private connected = false;
+        private reconnectTimer: NodeJS.Timeout | null = null;
+        private remoteTools: RemoteTool[] = [];
+        private lastFailureLoggedAt: number | null = null;
 
         constructor(config: RemoteToolProxyOptions) {
+                const {
+                        endpoint,
+                        enabled,
+                        logger,
+                        reconnectDelay = DEFAULT_RECONNECT_DELAY,
+                        serviceLabel = 'Remote MCP',
+                        unavailableErrorName = 'RemoteServiceUnavailableError',
+                        unavailableErrorMessage = 'Remote MCP proxy is temporarily unavailable',
+                        onAvailabilityChange = () => {},
+                        headers = {},
+                        agent,
+                        connectorId,
+                } = config;
+
                 this.config = {
-                        reconnectDelay: config.reconnectDelay ?? DEFAULT_RECONNECT_DELAY,
-                        serviceLabel: config.serviceLabel ?? 'Remote MCP',
-                        unavailableErrorName: config.unavailableErrorName ?? 'RemoteServiceUnavailableError',
-                        unavailableErrorMessage:
-                                config.unavailableErrorMessage ?? 'Remote MCP proxy is temporarily unavailable',
-                        onAvailabilityChange: config.onAvailabilityChange ?? (() => {}),
-                        headers: config.headers ?? {},
-                        ...config,
+                        endpoint,
+                        enabled,
+                        logger,
+                        reconnectDelay,
+                        serviceLabel,
+                        unavailableErrorName,
+                        unavailableErrorMessage,
+                        onAvailabilityChange,
+                        headers,
+                        agent,
+                        connectorId,
                 };
         }
 
@@ -74,7 +109,7 @@ export class RemoteToolProxy {
 				`Connecting to ${this.config.serviceLabel} MCP server...`,
 			);
 
-			const requestInit: RequestInit & { dispatcher?: Agent } = {
+                        const requestInit: RequestInit & { dispatcher?: DispatcherLike } = {
 				headers: this.config.headers,
 			};
 
