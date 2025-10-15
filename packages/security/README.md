@@ -32,6 +32,7 @@ _Zero-trust security with mTLS, workload identity management, and LLM-aware stat
 - **📨 Contract-Validated Events**: Emit CloudEvents with contract registry validation and policy enforcement
 - **🔒 Zero Trust Architecture**: Never trust, always verify security model
 - **🤖 LLM Security Analysis**: OWASP Top-10 LLM and MITRE ATLAS static analysis
+- **✅ ASVS Alignment**: OWASP Application Security Verification Standard Level 2 baseline with targeted Level 3 controls
 - **⚡ High Performance**: Optimized security operations with minimal overhead
 
 ## Quick Start
@@ -109,3 +110,19 @@ pnpm semgrep
 ### Analysis Thresholds
 
 The security scan fails on any finding with severity **WARNING** or higher. Results are exported to `semgrep.sarif` for CI/CD integration and automated security reporting.
+
+## OWASP ASVS Alignment
+
+| Requirement Family | Level 2 Status | Level 3 Status | Evidence Source |
+| ------------------- | -------------- | -------------- | --------------- |
+| Architecture & Threat Modeling (V1) | ✅ Implemented | ⚠️ Roadmap | ADRs, MITRE ATLAS navigator layer |
+| Authentication & Session (V2/V3) | ✅ Implemented | ✅ Implemented | SPIFFE/SPIRE identities, OAuth 2.1 + PKCE |
+| Access Control & Validation (V4/V5) | ✅ Implemented | ✅ Implemented | Policy engine guardrails, Zod schemas |
+| Cryptography & Data Protection (V6/V8) | ✅ Implemented | ⚠️ Roadmap | KMS secrets, encryption backlog tracking |
+| Error Handling & Logging (V7) | ✅ Implemented | ✅ Implemented | Structured audit logs, evidence IDs |
+| Communications (V9) | ✅ Implemented | ✅ Implemented | TLS 1.3 + mTLS enforcement |
+| Malicious Code & Configuration (V10/V14) | ✅ Implemented | ✅ Implemented | Semgrep OWASP/LLM scans, GitOps drift detection |
+| Business Logic (V11) | ✅ Implemented | ⚠️ Roadmap | Abuse-case tests, manual approvals |
+| Files, Resources & APIs (V12/V13) | ✅ Implemented | ✅ Implemented | Contract registry, rate limiting, CSP/sandbox |
+
+> ⚠️ Roadmap items require linked remediation issues before release; compensating controls must be documented in PRs.

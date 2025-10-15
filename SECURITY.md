@@ -316,34 +316,64 @@ Our security team conducts regular manual testing:
 | **LLM09: Overreliance**                     | ✅ Compliant | Human oversight, confidence scoring   |
 | **LLM10: Model Theft**                      | ✅ Compliant | Access controls, model protection     |
 
+### OWASP ASVS 4.0.3 Alignment
+
+| Verification Requirement                      | L1 | L2 | L3 | Implementation Highlights |
+| --------------------------------------------- | -- | -- | -- | ------------------------- |
+| **V1 Architecture & Threat Modeling**         | ✅ | ✅ | ⚠️ | Zero-trust reviews, MITRE ATLAS scenarios, design ADRs |
+| **V2 Authentication**                         | ✅ | ✅ | ✅ | SPIFFE/SPIRE identity, mTLS mutual auth, MFA enforcement |
+| **V3 Session Management**                     | ✅ | ✅ | ⚠️ | OAuth 2.1 + PKCE, short-lived tokens, secure cookie flags |
+| **V4 Access Control**                         | ✅ | ✅ | ✅ | RBAC/ABAC policies, policy-engine guardrails |
+| **V5 Validation, Sanitization & Encoding**    | ✅ | ✅ | ✅ | Zod validation, safe serialization, output encoding |
+| **V6 Stored Cryptography**                    | ✅ | ✅ | ⚠️ | KMS secrets, envelope encryption, rotation runbooks |
+| **V7 Error Handling & Logging**               | ✅ | ✅ | ✅ | Structured audit trails, privacy-aware logging |
+| **V8 Data Protection**                        | ✅ | ✅ | ⚠️ | Data classification, minimization, L3 encryption backlog |
+| **V9 Communications**                         | ✅ | ✅ | ✅ | TLS 1.3 everywhere, mTLS mesh enforcement |
+| **V10 Malicious Code & Configuration**        | ✅ | ✅ | ✅ | Semgrep OWASP/LLM, IaC policy scans, supply-chain attestations |
+| **V11 Business Logic**                        | ✅ | ✅ | ⚠️ | Abuse-case tests, workflow guardrails, manual approvals |
+| **V12 Files, Resources & APIs**               | ✅ | ✅ | ✅ | CSP + sandboxing, contract schemas, resource isolation |
+| **V13 API & Web Service Security**            | ✅ | ✅ | ✅ | OpenAPI linting, rate limiting, telemetry correlation |
+| **V14 Configuration**                         | ✅ | ✅ | ✅ | GitOps baselines, drift detection, secret scanning |
+
+> **Legend:** ✅ = implemented and continuously verified, ⚠️ Planned = tracked in roadmap with open stories, 🚧 = in progress.
+
+Our ASVS alignment work feeds into the MITRE ATLAS navigator to ensure adversarial ML coverage stays in lockstep with web and API controls. Roadmapped L3 capabilities are tracked in the Cortex-OS security program backlog, with quarterly reviews to close any remaining gaps.
+
 ## 📋 Security Checklist for Contributors
 
-### Code Security Checklist
+### Code & Platform Security Checklist (ASVS Mapping)
 
-- [ ] All inputs validated with Zod schemas
-- [ ] No hardcoded secrets or credentials
-- [ ] Proper error handling without information leakage
-- [ ] Secure communication protocols used
-- [ ] Authentication and authorization implemented
-- [ ] Logging configured appropriately
-- [ ] Dependencies are up-to-date and scanned
+- [ ] **V1 Architecture & Threat Modeling (L1-L2)** – Document threat models, update ADRs, and record MITRE ATLAS scenarios for new features.
+- [ ] **V2 Authentication (L1-L3)** – Enforce SPIFFE/SPIRE identity, rotate credentials, and verify MFA or device attestation where applicable.
+- [ ] **V3 Session Management (L1-L2)** – Use short-lived, server-side sessions with secure flags and implement token revocation workflows.
+- [ ] **V4 Access Control (L1-L3)** – Apply least privilege RBAC/ABAC rules, add defense-in-depth policy checks, and test negative access paths.
+- [ ] **V5 Input Validation (L1-L3)** – Validate all inbound data with schemas, reject on failure, and encode outputs for target contexts.
+- [ ] **V6 Cryptography (L1-L2)** – Store secrets in approved KMS, enforce TLS 1.3+, and document rotation cadence.
+- [ ] **V7 Error Handling & Logging (L1-L3)** – Emit structured, privacy-safe logs, scrub secrets, and enable tamper detection.
+- [ ] **V8 Data Protection (L1-L2)** – Classify data, enforce retention policies, and ensure data minimization in AI prompts.
+- [ ] **V9 Communications (L1-L3)** – Require mTLS for service mesh hops, enforce TLS for external clients, and monitor certificate health.
+- [ ] **V10 Malicious Code & Configuration (L1-L2)** – Run Semgrep OWASP/LLM rules, IaC scanners, and dependency audits before merge.
+- [ ] **V11 Business Logic (L1-L2)** – Write misuse/abuse tests for workflows, ensure fallback and escalation paths exist.
+- [ ] **V12 Files & Resources (L1-L3)** – Restrict file access, scan uploads, and sandbox untrusted code execution paths.
+- [ ] **V13 API Security (L1-L3)** – Version APIs, enforce schema-based validation, enable rate limits and telemetry correlations.
+- [ ] **V14 Configuration (L1-L3)** – Manage configs via GitOps, lock defaults to secure values, and monitor drift across environments.
 
-### AI/ML Security Checklist
+### AI/ML Security Checklist (OWASP LLM + ASVS Extensions)
 
-- [ ] Prompt injection protection implemented
-- [ ] Model inputs and outputs validated
-- [ ] PII detection and anonymization in place
-- [ ] Rate limiting for AI endpoints
-- [ ] Model access controls configured
-- [ ] Bias testing performed
+- [ ] Map each LLM integration to MITRE ATLAS techniques and associated detections.
+- [ ] Enforce prompt hygiene, output filtering, and evidence capture for critical flows.
+- [ ] Validate training and fine-tuning datasets for poisoning, lineage, and consent requirements.
+- [ ] Apply rate limiting, workload isolation, and cost guards against LLM DoS or resource abuse.
+- [ ] Restrict model and tool capabilities via explicit allowlists and contract enforcement.
+- [ ] Review fairness/bias dashboards and document mitigations for material risks.
 
-### Infrastructure Security Checklist
+### Infrastructure & Operations Checklist
 
-- [ ] TLS encryption for all communications
-- [ ] Secrets management properly configured
-- [ ] Container security scanning performed
-- [ ] Network segmentation implemented
-- [ ] Monitoring and alerting configured
+- [ ] Enforce TLS 1.3 + mTLS where supported, with automated certificate rotation.
+- [ ] Confirm secret storage (Vault/KMS) policies and audit logs for administrative actions.
+- [ ] Run container and host vulnerability scans (CIS Benchmarks, Trivy, etc.) before promotion.
+- [ ] Validate network segmentation, egress policies, and zero-trust controls per ASVS V9 requirements.
+- [ ] Ensure monitoring, alerting, and incident runbooks cover ASVS V7/V10/V13 controls with MITRE ATLAS adversary playbooks.
 
 ## 🆘 Security Incident Response
 
