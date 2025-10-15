@@ -21,7 +21,7 @@
     "line": 94,
     "end_line": 99,
     "severity": "medium",
-    "category": "brainwav-branding",
+    "category": "brAInwav-branding",
     "description": "Metrics logging omits the required brAInwav branding/structured fields, conflicting with CODESTYLE and observability requirements for production logs.",
     "evidence": "Lines 94-99: console.log('[Memory Metrics]', { ...metrics });",
     "fix": "Log through the shared logger with brand:'brAInwav' and structured fields (component, trace_id, etc.) instead of a bare console.log().",
