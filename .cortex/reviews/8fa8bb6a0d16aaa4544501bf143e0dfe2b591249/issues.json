@@ -1,0 +1,172 @@
+[
+  {
+    "file": "packages/memories/src/observability/provider.ts",
+    "line": 58,
+    "end_line": 58,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "OpenTelemetry sampling uses Math.random() in production, violating brAInwav's absolute prohibition on non-cryptographic randomness and creating inconsistent tracing behaviour.",
+    "evidence": "Line 58: if (Math.random() > this.config.sampleRate) {",
+    "fix": "Inject a cryptographically secure sampler (e.g., import secureRatio() from the package's secure random helper or Node crypto) and use it instead of Math.random().",
+    "tests_to_add": "Add a unit test that stubs the secure sampler to verify spans are skipped when the injected ratio exceeds the sample rate.",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#math-random",
+      "checklist:2.1-brainwav-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/memories/src/observability/provider.ts",
+    "line": 94,
+    "end_line": 99,
+    "severity": "medium",
+    "category": "brAInwav-branding",
+    "description": "Metrics logging omits the required brAInwav branding/structured fields, conflicting with CODESTYLE and observability requirements for production logs.",
+    "evidence": "Lines 94-99: console.log('[Memory Metrics]', { ...metrics });",
+    "fix": "Log through the shared logger with brand:'brAInwav' and structured fields (component, trace_id, etc.) instead of a bare console.log().",
+    "tests_to_add": "Add a logging unit test to confirm emitted records include brand:'brAInwav'.",
+    "rule": "brAInwav.branding.missing-in-logs",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "checklist:5-observability",
+      "policy:RULES_OF_AI#branding"
+    ]
+  },
+  {
+    "file": "packages/memories/src/adapters/store.lifecycle.ts",
+    "line": 418,
+    "end_line": 670,
+    "severity": "high",
+    "category": "brAInwav-prohibition",
+    "description": "Lifecycle management generates IDs with Math.random() (coldStorageId, compacted_*) which violates production standards and risks collisions in archival/compaction flows.",
+    "evidence": "Lines 418 & 670: `coldStorageId: `cold-${Date.now()}-${Math.random()...}` and id: `compacted_${Date.now()}_${Math.random()...}`",
+    "fix": "Use the package's secure ID helper (e.g., createPrefixedId()/crypto.randomUUID) to generate deterministic, collision-resistant identifiers.",
+    "tests_to_add": "Extend lifecycle tests to assert generated IDs use the secure helper (mock the helper to capture calls).",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#math-random",
+      "checklist:2.1-brainwav-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/memories/src/adapters/store.secure.ts",
+    "line": 668,
+    "end_line": 668,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Audit log IDs are derived from Math.random(), violating security guidance and enabling guessable identifiers in a security-sensitive subsystem.",
+    "evidence": "Line 668: return `audit_${Date.now()}_${Math.random()...}`;",
+    "fix": "Switch to a crypto-backed generator (e.g., createPrefixedId('audit')) for audit entries.",
+    "tests_to_add": "Add a unit test that injects the secure ID factory and asserts the audit ID format without Math.random().",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#math-random",
+      "checklist:7-security"
+    ]
+  },
+  {
+    "file": "packages/memories/src/adapters/store.external-sqlite.ts",
+    "line": 212,
+    "end_line": 212,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "SQLite adapter assigns memory IDs with Math.random(), breaking the prohibition and risking duplicate primary keys across distributed writers.",
+    "evidence": "Line 212: const id = memory.id || `mem_${Date.now()}_${Math.random()...}`;",
+    "fix": "Import the secure ID helper used elsewhere (crypto.randomUUID or createPrefixedId) for deterministic ID creation.",
+    "tests_to_add": "Extend the upsert test to assert IDs come from the secure generator (mock it to ensure invocation).",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#math-random",
+      "checklist:7-security"
+    ]
+  },
+  {
+    "file": "packages/memories/src/adapters/store.streaming.ts",
+    "line": 132,
+    "end_line": 132,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "Streaming subscriptions allocate IDs with Math.random(), conflicting with production policy and risking collisions when many listeners attach.",
+    "evidence": "Line 132: const subscriptionId = Math.random().toString(36).substring(7);",
+    "fix": "Depend on the secure ID utility (e.g., createPrefixedId('sub')) so subscriber handles are cryptographically strong.",
+    "tests_to_add": "Update the subscription tests to assert IDs originate from the secure helper (mock to track usage).",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#math-random",
+      "checklist:7-security"
+    ]
+  },
+  {
+    "file": "packages/orchestration/src/langgraph/context-graph/create-context-graph.ts",
+    "line": 107,
+    "end_line": 107,
+    "severity": "high",
+    "category": "brAInwav-prohibition",
+    "description": "Context graph orchestrator seeds request IDs with Math.random(), breaching constitutional rules and undermining traceability across multi-agent workflows.",
+    "evidence": "Line 107: initialState.requestId || `ctx-${Date.now()}-${Math.random()...}`",
+    "fix": "Reuse orchestration's secure random helpers (createPrefixedId) for request IDs.",
+    "tests_to_add": "Add a unit test that injects the secure ID factory and ensures execute() returns a crypto-generated requestId.",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#math-random",
+      "checklist:2.1-brainwav-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/mcp-core/src/tools/task-tool.ts",
+    "line": 274,
+    "end_line": 274,
+    "severity": "high",
+    "category": "brAInwav-prohibition",
+    "description": "TaskTool generateTaskId() relies on Math.random(), violating production policy and threatening task collision/correlation guarantees for MCP clients.",
+    "evidence": "Line 274: return `task_${Date.now()}_${Math.random()...}`;",
+    "fix": "Adopt crypto-backed IDs (e.g., createPrefixedId('task')) shared across MCP tools.",
+    "tests_to_add": "Augment TaskTool tests to assert IDs come from a secure generator (spy on injected helper).",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#math-random",
+      "checklist:2.1-brainwav-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/mcp-core/src/tools/todo-write-tool.ts",
+    "line": 430,
+    "end_line": 430,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "TodoWriteTool's generateId() uses Math.random(), conflicting with the prohibition and permitting predictable todo identifiers in MCP storage.",
+    "evidence": "Line 430: return `todo_${Date.now()}_${Math.random()...}`;",
+    "fix": "Switch to the existing secure ID helper shared by MCP utilities.",
+    "tests_to_add": "Add a unit test verifying todo IDs are sourced from the secure helper (mock to capture calls).",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#math-random",
+      "checklist:2.1-brainwav-constitutional-compliance"
+    ]
+  },
+  {
+    "file": "packages/workflow-orchestrator/src/orchestrator/WorkflowEngine.ts",
+    "line": 50,
+    "end_line": 50,
+    "severity": "high",
+    "category": "brainwav-prohibition",
+    "description": "WorkflowEngine.generateWorkflowId() builds workflow IDs with Math.random(), breaching constitutional policy and risking duplicate workflow executions.",
+    "evidence": "Line 50: return `wf-${Date.now()}-${Math.random()...}`;",
+    "fix": "Reuse the crypto-backed ID helper exported in this package (createPrefixedId or crypto.randomUUID).",
+    "tests_to_add": "Extend workflow engine tests to assert IDs originate from the secure generator by mocking the helper.",
+    "rule": "brainwav.math-random-in-prod",
+    "standards": [
+      "codestyle:0-brainwav-production-standards",
+      "policy:RULES_OF_AI#math-random",
+      "checklist:2.1-brainwav-constitutional-compliance"
+    ]
+  }
+]
