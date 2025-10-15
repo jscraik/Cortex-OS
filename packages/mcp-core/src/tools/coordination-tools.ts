@@ -304,15 +304,7 @@ export class RegisterAgentTool implements McpTool<RegisterAgentInput, RegisterAg
 			}
 
                         const { trustLevel, ...agentInput } = input.agent;
-                        const baseAgent: Omit<Agent, 'metadata'> = {
-                                id: agentInput.id,
-                                name: agentInput.name,
-                                role: agentInput.role,
-                                status: agentInput.status,
-                                capabilities: agentInput.capabilities,
-                                workspaceId: agentInput.workspaceId,
-                                sessionId: agentInput.sessionId,
-                        };
+                        const baseAgent: Omit<Agent, 'metadata'> = { ...agentInput };
                         const agent: Agent = {
                                 ...baseAgent,
                                 metadata: {
