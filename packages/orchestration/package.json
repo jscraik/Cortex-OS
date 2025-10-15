@@ -29,12 +29,10 @@
   },
   "dependencies": {
     "@cortex-os/agent-contracts": "workspace:*",
-    "@cortex-os/agents": "workspace:*",
     "@cortex-os/a2a-common": "workspace:*",
     "@cortex-os/a2a-contracts": "workspace:*",
     "@cortex-os/a2a-core": "workspace:*",
     "@cortex-os/a2a-transport": "workspace:*",
-    "@cortex-os/agent-contracts": "workspace:*",
     "@cortex-os/contracts": "workspace:*",
     "@cortex-os/hooks": "workspace:*",
     "@cortex-os/kernel": "workspace:*",
@@ -80,6 +78,7 @@
     "@cortex-os/cortex-sec": "workspace:*"
   },
   "devDependencies": {
+    "@cortex-os/agents": "workspace:*",
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/crypto-js": "^4.2.2",
