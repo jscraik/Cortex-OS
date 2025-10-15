@@ -1,0 +1,20 @@
+{
+    "name": "@cortex-os/project-workspace",
+    "version": "0.0.1",
+    "private": true,
+    "description": "Unified workspace for project infrastructure, documentation, and governance",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "dev": "echo 'Project workspace active - access to .cortex, .github, tasks, and project-documentation'",
+        "info": "node info.js"
+    },
+    "keywords": [
+        "workspace",
+        "project-management",
+        "governance",
+        "documentation"
+    ],
+    "author": "Cortex-OS Team",
+    "license": "Apache-2.0"
+}

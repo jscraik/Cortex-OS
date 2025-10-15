@@ -6,8 +6,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	CircuitBreaker,
-	CircuitBreakerFactory,
 	CircuitBreakerState,
+	getCircuitBreakerInstance,
+	getCircuitBreakerInstanceNames,
+	getAllCircuitBreakerMetrics,
+	destroyAllCircuitBreakers,
+	createHttpCircuitBreaker,
+	createDatabaseCircuitBreaker,
+	createApiCircuitBreaker,
 } from '../../src/lib/circuit-breaker.js';
 
 describe('Circuit Breaker', () => {
@@ -180,19 +186,16 @@ describe('Circuit Breaker', () => {
 		});
 
 		it('should fail after max retries', async () => {
-			const alwaysFailFn = vi.fn().mockRejectedValue(new Error('Always fail'));
+		const alwaysFailFn = vi.fn().mockRejectedValue(new Error('Always fail'));
+		(breaker as unknown as { delay(ms: number): Promise<void> }).delay = vi
+			.fn()
+			.mockResolvedValue();
 
-			// Start the retry operation
-			const resultPromise = breaker.callWithRetry(alwaysFailFn);
+		await expect(breaker.callWithRetry(alwaysFailFn)).rejects.toThrow('Always fail');
 
-			// Fast-forward through all retry delays
-			await vi.runAllTimersAsync();
-
-			await expect(resultPromise).rejects.toThrow('Always fail');
-
-			// Should be called maxRetries times
-			expect(alwaysFailFn).toHaveBeenCalledTimes(2); // maxRetries from config
-		});
+		// Should be called maxRetries times
+		expect(alwaysFailFn).toHaveBeenCalledTimes(2); // maxRetries from config
+	});
 		it('should not retry when circuit is open', async () => {
 			// Open the circuit first
 			const failFn = vi.fn().mockRejectedValue(new Error('Service down'));
@@ -325,54 +328,51 @@ describe('Circuit Breaker', () => {
 	});
 });
 
-describe('CircuitBreakerFactory', () => {
+describe('Circuit breaker registry helpers', () => {
 	afterEach(() => {
-		CircuitBreakerFactory.destroyAll();
+		destroyAllCircuitBreakers();
 	});
 
-	describe('Instance Management', () => {
+	describe('Instance management', () => {
 		it('should create and return named instances', () => {
-			const instance1 = CircuitBreakerFactory.getInstance('test-service');
-			const instance2 = CircuitBreakerFactory.getInstance('test-service');
+			const instance1 = getCircuitBreakerInstance('test-service');
+			const instance2 = getCircuitBreakerInstance('test-service');
 
-			expect(instance1).toBe(instance2); // Should return same instance
-			expect(CircuitBreakerFactory.getInstanceNames()).toContain('test-service');
+			expect(instance1).toBe(instance2);
+			expect(getCircuitBreakerInstanceNames()).toContain('test-service');
 		});
 
 		it('should create different instances for different names', () => {
-			const instance1 = CircuitBreakerFactory.getInstance('service-1');
-			const instance2 = CircuitBreakerFactory.getInstance('service-2');
+			const instance1 = getCircuitBreakerInstance('service-1');
+			const instance2 = getCircuitBreakerInstance('service-2');
 
 			expect(instance1).not.toBe(instance2);
-			expect(CircuitBreakerFactory.getInstanceNames()).toContain('service-1');
-			expect(CircuitBreakerFactory.getInstanceNames()).toContain('service-2');
+			expect(getCircuitBreakerInstanceNames()).toEqual(
+				expect.arrayContaining(['service-1', 'service-2']),
+			);
 		});
 
 		it('should destroy all instances', () => {
-			CircuitBreakerFactory.getInstance('service-1');
-			CircuitBreakerFactory.getInstance('service-2');
+			getCircuitBreakerInstance('service-1');
+			getCircuitBreakerInstance('service-2');
 
-			expect(CircuitBreakerFactory.getInstanceNames()).toHaveLength(2);
-
-			CircuitBreakerFactory.destroyAll();
-
-			expect(CircuitBreakerFactory.getInstanceNames()).toHaveLength(0);
+			expect(getCircuitBreakerInstanceNames()).toHaveLength(2);
+			destroyAllCircuitBreakers();
+			expect(getCircuitBreakerInstanceNames()).toHaveLength(0);
 		});
 
 		it('should get metrics for all instances', async () => {
-			const instance1 = CircuitBreakerFactory.getInstance('service-1');
-			const instance2 = CircuitBreakerFactory.getInstance('service-2');
+			const instance1 = getCircuitBreakerInstance('service-1');
+			const instance2 = getCircuitBreakerInstance('service-2');
 
-			// Make some calls to generate metrics
 			await instance1.call(() => Promise.resolve('success'));
 			try {
 				await instance2.call(() => Promise.reject(new Error('failure')));
 			} catch {
-				// Expected to fail
+				// expected failure
 			}
 
-			const allMetrics = CircuitBreakerFactory.getAllMetrics();
-
+			const allMetrics = getAllCircuitBreakerMetrics();
 			expect(allMetrics).toHaveProperty('service-1');
 			expect(allMetrics).toHaveProperty('service-2');
 			expect(allMetrics['service-1'].successCount).toBe(1);
@@ -380,31 +380,22 @@ describe('CircuitBreakerFactory', () => {
 		});
 	});
 
-	describe('Pre-configured Factories', () => {
+	describe('Pre-configured factories', () => {
 		it('should create HTTP circuit breaker with appropriate settings', () => {
-			const httpBreaker = CircuitBreakerFactory.createHttpCircuitBreaker();
-
-			const metrics = httpBreaker.getMetrics();
-			expect(metrics.state).toBe(CircuitBreakerState.CLOSED);
-
+			const httpBreaker = createHttpCircuitBreaker();
+			expect(httpBreaker.getMetrics().state).toBe(CircuitBreakerState.CLOSED);
 			httpBreaker.destroy();
 		});
 
 		it('should create database circuit breaker with appropriate settings', () => {
-			const dbBreaker = CircuitBreakerFactory.createDatabaseCircuitBreaker();
-
-			const metrics = dbBreaker.getMetrics();
-			expect(metrics.state).toBe(CircuitBreakerState.CLOSED);
-
+			const dbBreaker = createDatabaseCircuitBreaker();
+			expect(dbBreaker.getMetrics().state).toBe(CircuitBreakerState.CLOSED);
 			dbBreaker.destroy();
 		});
 
 		it('should create API circuit breaker with appropriate settings', () => {
-			const apiBreaker = CircuitBreakerFactory.createApiCircuitBreaker();
-
-			const metrics = apiBreaker.getMetrics();
-			expect(metrics.state).toBe(CircuitBreakerState.CLOSED);
-
+			const apiBreaker = createApiCircuitBreaker();
+			expect(apiBreaker.getMetrics().state).toBe(CircuitBreakerState.CLOSED);
 			apiBreaker.destroy();
 		});
 	});

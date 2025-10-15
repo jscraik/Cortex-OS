@@ -1,0 +1,14 @@
+{
+  "folders": [
+    { "path": "../apps/cortex-os", "name": "🚀 Cortex OS Main" },
+    { "path": "../apps/dashboard", "name": "🚀 Dashboard" },
+    { "path": "../apps/chatgpt-dashboard", "name": "🚀 ChatGPT Dashboard" },
+    { "path": "../apps/cbom-viewer", "name": "🚀 CBOM Viewer" },
+    { "path": "../packages/workflow-dashboard", "name": "📦 Workflow Dashboard" }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.tsserver.useSyntaxServer": "always",
+    "search.exclude": { "**/node_modules": true, "**/.nx": true, "**/dist": true }
+  }
+}

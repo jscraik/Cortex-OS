@@ -73,13 +73,13 @@ export function createFeatureFlagsAdminRouter(
 		basePath?: string;
 	} = {},
 ) {
-	const { authenticate, basePath = '/admin/api/flags' } = options;
+	const { authenticate, basePath = '/api/flags' } = options;
 	const router = new Hono();
 
 	// Apply authentication middleware if provided
 	if (authenticate) {
-		router.use('*', async (c, next) => {
-			await authenticate(c, next);
+		router.use('*', (c, next) => {
+			return authenticate(c, next);
 		});
 	}
 

@@ -1,0 +1,15 @@
+{
+  "folders": [
+    { "path": "../packages/security", "name": "📦 Security" },
+    { "path": "../packages/cortex-sec", "name": "📦 Cortex Sec" },
+    { "path": "../packages/policy", "name": "📦 Policy" },
+    { "path": "../packages/mcp-auth", "name": "📦 MCP Auth" },
+    { "path": "../packages/cortex-semgrep-github", "name": "📦 Semgrep Integration" },
+    { "path": "../infra/security", "name": "🔧 Security Infrastructure" }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.tsserver.useSyntaxServer": "always",
+    "search.exclude": { "**/node_modules": true, "**/.nx": true, "**/dist": true }
+  }
+}

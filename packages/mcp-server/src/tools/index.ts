@@ -172,12 +172,20 @@ export function registerTools(server: FastMCP, logger: any, context: ToolContext
 		logger.info(createBrandedLog('agent_toolkit_disabled'), 'Agent-toolkit tools disabled');
 	}
 
-        if (context.oauthOptions.protectedResource) {
+	if (context.oauthOptions.protectedResource) {
 		const scopesObject: Record<string, string[]> = {};
 		for (const [toolName, set] of scopeRegistry.entries()) {
 			scopesObject[toolName] = Array.from(set).sort();
 		}
 		context.oauthOptions.protectedResource.scopes = scopesObject;
+		const requiredScopes = context.auth.config.auth0?.requiredScopes ?? [];
+		const allScopes = new Set<string>(requiredScopes);
+		for (const values of Object.values(scopesObject)) {
+			for (const scope of values) {
+				allScopes.add(scope);
+			}
+		}
+		context.oauthOptions.protectedResource.scopesSupported = Array.from(allScopes).sort();
 	}
 }
 

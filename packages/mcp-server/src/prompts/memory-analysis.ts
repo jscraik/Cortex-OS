@@ -19,8 +19,6 @@ async function fetchSampleMemories(args: MemoryAnalysisInput): Promise<MemorySea
 	try {
 		const results = await memoryProvider.search({
 			query: args.query,
-			limit: 5,
-			offset: 0,
 			search_type: 'hybrid',
 			session_filter_mode: 'all',
 		});

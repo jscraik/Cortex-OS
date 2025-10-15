@@ -289,14 +289,15 @@ export class CodeQualityUseCase {
 		}
 
 		if (rsFiles.length > 0) {
-			try {
-				const result = await this.toolExecutor.execute('cargo', validationInput);
-				results.cargo = result;
-				toolsRun.push('cargo');
-				totalIssues += this.countIssues(result.results);
-			} catch {
-				// Continue
-			}
+				try {
+					const result = await this.toolExecutor.execute('cargo', validationInput);
+					results.cargo = result;
+					toolsRun.push('cargo');
+					totalIssues += this.countIssues(result.results);
+				} catch (error) {
+					// Log error or handle as needed
+					// Continue with validation even if cargo fails
+				}
 		}
 
 		return {

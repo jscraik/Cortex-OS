@@ -87,6 +87,12 @@ describe('brAInwav Phase C.2: Remote MCP Orchestration', () => {
             scopes: ['wikidata:vector-search'],
           },
           {
+            name: 'vector_search_properties',
+            description: 'Semantic vector search over Wikidata properties',
+            tags: ['vector', 'search', 'properties'],
+            scopes: ['wikidata:vector-search'],
+          },
+          {
             name: 'get_claims',
             description: 'Retrieve structured claims for specific Wikidata entities by QID',
             tags: ['claims', 'entities'],
@@ -172,6 +178,9 @@ describe('brAInwav Phase C.2: Remote MCP Orchestration', () => {
       expect(result.metadata.wikidata.qid).toBe('Q34743');
       expect(result.metadata.wikidata.claimGuid).toBe('Q34743$abc123-def456-789');
       expect(result.metadata.wikidata.sparql).toContain('SELECT ?entity');
+      expect(result.metadata.wikidata.vectorResults?.[0]?.qid).toBe('Q34743');
+      expect(result.metadata.wikidata.claims?.[0]?.guid).toBe('Q34743$abc123-def456-789');
+      expect(result.metadata.wikidata.sparqlBindings?.[0]?.entity).toBe('Q34743');
       expect(result.metadata.brand).toBe('brAInwav');
 
       // Verify MCP client was called for each step
@@ -362,6 +371,84 @@ describe('brAInwav Phase C.2: Remote MCP Orchestration', () => {
       expect(result.metadata.wikidata.claimGuid).toBeUndefined();
       expect(result.metadata.partialFailure).toBe('claims_unavailable');
       expect(result.metadata.brand).toBe('brAInwav');
+      expect(result.metadata.wikidata.vectorResults?.[0]?.qid).toBe('Q34743');
+    });
+
+    test('C.2.7: property queries should route to property search and skip downstream tools', async () => {
+      mockMCPClient.callTool.mockResolvedValueOnce({
+        results: [
+          {
+            qid: 'P31',
+            score: 0.88,
+            title: 'instance of',
+            content: 'Defines that a thing is an instance of a class',
+          },
+        ],
+      });
+
+      const result = await executeWikidataWorkflow(
+        'How is property P31 defined?',
+        mockWikidataConnector,
+        { mcpClient: mockMCPClient },
+      );
+
+      expect(mockMCPClient.callTool).toHaveBeenCalledTimes(1);
+      const [toolName, params] = mockMCPClient.callTool.mock.calls[0];
+      expect(toolName).toBe('vector_search_properties');
+      expect(params).toMatchObject({ scope: 'properties', query: 'How is property P31 defined?' });
+      expect(result.source).toBe('wikidata_workflow');
+      expect(result.metadata.partialFailure).toBeUndefined();
+    });
+
+    test('C.2.8: should publish events and persist insights when hooks are provided', async () => {
+      mockMCPClient.callTool
+        .mockResolvedValueOnce({
+          results: [
+            {
+              qid: 'Q34743',
+              score: 0.95,
+              title: 'Alexander Graham Bell',
+              content: 'Scottish-born inventor, scientist and engineer',
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          claims: [
+            {
+              guid: 'Q34743$abc123-def456-789',
+              property: 'P569',
+              value: '1847-03-03',
+              description: 'date of birth',
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          query: 'SELECT ?entity WHERE { VALUES ?entity { wd:Q34743 } }',
+          results: [{ entity: 'Q34743' }],
+        });
+
+      const publishEvent = vi.fn();
+      const persistInsight = vi.fn();
+
+      const result = await executeWikidataWorkflow('Who invented the telephone?', mockWikidataConnector, {
+        mcpClient: mockMCPClient,
+        hooks: { publishEvent, persistInsight },
+        queryId: 'test-query-123',
+      });
+
+      expect(result.source).toBe('wikidata_workflow');
+      expect(publishEvent).toHaveBeenCalledTimes(1);
+      const envelope = publishEvent.mock.calls[0][0];
+      expect(envelope.type).toBe('rag.query.completed');
+      expect(envelope.data.queryId).toBe('test-query-123');
+      expect(persistInsight).toHaveBeenCalledTimes(1);
+      expect(persistInsight).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: 'Who invented the telephone?',
+          connectorId: 'wikidata',
+          result: expect.objectContaining({ source: 'wikidata_workflow' }),
+        }),
+      );
     });
   });
 });

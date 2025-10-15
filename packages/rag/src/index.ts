@@ -57,6 +57,18 @@ export {
 	RemoteMCPEmbedder,
 	RemoteMCPEnhancedStore,
 } from './integrations/remote-mcp.js';
+export {
+	executeWikidataWorkflow,
+	type WorkflowOptions,
+	type WorkflowResult,
+	type WorkflowRoutingOptions,
+	type WorkflowHooks,
+	type WorkflowInsight,
+} from './integrations/remote-mcp.js';
+export {
+	createAgentMCPClient,
+	type AgentMCPClient,
+} from './integrations/agents-shim.js';
 // Content security policy for XSS/injection protection
 export {
 	type ContentSecurityConfig,

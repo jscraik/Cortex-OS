@@ -10,6 +10,22 @@ type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 type StructuredLogger = Pick<Logger, LogLevel>;
 export type ServerLogger = StructuredLogger;
 
+// Extended server info that includes capabilities
+export interface ExtendedServerInfo extends ServerInfo {
+	capabilities?: {
+		tools?: {
+			listChanged?: boolean;
+		};
+		prompts?: {
+			listChanged?: boolean;
+		};
+		resources?: {
+			subscribe?: boolean;
+			listChanged?: boolean;
+		};
+	};
+}
+
 const resourceContentSchema = z.object({
 	uri: z.string().min(1).optional(),
 	mimeType: z.string().min(1).optional(),
@@ -65,9 +81,8 @@ export class Server {
 	protected tools = new Map<string, any>();
 	protected prompts = new Map<string, any>();
 	protected resources = new Map<string, ResourceEntry>();
-	protected capabilities: ServerInfo = {
+	protected capabilities: ExtendedServerInfo = {
 		name: 'cortex-os-mcp-server',
-		version: '1.0.0',
 		transport: 'stdio',
 	};
 
@@ -187,7 +202,7 @@ export class Server {
 	/**
 	 * Get server capabilities including listChanged flags
 	 */
-	getServerInfo(): ServerInfo {
+	getServerInfo(): ExtendedServerInfo {
 		return {
 			...this.capabilities,
 			...this.getServerCapabilities(),
@@ -197,7 +212,7 @@ export class Server {
 	/**
 	 * Get current MCP capabilities with notification flags
 	 */
-	protected getServerCapabilities(): ServerInfo {
+	protected getServerCapabilities(): ExtendedServerInfo {
 		return {
 			capabilities: {
 				tools: {
@@ -497,6 +512,14 @@ export class Server {
 	protected emitNotification(method: string, params?: any): void {
 		this.logStructured('notification_emitted', { method, params });
 		// Base implementation - override in transport-specific servers
+	}
+
+	/**
+	 * Public test helper for emitNotification (for testing purposes only)
+	 * @internal
+	 */
+	public testEmitNotification(method: string, params?: any): void {
+		this.emitNotification(method, params);
 	}
 
 	/**

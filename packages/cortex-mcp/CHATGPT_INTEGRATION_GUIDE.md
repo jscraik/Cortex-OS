@@ -96,6 +96,25 @@ export REQUIRED_SCOPES="search.read docs.write memory.read memory.write memory.d
 
 After setting these values, enable RBAC and “Add Permissions in the Access Token” on the Auth0 API so access tokens include the scopes.
 
+Bridge-specific settings (nested under `MCPSettings.oauth`):
+
+```bash
+export CORTEX_MCP_OAUTH__ENABLED=true
+export CORTEX_MCP_OAUTH__ISSUER="https://brainwav-dev.us.auth0.com"
+export CORTEX_MCP_OAUTH__RESOURCE="https://cortex-mcp.brainwav.io/mcp"
+export CORTEX_MCP_OAUTH__JWKS_URI="https://brainwav-dev.us.auth0.com/.well-known/jwks.json"   # optional override
+export CORTEX_MCP_OAUTH__SCOPES='{"memory.store":["memories:write"],"memory.search":["memories:read"],"search":["knowledge:read"]}'
+```
+
+Validate the rollout and capture evidence for the deployment ticket:
+
+```bash
+curl -s https://cortex-mcp.brainwav.io/.well-known/oauth-protected-resource | jq
+curl -s https://cortex-mcp.brainwav.io/health/auth | jq
+```
+
+The `/health/auth` output feeds the Ops dashboard (Grafana panel `MCP OAuth Health`) and verifies JWKS reachability plus scope metadata freshness.
+
 ## Troubleshooting
 
 1. **Server won't start**: Run the installation commands in step 1 or re-run the startup script to trigger the automated installer

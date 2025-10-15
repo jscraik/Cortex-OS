@@ -1,63 +1,9 @@
 {
   "name": "@cortex-os/asbr",
-  "version": "1.0.0",
-  "private": true,
+  "version": "0.0.0-stub",
   "type": "module",
-  "description": "Agentic Second-Brain Runtime (ASBR) - Brain-only orchestration and knowledge runtime",
-  "keywords": [
-    "asbr",
-    "cortex-os",
-    "brain-only",
-    "orchestration",
-    "second-brain",
-    "local-first",
-    "a11y",
-    "wcag",
-    "mcp"
-  ],
-  "license": "(Apache-2.0 OR Commercial)",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "bin": {
-    "cortex-asbr": "bin/cortex-asbr.js"
-  },
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./sdk": {
-      "types": "./dist/sdk/index.d.ts",
-      "default": "./dist/sdk/index.js"
-    },
-    "./api": null,
-    "./types": {
-      "types": "./dist/types/index.d.ts",
-      "default": "./dist/types/index.js"
-    }
-  },
-  "files": [
-    "bin",
-    "dist",
-    "README.md"
-  ],
-  "scripts": {
-    "build": "rm -rf dist && tsc --build --force",
-    "prepare": "pnpm -s build",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js",
-    "test": "node ../../scripts/vitest-safe.mjs run",
-    "test:watch": "node ../../scripts/vitest-safe.mjs run",
-    "test:coverage": "node ../../scripts/vitest-safe.mjs run --coverage",
-    "test:perf": "PERF_METRICS=1 vitest run tests/performance --reporter=dot",
-    "test:a11y": "node ../../scripts/vitest-safe.mjs run --config vitest.a11y.config.ts",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo",
-    "typecheck": "tsc --noEmit --incremental",
-    "build:fast": "tsc --build --incremental --assumeChangesOnlyAffectDirectDependencies",
-    "build:prod": "NODE_ENV=production tsc --build --incremental",
-    "test:safe": "node ../../scripts/vitest-safe.mjs run"
+    "./types": "./dist/types/index.js"
   },
   "dependencies": {
     "@cortex-os/asbr-schemas": "workspace:*",
@@ -72,27 +18,9 @@
     "socket.io": "4.8.1",
     "uuid": "9.0.1",
     "ws": "^8.18.0",
-    "zod": "^3.25.76"
-  },
-  "devDependencies": {
-    "@types/express": "4.17.21",
-    "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.18.1",
-    "@types/pidusage": "^2.0.5",
-    "@types/supertest": "^6.0.3",
-    "@types/uuid": "^9.0.8",
-    "@types/ws": "^8.18.1",
-    "@typescript-eslint/eslint-plugin": "^8.42.0",
-    "@typescript-eslint/parser": "^8.42.0",
-    "@vitest/coverage-v8": "^3.2.4",
-    "eslint": "^9.35.0",
-    "socket.io-client": "^4.8.1",
-    "supertest": "^7.0.0",
-    "tsx": "^4.20.3",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "zod": "^3.25.76",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "ulid": "^2.4.0"
   }
 }

@@ -1,0 +1,32 @@
+{
+  "folders": [
+    { "path": "../packages/a2a", "name": "📦 A2A (Main)" },
+    { "path": "../packages/a2a/a2a-core", "name": "📦 A2A Core" },
+    { "path": "../packages/a2a/a2a-contracts", "name": "📦 A2A Contracts" },
+    { "path": "../packages/a2a/a2a-transport", "name": "📦 A2A Transport" },
+    { "path": "../packages/a2a/a2a-events", "name": "📦 A2A Events" },
+    { "path": "../packages/a2a/a2a-handlers", "name": "📦 A2A Handlers" },
+    { "path": "../packages/a2a/a2a-observability", "name": "📦 A2A Observability" },
+    { "path": "../packages/a2a/a2a-examples", "name": "📦 A2A Examples" },
+    { "path": "../packages/a2a/a2a-python-workers", "name": "🐍 A2A Python Workers" },
+    { "path": "../packages/a2a-services", "name": "📦 A2A Services" },
+    { "path": "../libs/typescript/a2a-contracts", "name": "📚 A2A Contracts (Libs)" }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.tsserver.useSyntaxServer": "always",
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.nx": true,
+      "**/dist": true,
+      "**/out": true,
+      "**/coverage": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/.nx/**": true,
+      "**/dist/**": true,
+      "**/out/**": true
+    }
+  }
+}

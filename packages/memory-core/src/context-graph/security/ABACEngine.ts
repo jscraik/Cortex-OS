@@ -22,8 +22,9 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
 
 // Clearance levels are now externalized to configuration for maintainability.
 // If equivalence between levels is intentional, document in the config file.
-import clearanceLevels from '../config/clearance-levels.json';
-const CLEARANCE_LEVELS: Record<string, number> = clearanceLevels;
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const CLEARANCE_LEVELS: Record<string, number> = require('../config/clearance-levels.json');
 
 const DEFAULT_COMPLIANCE: Record<string, { riskLevel: RiskLevel; mitigations: string[] }> = {
         llm01: { riskLevel: 'medium', mitigations: ['input-sanitization'] },

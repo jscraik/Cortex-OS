@@ -4,8 +4,7 @@ import { BRAND } from '../utils/brand.js';
 
 const HEALTH_URI = 'metrics://cortex-os/health';
 
-export async function readHealthMetrics(signal?: AbortSignal): Promise<ResourceContent> {
-	signal?.throwIfAborted();
+export async function readHealthMetrics(): Promise<ResourceContent> {
 	const now = new Date();
 	const payload = {
 		brand: BRAND.prefix,
@@ -19,6 +18,6 @@ export async function readHealthMetrics(signal?: AbortSignal): Promise<ResourceC
 	return {
 		uri: HEALTH_URI,
 		mimeType: 'application/json',
-		text: JSON.stringify(payload, null, 2),
+		blob: JSON.stringify(payload, null, 2), // Use blob instead of text for non-text/plain
 	};
 }

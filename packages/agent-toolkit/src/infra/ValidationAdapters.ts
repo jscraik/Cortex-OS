@@ -4,7 +4,7 @@ import type {
 	AgentToolkitValidationInput,
 	AgentToolkitValidationResult,
 } from '@cortex-os/contracts';
-import { safeExecFileWithRetry } from '@cortex-os/security';
+import { safeExecFileWithRetry } from './securityBridge.js';
 import type { ValidationTool } from '../domain/ToolInterfaces.js';
 import { resolveToolsDirFromOverride, type ToolsDirOverride } from './paths.js';
 import { execWithRetry } from './execUtil.js';

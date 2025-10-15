@@ -1,0 +1,16 @@
+{
+  "folders": [
+    { "path": "../packages/agents", "name": "📦 Agents" },
+    { "path": "../packages/orchestration", "name": "📦 Orchestration" },
+    { "path": "../packages/workflow-orchestrator", "name": "📦 Workflow Orchestrator" },
+    { "path": "../packages/workflow-common", "name": "📦 Workflow Common" },
+    { "path": "../packages/executor-spool", "name": "📦 Executor Spool" },
+    { "path": "../packages/agent-toolkit", "name": "📦 Agent Toolkit" },
+    { "path": "../libs/typescript/agent-contracts", "name": "📚 Agent Contracts" }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.tsserver.useSyntaxServer": "always",
+    "search.exclude": { "**/node_modules": true, "**/.nx": true, "**/dist": true }
+  }
+}

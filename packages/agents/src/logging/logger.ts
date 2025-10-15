@@ -1,4 +1,7 @@
 import type { BufferOptions, LogEntry, LoggerConfig, LoggerStream, LogLevel } from './types.js';
+import { getLogContext } from './log-context.js';
+
+const textEncoder = new TextEncoder();
 
 const LOG_LEVELS: Record<LogLevel, number> = {
 	trace: 10,
@@ -100,7 +103,10 @@ export class Logger {
 			format: this.format,
 			streams: this.streams,
 			bufferOptions: this.bufferOptions,
-			bindings,
+			bindings: {
+				...(this.bindings ?? {}),
+				...bindings,
+			},
 		});
 	}
 
@@ -165,7 +171,6 @@ export class Logger {
 		// Write to all streams
 		await Promise.allSettled(
 			this.streams.map(async (stream) => {
-				// Filter messages for this stream based on level
 				const streamMessages = messages.filter(
 					(item) => LOG_LEVELS[item.level] >= LOG_LEVELS[stream.level],
 				);
@@ -174,32 +179,36 @@ export class Logger {
 					return;
 				}
 
-				// Wait for any existing write to complete
-				const existingPromise = this.writingPromises.get(stream);
-				if (existingPromise) {
-					await existingPromise;
-				}
+				const previous = this.writingPromises.get(stream) ?? Promise.resolve();
+				let nextPromise: Promise<void>;
 
-				const writePromise = (async () => {
+				const performWrite = async () => {
 					try {
 						const writer = stream.stream.getWriter();
 						try {
 							for (const item of streamMessages) {
-								const encoded = new TextEncoder().encode(`${item.message}\n`);
+								const encoded = textEncoder.encode(`${item.message}\n`);
 								await writer.write(encoded);
 							}
 						} finally {
 							writer.releaseLock();
-							this.writingPromises.delete(stream);
 						}
 					} catch (error) {
-						this.writingPromises.delete(stream);
 						console.error('Failed to write to stream:', error);
 					}
-				})();
+				};
 
-				this.writingPromises.set(stream, writePromise);
-				return writePromise;
+				nextPromise = previous
+					.catch(() => undefined)
+					.then(performWrite)
+					.finally(() => {
+						if (this.writingPromises.get(stream) === nextPromise) {
+							this.writingPromises.delete(stream);
+						}
+					});
+
+				this.writingPromises.set(stream, nextPromise);
+				await nextPromise;
 			}),
 		);
 	}
@@ -216,6 +225,16 @@ export class Logger {
 			return;
 		}
 
+		const logContext = getLogContext();
+		const contextualBindings = logContext?.bindings ?? {};
+
+		const extraFields =
+			obj === undefined
+				? {}
+				: typeof obj === 'object' && obj !== null
+					? (obj as Record<string, unknown>)
+					: { obj };
+
 		const entry: LogEntry = {
 			level,
 			time: new Date().toISOString(),
@@ -223,9 +242,14 @@ export class Logger {
 			pid: this.pid,
 			hostname: this.hostname,
 			v: 1,
-			...this.bindings,
-			...(obj && typeof obj === 'object' ? obj : { obj }),
+			...(this.bindings ?? {}),
+			...contextualBindings,
+			...extraFields,
 		};
+	
+		if (logContext?.correlationId) {
+			(entry as Record<string, unknown>).correlationId = logContext.correlationId;
+		}
 
 		const message = this.format === 'json' ? safeStringify(entry) : this.formatPretty(entry);
 

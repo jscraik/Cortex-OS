@@ -3,6 +3,8 @@
  * @description End-to-end PRP workflow runner using gate framework (G0→G1 for now)
  */
 
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { HumanApproval, PRPState } from '@cortex-os/kernel';
 import { runSpool } from '@cortex-os/orchestration';
 import {
@@ -21,6 +23,23 @@ import { G4VerificationGate } from './gates/g4-verification.js';
 import { G5TriageGate } from './gates/g5-triage.js';
 import { G6ReleaseReadinessGate } from './gates/g6-release-readiness.js';
 import { G7ReleaseGate } from './gates/g7-release.js';
+import { buildRunManifest } from './run-manifest/builder.js';
+import { PRODUCT_TO_AUTOMATION_PIPELINE, type RunManifest, type StageKey } from './run-manifest/schema.js';
+
+const GATE_TO_STAGE_KEY = new Map<string, StageKey>();
+for (const stage of PRODUCT_TO_AUTOMATION_PIPELINE) {
+	for (const gateId of stage.sourceGateIds) {
+		GATE_TO_STAGE_KEY.set(gateId, stage.key);
+	}
+}
+
+type SpoolEventRecord = {
+	type: 'start' | 'settle';
+	id: string;
+	status?: string;
+	timestamp: string;
+	message?: string;
+};
 
 export interface RepoInfo {
 	owner: string;
@@ -81,7 +100,7 @@ export async function runPRPWorkflow(
 	repoInfo: RepoInfo,
 	options: RunOptions,
 	approvalProvider?: HumanApprovalProvider,
-): Promise<{ state: PRPState; prpPath: string; markdown: string }> {
+): Promise<{ state: PRPState; prpPath: string; markdown: string; manifestPath: string; manifest: RunManifest }> {
 	const enforcementProfile = await loadInitialMd(options.projectRoot, options.initialMdPath);
 
 	// Initialize state
@@ -168,11 +187,12 @@ export async function runPRPWorkflow(
 
 	const controller = new AbortController();
 	const metadata = state.metadata as Record<string, unknown> & {
-		startTime?: string;
-		spoolEvents?: Array<{ type: string; id: string; status?: string }>;
-		spoolSummary?: Array<{ id: string; status: string }>;
+	startTime?: string;
+	endTime?: string;
+	spoolEvents?: SpoolEventRecord[];
+	spoolSummary?: Array<{ id: string; status: string }>;
 	};
-	const spoolEvents = metadata.spoolEvents ?? [];
+	const spoolEvents = (metadata.spoolEvents ?? []) as SpoolEventRecord[];
 	if (!metadata.spoolEvents) {
 		metadata.spoolEvents = spoolEvents;
 	}
@@ -195,9 +215,19 @@ export async function runPRPWorkflow(
 			tokens: Math.max(1, gates.length) * 2048,
 			ms: options.strictMode ? 10 * 60 * 1000 : undefined,
 			signal: controller.signal,
-			onStart: (task) => spoolEvents.push({ type: 'start', id: task.id }),
+			onStart: (task) =>
+				spoolEvents.push({
+					type: 'start',
+					id: task.id,
+					timestamp: new Date().toISOString(),
+				}),
 			onSettle: (settled) =>
-				spoolEvents.push({ type: 'settle', id: settled.id, status: settled.status }),
+				spoolEvents.push({
+					type: 'settle',
+					id: settled.id,
+					status: settled.status,
+					timestamp: new Date().toISOString(),
+				}),
 		},
 	);
 
@@ -231,6 +261,8 @@ export async function runPRPWorkflow(
 		}
 	}
 
+	metadata.endTime = new Date().toISOString();
+
 	// Generate review JSON and prp.md
 	const review = generateReviewJSON(state);
 	// Calculate final document status
@@ -254,5 +286,61 @@ export async function runPRPWorkflow(
 	const prpPath = options.outputPath || `${options.projectRoot}/prp.md`;
 	await writePRPDocument(markdown, prpPath);
 
-	return { state, prpPath, markdown };
+	const manifestDirectory = join(options.projectRoot, '.cortex', 'run-manifests');
+	const manifestPath = join(manifestDirectory, `${state.runId}.json`);
+	const spoolStatusByGate = new Map(
+		(metadata.spoolSummary as Array<{ id: string; status: string }> | undefined)?.map((item) => [item.id, item.status]) ?? [],
+	);
+	const manifestTelemetryEvents = spoolEvents.map((event) => {
+		const stageKey = GATE_TO_STAGE_KEY.get(event.id);
+		if (!stageKey) {
+			return undefined;
+		}
+		return {
+			stageKey,
+			type: event.type,
+			status: event.type === 'settle' ? (event.status ?? spoolStatusByGate.get(event.id) ?? 'pending') : undefined,
+			timestamp: event.timestamp,
+		};
+	});
+	const manifestTelemetry = {
+		startedAt: state.metadata.startTime,
+		completedAt: metadata.endTime,
+		durationMs:
+			state.metadata.startTime && metadata.endTime
+				? Math.max(0, Date.parse(metadata.endTime) - Date.parse(state.metadata.startTime))
+				: undefined,
+		spoolRunId: state.runId,
+		events: manifestTelemetryEvents.filter(
+			(
+				record,
+			): record is {
+				stageKey: StageKey;
+				type: 'start' | 'settle';
+				status?: string;
+				timestamp: string;
+			} => !!record,
+		),
+	};
+
+	const manifest = buildRunManifest({
+		state,
+		repoInfo,
+		actor: ctxBase.actor,
+		strictMode: !!options.strictMode,
+		generatedAt: metadata.endTime,
+		telemetry: manifestTelemetry,
+		artifacts: {
+			prpMarkdownPath: prpPath,
+			manifestPath,
+			reviewJsonPath: undefined,
+		},
+	});
+
+	await mkdir(manifestDirectory, { recursive: true });
+	await writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+	state.exports.runManifestPath = manifestPath;
+	state.outputs.runManifest = manifest;
+
+	return { state, prpPath, markdown, manifestPath, manifest };
 }

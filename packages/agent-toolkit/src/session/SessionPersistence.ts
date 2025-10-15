@@ -5,8 +5,19 @@
  * for cross-session context and audit trails.
  */
 
-import { isPrivateHostname, safeFetch } from '@cortex-os/utils';
 import type { ToolCallRecord } from './SessionContextManager.js';
+
+type UtilsModule = typeof import('@cortex-os/utils');
+
+let utilsModulePromise: Promise<UtilsModule> | null = null;
+
+async function loadUtils(): Promise<UtilsModule> {
+	if (!utilsModulePromise) {
+		utilsModulePromise = import('@cortex-os/utils');
+	}
+
+	return utilsModulePromise;
+}
 
 export interface SessionMetadata {
 	sessionId: string;
@@ -43,15 +54,16 @@ export const createSessionPersistence = (opts: SessionPersistenceOptions) => {
 	}
 
 	const parsedBase = new URL(opts.baseUrl);
-	const safeOptions = {
-		allowedHosts: [parsedBase.hostname.toLowerCase()],
-		allowedProtocols: [parsedBase.protocol],
-		allowLocalhost: isPrivateHostname(parsedBase.hostname),
-	};
+	const allowedHosts = [parsedBase.hostname.toLowerCase()];
+	const allowedProtocols = [parsedBase.protocol];
 
 	const post = async (path: string, payload: unknown) => {
+		const { isPrivateHostname, safeFetch } = await loadUtils();
+
 		return safeFetch(`${opts.baseUrl}${path}`, {
-			...safeOptions,
+			allowedHosts,
+			allowedProtocols,
+			allowLocalhost: isPrivateHostname(parsedBase.hostname),
 			fetchOptions: {
 				method: 'POST',
 				headers: { ...headers },

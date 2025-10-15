@@ -332,9 +332,23 @@ function generateArtifacts(state: PRPState): string {
 			? allArtifacts.map((artifact) => `- ${artifact}`).join('\n')
 			: '- No artifacts generated yet';
 
+	const manifestPath = (state.exports as Record<string, unknown>).runManifestPath as
+		| string
+		| undefined;
+	const manifest = (state.outputs as Record<string, unknown>).runManifest as
+		| { summary?: { status: string } }
+		| undefined;
+	const manifestLines = manifestPath
+		? [`**Run Manifest:** ${manifestPath}`, manifest?.summary?.status ? `**Run Manifest Status:** ${manifest.summary.status}` : undefined]
+			.filter(Boolean)
+			.join('\n')
+		: '**Run Manifest:** Pending generation';
+
 	return `## 11. Artifacts
 
 ${artifactText}
+
+${manifestLines}
 
 **Evidence:** ${state.evidence.length} items collected
 **Gates Executed:** ${Object.keys(state.gates).length}`;

@@ -96,6 +96,9 @@ describe('MCPFSWatcher', () => {
 			const { watch } = require('chokidar');
 			const mockOn = mockChokidar.on;
 			emitCallback = mockOn.mock.calls.find((call) => call[0] === 'all')?.[1];
+			if (!emitCallback) {
+				throw new Error('Failed to find emitCallback in mock setup');
+			}
 		});
 
 		it('should handle prompt file changes', () => {

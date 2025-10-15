@@ -21,6 +21,12 @@
   ],
   "references": [
     {
+      "path": "../mcp-auth"
+    },
+    {
+      "path": "../mcp-bridge"
+    },
+    {
       "path": "../memory-core"
     },
     {

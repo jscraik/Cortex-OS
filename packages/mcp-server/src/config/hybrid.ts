@@ -127,8 +127,8 @@ export function loadHybridConfig(logger?: Logger): HybridConfig {
 	}
 
 	return {
-		strategy: strategy.success ? strategy.data : null,
-		enforcement: enforcement.success ? enforcement.data : null,
+		strategy: strategy.success && 'data' in strategy ? strategy.data : null,
+		enforcement: enforcement.success && 'data' in enforcement ? enforcement.data : null,
 	};
 }
 

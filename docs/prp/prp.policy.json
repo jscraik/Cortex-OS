@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "requireStrictMode": true,
+  "requireCompletedStages": [
+    "product-foundation",
+    "product-test-strategy",
+    "engineering-execution",
+    "quality-triage",
+    "automation-release"
+  ],
+  "stageRules": {
+    "product-foundation": {
+      "allowStatus": ["passed"],
+      "requireApprovals": 1
+    },
+    "product-test-strategy": {
+      "allowStatus": ["passed"],
+      "requireApprovals": 1,
+      "requireCompletedChecks": 1
+    },
+    "engineering-execution": {
+      "allowStatus": ["passed", "skipped"],
+      "requireApprovals": 1,
+      "requireCompletedChecks": 1
+    },
+    "quality-triage": {
+      "allowStatus": ["passed", "skipped"]
+    },
+    "automation-release": {
+      "allowStatus": ["passed"],
+      "requireApprovals": 1
+    }
+  }
+}

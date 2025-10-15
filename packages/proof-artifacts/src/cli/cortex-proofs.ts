@@ -6,6 +6,8 @@ import { Command } from 'commander';
 import { createProofEnvelope } from '../createProof.js';
 import { signEnvelopeWithCosign, verifyCosignAttestations } from '../signing/cosign.js';
 import type { ProofEnvelope } from '../types.js';
+import { createStageProofEnvelope, loadRunManifest, verifyStageProofEnvelope } from '../stageManifest.js';
+import type { ProofPolicyReceipt, ProofRuntime, ProofTrace } from '../types.js';
 import { verifyProofEnvelope } from '../verifyProof.js';
 
 const parseJson = <T>(raw: string, label: string): T => {
@@ -36,6 +38,21 @@ interface CreateOptions {
 	trace?: string;
 	policy?: string;
 	bundle?: string[];
+}
+
+interface StageCreateOptions {
+	manifest: string;
+	stage: string;
+	runtime: string;
+	trace?: string;
+	policy?: string;
+	out?: string;
+}
+
+interface StageVerifyOptions {
+	manifest: string;
+	stage: string;
+	proof: string;
 }
 
 const runCreate = (options: CreateOptions) => {
@@ -84,6 +101,48 @@ const runSign = async (paths: string[], issuer: string, identityToken?: string) 
 			console.log(`brAInwav: attestation added to ${filePath}`);
 		}),
 	);
+};
+
+const runStageCreate = async (options: StageCreateOptions) => {
+	const manifestPath = resolvePath(options.manifest);
+	const manifest = await loadRunManifest(manifestPath);
+	const stageKey = options.stage;
+	const runtime = parseJson<ProofRuntime>(options.runtime, 'runtime');
+	const trace = options.trace ? parseJson<ProofTrace>(options.trace, 'trace') : undefined;
+	const policy = options.policy ? parseJson<ProofPolicyReceipt[]>(options.policy, 'policy') : undefined;
+	const { envelope } = createStageProofEnvelope({
+		manifest,
+		manifestPath,
+		stageKey,
+		runtime,
+		trace,
+		policyReceipts: policy,
+	});
+	const outputPath = resolvePath(options.out ?? `${manifestPath}.${stageKey}.proof.json`);
+	writeEnvelope(outputPath, envelope);
+	console.log(`brAInwav: stage ${stageKey} proof created at ${outputPath}`);
+};
+
+const runStageVerify = async (options: StageVerifyOptions) => {
+	const manifestPath = resolvePath(options.manifest);
+	const manifest = await loadRunManifest(manifestPath);
+	const stageKey = options.stage;
+	const proofPath = resolvePath(options.proof);
+	const envelope = loadEnvelope(proofPath);
+	const verification = verifyStageProofEnvelope({
+		manifest,
+		manifestPath,
+		stageKey,
+		envelope,
+	});
+	if (!verification.valid) {
+		console.error(`brAInwav: stage proof verification failed for ${stageKey}`);
+		verification.issues.forEach((issue) => console.error(`- ${issue}`));
+		process.exitCode = 1;
+		return { valid: false, issues: verification.issues };
+	}
+	console.log(`brAInwav: stage ${stageKey} proof verified`);
+	return { valid: true, issues: [] };
 };
 
 const discoverProofFiles = (root: string) => {
@@ -174,6 +233,30 @@ export {
 	resolveProofTargets,
 	runCreate,
 	runSign,
+	runStageCreate,
+	runStageVerify,
 	runVerify,
 	writeEnvelope,
 };
+const stageCommand = program.command('stage').description('Stage manifest proof helpers');
+
+stageCommand
+	.command('create')
+	.requiredOption('--manifest <path>')
+	.requiredOption('--stage <stageKey>')
+	.requiredOption('--runtime <json>')
+	.option('--trace <json>', 'Trace payload JSON')
+	.option('--policy <json>', 'Policy receipts JSON array', '[]')
+	.option('--out <path>', 'Output proof path')
+	.action(async (opts: StageCreateOptions) => {
+		await runStageCreate(opts);
+	});
+
+stageCommand
+	.command('verify')
+	.requiredOption('--manifest <path>')
+	.requiredOption('--stage <stageKey>')
+	.requiredOption('--proof <path>')
+	.action(async (opts: StageVerifyOptions) => {
+		await runStageVerify(opts);
+	});

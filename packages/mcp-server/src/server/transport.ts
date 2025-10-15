@@ -1,9 +1,14 @@
 import { resolveTransport } from '@cortex-os/mcp-bridge/runtime/transport';
+import {
+	startHttpTransport,
+	type HttpTransportHandle,
+} from '@cortex-os/mcp-bridge/runtime/transport/http-transport';
 import type { FastMcpServer } from 'fastmcp';
 import type { Logger } from 'pino';
 import { BRAND, createBrandedLog } from '../utils/brand.js';
 import type { ServerConfig } from '../utils/config.js';
 import type { AuthenticatorBundle } from './auth.js';
+import { createAuthHealthHandler } from './auth-health.js';
 
 export type TransportController = {
 	mode: 'http' | 'stdio';
@@ -28,16 +33,15 @@ async function startHttp(
 	server: FastMcpServer,
 	logger: Logger,
 	config: ServerConfig,
+	auth: AuthenticatorBundle,
 ): Promise<TransportController> {
-	await server.start({
-		transportType: 'httpStream',
-		httpStream: {
-			host: config.host,
-			port: config.port,
-			endpoint: config.httpEndpoint as `/${string}`,
-			enableJsonResponse: true,
-			stateless: true,
-		},
+	const handle: HttpTransportHandle = await startHttpTransport({
+		server,
+		host: config.host,
+		port: config.port,
+		endpoint: config.httpEndpoint,
+		logger,
+		customHandler: createAuthHealthHandler(auth, logger),
 	});
 
 	logger.info(
@@ -52,7 +56,7 @@ async function startHttp(
 	return {
 		mode: 'http',
 		stop: async () => {
-			await server.stop();
+			await handle.stop();
 			logger.info(createBrandedLog('transport_http_stopped'), 'HTTP transport stopped');
 		},
 	};
@@ -91,5 +95,5 @@ export async function startTransport(
 		);
 	}
 
-	return startHttp(server, logger, config);
+	return startHttp(server, logger, config, auth);
 }

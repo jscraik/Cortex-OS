@@ -23,3 +23,11 @@ export type {
 	ProofTrace,
 } from './types.js';
 export { verifyProofEnvelope } from './verifyProof.js';
+export {
+	createStageProofEnvelope,
+	findStage,
+	loadRunManifest,
+	verifyStageProofEnvelope,
+	type StageProofEnvelopeResult,
+	type StageProofInput,
+} from './stageManifest.js';

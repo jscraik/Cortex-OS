@@ -1,0 +1,42 @@
+{
+  "proofSpec": "cortex-os/proof-artifact",
+  "specVersion": "0.2.0",
+  "id": "stage-proof-sample",
+  "issuedAt": "2025-10-14T00:04:00.000Z",
+  "actor": {
+    "agent": "prp-cli",
+    "role": "automation"
+  },
+  "artifact": {
+    "uri": "file:///Users/jamiecraik/.Cortex-OS/docs/prp/artifacts/sample-run-manifest.json#stage=product-foundation",
+    "mime": "application/json",
+    "contentHash": {
+      "alg": "sha256",
+      "hex": "4882acd3ce0ad086a4deb338668379d31657f6cc230c629d284700709186e79d"
+    }
+  },
+  "context": {
+    "public": {
+      "manifestId": "run-manifest-sample",
+      "runId": "run-sample-001",
+      "stage": {
+        "key": "product-foundation",
+        "title": "Product Foundation",
+        "status": "passed",
+        "summary": "Problem and outcome approved",
+        "sequence": 1
+      }
+    }
+  },
+  "evidence": [
+    {
+      "type": "kernel",
+      "evidenceId": "run-sample-001::G0"
+    }
+  ],
+  "runtime": {
+    "model": "gpt-5-codex"
+  },
+  "policyReceipts": [],
+  "attestations": []
+}

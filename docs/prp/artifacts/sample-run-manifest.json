@@ -1,0 +1,237 @@
+{
+  "schemaVersion": "1.0.0",
+  "manifestId": "run-manifest-sample",
+  "runId": "run-sample-001",
+  "generatedAt": "2025-10-14T00:00:00.000Z",
+  "actor": "demo",
+  "strictMode": true,
+  "blueprint": {
+    "title": "Sample Feature",
+    "description": "Demonstrate run-manifest workflow",
+    "requirements": ["R1", "R2"],
+    "metadata": {
+      "scope": ["demo"],
+      "nonGoals": []
+    }
+  },
+  "repo": {
+    "owner": "brainwav",
+    "name": "cortex-os",
+    "branch": "main",
+    "commitSha": "deadbeefdeadbeef"
+  },
+  "telemetry": {
+    "startedAt": "2025-10-14T00:00:00.000Z",
+    "completedAt": "2025-10-14T00:04:00.000Z",
+    "durationMs": 240000,
+    "spoolRunId": "run-sample-001",
+    "events": [
+      { "stageKey": "product-foundation", "type": "start", "timestamp": "2025-10-14T00:00:10.000Z" },
+      { "stageKey": "product-foundation", "type": "settle", "status": "fulfilled", "timestamp": "2025-10-14T00:00:40.000Z" },
+      { "stageKey": "product-test-strategy", "type": "start", "timestamp": "2025-10-14T00:00:45.000Z" },
+      { "stageKey": "product-test-strategy", "type": "settle", "status": "fulfilled", "timestamp": "2025-10-14T00:01:20.000Z" },
+      { "stageKey": "engineering-execution", "type": "start", "timestamp": "2025-10-14T00:01:25.000Z" },
+      { "stageKey": "engineering-execution", "type": "settle", "status": "fulfilled", "timestamp": "2025-10-14T00:02:30.000Z" },
+      { "stageKey": "quality-triage", "type": "start", "timestamp": "2025-10-14T00:02:35.000Z" },
+      { "stageKey": "quality-triage", "type": "settle", "status": "fulfilled", "timestamp": "2025-10-14T00:03:10.000Z" },
+      { "stageKey": "automation-release", "type": "start", "timestamp": "2025-10-14T00:03:15.000Z" },
+      { "stageKey": "automation-release", "type": "settle", "status": "fulfilled", "timestamp": "2025-10-14T00:03:55.000Z" }
+    ],
+    "metrics": {
+      "totalStages": 5,
+      "completedStages": 5,
+      "failedStages": 0
+    }
+  },
+  "summary": {
+    "status": "completed",
+    "completedStageKeys": [
+      "product-foundation",
+      "product-test-strategy",
+      "engineering-execution",
+      "quality-triage",
+      "automation-release"
+    ],
+    "pendingStageKeys": [],
+    "failedStageKeys": [],
+    "requiresHumanAttention": [],
+    "blockers": []
+  },
+  "stages": [
+    {
+      "key": "product-foundation",
+      "title": "Product Foundation",
+      "category": "product",
+      "sequence": 1,
+      "status": "passed",
+      "summary": "Problem and outcome approved",
+      "dependencies": [],
+      "timings": {
+        "startedAt": "2025-10-14T00:00:10.000Z",
+        "completedAt": "2025-10-14T00:00:40.000Z",
+        "durationMs": 30000
+      },
+      "gate": {
+        "sourceGateIds": ["G0", "G1"],
+        "requiresHumanApproval": true,
+        "approvals": [
+          {
+            "role": "product-owner",
+            "actor": "po@brainwav.ai",
+            "decision": "approved",
+            "timestamp": "2025-10-14T00:00:35.000Z",
+            "commitSha": "deadbeefdeadbeef"
+          }
+        ],
+        "automatedChecks": [
+          {
+            "id": "G0-check-0",
+            "name": "blueprint-lint",
+            "status": "pass"
+          }
+        ]
+      },
+      "artifacts": [
+        {
+          "id": "plan",
+          "type": "document",
+          "description": "Initial plan",
+          "path": "docs/prp/artifacts/plan.md"
+        }
+      ],
+      "evidence": [
+        { "type": "kernel", "evidenceId": "run-sample-001::G0" }
+      ],
+      "nextSteps": [],
+      "policy": []
+    },
+    {
+      "key": "product-test-strategy",
+      "title": "Test Strategy",
+      "category": "product",
+      "sequence": 2,
+      "status": "passed",
+      "summary": "Coverage budgets ratified",
+      "dependencies": ["product-foundation"],
+      "timings": {},
+      "gate": {
+        "sourceGateIds": ["G2"],
+        "requiresHumanApproval": true,
+        "approvals": [
+          {
+            "role": "qa-lead",
+            "actor": "qa@brainwav.ai",
+            "decision": "approved",
+            "timestamp": "2025-10-14T00:01:18.000Z",
+            "commitSha": "deadbeefdeadbeef"
+          }
+        ],
+        "automatedChecks": [
+          {
+            "id": "G2-check-0",
+            "name": "coverage-plan",
+            "status": "pass"
+          }
+        ]
+      },
+      "artifacts": [],
+      "evidence": [],
+      "nextSteps": []
+    },
+    {
+      "key": "engineering-execution",
+      "title": "Engineering Execution",
+      "category": "engineering",
+      "sequence": 3,
+      "status": "passed",
+      "summary": "Implementation complete",
+      "dependencies": ["product-test-strategy"],
+      "timings": {},
+      "gate": {
+        "sourceGateIds": ["G3", "G4"],
+        "requiresHumanApproval": true,
+        "approvals": [
+          {
+            "role": "reviewer",
+            "actor": "review@brainwav.ai",
+            "decision": "approved",
+            "timestamp": "2025-10-14T00:02:25.000Z",
+            "commitSha": "deadbeefdeadbeef"
+          }
+        ],
+        "automatedChecks": [
+          {
+            "id": "G3-check-0",
+            "name": "unit-tests",
+            "status": "pass"
+          }
+        ]
+      },
+      "artifacts": [],
+      "evidence": [],
+      "nextSteps": []
+    },
+    {
+      "key": "quality-triage",
+      "title": "Quality Triage",
+      "category": "quality",
+      "sequence": 4,
+      "status": "passed",
+      "summary": "No blockers",
+      "dependencies": ["engineering-execution"],
+      "timings": {},
+      "gate": {
+        "sourceGateIds": ["G5"],
+        "requiresHumanApproval": false,
+        "approvals": [],
+        "automatedChecks": [
+          {
+            "id": "G5-check-0",
+            "name": "bug-triage",
+            "status": "pass"
+          }
+        ]
+      },
+      "artifacts": [],
+      "evidence": [],
+      "nextSteps": []
+    },
+    {
+      "key": "automation-release",
+      "title": "Automation Release",
+      "category": "automation",
+      "sequence": 5,
+      "status": "passed",
+      "summary": "Release ready",
+      "dependencies": ["quality-triage"],
+      "timings": {},
+      "gate": {
+        "sourceGateIds": ["G6", "G7"],
+        "requiresHumanApproval": true,
+        "approvals": [
+          {
+            "role": "release-manager",
+            "actor": "release@brainwav.ai",
+            "decision": "approved",
+            "timestamp": "2025-10-14T00:03:50.000Z",
+            "commitSha": "deadbeefdeadbeef"
+          }
+        ],
+        "automatedChecks": [
+          {
+            "id": "G7-check-0",
+            "name": "release-checklist",
+            "status": "pass"
+          }
+        ]
+      },
+      "artifacts": [],
+      "evidence": [],
+      "nextSteps": []
+    }
+  ],
+  "artifacts": {
+    "prpMarkdownPath": "docs/prp/artifacts/sample-prp.md",
+    "manifestPath": "docs/prp/artifacts/sample-run-manifest.json"
+  }
+}

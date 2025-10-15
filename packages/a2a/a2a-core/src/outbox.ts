@@ -10,6 +10,7 @@ import {
 } from '../../a2a-contracts/src/outbox-types.js';
 import { createTraceParent } from '../../a2a-contracts/src/trace-context.js';
 import { getCurrentTraceContext } from './trace-context-manager.js';
+import { logWarn, logError } from './lib/logging.js';
 
 /**
  * Enhanced Transactional Outbox Pattern Implementation
@@ -184,7 +185,10 @@ export function createReliableOutboxProcessor(
 		if (config.enableIdempotency && message.idempotencyKey) {
 			const exists = await repository.existsByIdempotencyKey(message.idempotencyKey);
 			if (exists) {
-				console.warn(`Skipping duplicate message with idempotency key: ${message.idempotencyKey}`);
+				logWarn(
+					`Skipping duplicate message with idempotency key: ${message.idempotencyKey}`,
+					'Outbox',
+				);
 				return;
 			}
 		}
@@ -210,14 +214,14 @@ export function createReliableOutboxProcessor(
 		if (isRunning) return;
 
 		isRunning = true;
-		console.warn('Starting outbox processor...');
+		logWarn('Starting outbox processor...', 'Outbox');
 
 		processingTimer = setInterval(async () => {
 			try {
 				await processPending();
 				await processRetries();
 			} catch (error) {
-				console.error('Background processing error:', error);
+				logError(`Background processing error: ${String(error)}`, 'Outbox');
 			}
 		}, config.processingIntervalMs);
 	};
@@ -230,7 +234,7 @@ export function createReliableOutboxProcessor(
 			clearInterval(processingTimer);
 			processingTimer = undefined;
 		}
-		console.warn('Stopped outbox processor');
+		logWarn('Stopped outbox processor', 'Outbox');
 	};
 
 	return { processPending, processRetries, start, stop };

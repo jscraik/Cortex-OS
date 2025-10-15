@@ -219,6 +219,18 @@ Cortex-OS implements a unified memory architecture with strict governance:
 - **Transport Agnostic**: STDIO, HTTP/streamable, and REST support
 - **Governed Boundaries**: Enforced import validation and dependency rules
 
+### Run Manifest & CLI Workflow
+
+- Each PRP execution now emits a **run manifest** (`.cortex/run-manifests/<runId>.json`) summarizing Product→Automation stages, approvals, and telemetry.
+- Use the `prp` CLI to inspect and enforce workflow policies:
+  ```bash
+  pnpm prp manifest inspect .cortex/run-manifests/<runId>.json
+  pnpm prp manifest verify .cortex/run-manifests/<runId>.json
+  pnpm prp policy --manifest .cortex/run-manifests/<runId>.json --policy docs/prp/prp.policy.json
+  pnpm prp signatures --manifest .cortex/run-manifests/<runId>.json --all proofs/
+  ```
+- Templates and policy defaults live under [`docs/prp/`](docs/prp/) to keep manifests, artifacts, and stage proofs in sync with governance.
+
 For detailed architecture information, see [docs/architecture.md](./docs/architecture.md).
 
 ---

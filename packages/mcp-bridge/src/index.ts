@@ -49,6 +49,12 @@ export {
 	type TransportSelection,
 	type TransportWarning,
 } from './runtime/transport.js';
+export {
+	startHttpTransport,
+	type CustomRouteHandler,
+	type HttpTransportHandle,
+	type HttpTransportOptions,
+} from './runtime/transport/http-transport.js';
 export type {
 	CircuitBreakerOptions,
 	RateLimitOptions,

@@ -1,0 +1,15 @@
+{
+  "folders": [
+    { "path": "../packages/testing", "name": "📦 Testing" },
+    { "path": "../packages/tdd-coach", "name": "📦 TDD Coach" },
+    { "path": "../packages/evals", "name": "📦 Evals" },
+    { "path": "../packages/simlab", "name": "📦 Simlab" },
+    { "path": "../tests", "name": "🧪 Tests" },
+    { "path": "../simple-tests", "name": "🧪 Simple Tests" }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.tsserver.useSyntaxServer": "always",
+    "search.exclude": { "**/node_modules": true, "**/.nx": true, "**/dist": true }
+  }
+}

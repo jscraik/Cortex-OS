@@ -7,6 +7,7 @@
  * Co-authored-by: brAInwav Development Team
  */
 
+import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import type { RunnableConfig } from '@langchain/core/runnables';
@@ -18,6 +19,16 @@ import type {
 } from '../connectors/registry.js';
 import { ConnectorRegistry } from '../connectors/registry.js';
 import { secureDelay } from '../lib/secure-random.js';
+import {
+	createAgentMCPClient,
+	createRagBus,
+	executeWikidataWorkflow,
+	type AgentMCPClient,
+	type WorkflowHooks,
+	type WorkflowResult,
+} from '@cortex-os/rag';
+import type { RagBus, RagEventEnvelope } from '@cortex-os/rag';
+import { LocalMemoryProvider } from '@cortex-os/memory-core';
 
 type BuiltinSurfaceType = 'filesystem' | 'network' | 'git' | 'deployment' | 'database';
 
@@ -47,11 +58,18 @@ interface AvailableConnectorContext {
 	remoteTools?: ConnectorRemoteTool[];
 	tags?: string[];
 	enabled?: boolean;
+	definition?: ConnectorDefinition;
 }
 
 interface DetectionContext {
 	connectors: AvailableConnectorContext[];
 	scopeHints: string[];
+}
+
+interface ExecutionSurfaceGraphDeps {
+	getConnectorDefinition?: (id: string) => ConnectorDefinition | undefined;
+	getWorkflowHooks?: () => Promise<WorkflowHooks>;
+	getMcpClient?: (connector: ConnectorDefinition) => Promise<AgentMCPClient>;
 }
 
 // Execution Surface State
@@ -106,6 +124,10 @@ export class ExecutionSurfaceAgent extends EventEmitter {
 	>;
 	private connectorRegistry?: ConnectorRegistry;
 	private connectorDefinitions: ConnectorDefinition[] = [];
+	private ragBus?: RagBus;
+	private localMemoryProvider?: LocalMemoryProvider;
+	private workflowHooksPromise?: Promise<WorkflowHooks>;
+	private readonly connectorClients = new Map<string, Promise<AgentMCPClient>>();
 
 	constructor(config: ExecutionSurfaceConfig) {
 		super();
@@ -118,8 +140,13 @@ export class ExecutionSurfaceAgent extends EventEmitter {
 				console.warn('brAInwav execution surface agent: Initial connector refresh failed:', error);
 			});
 		}
-		this.initializeSurfaceConnectors();
-		this.graph = createExecutionSurfaceGraph();
+	this.initializeSurfaceConnectors();
+	this.graph = createExecutionSurfaceGraph({
+		getConnectorDefinition: (id) =>
+			this.connectorDefinitions.find((definition) => definition.id === id),
+		getWorkflowHooks: () => this.resolveWorkflowHooks(),
+		getMcpClient: (connector) => this.resolveMcpClient(connector),
+	});
 	}
 
 	/**
@@ -149,6 +176,7 @@ export class ExecutionSurfaceAgent extends EventEmitter {
 						remoteTools: definition.remoteTools,
 						tags: definition.tags,
 						enabled: definition.enabled,
+						definition,
 					}) satisfies AvailableConnectorContext,
 			);
 		}
@@ -242,6 +270,87 @@ export class ExecutionSurfaceAgent extends EventEmitter {
 		});
 	}
 
+	private async getRagBus(): Promise<RagBus> {
+		if (!this.ragBus) {
+			this.ragBus = createRagBus({ source: 'urn:cortex:agents:execution-surface' });
+		}
+		return this.ragBus;
+	}
+
+	private async getLocalMemoryProvider(): Promise<LocalMemoryProvider> {
+		if (!this.localMemoryProvider) {
+			this.localMemoryProvider = new LocalMemoryProvider({ maxRecords: 2048 });
+		}
+		return this.localMemoryProvider;
+	}
+
+	private async resolveWorkflowHooks(): Promise<WorkflowHooks> {
+		if (!this.workflowHooksPromise) {
+			this.workflowHooksPromise = (async () => {
+				const bus = await this.getRagBus();
+				const memory = await this.getLocalMemoryProvider();
+				const hooks: WorkflowHooks = {
+					publishEvent: async (envelope) => {
+						try {
+							await bus.publishEnvelope(envelope as RagEventEnvelope);
+						} catch (error) {
+							console.warn('brAInwav execution surface agent: Failed to publish RAG event', {
+								error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+								brand: 'brAInwav',
+								timestamp: new Date().toISOString(),
+							});
+						}
+					},
+					persistInsight: async (insight) => {
+						try {
+							const tags = [
+								'wikidata',
+								'semantic',
+								`connector:${insight.connectorId}`,
+							];
+							if (insight.partialFailure) tags.push('partial');
+							await memory.store({
+								text: `[${insight.connectorId}] ${insight.result.content}`,
+								tags,
+								meta: {
+									brand: insight.brand,
+									query: insight.query,
+									result: insight.result,
+									timestamp: insight.timestamp,
+									partialFailure: insight.partialFailure,
+								},
+							});
+						} catch (error) {
+							console.warn('brAInwav execution surface agent: Failed to persist Local Memory insight', {
+								error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+								brand: 'brAInwav',
+								timestamp: new Date().toISOString(),
+							});
+						}
+					},
+				};
+				return hooks;
+			})();
+		}
+		return this.workflowHooksPromise;
+	}
+
+	private async resolveMcpClient(connector: ConnectorDefinition): Promise<AgentMCPClient> {
+		let clientPromise = this.connectorClients.get(connector.id);
+		if (!clientPromise) {
+			clientPromise = (async () => {
+				const apiKey = extractApiKeyFromHeaders(connector.headers);
+				const client = createAgentMCPClient({ mcpServerUrl: connector.endpoint, apiKey });
+				if (typeof client.initialize === 'function') {
+					await client.initialize();
+				}
+				return client;
+			})();
+			this.connectorClients.set(connector.id, clientPromise);
+		}
+		return clientPromise;
+	}
+
 	private async refreshConnectorDefinitions(force = false): Promise<void> {
 		if (!this.connectorRegistry) {
 			return;
@@ -317,7 +426,7 @@ export class ExecutionSurfaceAgent extends EventEmitter {
 /**
  * Create LangGraphJS workflow for Execution Surface Agent
  */
-function createExecutionSurfaceGraph() {
+function createExecutionSurfaceGraph(deps: ExecutionSurfaceGraphDeps = {}) {
 	/**
 	 * Surface Detection Node - Detect target execution surface
 	 */
@@ -412,6 +521,24 @@ function createExecutionSurfaceGraph() {
 				currentStep: 'response_generation',
 				executionResults: [],
 			};
+		}
+
+		if (
+			targetSurface?.type === 'connector' &&
+			targetSurface.connectorId === 'wikidata'
+		) {
+			const wikidataResults = await maybeRunWikidataWorkflow(
+				executionPlan as ExecutionPlanStep[],
+				state,
+				targetSurface,
+				deps,
+			);
+			if (wikidataResults) {
+				return {
+					currentStep: 'response_generation',
+					executionResults: wikidataResults,
+				};
+			}
 		}
 
 		// Execute actions on target surface
@@ -582,6 +709,10 @@ function normalizeConnectorContextEntry(entry: unknown): AvailableConnectorConte
 				.filter((tool): tool is ConnectorRemoteTool => Boolean(tool))
 		: undefined;
 	const enabled = typeof record.enabled === 'boolean' ? record.enabled : true;
+	const definition =
+		record.definition && typeof record.definition === 'object'
+			? (record.definition as ConnectorDefinition)
+			: undefined;
 	return {
 		id,
 		endpoint,
@@ -590,6 +721,7 @@ function normalizeConnectorContextEntry(entry: unknown): AvailableConnectorConte
 		remoteTools,
 		tags: tags.length ? tags : undefined,
 		enabled,
+		definition,
 	};
 }
 
@@ -1133,6 +1265,181 @@ function validateExecutionSecurity(
 	return { passed: true };
 }
 
+type ExecutionPlanStep = {
+	action: string;
+	target: string;
+	parameters: Record<string, unknown>;
+	order: number;
+};
+
+type ExecutionPlanResult = {
+	action: string;
+	status: 'success' | 'error' | 'pending';
+	result: unknown;
+	duration: number;
+};
+
+function resolveConnectorDefinitionFromContext(
+	context: Record<string, unknown> | undefined,
+	connectorId: string,
+): ConnectorDefinition | undefined {
+	if (!context) return undefined;
+	const available = context.availableConnectors;
+	if (!Array.isArray(available)) return undefined;
+	for (const entry of available) {
+		if (!entry || typeof entry !== 'object') continue;
+		const candidate = entry as { id?: string; definition?: ConnectorDefinition };
+		if (candidate.id === connectorId && candidate.definition) {
+			return candidate.definition;
+		}
+	}
+	return undefined;
+}
+
+function extractQueryFromPlan(
+	plan: ExecutionPlanStep[],
+	state: ExecutionSurfaceState,
+): string {
+	const sorted = [...plan].sort((a, b) => a.order - b.order);
+	for (const step of sorted) {
+		const query = step.parameters.query;
+		if (typeof query === 'string' && query.trim().length > 0) {
+			return query;
+		}
+	}
+	const lastMessage = state.messages[state.messages.length - 1];
+	if (lastMessage && typeof lastMessage.content === 'string') {
+		return lastMessage.content;
+	}
+	return 'wikidata facts';
+}
+
+function buildWikidataExecutionResults(
+	plan: ExecutionPlanStep[],
+	targetSurface: ConnectorExecutionSurface,
+	workflowResult: WorkflowResult,
+): ExecutionPlanResult[] {
+	const sorted = [...plan].sort((a, b) => a.order - b.order);
+	const vectorResults = workflowResult.metadata?.wikidata?.vectorResults ?? [];
+	const claimGuid = workflowResult.metadata?.wikidata?.claimGuid;
+	const claims = workflowResult.metadata?.wikidata?.claims ?? [];
+	const sparql = workflowResult.metadata?.wikidata?.sparql;
+	const sparqlBindings = workflowResult.metadata?.wikidata?.sparqlBindings;
+	const partialFailure = workflowResult.metadata?.partialFailure;
+	const qids = new Set<string>();
+	if (workflowResult.metadata?.wikidata?.qid) qids.add(workflowResult.metadata.wikidata.qid);
+	for (const result of vectorResults) {
+		if (result?.qid) qids.add(result.qid);
+	}
+
+	return sorted.map((step, index) => {
+		const start = Date.now();
+		const toolName = typeof step.parameters.tool === 'string' ? step.parameters.tool : undefined;
+		const metadata: Record<string, unknown> = {
+			connectorId: targetSurface.connectorId,
+			targetEndpoint: targetSurface.endpoint,
+			tool: toolName,
+			partialFailure,
+		};
+
+		const wikidataMeta: Record<string, unknown> = {
+			connectorId: targetSurface.connectorId,
+			tool: toolName,
+			qids: Array.from(qids),
+		};
+
+		if (vectorResults.length > 0) {
+			wikidataMeta.vectorResults = vectorResults;
+		}
+		if (claimGuid) {
+			wikidataMeta.claimGuid = claimGuid;
+		}
+		if (claims.length > 0) {
+			wikidataMeta.claims = claims;
+		}
+		if (sparql) {
+			wikidataMeta.sparql = sparql;
+		}
+		if (sparqlBindings && sparqlBindings.length > 0) {
+			wikidataMeta.sparqlBindings = sparqlBindings;
+		}
+
+		metadata.wikidata = wikidataMeta;
+
+		if (index === sorted.length - 1) {
+			metadata.workflow = workflowResult;
+		}
+
+		const payload = {
+			action: step.action,
+			target: `${targetSurface.connectorId}:${
+				typeof step.parameters.tool === 'string' ? step.parameters.tool : step.target
+			}`,
+			surface: formatSurfaceName(targetSurface),
+			status: 'completed',
+			timestamp: new Date().toISOString(),
+			parameters: step.parameters,
+			metadata,
+		};
+
+		return {
+			action: step.action,
+			status: 'success',
+			result: payload,
+			duration: Math.max(1, Date.now() - start),
+		};
+	});
+}
+
+async function maybeRunWikidataWorkflow(
+	executionPlan: ExecutionPlanStep[],
+	state: ExecutionSurfaceState,
+	targetSurface: ConnectorExecutionSurface,
+	deps: ExecutionSurfaceGraphDeps,
+): Promise<ExecutionPlanResult[] | null> {
+	try {
+		const resolver =
+			deps.getConnectorDefinition ?? ((id: string) => resolveConnectorDefinitionFromContext(state.context, id));
+		const connector = resolver(targetSurface.connectorId);
+		if (!connector) return null;
+		const getClient = deps.getMcpClient;
+		if (!getClient) return null;
+		const query = extractQueryFromPlan(executionPlan, state);
+		if (!query) return null;
+		const rawScope = executionPlan
+			.map((step) => step.parameters.scope)
+			.find((scope) => typeof scope === 'string');
+		const scopeCandidate = rawScope === 'properties' || rawScope === 'facts'
+			? (rawScope as 'facts' | 'properties')
+			: undefined;
+		const hooks = (await deps.getWorkflowHooks?.()) ?? undefined;
+		const mcpClient = await getClient(connector);
+		const workflowResult = await executeWikidataWorkflow(query, connector, {
+			mcpClient,
+			hooks,
+			queryId: `wikidata-${randomUUID()}`,
+			routing: scopeCandidate ? { scope: scopeCandidate } : undefined,
+		});
+		return buildWikidataExecutionResults(executionPlan, targetSurface, workflowResult);
+	} catch (error) {
+		console.warn('brAInwav execution surface agent: Wikidata workflow execution failed', {
+			error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+			connector: targetSurface.connectorId,
+			brand: 'brAInwav',
+			timestamp: new Date().toISOString(),
+		});
+		return null;
+	}
+}
+
+function extractApiKeyFromHeaders(headers?: Record<string, string>): string | undefined {
+	if (!headers) return undefined;
+	const auth = headers.Authorization ?? headers.authorization;
+	if (!auth) return undefined;
+	const match = auth.match(/^Bearer\s+(.+)$/i);
+	return match ? match[1] : auth;
+}
+
 async function executeOnSurface(
 	executionPlan: Array<{
 		action: string;
@@ -1478,6 +1785,7 @@ function generateExecutionSurfaceResponse(result: {
 export const __INTERNALS__ = {
 	detectTargetSurface,
 	createConnectorPlan,
+	maybeRunWikidataWorkflow,
 };
 /**
  * Factory function to create Execution Surface Agent

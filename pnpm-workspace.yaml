@@ -5,6 +5,7 @@ packages:
   - "apps/*/packages/*"
   - "packages/*"
   - "packages/*/*"
+  - "tools/*"
   - "services/*"
   - "libs/typescript/*"
   - "website"

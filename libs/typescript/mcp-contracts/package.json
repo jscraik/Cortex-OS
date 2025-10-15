@@ -1,0 +1,25 @@
+{
+    "name": "@cortex-os/mcp-contracts",
+    "version": "0.1.0",
+    "description": "Model Context Protocol contracts for Cortex OS",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "test": "vitest",
+        "lint": "eslint src",
+        "typecheck": "tsc --noEmit"
+    },
+    "keywords": [
+        "mcp",
+        "contracts",
+        "cortex-os"
+    ],
+    "license": "MIT",
+    "devDependencies": {
+        "typescript": "^5.0.0",
+        "vitest": "^0.34.0"
+    }
+}

@@ -191,7 +191,7 @@ describe('ManualRefreshTool', () => {
 		});
 
 		it('should handle notification handler errors gracefully', async () => {
-			notificationHandler.emitPromptsListChanged.mockRejectedValue(
+			(notificationHandler.emitPromptsListChanged as any).mockRejectedValue(
 				new Error('Notification failed'),
 			);
 
@@ -203,8 +203,8 @@ describe('ManualRefreshTool', () => {
 		});
 
 		it('should handle partial failures', async () => {
-			notificationHandler.emitPromptsListChanged.mockResolvedValue(undefined);
-			notificationHandler.emitResourcesListChanged.mockRejectedValue(
+			(notificationHandler.emitPromptsListChanged as any).mockResolvedValue(undefined);
+			(notificationHandler.emitResourcesListChanged as any).mockRejectedValue(
 				new Error('Resource refresh failed'),
 			);
 
@@ -303,7 +303,7 @@ describe('ManualRefreshTool', () => {
 
 		it('should handle empty refresh results', async () => {
 			// Mock notification handler to simulate no refreshes
-			notificationHandler.emitPromptsListChanged.mockImplementation(() => {
+			(notificationHandler.emitPromptsListChanged as any).mockImplementation(() => {
 				// Do nothing - simulate no change
 			});
 

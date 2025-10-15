@@ -39,14 +39,15 @@ export async function readMemoryById(id: string, signal?: AbortSignal): Promise<
 		// Check for cancellation again
 		signal?.throwIfAborted();
 
-		const result = {
+		const result: ResourceContent = {
 			uri: `memory://cortex-local/${id}`,
-			mimeType: 'application/json' as const,
-			text: JSON.stringify(
+			mimeType: 'application/json',
+			blob: JSON.stringify(
 				{
 					id,
-					content: memory.content || 'No content available',
 					title: memory.content?.slice(0, 100) ?? `Memory ${id}`,
+					content: memory.content || '',
+					url: `memory://cortex-local/${id}`,
 					metadata: {
 						source: 'brAInwav-cortex-memory',
 						tags: memory.tags || [],
@@ -61,7 +62,7 @@ export async function readMemoryById(id: string, signal?: AbortSignal): Promise<
 			),
 		};
 
-		return result;
+		return result;		return result;
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		throw new Error(`[brAInwav] Failed to read memory ${id}: ${message}`);
@@ -74,21 +75,13 @@ export async function readMemoryById(id: string, signal?: AbortSignal): Promise<
 export async function searchMemory(
 	query: string,
 	limit: number = 10,
-	signal?: AbortSignal,
 ): Promise<ResourceContent> {
 	const provider = getMemoryProvider();
 
 	try {
-		// Check for cancellation
-		signal?.throwIfAborted();
-
 		const results = await provider.search({
 			query,
-			limit,
 		});
-
-		// Check for cancellation again
-		signal?.throwIfAborted();
 
 		const searchResults = results.map((memory: MemorySearchResult, index: number) => ({
 			id: memory.id,
@@ -104,10 +97,10 @@ export async function searchMemory(
 			},
 		}));
 
-		const result = {
+		const result: ResourceContent = {
 			uri: `memory://cortex-local/search?query=${encodeURIComponent(query)}&limit=${limit}`,
-			mimeType: 'application/json' as const,
-			text: JSON.stringify(
+			mimeType: 'application/json',
+			blob: JSON.stringify(
 				{
 					query,
 					limit,

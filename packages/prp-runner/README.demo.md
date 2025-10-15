@@ -78,3 +78,16 @@ Notes:
 
 - The embedding and search are deterministic and dependency-free for local dev.
 - This demo intentionally avoids heavy external model stacks.
+
+## 3) Run Manifest & Policy CLI
+
+After executing a PRP workflow, inspect the emitted manifest and enforce governance policies:
+
+```bash
+pnpm prp manifest inspect .cortex/run-manifests/<runId>.json
+pnpm prp manifest verify .cortex/run-manifests/<runId>.json
+pnpm prp policy --manifest .cortex/run-manifests/<runId>.json --policy docs/prp/prp.policy.json
+pnpm prp signatures --manifest .cortex/run-manifests/<runId>.json --all proofs/
+```
+
+Templates and baseline policies live in [`docs/prp/`](../../docs/prp/).

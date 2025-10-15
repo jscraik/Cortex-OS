@@ -1,4 +1,32 @@
 # Cortex Memory Decision Log
+## 2025-10-14 Chain-of-Stages Run Manifest Schema Established
+- Decision: Finalized the canonical Product→Automation run manifest schema (stage keys, summary/telemetry fields, proof linkage) ahead of implementation to keep prp-runner, proof-artifacts, and the planned prp-cli aligned on shared contracts.
+- Impacted Surfaces: packages/prp-runner/src/run-manifest/schema.ts; ~/tasks/chain-of-stages-run-manifest/manifest-schema.md
+- Evidence: vibe_check response (chain-of-stages-run-manifest); stored schema draft manifest-schema.md; new Zod schema definitions committed for StageEntry/RunManifest.
+- LocalMemoryEntryId: 4d9dfe70-8674-4c5f-a75f-b9c9b65ec0c4
+- RESTReference: http://localhost:3028/api/v1/memories/4d9dfe70-8674-4c5f-a75f-b9c9b65ec0c4
+
+## 2025-10-14 prp-runner Run Manifest Emission Implemented
+- Decision: Persist run-manifest JSON alongside prp.md with spool telemetry, Product→Automation stage aggregation, and public exports so downstream tooling can inspect manifest state.
+- Impacted Surfaces: packages/prp-runner/src/run-manifest/builder.ts; packages/prp-runner/src/run-manifest/schema.ts; packages/prp-runner/src/runner.ts; packages/prp-runner/src/documentation/prp-generator.ts; packages/prp-runner/tests/integration/run-manifest.integration.test.ts; packages/prp-runner/src/run-manifest/__tests__/manifest-builder.test.ts; packages/prp-runner/__tests__/public-exports.snapshot.test.ts
+- Evidence: `vibe_check` log chain-of-stages-run-manifest-impl; manifest integration test persisting `.cortex/run-manifests/<runId>.json`; updated PRP artifacts section referencing manifest path.
+- LocalMemoryEntryId: b152c3c9-70ff-438d-bdb8-29b91264cc2b
+- RESTReference: http://localhost:3028/api/v1/memories/b152c3c9-70ff-438d-bdb8-29b91264cc2b
+
+## 2025-10-14 proof-artifacts Stage Proof Helpers Added
+- Decision: Introduced run-manifest driven stage proof generation/verification plus CLI commands to create and validate stage envelopes.
+- Impacted Surfaces: packages/proof-artifacts/src/stageManifest.ts; packages/proof-artifacts/src/cli/cortex-proofs.ts; packages/proof-artifacts/tests/stageManifest.test.ts; packages/proof-artifacts/tests/cli/cortex-proofs.test.ts; packages/proof-artifacts/src/index.ts; packages/proof-artifacts/package.json.
+- Evidence: Stage CLI tests and unit tests covering manifest loading, envelope creation, and verification.
+- LocalMemoryEntryId: 7a38a9c7-4585-426e-87f6-a72a58f63b4f
+- RESTReference: http://localhost:3028/api/v1/memories/7a38a9c7-4585-426e-87f6-a72a58f63b4f
+
+## 2025-10-14 prp-cli Workflow CLI Scaffolded
+- Decision: Delivered @cortex-os/prp-cli with manifest inspection, verification, policy / signature evaluation commands, providing run-manifest tooling for teams.
+- Impacted Surfaces: tools/prp-cli/**/*, pnpm-workspace.yaml, package.json.
+- Evidence: prp-cli Vitest suites for manifest helpers, policy evaluation, and signature verification.
+- LocalMemoryEntryId: 7325da90-33d4-4bf0-8f78-8a4f95d906b1
+- RESTReference: http://localhost:3028/api/v1/memories/7325da90-33d4-4bf0-8f78-8a4f95d906b1
+
 ## 2025-01-12 arXiv MCP Tool Integration - TASK COMPLETE
 - Decision: Successfully completed arXiv MCP tool integration following agentic-phase-policy.md (R→G→F→REVIEW). Implemented academic paper search tools for LangGraph agents using simplified HTTP client approach with comprehensive rate limiting, schema validation, and brAInwav compliance.
 - Impacted Surfaces: packages/agent-toolkit/src/mcp/arxiv/ (complete tool implementation), .env.example (configuration), docs/architecture/decisions/002-arxiv-mcp-as-tool.md (ADR), tasks/arxiv-mcp-tool-integration/ (full task documentation)

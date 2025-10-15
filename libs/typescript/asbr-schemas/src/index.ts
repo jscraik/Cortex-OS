@@ -290,7 +290,7 @@ const connectorScopesSchema = z
 		}
 	});
 
-const ConnectorAuthSchema = z
+export const ConnectorAuthSchema = z
 	.object({
 		type: z.enum(['apiKey', 'bearer', 'none']),
 		headerName: z.string().min(1).optional(),

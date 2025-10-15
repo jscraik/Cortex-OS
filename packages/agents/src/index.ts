@@ -104,3 +104,15 @@ export {
 	TestEnvironment,
 	TestSuiteRunner,
 } from './testing/test-utilities.js';
+export {
+	createEmailNotifier,
+	type EmailNotifier,
+	type EmailNotificationRequest,
+	type EmailNotificationResult,
+	EmailNotificationError,
+	EmailTemplateNotFoundError,
+	InMemoryEmailTemplateStore,
+	type EmailTemplate,
+	type EmailTemplateRenderer,
+	type IdempotencyStore,
+} from './communications/email-notifier.js';

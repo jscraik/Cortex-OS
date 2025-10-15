@@ -1,0 +1,81 @@
+{
+    "schema_version": "1.1",
+    "task_slug": "mcp-performance-optimization",
+    "task_dir": "~/tasks/mcp-performance-optimization/",
+    "baton_path": "~/tasks/mcp-performance-optimization/json/baton.v1.json",
+    "created_at": "2025-10-15T00:00:00.000Z",
+    "updated_at": "2025-10-15T00:00:00.000Z",
+    "spec": {
+        "goal": "Optimize MCP connector sync latency and registry persistence to achieve ≤250ms p95 latency and ≥35% reduction in cold-start time",
+        "entry_points": [
+            "packages/mcp/src/connectors/manager.ts",
+            "packages/mcp/src/connectors/service-map.ts",
+            "packages/mcp-registry/src/fs-store.ts",
+            "packages/mcp-bridge/src/runtime/remote-proxy.ts"
+        ],
+        "stack": [
+            "TypeScript 5.9+",
+            "Node.js 22+",
+            "undici (HTTP agent pooling)",
+            "p-limit (concurrency control)",
+            "prom-client (metrics)",
+            "vitest (testing)"
+        ],
+        "constraints": [
+            "Preserve MCP protocol spec compliance (2024-11 edition)",
+            "Maintain backward compatibility with existing connectors",
+            "Support graceful degradation (stale-on-error)",
+            "Zero breaking API changes",
+            "Feature-flagged rollout capability"
+        ],
+        "testing": {
+            "coverage_target": "≥80% line/branch coverage for modified modules",
+            "types": [
+                "unit",
+                "integration",
+                "performance benchmarks"
+            ],
+            "determinism": "Use fixed clocks, mock HTTP, stable fixtures"
+        },
+        "non_goals": [
+            "MCP protocol changes or extensions",
+            "UI/CLI changes",
+            "Third-party connector modifications",
+            "Streaming batching (deferred to future iteration)"
+        ]
+    },
+    "planner": {
+        "plan_paths": {
+            "implementation_plan_md": "~/tasks/mcp-performance-optimization/implementation-plan.md",
+            "tdd_plan_md": "~/tasks/mcp-performance-optimization/tdd-plan.md",
+            "checklist_md": "~/tasks/mcp-performance-optimization/implementation-checklist.md",
+            "summary_md": "~/tasks/mcp-performance-optimization/SUMMARY.md"
+        },
+        "file_tree": [
+            "packages/mcp/src/connectors/manager.ts",
+            "packages/mcp/src/connectors/service-map.ts",
+            "packages/mcp/src/connectors/refresh-scheduler.ts",
+            "packages/mcp/src/connectors/cache.ts",
+            "packages/mcp-registry/src/fs-store.ts",
+            "packages/mcp-registry/src/memory-cache.ts",
+            "packages/mcp/package.json",
+            "packages/mcp-registry/package.json",
+            "packages/mcp/src/connectors/__tests__/manager.test.ts",
+            "packages/mcp/src/connectors/__tests__/refresh-scheduler.test.ts",
+            "packages/mcp/src/connectors/__tests__/cache.test.ts",
+            "packages/mcp/src/connectors/__tests__/service-map.test.ts",
+            "packages/mcp-registry/src/__tests__/fs-store.test.ts",
+            "packages/mcp-registry/src/__tests__/memory-cache.test.ts"
+        ],
+        "commands": {
+            "install": "cd /Users/jamiecraik/.Cortex-OS && pnpm install",
+            "lint": "pnpm --filter @cortex-os/mcp lint && pnpm --filter @cortex-os/mcp-registry lint",
+            "typecheck": "pnpm --filter @cortex-os/mcp typecheck && pnpm --filter @cortex-os/mcp-registry typecheck",
+            "test": "pnpm --filter @cortex-os/mcp test:coverage && pnpm --filter @cortex-os/mcp-registry test:coverage",
+            "test_mcp": "pnpm --filter @cortex-os/mcp test",
+            "test_registry": "pnpm --filter @cortex-os/mcp-registry test"
+        },
+        "coverage_target": "≥80% line/branch coverage",
+        "conventional_commits": true
+    }
+}

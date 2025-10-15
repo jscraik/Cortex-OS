@@ -10,6 +10,7 @@ export * from './gates/g5-triage.js';
 export * from './gates/g6-release-readiness.js';
 export * from './gates/g7-release.js';
 export * from './runner.js';
+export * from './run-manifest/index.js';
 
 /**
  * @file packages/prp-runner/src/index.ts

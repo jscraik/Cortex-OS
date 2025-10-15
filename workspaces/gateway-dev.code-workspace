@@ -1,0 +1,14 @@
+{
+  "folders": [
+    { "path": "../packages/model-gateway", "name": "📦 Model Gateway" },
+    { "path": "../packages/gateway", "name": "📦 Gateway" },
+    { "path": "../packages/router", "name": "📦 Router" },
+    { "path": "../packages/connectors", "name": "📦 Connectors" },
+    { "path": "../packages/openai-apps-sdk", "name": "📦 OpenAI Apps SDK" }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.tsserver.useSyntaxServer": "always",
+    "search.exclude": { "**/node_modules": true, "**/.nx": true, "**/dist": true }
+  }
+}

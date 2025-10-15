@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { promisify } from 'node:util';
 import type { AgentToolkitCodemodInput, AgentToolkitCodemodResult } from '@cortex-os/contracts';
-import { safeExecFile } from '@cortex-os/security';
+import { safeExecFile } from './securityBridge.js';
 import type { CodemodTool } from '../domain/ToolInterfaces.js';
 import { resolveToolsDirFromOverride, type ToolsDirOverride } from './paths.js';
 

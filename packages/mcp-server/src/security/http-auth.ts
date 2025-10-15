@@ -135,12 +135,11 @@ const createBearerVerifier = (config: AuthConfig): BearerVerifier | null => {
 		return null;
 	}
 	const requiredScopes = config.enforceScopes ? auth0.requiredScopes : [];
-	return async (token, signal) => {
+	return async (token) => {
 		return verifyAuth0Jwt(token, {
 			domain: auth0.domain,
 			audience: auth0.audience,
 			requiredScopes,
-			signal,
 		});
 	};
 };

@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Context, Next } from 'hono';
+import { getCorrelationIdFromContext, runWithLogContext } from './log-context.js';
 import type { Logger } from './logger.js';
 import type { CorrelationIdOptions } from './types.js';
 
@@ -16,16 +17,21 @@ const DEFAULT_HEADERS = [
 /**
  * Extract correlation ID from various headers
  */
-function extractCorrelationId(headers: Headers): string | null {
-	for (const header of DEFAULT_HEADERS) {
+function extractCorrelationId(headers: Headers, headerName?: string): string | null {
+	const candidates = new Set<string>([
+		...(headerName ? [headerName.toLowerCase()] : []),
+		...DEFAULT_HEADERS,
+	]);
+
+	for (const header of candidates) {
 		const value = headers.get(header);
 		if (value) {
-			// For traceparent header, extract the trace ID
 			if (header === 'traceparent') {
 				const match = value.match(/^00-([a-f0-9]{32})-/);
 				if (match) {
 					return match[1];
 				}
+				continue;
 			}
 			return value;
 		}
@@ -47,22 +53,32 @@ export function correlationIdMiddleware(options: CorrelationIdOptions = {}) {
 	const { logger, headerName = 'X-Correlation-ID', idGenerator = generateCorrelationId } = options;
 
 	return async (c: Context, next: Next) => {
-		// Extract or generate correlation ID
-		const correlationId = extractCorrelationId(c.req.raw.headers) || idGenerator();
+		const normalizedHeaderName = headerName.toLowerCase();
+		const correlationId = extractCorrelationId(c.req.raw.headers, normalizedHeaderName) || idGenerator();
 
-		// Add to response headers
+		// Update request/response context with the correlation ID so downstream handlers and tests can access it
 		c.res.headers.set(headerName, correlationId);
-
-		// Store in context for access in other middleware/handlers
 		c.set('correlationId', correlationId);
 
-		// Add to logger if provided
-		if (logger) {
-			const childLogger = logger.child({ correlationId });
-			c.set('logger', childLogger);
-		}
+		// Run the downstream chain within the async context so loggers can retrieve the ID automatically
+		return runWithLogContext({ correlationId }, async () => {
+			let scopedLogger: Logger | undefined;
 
-		await next();
+			if (logger) {
+				scopedLogger = logger.child({ correlationId });
+				c.set('logger', scopedLogger);
+			}
+
+			await next();
+
+			if (logger) {
+				await logger.flush();
+
+				if (scopedLogger && scopedLogger !== logger) {
+					await scopedLogger.flush();
+				}
+			}
+		});
 	};
 }
 
@@ -70,7 +86,7 @@ export function correlationIdMiddleware(options: CorrelationIdOptions = {}) {
  * Get correlation ID from context
  */
 export function getCorrelationId(c: Context): string | undefined {
-	return c.get('correlationId');
+	return c.get('correlationId') ?? getCorrelationIdFromContext();
 }
 
 /**

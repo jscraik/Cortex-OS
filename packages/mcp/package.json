@@ -1,0 +1,54 @@
+{
+    "name": "@cortex-os/mcp",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./server": {
+            "import": "./dist/server.js",
+            "types": "./dist/server.d.ts"
+        },
+        "./connectors": {
+            "import": "./dist/connectors/index.js",
+            "types": "./dist/connectors/index.d.ts"
+        },
+        "./capabilities": {
+            "import": "./dist/capabilities/index.js",
+            "types": "./dist/capabilities/index.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "typecheck": "tsc -p tsconfig.json --noEmit",
+        "test": "node ../../scripts/vitest-safe.mjs run",
+        "test:watch": "echo 'DISABLED: watch/UI mode blocked for memory safety'",
+        "test:coverage": "node ../../scripts/vitest-safe.mjs run --coverage",
+        "test:safe": "node ../../scripts/vitest-safe.mjs run"
+    },
+    "dependencies": {
+        "@cortex-os/mcp-core": "workspace:*",
+        "@cortex-os/mcp-bridge": "workspace:*",
+        "@cortex-os/orchestration": "workspace:*",
+        "@cortex-os/protocol": "workspace:*",
+        "@cortex-os/utils": "workspace:*",
+        "jsonwebtoken": "^9.0.0",
+        "lodash-es": "^4.17.21",
+        "semver": "^7.6.0",
+        "zod": "^3.25.76"
+    },
+    "devDependencies": {
+        "@types/jsonwebtoken": "^9.0.0",
+        "@types/lodash-es": "^4.17.0",
+        "@types/node": "^22.18.1",
+        "@types/semver": "^7.5.0",
+        "@vitest/coverage-v8": "^3.2.4",
+        "typescript": "^5.9.3",
+        "vitest": "^3.2.4"
+    }
+}

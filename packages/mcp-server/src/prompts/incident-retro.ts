@@ -15,8 +15,10 @@ type IncidentRetroInput = z.infer<typeof IncidentRetroArgs>;
 
 async function loadHealthSnapshot(signal?: AbortSignal) {
 	try {
-		const resource = await readHealthMetrics(signal);
-		return JSON.parse(resource.text);
+		const resource = await readHealthMetrics();
+		// Resource can be text or blob, need to handle both
+		const content = 'text' in resource ? resource.text : resource.blob;
+		return JSON.parse(content);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		console.warn('[brAInwav] incident-retro metrics failed', message);

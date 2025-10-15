@@ -22,6 +22,7 @@
     "local-memory:health": "node -e \"fetch(process.env.LOCAL_MEMORY_BASE_URL?.replace(/\\\\\\/$/, '') + '/health').then(r=>console.log('health', r.status)).catch(e=>{console.error('health fail', e.message); process.exit(1);})\"",
     "local-memory:check": "node tools/validators/enforce-local-memory.mjs",
     "ci:agent-toolkit:validate": "bash scripts/ci/agent-toolkit-validate.test.sh",
+    "validate:build": "node scripts/validate-build.js",
     "test:rag:e2e": "bash -lc 'if [ \"${CORTEX_RAG_E2E}\" = \"true\" ]; then node scripts/vitest-safe.mjs run tests/rag/rag-http.e2e.test.ts; else echo \"Skipping RAG E2E suite (CORTEX_RAG_E2E!=true)\"; fi'",
     "test:agents:reflection": "node scripts/vitest-safe.mjs run packages/agents/tests/modern-agent-system/unit/reflection.test.ts",
     "ci:agent-toolkit:validate:legacy": "node scripts/agent-toolkit.mjs validate:project \"**/*.{ts,tsx,js,jsx,py,rs}\"",

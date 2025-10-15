@@ -88,6 +88,7 @@ export function scheduleHeartbeat(
 	const ms = durationToMs(interval) || 300_000;
 	const timers: Array<NodeJS.Timeout> = [];
 	const jitter = Math.max(50, Math.floor(ms / Math.max(2, models.length + 1)));
+	options.keepAlive = keepAlive; // Ensure keepAlive is in options
 
 	const ping = async (model: string) => {
 		try {

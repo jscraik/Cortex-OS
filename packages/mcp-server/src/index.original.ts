@@ -33,6 +33,14 @@ import { execa } from 'execa';
 import { FastMCP } from 'fastmcp';
 import { pino } from 'pino';
 import { z } from 'zod';
+import {
+	adaptStoreInput,
+	adaptSearchInput,
+	adaptGetInput,
+	hasAnalysis,
+	hasRelationships,
+	hasStats,
+} from './adapters/memory-adapters.js';
 import { normalizePiecesResults } from './pieces-normalizer.js';
 import { PiecesMCPProxy } from './pieces-proxy.js';
 import { performLocalHybridSearch } from './search-utils.js';
@@ -177,7 +185,9 @@ server.addTool({
 	async execute(args) {
 		return runTool('memory.store', async () => {
 			logger.info({ branding: BRAND.prefix, tool: 'memory.store' }, 'Storing memory');
-			const result = await memoryProvider.store(args);
+			// Adapt schema: content -> text for memory provider
+			const adapted = adaptStoreInput(args as any);
+			const result = await memoryProvider.store(adapted);
 			return JSON.stringify(result, null, 2);
 		});
 	},
@@ -195,7 +205,9 @@ server.addTool({
 	async execute(args) {
 		return runTool('memory.search', async () => {
 			logger.info({ branding: BRAND.prefix, tool: 'memory.search' }, 'Searching memories');
-			const result = await memoryProvider.search(args);
+			// Adapt schema: searchType -> search_type, remove limit from provider call
+			const adapted = adaptSearchInput(args as any);
+			const result = await memoryProvider.search(adapted);
 			return JSON.stringify(result, null, 2);
 		});
 	},
@@ -218,6 +230,10 @@ server.addTool({
 				} catch {
 					logger.debug({ branding: BRAND.prefix }, 'Streaming unsupported, continuing');
 				}
+			}
+			// Type guard: check if provider has analysis capability
+			if (!hasAnalysis(memoryProvider)) {
+				throw new Error('Memory provider does not support analysis');
 			}
 			const result = await memoryProvider.analysis(args);
 			if (context?.streamContent) {
@@ -249,6 +265,10 @@ server.addTool({
 				{ branding: BRAND.prefix, tool: 'memory.relationships' },
 				'Managing relationships',
 			);
+			// Type guard: check if provider has relationships capability
+			if (!hasRelationships(memoryProvider)) {
+				throw new Error('Memory provider does not support relationships');
+			}
 			const result = await memoryProvider.relationships(args);
 			return JSON.stringify(result, null, 2);
 		});
@@ -266,7 +286,11 @@ server.addTool({
 	},
 	async execute(args) {
 		return runTool('memory.stats', async () => {
-			logger.info({ branding: BRAND.prefix, tool: 'memory.stats' }, 'Fetching memory stats');
+			logger.info({ branding: BRAND.prefix, tool: 'memory.stats' }, 'Retrieving stats');
+			// Type guard: check if provider has stats capability
+			if (!hasStats(memoryProvider)) {
+				throw new Error('Memory provider does not support stats');
+			}
 			const result = await memoryProvider.stats(args);
 			return JSON.stringify(result, null, 2);
 		});
@@ -304,11 +328,14 @@ server.addTool({
 	async execute(args) {
 		return runTool('fetch', async () => {
 			logger.info({ branding: BRAND.prefix, tool: 'fetch', id: args.id }, 'ChatGPT fetch');
-			const memory = await memoryProvider.get(args.id);
+			// Adapt GetMemoryInput to string for provider
+			const memoryId = adaptGetInput(args as any);
+			const memory = await memoryProvider.get(memoryId);
 			if (!memory) {
 				throw new Error(`Document with ID "${args.id}" not found`);
 			}
-			return createFetchResponse(memory, args.id);
+			// Memory interface already matches the expected return type
+			return memory;
 		});
 	},
 });

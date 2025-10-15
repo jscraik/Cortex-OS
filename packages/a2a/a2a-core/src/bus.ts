@@ -8,6 +8,7 @@ import type { SchemaRegistry } from './schema-registry.js';
 import { getCurrentTraceContext } from './trace-context-manager.js';
 import type { Transport } from './transport.js';
 import type { InputValidator, ValidationRule } from './validation/input-validator.js';
+import { logError } from './lib/logging.js';
 
 export type Handler = {
 	type: string;
@@ -217,7 +218,10 @@ export const createBus = (
 			} catch (error) {
 				// OLD (BROKEN): m.routing.topic
 				// NEW (FIXED): Use m.type
-				console.error(`[A2A Bus] Error handling message type ${m.type}:`, error);
+				logError(
+					`Error handling message type ${m.type}: ${error instanceof Error ? error.message : String(error)}`,
+					'A2A-Bus',
+				);
 			}
 		});
 	};

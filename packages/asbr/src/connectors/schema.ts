@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import Ajv from 'ajv';
+import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 
 const MODULE_DIR = fileURLToPath(new URL('.', import.meta.url));
@@ -11,7 +11,7 @@ export const CONNECTORS_MANIFEST_SCHEMA_PATH = resolve(
 	'../../../../schemas/connectors-manifest.schema.json',
 );
 
-const ajv = new Ajv({ allErrors: true, strict: false });
+const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
 
 const schemaDocument = JSON.parse(

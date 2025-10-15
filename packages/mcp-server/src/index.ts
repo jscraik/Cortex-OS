@@ -178,6 +178,7 @@ async function maybeWarmupOllama(
 		);
 		return scheduleHeartbeat(ollama.prewarmModels, ollama.heartbeatInterval, ollama.keepAlive, {
 			baseUrl: ollama.baseUrl,
+			keepAlive: ollama.keepAlive,
 		});
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
@@ -256,7 +257,9 @@ async function initializeTelemetry(logger: Logger, config: ServerConfig): Promis
         initializeMetrics(BRAND.prefix);
 
         if (config.metricsEnabled) {
-                const metricsPath = config.metricsPath;
+                const metricsPath = config.metricsPath.startsWith('/') 
+			? config.metricsPath as `/${string}` 
+			: `/${config.metricsPath}` as `/${string}`;
                 try {
                         metricsServerHandle = startMetricsServer({
                                 brandPrefix: BRAND.prefix,

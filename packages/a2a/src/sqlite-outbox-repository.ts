@@ -300,9 +300,16 @@ export class SqliteOutboxRepository implements OutboxRepository {
 	constructor(dbPath: string = ':memory:') {
 		// Dynamically import better-sqlite3 to avoid hard dependency
 		try {
-			// eslint-disable-next-line @typescript-eslint/no-require-imports
-			const sqlite3 = require('better-sqlite3');
-			this.db = new sqlite3(dbPath) as unknown as BetterSqliteLike;
+			// Using dynamic import with workaround for synchronous constructor
+			let SqliteConstructor;
+			try {
+				// Try to load better-sqlite3 synchronously for CommonJS compatibility
+				// biome-ignore lint: Dynamic require needed for optional dependency
+				SqliteConstructor = require('better-sqlite3');
+			} catch {
+				throw new Error('better-sqlite3 not available');
+			}
+			this.db = new SqliteConstructor(dbPath) as unknown as BetterSqliteLike;
 
 			// Create tables if they don't exist
 			this.db.exec(`

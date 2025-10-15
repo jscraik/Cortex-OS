@@ -1,0 +1,62 @@
+{
+  "folders": [
+    {
+      "path": "../packages/mcp",
+      "name": "📦 MCP (Main)"
+    },
+    {
+      "path": "../packages/mcp-server",
+      "name": "📦 MCP Server"
+    },
+    {
+      "path": "../packages/mcp-bridge",
+      "name": "📦 MCP Bridge"
+    },
+    {
+      "path": "../packages/mcp-auth",
+      "name": "📦 MCP Auth"
+    },
+    {
+      "path": "../packages/mcp-registry",
+      "name": "📦 MCP Registry"
+    },
+    {
+      "path": "../packages/mcp-core",
+      "name": "📦 MCP Core"
+    },
+    {
+      "path": "../packages/cortex-mcp",
+      "name": "📦 Cortex MCP"
+    },
+    {
+      "path": "../libs/typescript/mcp-contracts",
+      "name": "📚 MCP Contracts"
+    },
+    {
+      "path": "../servers",
+      "name": "🔌 MCP Servers"
+    }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.tsserver.useSyntaxServer": "always",
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.nx": true,
+      "**/dist": true,
+      "**/out": true,
+      "**/coverage": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/.nx/**": true,
+      "**/dist/**": true,
+      "**/out/**": true
+    },
+    "debug.javascript.defaultRuntimeExecutable": {
+      "pwa-node": "/Users/jamiecraik/.local/share/mise/shims/node"
+    },
+    "python.defaultInterpreterPath": "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/python",
+    "python.analysis.typeCheckingMode": "off"
+  }
+}

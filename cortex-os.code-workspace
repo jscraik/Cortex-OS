@@ -1,0 +1,91 @@
+{
+  "folders": [
+    {
+      "path": "packages/agents",
+      "name": "📦 Agents"
+    },
+    {
+      "path": "packages/rag",
+      "name": "📦 RAG"
+    },
+    {
+      "path": "packages/mcp",
+      "name": "📦 MCP"
+    },
+    {
+      "path": "packages/orchestration",
+      "name": "📦 Orchestration"
+    },
+    {
+      "path": "packages/memories",
+      "name": "📦 Memories"
+    },
+    {
+      "path": "apps/cortex-os",
+      "name": "🚀 Cortex OS App"
+    },
+    {
+      "path": "libs/typescript",
+      "name": "📚 TypeScript Libs"
+    },
+    {
+      "path": ".",
+      "name": "🔧 Root (Config Files Only)"
+    }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 12288,
+    "typescript.disableAutomaticTypeAcquisition": true,
+    "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+    "typescript.tsserver.useSyntaxServer": "always",
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.nx": true,
+      "**/dist": true,
+      "**/out": true,
+      "**/coverage": true,
+      "**/.git": true,
+      "**/pnpm-lock.yaml": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/.nx/**": true,
+      "**/dist/**": true,
+      "**/out/**": true,
+      "**/coverage/**": true,
+      "**/.git/objects/**": true,
+      "**/.git/subtree-cache/**": true
+    },
+    "files.exclude": {
+      "**/.git": true,
+      "**/.nx": true,
+      "**/dist": true,
+      "**/out": true,
+      "**/coverage": true,
+      "**/node_modules": true
+    },
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "eslint.run": "onSave",
+    "[typescript]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "biomejs.biome"
+    },
+    "debug.javascript.defaultRuntimeExecutable": {
+      "pwa-node": "/Users/jamiecraik/.local/share/mise/shims/node"
+    },
+    "python.defaultInterpreterPath": "/Users/jamiecraik/.local/share/mise/installs/python/3.12.6/bin/python"
+  },
+  "extensions": {
+    "recommendations": [
+      "biomejs.biome",
+      "dbaeumer.vscode-eslint",
+      "github.copilot",
+      "nrwl.angular-console"
+    ]
+  }
+}

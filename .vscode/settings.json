@@ -102,14 +102,14 @@
   "typescript.preferences.preferTypeOnlyAutoImports": true,
   "typescript.preferences.useLabelDetailsInCompletionEntries": true,
   "typescript.suggest.completeFunctionCalls": true,
-  "typescript.tsserver.maxTsServerMemory": 4096,
   "typescript.disableAutomaticTypeAcquisition": true,
   "typescript.tsserver.watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",
     "fallbackPolling": "dynamicPriorityPolling"
   },
-  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+  "typescript.tsserver.maxTsServerMemory": 8192,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
   "javascript.validate.enable": false,
   "javascript.updateImportsOnFileMove.enabled": "always",
   "emmet.includeLanguages": {
@@ -156,7 +156,14 @@
     "**/.DS_Store": true,
     "**/Thumbs.db": true,
     "**/*.sqlite": false,
-    "**/cortex-*.sqlite": false
+    "**/cortex-*.sqlite": false,
+    "**/.nx": true,  // Nx cache
+    "**/.tsbuildinfo": true,  // TypeScript build info
+    "**/out": true,  // Compiled output
+    "**/htmlcov": true,  // Python coverage
+    "**/test-results": true,  // Test results
+    "**/playwright-report": true,  // Playwright reports
+    "**/target": true,  // Rust/Java build output
   },
   "search.exclude": {
     "**/node_modules": true,
@@ -870,13 +877,6 @@
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
   },
-}
-
-  // Performance Optimizations - Added 2025-01-14
-  "typescript.tsserver.maxTsServerMemory": 8192,
-  "typescript.disableAutomaticTypeAcquisition": true,
-  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
-  "typescript.tsserver.useSyntaxServer": "auto",
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true,

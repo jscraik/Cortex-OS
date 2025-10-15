@@ -72,3 +72,15 @@
 ## 7. Evidence & Next Steps
 - Oversight: `vibe_check` session `chatgpt-auth-bridge-plan` logged 2025-10-13 verifying plan alignment.
 - Proceed to author feature spec + TDD plan per governance, then implement in small PRs with coverage ≥95% on changed files.
+
+## 8. Verification Summary — 2025-10-14
+- ✅ Automated suites  
+  `uv run pytest packages/cortex-mcp/tests/test_oauth_bridge.py packages/cortex-mcp/tests/test_server_integration.py packages/cortex-mcp/tests/test_discovery_route.py`
+- ✅ Health evidence  
+  Saved `/health/auth` response and PRM payload under `~/tasks/chatgpt-apps-oauth-bridge/verification/`.
+- ✅ Documentation  
+  README + ChatGPT integration guide updated with OAuth env vars, PRM endpoint, and `/health/auth` dashboards.
+- ✅ Oversight  
+  Logged `vibe_check` response at `verification/vibe-check-response.json` (session: `chatgpt-apps-oauth-bridge`).
+- 🔄 Ops follow-up  
+  Instrument `/health/auth` in Grafana panel `mcp-auth-health` and confirm JWKS probe alerts (owner: Ops SRE, due 2025-10-17).

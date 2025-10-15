@@ -50,6 +50,15 @@ values include:
 | `CORTEX_MCP_SEARCH_BREAKER_TIMEOUT_SECONDS` | Recovery timeout for the search circuit breaker (default 30s) |
 | `CORTEX_MCP_MEMORY_BREAKER_FAILURES` | Failure threshold before the memory circuit opens (default 5) |
 | `CORTEX_MCP_MEMORY_BREAKER_TIMEOUT_SECONDS` | Recovery timeout for the memory circuit breaker (default 15s) |
+| `CORTEX_MCP_OAUTH__ENABLED` | Set to `true` to enable the ChatGPT Apps OAuth bridge |
+| `CORTEX_MCP_OAUTH__ISSUER` | OAuth 2.1 issuer URL used to validate access tokens |
+| `CORTEX_MCP_OAUTH__RESOURCE` | Resource (audience) expected in bearer tokens |
+| `CORTEX_MCP_OAUTH__AUTHORIZATION_ENDPOINT` | Optional override for the IdP authorization endpoint |
+| `CORTEX_MCP_OAUTH__TOKEN_ENDPOINT` | Optional override for the IdP token endpoint |
+| `CORTEX_MCP_OAUTH__JWKS_URI` | Optional override for JWKS URL (defaults to `<issuer>/.well-known/jwks.json`) |
+| `CORTEX_MCP_OAUTH__SCOPES` | JSON map of MCP tool identifiers to required scopes (e.g. `{"memory.store":["memories:write"]}`) |
+| `CORTEX_MCP_OAUTH__METADATA_TTL_SECONDS` | Cache lifetime for PRM responses (default 300) |
+| `CORTEX_MCP_OAUTH__JWKS_CACHE_TTL_SECONDS` | Cache lifetime for JWKS keys (default 300) |
 
 JWT authentication for REST routes requires:
 
@@ -77,6 +86,25 @@ export JWT_ALGORITHM="HS256"
 ```bash
 docker-compose -f docker/docker-compose.mcp.yml up
 ```
+
+## OAuth 2.1 Bridge & Health
+
+When `CORTEX_MCP_OAUTH__ENABLED=true`, the FastMCP server:
+
+- Validates bearer tokens with the configured issuer/JWKS.
+- Projects ChatGPT Apps identities into request state for REST + MCP tools.
+- Publishes [Protected Resource Metadata](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-protected-resource-metadata) at `/.well-known/oauth-protected-resource`.
+- Advertises scope requirements inside `/.well-known/mcp.json`.
+- Exposes auth-specific health telemetry at `/health/auth`, including JWKS probe status.
+
+Example curl checks:
+
+```bash
+curl -s https://cortex-mcp.brainwav.io/.well-known/oauth-protected-resource | jq
+curl -s https://cortex-mcp.brainwav.io/health/auth | jq
+```
+
+Feed the `/health/auth` output into Ops dashboards to monitor `status`, `metadata`, and JWKS key counts alongside the standard `/health` endpoint.
 
 ## Test Coverage
 

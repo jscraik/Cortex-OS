@@ -975,8 +975,11 @@ export function createRemoteMCPIngestionManager(
 // Phase C.2: Remote MCP Orchestration Implementation
 //
 
+import type { Envelope } from '@cortex-os/a2a-contracts';
 import type { ConnectorEntry } from '@cortex-os/protocol';
+import { createRAGQueryResultEvent } from '../events/rag-events.js';
 import { routeFactQuery } from './agents-shim.js';
+import type { FactQueryOptions } from './agents-shim.js';
 
 // Types for Phase C.2
 export interface VectorSearchResult {
@@ -1005,6 +1008,9 @@ export interface WikidataMetadata {
 	claimGuid?: string;
 	title?: string;
 	properties?: string[];
+	vectorResults?: VectorSearchResult[];
+	claims?: ClaimsResult['claims'];
+	sparqlBindings?: SparqlResult['results'];
 	brand: string;
 }
 
@@ -1024,6 +1030,9 @@ export interface WorkflowResult {
 			qid?: string;
 			claimGuid?: string;
 			sparql?: string;
+			vectorResults?: VectorSearchResult[];
+			claims?: ClaimsResult['claims'];
+			sparqlBindings?: SparqlResult['results'];
 		};
 		fallbackReason?: string;
 		partialFailure?: string;
@@ -1032,13 +1041,159 @@ export interface WorkflowResult {
 	};
 }
 
+export interface WorkflowRoutingOptions extends FactQueryOptions {}
+
+export interface WorkflowInsight {
+	query: string;
+	connectorId: string;
+	result: WorkflowResult;
+	partialFailure?: string;
+	timestamp: string;
+	brand: string;
+}
+
+export interface WorkflowHooks {
+	publishEvent?: (event: Envelope) => Promise<void> | void;
+	persistInsight?: (insight: WorkflowInsight) => Promise<void> | void;
+}
+
 export interface WorkflowOptions {
-        mcpClient?: AgentMCPClient;
-        localStore?: Store;
-        timeout?: number;
-        enableSparql?: boolean;
-        enablePartialResults?: boolean;
-        enableClaims?: boolean;
+	mcpClient?: AgentMCPClient;
+	localStore?: Store;
+	timeout?: number;
+	enableSparql?: boolean;
+	enablePartialResults?: boolean;
+	enableClaims?: boolean;
+	queryId?: string;
+	routing?: WorkflowRoutingOptions;
+	hooks?: WorkflowHooks;
+}
+
+type FactScope = 'facts' | 'properties';
+
+function detectRoutingScope(query: string, override?: FactScope): FactScope {
+	if (override) return override;
+	const normalized = query.toLowerCase();
+	const propertyPatterns = [/\bproperties?\b/, /\bprop(er(ty|ties))?\b/, /\bstatement\b/];
+	const propertyIdPattern = /\bP\d{2,5}\b/i;
+	if (propertyPatterns.some((pattern) => pattern.test(normalized)) || propertyIdPattern.test(query)) {
+		return 'properties';
+	}
+	return 'facts';
+}
+
+function parseNumeric(value: unknown): number | undefined {
+	const numeric = Number(value);
+	return Number.isFinite(numeric) && numeric > 0 ? numeric : undefined;
+}
+
+function buildRoutingOptions(
+	query: string,
+	connector: ConnectorEntry,
+	routing?: WorkflowRoutingOptions,
+): WorkflowRoutingOptions {
+	const scope = detectRoutingScope(query, routing?.scope as FactScope | undefined);
+	const metadata = (connector.metadata as Record<string, unknown> | undefined) ?? {};
+	const dimension = routing?.matryoshkaDimension ?? parseNumeric(metadata.embeddingDimensions);
+	const embedderHint = routing?.embedderHint ??
+		(typeof metadata.vectorModel === 'string' ? metadata.vectorModel : undefined);
+	const resolved: WorkflowRoutingOptions = { scope };
+	if (typeof dimension === 'number') {
+		resolved.matryoshkaDimension = dimension;
+	}
+	if (embedderHint) {
+		resolved.embedderHint = embedderHint;
+	}
+	return resolved;
+}
+
+function determineWorkflowFlags(
+	scope: FactScope,
+	options?: WorkflowOptions,
+): { enableClaims: boolean; enableSparql: boolean; enablePartialResults: boolean } {
+	const { enableClaims, enableSparql, enablePartialResults } = options ?? {};
+	const defaultClaims = scope !== 'properties';
+	return {
+		enableClaims: typeof enableClaims === 'boolean' ? enableClaims : defaultClaims,
+		enableSparql: typeof enableSparql === 'boolean' ? enableSparql : defaultClaims,
+		enablePartialResults:
+			typeof enablePartialResults === 'boolean' ? enablePartialResults : true,
+	};
+}
+
+function resolveQueryId(query: string, provided?: string): string {
+	if (provided) return provided;
+	return `wikidata-${simpleHash(query).toString(36)}`;
+}
+
+interface WorkflowDispatchContext {
+	query: string;
+	connector: ConnectorEntry;
+	result: WorkflowResult;
+	vectorResults?: VectorSearchResult[];
+	partialFailure?: string;
+	durationMs: number;
+	hooks?: WorkflowHooks;
+	queryId: string;
+}
+
+function toEventResults(
+	result: WorkflowResult,
+	vectorResults?: VectorSearchResult[],
+): Array<{ text: string; score: number; metadata?: Record<string, unknown> }> {
+	if (Array.isArray(vectorResults) && vectorResults.length > 0) {
+		return vectorResults.slice(0, 5).map((item) => ({
+			text: item.content ?? item.title ?? result.content,
+			score: typeof item.score === 'number' ? item.score : 0,
+			metadata: {
+				qid: item.qid,
+				brand: 'brAInwav',
+			},
+		}));
+	}
+	return [
+		{
+			text: result.content,
+			score: 0,
+			metadata: result.metadata ? { ...result.metadata } : undefined,
+		},
+	];
+}
+
+async function dispatchWorkflowOutcome(context: WorkflowDispatchContext): Promise<void> {
+	const { hooks } = context;
+	if (!hooks) return;
+	const timestamp = new Date().toISOString();
+	if (hooks.publishEvent) {
+		try {
+			const envelope = createRAGQueryResultEvent({
+				queryId: context.queryId,
+				results: toEventResults(context.result, context.vectorResults),
+				provider: context.connector.id,
+				duration: context.durationMs,
+				timestamp,
+			});
+			await Promise.resolve(hooks.publishEvent(envelope));
+		} catch (error) {
+			console.warn('brAInwav: Failed to publish RAG event', error);
+		}
+	}
+	if (hooks.persistInsight) {
+		try {
+			await Promise.resolve(
+				hooks.persistInsight({
+					query: context.query,
+					connectorId: context.connector.id,
+					result: context.result,
+					partialFailure: context.partialFailure,
+					timestamp,
+					brand: 'brAInwav',
+				}),
+			);
+		} catch (error) {
+			console.warn('brAInwav: Failed to persist Local Memory insight', error);
+		}
+	}
 }
 
 /**
@@ -1057,87 +1212,118 @@ export async function executeWikidataWorkflow(
 	connector: ConnectorEntry,
 	options?: WorkflowOptions,
 ): Promise<WorkflowResult> {
-        const enableSparql = options?.enableSparql ?? true;
-        const enablePartialResults = options?.enablePartialResults ?? true;
-        const enableClaims = options?.enableClaims ?? true;
-        const timeout = options?.timeout ?? 30000;
+	const startedAt = Date.now();
+	const routingOptions = buildRoutingOptions(query, connector, options?.routing);
+	const flags = determineWorkflowFlags((routingOptions.scope as FactScope) ?? 'facts', options);
+	const timeout = options?.timeout ?? 30000;
+	const queryId = resolveQueryId(query, options?.queryId);
+	let vectorResults: VectorSearchResult[] | undefined;
 
 	try {
-		// Step 1: Route to vector search tool
-		const routing = await routeFactQuery(query, connector, { scope: 'facts' });
+		const routing = await routeFactQuery(query, connector, routingOptions);
 
 		if (!options?.mcpClient) {
 			throw new Error('MCP client not provided for remote workflow');
 		}
 
-		// Step 1: Execute vector search
-		const vectorResult = (await options.mcpClient.callTool(
+		const vectorResponse = (await options.mcpClient.callTool(
 			routing.toolName,
 			{ ...routing.parameters, query },
 			timeout,
 		)) as { results: VectorSearchResult[] };
 
-		if (!vectorResult.results || vectorResult.results.length === 0) {
-			return await fallbackToLocal(query, options.localStore, 'no_vector_results');
+		vectorResults = Array.isArray(vectorResponse.results) ? vectorResponse.results : [];
+		if (vectorResults.length === 0) {
+			const fallbackResult = await fallbackToLocal(query, options.localStore, 'no_vector_results');
+			await dispatchWorkflowOutcome({
+				query,
+				connector,
+				result: fallbackResult,
+				vectorResults,
+				partialFailure: 'no_vector_results',
+				durationMs: Date.now() - startedAt,
+				hooks: options?.hooks,
+				queryId,
+			});
+			return fallbackResult;
 		}
 
-		const topResult = vectorResult.results[0];
+		const topResult = vectorResults[0];
 		let claimsResult: ClaimsResult | null = null;
 		let sparqlResult: SparqlResult | null = null;
-		let partialFailure: string | undefined;
+		const partialFailures: string[] = [];
 
-		// Step 2: Get claims for top QID
-                if (enableClaims) {
-                        try {
-                                claimsResult = (await options.mcpClient.callTool(
-                                        'get_claims',
-                                        {
-                                                qid: topResult.qid,
-                                                brand: 'brAInwav',
-                                        },
-                                        timeout,
-                                )) as ClaimsResult;
-                        } catch (error) {
-                                console.warn(`brAInwav: Claims retrieval failed for ${topResult.qid}:`, error);
-                                if (!enablePartialResults) {
-                                        return await fallbackToLocal(query, options.localStore, 'claims_failed');
-                                }
-                                partialFailure = 'claims_unavailable';
-                        }
-                }
-
-		// Step 3: Execute SPARQL (optional)
-		if (enableSparql) {
+		if (flags.enableClaims) {
 			try {
-				// Generate contextual SPARQL query anchored to the top result's QID
+				claimsResult = (await options.mcpClient.callTool(
+					'get_claims',
+					{ qid: topResult.qid, brand: 'brAInwav' },
+					timeout,
+				)) as ClaimsResult;
+			} catch (error) {
+				console.warn(`brAInwav: Claims retrieval failed for ${topResult.qid}:`, error);
+				if (!flags.enablePartialResults) {
+					const fallbackResult = await fallbackToLocal(query, options.localStore, 'claims_failed');
+					await dispatchWorkflowOutcome({
+						query,
+						connector,
+						result: fallbackResult,
+						vectorResults,
+						partialFailure: 'claims_failed',
+						durationMs: Date.now() - startedAt,
+						hooks: options?.hooks,
+						queryId,
+					});
+					return fallbackResult;
+				}
+				partialFailures.push('claims_unavailable');
+			}
+		}
+
+		if (flags.enableSparql) {
+			try {
 				const sparqlQuery = generateContextualSparqlQuery(topResult.qid);
 				sparqlResult = (await options.mcpClient.callTool(
 					'sparql',
-					{
-						query: sparqlQuery,
-						brand: 'brAInwav',
-					},
+					{ query: sparqlQuery, brand: 'brAInwav' },
 					timeout,
 				)) as SparqlResult;
 			} catch (error) {
 				console.warn('brAInwav: SPARQL execution failed:', error);
-				// SPARQL failure is non-fatal
+				if (!flags.enablePartialResults) {
+					const fallbackResult = await fallbackToLocal(query, options.localStore, 'sparql_failed');
+					await dispatchWorkflowOutcome({
+						query,
+						connector,
+						result: fallbackResult,
+						vectorResults,
+						partialFailure: 'sparql_failed',
+						durationMs: Date.now() - startedAt,
+						hooks: options?.hooks,
+						queryId,
+					});
+					return fallbackResult;
+				}
+				partialFailures.push('sparql_unavailable');
 			}
 		}
 
-		// Stitch metadata together
+		const partialFailure = partialFailures.length > 0 ? partialFailures.join(',') : undefined;
 		const wikidataMetadata: Partial<WikidataMetadata> = {
 			qid: topResult.qid,
 			brand: 'brAInwav',
+			vectorResults,
 		};
 		if (claimsResult && claimsResult.claims.length > 0) {
 			wikidataMetadata.claimGuid = claimsResult.claims[0].guid;
+			wikidataMetadata.claims = claimsResult.claims;
 		}
 		if (sparqlResult) {
 			wikidataMetadata.sparql = sparqlResult.query;
+			wikidataMetadata.sparqlBindings = sparqlResult.results;
 		}
 
-		return {
+		const workflowResult: WorkflowResult = {
 			content: topResult.content || topResult.title || `Entity ${topResult.qid}`,
 			source: partialFailure ? 'wikidata_partial' : 'wikidata_workflow',
 			metadata: {
@@ -1146,14 +1332,37 @@ export async function executeWikidataWorkflow(
 				brand: 'brAInwav',
 			},
 		};
+
+		await dispatchWorkflowOutcome({
+			query,
+			connector,
+			result: workflowResult,
+			vectorResults,
+			partialFailure,
+			durationMs: Date.now() - startedAt,
+			hooks: options?.hooks,
+			queryId,
+		});
+
+		return workflowResult;
 	} catch (error) {
 		console.error('brAInwav: Wikidata workflow failed:', error);
-		return await fallbackToLocal(
+		const fallbackResult = await fallbackToLocal(
 			query,
 			options?.localStore,
 			'network_error',
 			error instanceof Error ? error.message : String(error),
 		);
+		await dispatchWorkflowOutcome({
+			query,
+			connector,
+			result: fallbackResult,
+			vectorResults,
+			durationMs: Date.now() - startedAt,
+			hooks: options?.hooks,
+			queryId,
+		});
+		return fallbackResult;
 	}
 }
 

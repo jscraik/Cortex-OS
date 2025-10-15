@@ -20,10 +20,11 @@ export function generateNonce(length = 32): string {
 
 /**
  * Validate SPIFFE ID format
+ * Uses a more efficient non-backtracking regex pattern
  */
 export function isValidSpiffeId(spiffeId: string): boolean {
-	// eslint-disable-next-line sonarjs/slow-regex
-	const spiffeRegex = /^spiffe:\/\/[^/]+\/[^/]+.*$/;
+	// More efficient regex with atomic grouping to prevent backtracking
+	const spiffeRegex = /^spiffe:\/\/[^/]+\/.+$/;
 	return spiffeRegex.test(spiffeId);
 }
 

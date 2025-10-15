@@ -1,0 +1,15 @@
+{
+  "folders": [
+    { "path": "../packages/rag", "name": "📦 RAG Core" },
+    { "path": "../packages/rag-http", "name": "📦 RAG HTTP" },
+    { "path": "../packages/memories", "name": "📦 Memories" },
+    { "path": "../packages/memory-core", "name": "📦 Memory Core" },
+    { "path": "../packages/memory-rest-api", "name": "📦 Memory REST API" },
+    { "path": "../packages/history-store", "name": "📦 History Store" }
+  ],
+  "settings": {
+    "typescript.tsserver.maxTsServerMemory": 8192,
+    "typescript.tsserver.useSyntaxServer": "always",
+    "search.exclude": { "**/node_modules": true, "**/.nx": true, "**/dist": true }
+  }
+}

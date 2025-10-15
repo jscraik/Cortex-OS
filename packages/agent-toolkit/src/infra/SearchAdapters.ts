@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import type { AgentToolkitSearchInput, AgentToolkitSearchResult } from '@cortex-os/contracts';
-import { safeExecFileWithRetry } from '@cortex-os/security';
+import { safeExecFileWithRetry } from './securityBridge.js';
 import type { SearchTool } from '../domain/ToolInterfaces.js';
 import { resolveToolsDirFromOverride, type ToolsDirOverride } from './paths.js';
 

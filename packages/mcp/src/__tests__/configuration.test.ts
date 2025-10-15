@@ -13,7 +13,7 @@ import {
 	MCP_ENVIRONMENT_PROFILES,
 	type MCPConfig,
 	validateMCPConfig,
-} from '../../apps/cortex-os/src/config/mcp.js';
+} from '../config/mcp-config.js';
 
 describe('MCP Configuration', () => {
 	let originalEnv: NodeJS.ProcessEnv;

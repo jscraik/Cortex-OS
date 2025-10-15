@@ -13,7 +13,27 @@ vi.mock('../../src/documentation/index.js', () => ({
 }));
 
 vi.mock('../../src/enforcement/initial-processor.js', () => ({
-	loadInitialMd: vi.fn(async () => ({ profile: 'test-profile' })),
+	loadInitialMd: vi.fn(async () => ({
+		budgets: {
+			coverageLines: 95,
+			coverageBranches: 90,
+			performanceLCP: 2500,
+			performanceTBT: 300,
+			a11yScore: 95,
+		},
+		architecture: {
+			allowedPackageBoundaries: [],
+			namingConventions: {},
+			repoLayout: [],
+			crossBoundaryImports: [],
+		},
+		governance: {
+			licensePolicy: '(Apache-2.0 OR Commercial)',
+			codeownersMapping: {},
+			structureGuardExceptions: [],
+			requiredChecks: [],
+		},
+	})),
 }));
 
 type GateOptions = { approval?: boolean };

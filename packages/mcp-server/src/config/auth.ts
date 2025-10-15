@@ -1,4 +1,4 @@
-import { parseBooleanEnv } from '../utils/config.js';
+import { parseBooleanEnv, parseNumberEnv } from '../utils/config.js';
 
 export type AuthMode = 'api-key' | 'anonymous' | 'oauth2' | 'optional';
 
@@ -8,6 +8,11 @@ export type Auth0Settings = {
 	audience: string;
 	resource: string;
 	requiredScopes: string[];
+	jwksUri: string;
+	authorizationEndpoint: string;
+	tokenEndpoint: string;
+	requirePkce: boolean;
+	metadataTtlSeconds: number;
 };
 
 export type AuthConfig = {
@@ -83,14 +88,32 @@ export function loadAuthConfig(): AuthConfig {
 				'[brAInwav] AUTH0_DOMAIN and AUTH0_AUDIENCE must be configured for OAuth2 mode.',
 			);
 		}
+		const normalizedDomain = normalizeDomain(domain);
 		const resource = ensureAbsoluteResource(process.env.MCP_RESOURCE_URL);
-		const issuer = buildIssuer(domain);
+		const issuer = buildIssuer(normalizedDomain);
+		const baseUrl = `https://${normalizedDomain}`;
+		const jwksUri =
+			process.env.AUTH0_JWKS_URI?.trim() ?? `${baseUrl}/.well-known/jwks.json`;
+		const authorizationEndpoint =
+			process.env.AUTH0_AUTHORIZATION_ENDPOINT?.trim() ?? `${baseUrl}/authorize`;
+		const tokenEndpoint =
+			process.env.AUTH0_TOKEN_ENDPOINT?.trim() ?? `${baseUrl}/oauth/token`;
+		const metadataTtlSeconds = parseNumberEnv(
+			process.env.AUTH0_METADATA_TTL_SECONDS,
+			300,
+		);
+		const requirePkce = parseBooleanEnv(process.env.AUTH0_REQUIRE_PKCE, true);
 		const auth0: Auth0Settings = {
-			domain: normalizeDomain(domain),
+			domain: normalizedDomain,
 			issuer,
 			audience,
 			resource,
 			requiredScopes: scopes,
+			jwksUri,
+			authorizationEndpoint,
+			tokenEndpoint,
+			requirePkce,
+			metadataTtlSeconds,
 		};
 		return { mode, apiKey, auth0, enforceScopes };
 	}

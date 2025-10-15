@@ -1,0 +1,12 @@
+node_modules/**
+.nx/**
+dist/**
+out/**
+coverage/**
+htmlcov/**
+.venv/**
+target/**
+**/*.log
+**/.tsbuildinfo
+**/test-results/**
+**/playwright-report/**

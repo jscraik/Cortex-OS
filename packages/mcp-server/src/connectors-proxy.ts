@@ -1,11 +1,8 @@
-import type {
-        ConnectorManifestEntry,
-        ConnectorsManifest,
-} from '@cortex-os/asbr/types';
 import { type RemoteTool, RemoteToolProxy } from '@cortex-os/mcp-bridge/runtime/remote-proxy';
 import { setConnectorProxyStatus } from '@cortex-os/mcp-bridge/runtime/telemetry/metrics';
 import type { FastMCP } from 'fastmcp';
 import type { Logger } from 'pino';
+import type { ConnectorsManifest, ConnectorManifestEntry } from './config/connectors.js';
 
 interface ConnectorsProxyOptions {
 	manifest: ConnectorsManifest;

@@ -5,7 +5,7 @@
  * built-in prompt support with structured content output.
  */
 
-import type { FastMcpServer } from 'fastmcp';
+import type { FastMCP } from 'fastmcp';
 import { z } from 'zod';
 import { BRAND, createBrandedLog } from '../utils/brand.js';
 import { loadServerConfig } from '../utils/config.js';
@@ -44,7 +44,7 @@ export const IncidentRetroArgs = z.object({
 /**
  * Register all prompts with the server
  */
-export function createPrompts(server: FastMcpServer, logger: any) {
+export function createPrompts(server: any, logger: any) {
 	const config = loadServerConfig();
 
 	if (!config.promptsEnabled) {
@@ -52,45 +52,55 @@ export function createPrompts(server: FastMcpServer, logger: any) {
 		return;
 	}
 
+	const prompts = server.prompts;
+
+	if (!prompts || typeof prompts.add !== 'function') {
+		logger.warn(
+			createBrandedLog('prompts_unsupported'),
+			'FastMCP server does not expose a prompts registry; skipping prompt registration',
+		);
+		return;
+	}
+
 	// Code Change Plan Prompt
-	server.prompts.add({
+	prompts.add({
 		name: 'code-change-plan',
 		description: 'Generate structured code change plans with constraints and acceptance criteria',
 		inputSchema: CodeChangePlanArgs,
-		handler: async (args, context) => {
+		handler: async (args: any) => {
 			logger.info(
 				createBrandedLog('prompt_rendering', { prompt: 'code-change-plan' }),
 				'Rendering code change plan prompt',
 			);
-			return renderCodeChangePlan(args, context);
+			return renderCodeChangePlan(args);
 		},
 	});
 
-	// Memory Analysis Prompt
-	server.prompts.add({
+		// Memory Analysis Prompt
+	prompts.add({
 		name: 'memory-analysis',
-		description: 'Analyze stored memories for patterns, insights, and trends',
+		description: 'Analyze memories with AI-powered insights and summarization',
 		inputSchema: MemoryAnalysisArgs,
-		handler: async (args, context) => {
+		handler: async (args: any) => {
 			logger.info(
 				createBrandedLog('prompt_rendering', { prompt: 'memory-analysis' }),
 				'Rendering memory analysis prompt',
 			);
-			return renderMemoryAnalysis(args, context);
+			return renderMemoryAnalysis(args);
 		},
 	});
 
-	// Incident Retro Prompt
-	server.prompts.add({
+	// Incident Retrospective Prompt
+	prompts.add({
 		name: 'incident-retro',
-		description: 'Generate structured incident retrospectives with timeline and action items',
+		description: 'Generate structured incident retrospective prompts',
 		inputSchema: IncidentRetroArgs,
-		handler: async (args, context) => {
+		handler: async (args: any) => {
 			logger.info(
 				createBrandedLog('prompt_rendering', { prompt: 'incident-retro' }),
-				'Rendering incident retro prompt',
+				'Rendering incident retrospective prompt',
 			);
-			return renderIncidentRetro(args, context);
+			return renderIncidentRetro(args);
 		},
 	});
 
