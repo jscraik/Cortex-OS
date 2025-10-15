@@ -35,5 +35,5 @@ export const createPrefixedId = (prefix: string): string => `${prefix}-${createS
 
 export const createTimestampedId = (prefix: string): string => {
         const secureSegment = createSecureId().slice(0, 9);
-        return `${prefix}-${Date.now()}-${secureSegment}`;
+        return `${prefix}_${Date.now()}_${secureSegment}`;
 };
