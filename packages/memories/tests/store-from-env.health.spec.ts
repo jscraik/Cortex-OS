@@ -1,118 +1,55 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Memory } from '../src/domain/types.js';
-import type { MemoryStore } from '../src/ports/MemoryStore.js';
-
-const qdrantHealthMock = vi.fn(async () => true);
-const qdrantInstances: FakeQdrantStore[] = [];
-const memoryInstances: FakeMemoryStore[] = [];
-
-class FakeQdrantStore implements MemoryStore {
-	readonly upsert = vi.fn(async (memory: Memory, _namespace?: string) => memory);
-	readonly get = vi.fn(async () => null);
-	readonly delete = vi.fn(async () => {});
-	readonly searchByText = vi.fn(async () => [] as Memory[]);
-	readonly searchByVector = vi.fn(async () => [] as (Memory & { score: number })[]);
-	readonly purgeExpired = vi.fn(async () => 0);
-	readonly list = vi.fn(async () => [] as Memory[]);
-	readonly healthCheck = qdrantHealthMock;
-}
-
-class FakeMemoryStore implements MemoryStore {
-	readonly upsert = vi.fn(async (memory: Memory, _namespace?: string) => memory);
-	readonly get = vi.fn(async () => null);
-	readonly delete = vi.fn(async () => {});
-	readonly searchByText = vi.fn(async () => [] as Memory[]);
-	readonly searchByVector = vi.fn(async () => [] as (Memory & { score: number })[]);
-	readonly purgeExpired = vi.fn(async () => 0);
-	readonly list = vi.fn(async () => [] as Memory[]);
-}
-
-vi.mock('../src/adapters/store.qdrant.js', () => ({
-	__esModule: true,
-	QdrantMemoryStore: vi.fn(() => {
-		const instance = new FakeQdrantStore();
-		qdrantInstances.push(instance);
-		return instance;
-	}),
-}));
-
-vi.mock('../src/adapters/store.memory.js', () => ({
-	__esModule: true,
-	InMemoryStore: vi.fn(() => {
-		const instance = new FakeMemoryStore();
-		memoryInstances.push(instance);
-		return instance;
-	}),
-}));
-
 import { createStoreFromEnv } from '../src/config/store-from-env.js';
 
 const ORIGINAL_ENV = { ...process.env };
-const sampleMemory: Memory = {
-	id: 'fallback-1',
-	kind: 'note',
-	text: 'health integration test',
-	tags: [],
-	createdAt: new Date('2024-01-01T00:00:00.000Z').toISOString(),
-	updatedAt: new Date('2024-01-01T00:00:00.000Z').toISOString(),
-	provenance: { source: 'system' },
-};
+const originalFetch = globalThis.fetch;
 
-describe('createStoreFromEnv health routing integration', () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		qdrantHealthMock.mockReset();
-		qdrantHealthMock.mockResolvedValue(true);
-		qdrantInstances.length = 0;
-		memoryInstances.length = 0;
-		process.env = { ...ORIGINAL_ENV };
-		process.env.QDRANT_URL = 'http://localhost:6333';
-		process.env.MEMORIES_FALLBACK_STORE = 'memory';
-		vi.useRealTimers();
-	});
+describe('createStoreFromEnv remote compatibility', () => {
+        beforeEach(() => {
+                process.env = { ...ORIGINAL_ENV };
+        });
 
-	afterEach(() => {
-		vi.useRealTimers();
-	});
+        afterEach(() => {
+                vi.restoreAllMocks();
+                if (originalFetch) {
+                        globalThis.fetch = originalFetch;
+                } else {
+                        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                        delete (globalThis as Record<string, unknown>).fetch;
+                }
+        });
 
-	afterAll(() => {
-		process.env = ORIGINAL_ENV;
-	});
+        afterAll(() => {
+                process.env = ORIGINAL_ENV;
+        });
 
-	it('delegates to primary when Qdrant is healthy', async () => {
-		qdrantHealthMock.mockResolvedValue(true);
-		const store = await createStoreFromEnv();
+        it('falls back to the local provider when remote requests fail', async () => {
+                process.env.LOCAL_MEMORY_BASE_URL = 'http://127.0.0.1:3999/api/v1';
+                process.env.LOCAL_MEMORY_API_KEY = 'test';
 
-		await store.upsert(sampleMemory);
+                const failingFetch = vi
+                        .fn<typeof fetch>()
+                        .mockRejectedValue(new Error('remote service unavailable'));
+                vi.stubGlobal('fetch', failingFetch);
 
-		expect(qdrantInstances).toHaveLength(1);
-		expect(qdrantInstances[0].upsert).toHaveBeenCalledTimes(1);
-		expect(memoryInstances[0]?.upsert).toBeUndefined();
-	});
+                const store = await createStoreFromEnv();
 
-	it('falls back to the configured adapter when Qdrant is unhealthy', async () => {
-		qdrantHealthMock.mockResolvedValueOnce(false);
-		const store = await createStoreFromEnv();
+                const sample: Memory = {
+                        id: 'legacy-1',
+                        kind: 'note',
+                        text: 'remote fallback validation',
+                        tags: ['test'],
+                        createdAt: new Date('2024-01-01T00:00:00Z').toISOString(),
+                        updatedAt: new Date('2024-01-01T00:00:00Z').toISOString(),
+                        provenance: { source: 'system' },
+                };
 
-		await store.upsert(sampleMemory);
+                await expect(store.upsert(sample)).resolves.toMatchObject({ id: 'legacy-1' });
 
-		expect(qdrantInstances[0].upsert).not.toHaveBeenCalled();
-		expect(memoryInstances[0].upsert).toHaveBeenCalledTimes(1);
-	});
-
-	it('recovers primary after health check passes again', async () => {
-		vi.useFakeTimers();
-		qdrantHealthMock.mockResolvedValueOnce(false);
-		qdrantHealthMock.mockResolvedValueOnce(true);
-		const store = await createStoreFromEnv();
-
-		await store.upsert(sampleMemory);
-		expect(memoryInstances[0].upsert).toHaveBeenCalledTimes(1);
-
-		vi.advanceTimersByTime(10);
-		await store.list();
-
-		expect(qdrantInstances[0].list).toHaveBeenCalledTimes(1);
-		vi.useRealTimers();
-	});
+                const fetched = await store.get('legacy-1');
+                expect(fetched?.id).toBe('legacy-1');
+                expect(fetched?.text).toBe('remote fallback validation');
+                expect(failingFetch).toHaveBeenCalled();
+        });
 });
