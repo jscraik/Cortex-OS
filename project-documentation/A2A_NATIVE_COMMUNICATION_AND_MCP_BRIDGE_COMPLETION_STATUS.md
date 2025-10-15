@@ -128,7 +128,7 @@
 
 1. **@cortex-os/agents** Package A2A Integration
    - ⚠️ Has A2A tools but needs `createAgentsBus` function
-   - ⚠️ Using mock voltagent-core that needs replacement
+   - ⚠️ Using legacy mock agent bus that needs replacement
    - **Estimated effort**: 2-3 days
 
 2. **apps/cortex-os** A2A Integration
@@ -180,7 +180,7 @@
 
 1. **Finalize @cortex-os/agents A2A integration**
    - Implement `createAgentsBus` function
-   - Replace mock voltagent-core with real A2A core
+   - Replace legacy mock bus implementation with the production A2A core
    - Test integration with existing A2A tools
 
 2. **Complete apps/cortex-os A2A integration**

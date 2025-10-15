@@ -26,7 +26,7 @@ The package has solid technical foundations with proper TypeScript configuration
 - **Resource Management**: No timeout or resource limit configurations for production workloads
 
 ### 📋 **Recommendations**
-1. **Update Dependencies**: Fix the `got` vulnerability by updating `@voltagent/cli` or adding appropriate overrides
+1. **Update Dependencies**: Remove unused VoltAgent packages and ensure remaining dependencies are patched against `got` vulnerabilities
 2. **Fix Test Infrastructure**: Ensure all test dependencies are properly installed and configured
 3. **Add Production Config**: Create production-specific environment configurations with appropriate resource limits
 4. **Implement Resource Limits**: Add memory and CPU limits for agent execution in production

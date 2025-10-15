@@ -50,7 +50,7 @@ server.app.use('*', async (c, next) => {
 **Fixes**:
 
 - Added `OllamaConfig` interface with proper typing
-- Imported `Tool` type from @voltagent/core
+- Defined internal `Tool` typings for agent integrations
 - Created `MonitoringContext` and `NextFunction` types
 - Updated all `any` usages with proper TypeScript types
 
@@ -197,7 +197,7 @@ describe('Memory Management', () => {
 
 ### Remaining 0.5 Points
 
-- External dependency monitoring (@voltagent/cli vulnerabilities outside our control)
+- External dependency monitoring (track third-party advisories even after removing VoltAgent packages)
 
 ## Conclusion
 

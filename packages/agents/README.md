@@ -158,9 +158,9 @@ The workflow implementation will be added once the VoltAgent workflow API is bet
 - `MEMORY_URL`: Memory storage URL
 - `MEMORY_ADAPTER`: Memory adapter type (libsql, memory)
 
-### VoltAgent Configuration
+### Runtime Configuration
 
-The framework can be configured through the `.voltagent/` directory, which stores persistent data and configuration.
+Agent runtime settings are managed through the standard environment variables above and the package's native configuration files. No external VoltAgent directory is required.
 
 ## API Reference
 
