@@ -26,7 +26,7 @@
     "evidence": "Lines 94-99: console.log('[Memory Metrics]', { ...metrics });",
     "fix": "Log through the shared logger with brand:'brAInwav' and structured fields (component, trace_id, etc.) instead of a bare console.log().",
     "tests_to_add": "Add a logging unit test to confirm emitted records include brand:'brAInwav'.",
-    "rule": "brainwav.branding.missing-in-logs",
+    "rule": "brAInwav.branding.missing-in-logs",
     "standards": [
       "codestyle:0-brainwav-production-standards",
       "checklist:5-observability",
