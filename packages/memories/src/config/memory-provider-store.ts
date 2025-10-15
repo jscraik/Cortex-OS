@@ -191,8 +191,13 @@ export class MemoryProviderStore implements MemoryStore {
                 return [];
         }
 
+        /**
+         * No-op: The underlying Provider API does not currently expose purge semantics,
+         * so this method does not actually remove any expired items and always returns 0.
+         * Callers should NOT rely on this method to perform any cleanup or memory management.
+         * Relying on this no-op may lead to memory leaks or unexpected behavior if expired items accumulate.
+         */
         async purgeExpired(_nowISO: string, _namespace?: string): Promise<number> {
-                // Provider API does not currently expose purge semantics
                 return 0;
         }
 
