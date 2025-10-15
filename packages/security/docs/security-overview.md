@@ -1,6 +1,6 @@
 # Security Overview
 
-The Cortex-OS security domain adopts a zero-trust posture informed by OWASP Application Security Verification Standard (ASVS) 4.0.3. Every release is assessed against ASVS Level 2 by default, with Level 3 controls targeted for privileged or safety-critical surfaces.
+The Cortex-OS security domain adopts a zero-trust posture informed by [OWASP Application Security Verification Standard (ASVS) 4.0.3](https://github.com/OWASP/ASVS/tree/v4.0.3). Every release is assessed against ASVS Level 2 by default, with Level 3 controls targeted for privileged or safety-critical surfaces.
 
 ## ASVS Control Coverage
 
