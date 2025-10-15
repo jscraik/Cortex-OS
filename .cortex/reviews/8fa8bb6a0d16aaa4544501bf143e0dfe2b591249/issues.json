@@ -38,7 +38,7 @@
     "line": 418,
     "end_line": 670,
     "severity": "high",
-    "category": "brainwav-prohibition",
+    "category": "brAInwav-prohibition",
     "description": "Lifecycle management generates IDs with Math.random() (coldStorageId, compacted_*) which violates production standards and risks collisions in archival/compaction flows.",
     "evidence": "Lines 418 & 670: `coldStorageId: `cold-${Date.now()}-${Math.random()...}` and id: `compacted_${Date.now()}_${Math.random()...}`",
     "fix": "Use the package's secure ID helper (e.g., createPrefixedId()/crypto.randomUUID) to generate deterministic, collision-resistant identifiers.",
