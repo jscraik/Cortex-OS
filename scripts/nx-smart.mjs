@@ -189,7 +189,7 @@ function writeMetrics(metaExtra = {}) {
                 strategy,
                 telemetry: {
                         enabled: telemetryEnabled,
-                        reason: telemetryEnabled ? 'NX_SMART_OTEL=1' : 'NX_SMART_OTEL!=1',
+                        reason: `NX_SMART_OTEL=${process.env.NX_SMART_OTEL ?? '0'}`,
                 },
                 ...metaExtra,
         };
