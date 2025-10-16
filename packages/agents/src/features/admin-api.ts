@@ -2,66 +2,76 @@ import type { Context, Next } from 'hono';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { FeatureFlags } from './flags.js';
-import type { StorageAdapter } from './types.js';
+import type { FlagConfig, StorageAdapter } from './types.js';
 
 // Validation schemas
-const CreateFlagSchema = z.object({
-	enabled: z.boolean(),
-	targeting: z
-		.object({
-			userTargets: z.array(z.string()).optional(),
-			attributeRules: z
-				.array(
-					z.object({
-						attribute: z.string(),
-						operator: z.enum([
-							'equals',
-							'notEquals',
-							'contains',
-							'notContains',
-							'startsWith',
-							'endsWith',
-							'greaterThan',
-							'lessThan',
-							'greaterThanOrEqual',
-							'lessThanOrEqual',
-							'in',
-							'notIn',
-						]),
-						value: z.union([z.string(), z.number(), z.boolean()]),
-					}),
-				)
-				.optional(),
-			ruleLogic: z.enum(['AND', 'OR']).optional(),
-		})
-		.optional(),
-	percentageRollout: z
-		.object({
-			percentage: z.number().min(0).max(100),
-			salt: z.string(),
-		})
-		.optional(),
-	abTest: z
-		.object({
-			groups: z.array(
-				z.object({
-					name: z.string(),
-					percentage: z.number().min(0).max(100),
-					config: z.record(z.unknown()).optional(),
-				}),
-			),
-			salt: z.string(),
-		})
-		.optional(),
-	overrides: z.record(z.boolean()).optional(),
-	metadata: z.record(z.unknown()).optional(),
+const AttributeRuleSchema = z.object({
+        attribute: z.string(),
+        operator: z.enum([
+                'equals',
+                'notEquals',
+                'contains',
+                'notContains',
+                'startsWith',
+                'endsWith',
+                'greaterThan',
+                'lessThan',
+                'greaterThanOrEqual',
+                'lessThanOrEqual',
+                'in',
+                'notIn',
+        ]),
+        value: z.union([z.string(), z.number(), z.boolean()]),
 });
 
-const UpdateFlagSchema = CreateFlagSchema.partial();
+const TargetingSchema = z.object({
+        userTargets: z.array(z.string()).optional(),
+        attributeRules: z.array(AttributeRuleSchema).optional(),
+        ruleLogic: z.enum(['AND', 'OR']).optional(),
+});
 
-// Type definitions for internal use
-// type CreateFlagInput = z.infer<typeof CreateFlagSchema>;
-// type UpdateFlagInput = z.infer<typeof UpdateFlagSchema>;
+const PercentageRolloutSchema = z.object({
+        percentage: z.number().min(0).max(100),
+        salt: z.string(),
+});
+
+const ABTestGroupSchema = z.object({
+        name: z.string(),
+        percentage: z.number().min(0).max(100),
+        config: z.record(z.unknown()).optional(),
+});
+
+const ABTestSchema = z.object({
+        groups: z.array(ABTestGroupSchema),
+        salt: z.string(),
+});
+
+const FlagConfigSchema = z.object({
+        enabled: z.boolean(),
+        targeting: TargetingSchema.optional(),
+        percentageRollout: PercentageRolloutSchema.optional(),
+        abTest: ABTestSchema.optional(),
+        overrides: z.record(z.boolean()).optional(),
+        metadata: z.record(z.unknown()).optional(),
+});
+
+const CreateFlagSchema = FlagConfigSchema;
+const UpdateFlagSchema = FlagConfigSchema.partial();
+
+type FlagConfigInput = z.infer<typeof FlagConfigSchema>;
+type UpdateFlagInput = z.infer<typeof UpdateFlagSchema>;
+
+const toFlagConfig = (input: FlagConfigInput): FlagConfig => ({ ...input });
+
+const mergeFlagConfig = (existing: FlagConfig, update: UpdateFlagInput): FlagConfig => ({
+        ...existing,
+        ...update,
+        targeting: update.targeting ?? existing.targeting,
+        percentageRollout: update.percentageRollout ?? existing.percentageRollout,
+        abTest: update.abTest ?? existing.abTest,
+        overrides: update.overrides ?? existing.overrides,
+        metadata: update.metadata ?? existing.metadata,
+});
 
 /**
  * Create admin API routes for feature flags management
@@ -77,11 +87,11 @@ export function createFeatureFlagsAdminRouter(
 	const router = new Hono();
 
 	// Apply authentication middleware if provided
-	if (authenticate) {
-		router.use('*', (c, next) => {
-			return authenticate(c, next);
-		});
-	}
+        if (authenticate) {
+                router.use('*', async (c, next) => {
+                        await authenticate(c, next);
+                });
+        }
 
 	// GET /flags - List all flags
 	router.get(basePath, async (c) => {
@@ -167,8 +177,12 @@ export function createFeatureFlagsAdminRouter(
 				);
 			}
 
-			const flagName = (body as Record<string, unknown>).name || `flag-${Date.now()}`;
-			await featureFlags.setFlag(flagName, result.data);
+                        const requestBody = body as Record<string, unknown>;
+                        const rawName = typeof requestBody.name === 'string' ? requestBody.name.trim() : '';
+                        const flagName = rawName.length > 0 ? rawName : `flag-${Date.now()}`;
+                        const flagConfig = toFlagConfig(result.data);
+
+                        await featureFlags.setFlag(flagName, flagConfig);
 
 			const createdFlag = await featureFlags.getFlag(flagName);
 
@@ -236,8 +250,8 @@ export function createFeatureFlagsAdminRouter(
 				);
 			}
 
-			const updatedConfig = { ...existingFlag, ...result.data };
-			await featureFlags.setFlag(flagName, updatedConfig);
+                        const updatedConfig = mergeFlagConfig(existingFlag, result.data);
+                        await featureFlags.setFlag(flagName, updatedConfig);
 
 			const updatedFlag = await featureFlags.getFlag(flagName);
 
@@ -313,20 +327,22 @@ export function createFeatureFlagsAdminRouter(
 				);
 			}
 
-			const { userId, attributes = {} } = body as Record<string, unknown>;
+                        const payload = body as Record<string, unknown>;
+                        const userId = typeof payload.userId === 'string' ? payload.userId : undefined;
+                        if (!userId) {
+                                return c.json(
+                                        {
+                                                success: false,
+                                                error: 'userId is required',
+                                        },
+                                        400,
+                                );
+                        }
 
-			if (!userId) {
-				return c.json(
-					{
-						success: false,
-						error: 'userId is required',
-					},
-					400,
-				);
-			}
+                        const attributes = isRecord(payload.attributes) ? payload.attributes : {};
 
-			const isEnabled = await featureFlags.isEnabled(flagName, { userId, attributes });
-			const variant = await featureFlags.getVariant(flagName, { userId, attributes });
+                        const isEnabled = await featureFlags.isEnabled(flagName, { userId, attributes });
+                        const variant = await featureFlags.getVariant(flagName, { userId, attributes });
 
 			return c.json({
 				success: true,
@@ -379,6 +395,10 @@ export function createFeatureFlagsAdminRouter(
 	});
 
 	return router;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+        return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /**

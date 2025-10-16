@@ -6,6 +6,7 @@
  */
 
 import type { Chunk } from '../lib/types.js';
+export type { Chunk } from '../lib/types.js';
 
 /**
  * Risk classification for query guarding
@@ -317,10 +318,23 @@ export interface EscalationTrace {
  * Individual escalation step
  */
 export interface EscalationStep {
-	/** Step number */
-	step: number;
-	/** Action taken */
-	action: 'expand-band-b' | 'add-mandatory' | 'rebuild-pack' | 'verify-again';
+        /** Step number */
+        step: number;
+        /** Action taken */
+        action:
+                | 'expand-band-b'
+                | 'add-mandatory'
+                | 'rebuild-pack'
+                | 'verify-again'
+                | 'query-analysis'
+                | 'chunk-retrieval'
+                | 'relevance-scoring'
+                | 'expansion-planning'
+                | 'context-packing'
+                | 'answer-generation'
+                | 'answer-verification'
+                | 'escalation'
+                | 'error';
 	/** Reason for action */
 	reason: string;
 	/** Result of action */
@@ -437,8 +451,8 @@ export interface RefRagPipeline {
 export interface RefRagProcessOptions {
 	/** Override risk classification */
 	forceRiskClass?: RiskClass;
-	/** Override budgets */
-	budgetOverrides?: Partial<BandBudgets>;
+        /** Override budgets per risk class */
+        budgetOverrides?: Partial<RiskClassBudgets>;
 	/** Custom expansion hints */
 	customHints?: ExpansionHint[];
 	/** Enable verification */
@@ -517,13 +531,30 @@ export interface RefRagChunkMetadata {
 		/** Extraction method */
 		method: 'regex' | 'parser' | 'ml';
 	};
-	/** Compression metadata */
-	compression?: {
-		/** Compression ratio achieved */
-		ratio: number;
-		/** Compression method used */
-		method: 'projection' | 'quantization' | 'hybrid';
-		/** Quality score */
-		quality: number;
-	};
+        /** Compression metadata */
+        compression?: {
+                /** Compression ratio achieved */
+                ratio: number;
+                /** Compression method used */
+                method: 'projection' | 'quantization' | 'hybrid';
+                /** Quality score */
+                quality: number;
+        };
+        /** Content analysis metadata */
+        contentAnalysis?: {
+                hasNumbers: boolean;
+                hasQuotes: boolean;
+                hasCode: boolean;
+                hasDates: boolean;
+                hasEntities: boolean;
+                domains: string[];
+                entities: string[];
+        };
+        /** Quality metrics */
+        qualityMetrics?: {
+                freshnessScore: number;
+                diversityScore: number;
+                completenessScore: number;
+                accuracyScore: number;
+        };
 }

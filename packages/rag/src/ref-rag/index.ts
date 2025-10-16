@@ -5,33 +5,33 @@
  * risk-aware retrieval with virtual tokens and structured facts.
  */
 
+import type { RefRagConfig } from './types.js';
+
 // Type exports
 export type {
-	RiskClass,
-	ContextBand,
-	QueryGuardResult,
-	ExpansionHint,
-	StructuredFact,
-	BandAContext,
-	BandBContext,
-	BandCContext,
-	BandContext,
-	HybridContextPack,
-	BudgetUsage,
-	RelevanceScore,
-	ExpansionPlan,
-	VerificationResult,
-	VerificationIssue,
-	EscalationTrace,
-	EscalationStep,
-	RefRagConfig,
-	RiskClassBudgets,
-	BandBudgets,
-	RefRagPipeline,
-	RefRagProcessOptions,
-	TriBandGenerationRequest,
-	FactExtractionResult,
-	CompressionEncodingResult,
+        QueryGuardResult,
+        ExpansionHint,
+        StructuredFact,
+        BandAContext,
+        BandBContext,
+        BandCContext,
+        BandContext,
+        HybridContextPack,
+        BudgetUsage,
+        RelevanceScore,
+        ExpansionPlan,
+        VerificationResult,
+        VerificationIssue,
+        EscalationTrace,
+        EscalationStep,
+        RefRagConfig,
+        RiskClassBudgets,
+        BandBudgets,
+        RefRagPipeline,
+        RefRagProcessOptions,
+        TriBandGenerationRequest,
+        FactExtractionResult,
+        CompressionEncodingResult,
 } from './types.js';
 
 // Enum exports
@@ -53,9 +53,9 @@ export {
 export type { BudgetProfile } from './budgets.js';
 
 // Default configuration
-export const DEFAULT_REF_RAG_CONFIG = {
-	enabled: false, // Disabled by default for safety
-	budgets: {
+export const DEFAULT_REF_RAG_CONFIG: RefRagConfig = {
+        enabled: false, // Disabled by default for safety
+        budgets: {
 		low: {
 			bandA: 4000,
 			bandB: 8000,
@@ -151,13 +151,13 @@ export const DEFAULT_REF_RAG_CONFIG = {
 		enableDateExtraction: true,
 		confidenceThreshold: 0.7,
 	},
-	virtualTokens: {
-		enableCompression: true,
-		compressionMethod: 'projection' as const,
-		targetCompressionRatio: 0.25, // Compress to 25% of original size
-		projectionWeightsPath: process.env.REFRAG_PROJECTION_PATH,
-	},
-} as const;
+        virtualTokens: {
+                enableCompression: true,
+                compressionMethod: 'projection',
+                targetCompressionRatio: 0.25, // Compress to 25% of original size
+                projectionWeightsPath: process.env.REFRAG_PROJECTION_PATH,
+        },
+};
 
 /**
  * Create REF‑RAG configuration with environment overrides
@@ -397,7 +397,6 @@ export type { RelevancePolicyConfig } from './relevance-policy.js';
 
 // Pipeline exports
 export { RefRagPipelineImpl, createRefRagPipeline } from './pipeline.js';
-export type { RefRagPipeline, RefRagProcessOptions, TriBandGenerationRequest } from './types.js';
 
 // Re-export for convenience
 export * from '../lib/types.js';

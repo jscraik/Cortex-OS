@@ -5,7 +5,8 @@
  * for tri-band context management.
  */
 
-import type { RiskClass, RiskClassBudgets, BandBudgets } from './types.js';
+import { RiskClass } from './types.js';
+import type { RiskClassBudgets, BandBudgets } from './types.js';
 
 /**
  * Default budget presets for each risk class

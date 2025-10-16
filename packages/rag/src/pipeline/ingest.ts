@@ -136,12 +136,17 @@ async function processChunksWithRefRag(
 				try {
 					const factResult = await factExtractor.extractFacts(chunk.text, chunk.id);
 					chunkMetadata.structuredFacts = factResult.facts;
-					chunkMetadata.factExtraction = {
-						timestamp: Date.now(),
-						method: factResult.metadata.method,
-						confidence: factResult.metadata.confidence,
-						factCount: factResult.facts.length,
-					};
+                                        const extractionMethod = factResult.metadata.method;
+                                        const normalizedMethod: RefRagChunkMetadata['factExtraction']['method'] =
+                                                extractionMethod === 'parser' || extractionMethod === 'ml'
+                                                        ? extractionMethod
+                                                        : 'regex';
+                                        chunkMetadata.factExtraction = {
+                                                timestamp: Date.now(),
+                                                method: normalizedMethod,
+                                                confidence: factResult.metadata.confidence,
+                                                factCount: factResult.facts.length,
+                                        };
 				} catch (error) {
 					console.warn(`Fact extraction failed for chunk ${chunk.id}:`, error);
 				}
@@ -154,11 +159,21 @@ async function processChunksWithRefRag(
 			if (compressionConfig?.enableCompression && batchEmbeddings[batchIndex]) {
 				try {
 					const compressionResult = await compressionEncoder.encode(batchEmbeddings[batchIndex]);
-					chunkMetadata.dualEmbeddings = {
-						standard: batchEmbeddings[batchIndex],
-						compressed: Array.from(compressionResult.compressedEmbedding),
-						compression: compressionResult.metadata,
-					};
+                                        const compressionMeta = compressionResult.metadata;
+                                        chunkMetadata.dualEmbeddings = {
+                                                standard: batchEmbeddings[batchIndex],
+                                                compressed: Array.from(compressionResult.compressedEmbedding),
+                                                compression: {
+                                                        originalDimensions: compressionMeta.originalDimensions,
+                                                        compressedDimensions: compressionMeta.compressedDimensions,
+                                                        compressionRatio: compressionMeta.compressionRatio,
+                                                        method:
+                                                                compressionMeta.method === 'quantization' ||
+                                                                compressionMeta.method === 'hybrid'
+                                                                        ? compressionMeta.method
+                                                                        : 'projection',
+                                                },
+                                        };
 				} catch (error) {
 					console.warn(`Compression failed for chunk ${chunk.id}:`, error);
 					// Fall back to standard embedding only

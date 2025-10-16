@@ -535,7 +535,7 @@ export const ragStatusTool: RAGTool = {
 
 			if (includeHealth) {
 				// Lazy import to keep baseline fast and tree-shake friendly
-				const { getDefaultRAGHealth } = await import('../lib/health');
+                const { getDefaultRAGHealth } = await import('../lib/health.js');
 				const health = await getDefaultRAGHealth();
 				status.health = health;
 			}
