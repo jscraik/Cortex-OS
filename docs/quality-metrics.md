@@ -44,8 +44,8 @@ pnpm badges:generate
   "branchCoverage": 80.75,
   "mutationScore": 82.5,
   "qualityGate": { "pass": true, "branchMin": 65, "mutationMin": 75 },
-  "branchSamples": 1,
-  "mutationSamples": 1,
+  "branchSamples": 42,
+  "mutationSamples": 42,
   "generatedAt": "2025-10-09T14:16:53.926Z"
 }
 ```
