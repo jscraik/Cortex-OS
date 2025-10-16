@@ -274,8 +274,8 @@ export const createEmailNotifier = (config: EmailNotifierConfig): EmailNotifier 
                         attempts = attempt;
 
                         try {
-                                const sendResult = await transport.send(message);
-                                const messageId = (sendResult as EmailTransportResponse | undefined)?.id ?? randomUUID();
+                                const sendResult: EmailTransportResponse = await transport.send(message);
+                                const messageId = sendResult.id ?? randomUUID();
                                 return {
                                         status: 'sent',
                                         attempts,
