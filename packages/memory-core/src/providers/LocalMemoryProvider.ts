@@ -331,9 +331,9 @@ export class LocalMemoryProvider implements MemoryProvider {
 
   private sanitizeContent(content: string): string {
     const patterns: RegExp[] = [
-      /sk-[a-z0-9_-]+/gi,
-      /api[_-]?key\s*[:=]\s*['\"]?[a-z0-9_-]+['\"]?/gi,
-      /secret\s*[:=]\s*['\"]?[a-z0-9_-]+['\"]?/gi,
+      /sk-[a-zA-Z0-9_-]+/gi,
+      /api[_-]?key\s*[:=]\s*['\"]?[a-zA-Z0-9_-]+['\"]?/gi,
+      /secret\s*[:=]\s*['\"]?[a-zA-Z0-9_-]+['\"]?/gi,
     ];
 
     return patterns.reduce((acc, pattern) => acc.replace(pattern, '[REDACTED]'), content);
