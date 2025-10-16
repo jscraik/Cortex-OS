@@ -5,13 +5,13 @@
  * heuristics for freshness, diversity, domain relevance, and duplication penalties.
  */
 
+import { ContextBand } from './types.js';
 import type {
-	Chunk,
-	RelevanceScore,
-	ContextBand,
-	RefRagChunkMetadata,
-	QueryGuardResult,
-	ExpansionHint,
+        Chunk,
+        RelevanceScore,
+        RefRagChunkMetadata,
+        QueryGuardResult,
+        ExpansionHint,
 } from './types.js';
 
 /**
@@ -161,8 +161,8 @@ export class RelevancePolicy {
 		const { textSimilarityThreshold, maxDuplicates, penaltyStrength } = this.config.duplicationSettings;
 
 		// Optimization: Use similarity cache to avoid redundant calculations
-		const similarityCache = new Map<string, Map<string, number>>();
-		const duplicateCounts = new Array(chunks.length).fill(0);
+                const similarityCache = new Map<string, number>();
+                const duplicateCounts = new Array(chunks.length).fill(0);
 
 		// Pre-compute text similarity matrix with caching
 		for (let i = 0; i < chunks.length; i++) {
@@ -175,9 +175,9 @@ export class RelevancePolicy {
 					similarityCache
 				);
 
-				if (similarity >= textSimilarityThreshold) {
-					duplicateCount[i]++;
-					duplicateCount[j]++;
+                                if (similarity >= textSimilarityThreshold) {
+                                        duplicateCounts[i]++;
+                                        duplicateCounts[j]++;
 				}
 			}
 		}
@@ -203,28 +203,20 @@ export class RelevancePolicy {
 		text2: string,
 		index1: number,
 		index2: number,
-		cache: Map<string, Map<string, number>>,
-	): number {
-		// Create consistent cache keys
-		const key1 = `${index1}:${index2}`;
-		const key2 = `${index2}:${index1}`;
+                cache: Map<string, number>,
+        ): number {
+                // Create a stable cache key regardless of index order
+                const key = index1 < index2 ? `${index1}:${index2}` : `${index2}:${index1}`;
 
-		// Check cache first
-		if (cache.has(key1)) {
-			return cache.get(key1)!;
-			}
-		if (cache.has(key2)) {
-			return cache.get(key2)!;
-		}
+                const cached = cache.get(key);
+                if (cached !== undefined) {
+                        return cached;
+                }
 
-		// Calculate similarity and cache it
-		const similarity = this.calculateTextSimilarity(text1, text2);
-		const innerCache = cache.get(key1) || new Map<string, number>();
-		innerCache.set(key2, similarity);
-		cache.set(key1, innerCache);
-
-		return similarity;
-	}
+                const similarity = this.calculateTextSimilarity(text1, text2);
+                cache.set(key, similarity);
+                return similarity;
+        }
 
 	/**
 	 * Calculate freshness score for chunk

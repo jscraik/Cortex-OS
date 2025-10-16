@@ -81,7 +81,7 @@ export function requirePermission(permission: string) {
 			});
 		}
 
-		const { checkPermission } = await import('./permissions');
+                const { checkPermission } = await import('./permissions.js');
 		if (!checkPermission(user, permission)) {
 			throw new HTTPException(403, {
 				message: 'Insufficient permissions',
@@ -105,7 +105,7 @@ export function requireRole(role: string) {
 			});
 		}
 
-		const { hasRole } = await import('./permissions');
+                const { hasRole } = await import('./permissions.js');
 		if (!hasRole(user, role)) {
 			throw new HTTPException(403, {
 				message: 'Insufficient permissions',
@@ -160,7 +160,7 @@ export async function currentUserHasPermission(c: Context, permission: string): 
 	const user = getCurrentUser(c);
 	if (!user) return false;
 
-	const { checkPermission } = await import('./permissions');
+        const { checkPermission } = await import('./permissions.js');
 	return checkPermission(user, permission);
 }
 
@@ -171,6 +171,6 @@ export async function currentUserHasRole(c: Context, role: string): Promise<bool
 	const user = getCurrentUser(c);
 	if (!user) return false;
 
-	const { hasRole } = await import('./permissions');
+        const { hasRole } = await import('./permissions.js');
 	return hasRole(user, role);
 }

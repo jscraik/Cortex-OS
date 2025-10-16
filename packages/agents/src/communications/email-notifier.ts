@@ -270,19 +270,18 @@ export const createEmailNotifier = (config: EmailNotifierConfig): EmailNotifier 
 
 		let attempts = 0;
 		let lastError: unknown;
-		let sendResult: EmailTransportResponse | void;
+                for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                        attempts = attempt;
 
-		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-			attempts = attempt;
-
-			try {
-				sendResult = await transport.send(message);
-				return {
-					status: 'sent',
-					attempts,
-					messageId: sendResult?.id ?? randomUUID(),
-					idempotencyKey: request.idempotencyKey,
-				};
+                        try {
+                                const sendResult: EmailTransportResponse = await transport.send(message);
+                                const messageId = sendResult.id ?? randomUUID();
+                                return {
+                                        status: 'sent',
+                                        attempts,
+                                        messageId,
+                                        idempotencyKey: request.idempotencyKey,
+                                };
 			} catch (error) {
 				lastError = error;
 

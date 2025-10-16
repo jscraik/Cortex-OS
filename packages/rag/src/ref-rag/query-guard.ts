@@ -5,7 +5,8 @@
  * mandatory expansion hints for safe and comprehensive retrieval.
  */
 
-import type { ExpansionHint, QueryGuardResult, RiskClass } from './types.js';
+import { RiskClass } from './types.js';
+import type { ExpansionHint, QueryGuardResult } from './types.js';
 
 /**
  * Query guard configuration

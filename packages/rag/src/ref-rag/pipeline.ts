@@ -6,24 +6,26 @@
  */
 
 import crypto from 'node:crypto';
+import { ContextBand, RiskClass } from './types.js';
 import type {
-	RefRagPipeline,
-	RefRagConfig,
-	RefRagProcessOptions,
-	TriBandGenerationRequest,
-	HybridContextPack,
-	QueryGuardResult,
-	ExpansionPlan,
-	VerificationResult,
-	EscalationTrace,
-	Chunk,
-	BandAContext,
-	BandBContext,
-	BandCContext,
-	BudgetUsage,
-	RefRagChunkMetadata,
+        RefRagPipeline,
+        RefRagConfig,
+        RefRagProcessOptions,
+        TriBandGenerationRequest,
+        HybridContextPack,
+        QueryGuardResult,
+        ExpansionPlan,
+        VerificationResult,
+        EscalationTrace,
+        Chunk,
+        BandAContext,
+        BandBContext,
+        BandCContext,
+        BudgetUsage,
+        RefRagChunkMetadata,
 } from './types.js';
-import type { Embedder, Store, Generator } from '../lib/types.js';
+import type { Embedder, Store } from '../lib/types.js';
+import type { Generator } from '../generation/index.js';
 import { createQueryGuard } from './query-guard.js';
 import { createRelevancePolicy } from './relevance-policy.js';
 import { getBudgetForRiskClass } from './budgets.js';
@@ -128,8 +130,8 @@ class SimplePackBuilder {
 		queryGuard: QueryGuardResult,
 	): HybridContextPack {
 		// Build Band A contexts
-		const bandA: BandAContext[] = expansionPlan.bandAChunks.map((chunk, index) => ({
-			band: 'A' as const,
+                const bandA: BandAContext[] = expansionPlan.bandAChunks.map((chunk, index) => ({
+                        band: ContextBand.A,
 			text: chunk.text,
 			citation: {
 				id: chunk.id,
@@ -144,12 +146,12 @@ class SimplePackBuilder {
 		}));
 
 		// Build Band B contexts (virtual tokens)
-		const bandB: BandBContext[] = expansionPlan.bandBChunks.map(chunk => {
+                const bandB: BandBContext[] = expansionPlan.bandBChunks.map(chunk => {
 			const refRagMetadata = chunk.metadata?.refRag as RefRagChunkMetadata | undefined;
 			const compressedEmbedding = refRagMetadata?.dualEmbeddings?.compressed || [];
 
-			return {
-				band: 'B' as const,
+                        return {
+                                band: ContextBand.B,
 				virtualTokens: new Float32Array(compressedEmbedding),
 				chunkRef: {
 					id: chunk.id,
@@ -160,18 +162,18 @@ class SimplePackBuilder {
 					originalLength: chunk.text.length,
 					compressedLength: compressedEmbedding.length,
 					compressionRatio: compressedEmbedding.length / chunk.text.length,
-					method: 'projection' as const,
+                                        method: 'projection',
 				},
 			};
 		});
 
 		// Build Band C contexts (structured facts)
-		const bandC: BandCContext[] = expansionPlan.bandCChunks.map(chunk => {
+                const bandC: BandCContext[] = expansionPlan.bandCChunks.map(chunk => {
 			const refRagMetadata = chunk.metadata?.refRag as RefRagChunkMetadata | undefined;
 			const facts = refRagMetadata?.structuredFacts || [];
 
-			return {
-				band: 'C' as const,
+                        return {
+                                band: ContextBand.C,
 				facts,
 				chunkRef: {
 					id: chunk.id,
@@ -179,7 +181,7 @@ class SimplePackBuilder {
 					score: 0.7, // Simplified
 				},
 				extraction: {
-					method: 'regex' as const,
+                                        method: 'regex',
 					confidence: refRagMetadata?.factExtraction?.confidence || 0.7,
 					timestamp: Date.now(),
 				},
@@ -318,12 +320,13 @@ class SimpleVerification {
 		if (hasCitations) return 0.9;
 
 		// Penalize based on risk class
-		const riskPenalty = {
-			low: 0.2,
-			medium: 0.4,
-			high: 0.6,
-			critical: 0.8,
-		}[contextPack.metadata.riskClass] || 0.4;
+                const riskPenaltyMap: Record<RiskClass, number> = {
+                        [RiskClass.LOW]: 0.2,
+                        [RiskClass.MEDIUM]: 0.4,
+                        [RiskClass.HIGH]: 0.6,
+                        [RiskClass.CRITICAL]: 0.8,
+                };
+                const riskPenalty = riskPenaltyMap[contextPack.metadata.riskClass] ?? 0.4;
 
 		return Math.max(0.2, 1.0 - riskPenalty);
 	}
@@ -387,10 +390,10 @@ export class RefRagPipelineImpl implements RefRagPipeline {
 		const traceId = crypto.randomUUID();
 
 		// Initialize escalation trace
-		const trace: EscalationTrace = {
-			traceId,
-			query,
-			initialRiskClass: options.forceRiskClass || 'low',
+                const trace: EscalationTrace = {
+                        traceId,
+                        query,
+                        initialRiskClass: options.forceRiskClass ?? RiskClass.LOW,
 			steps: [],
 			outcome: 'success',
 			totalTimeMs: 0,
@@ -408,7 +411,7 @@ export class RefRagPipelineImpl implements RefRagPipeline {
 			});
 
 			// Override risk class if specified
-			const effectiveRiskClass = options.forceRiskClass || queryGuardResult.riskClass;
+                        const effectiveRiskClass = options.forceRiskClass ?? queryGuardResult.riskClass;
 
 			// Step 2: Retrieve Chunks
 			const retrievalStartTime = Date.now();
