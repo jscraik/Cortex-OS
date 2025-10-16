@@ -211,11 +211,11 @@ MEMORY_API_HEALTH="http://localhost:3028/api/v1/health"
 
 The following escalation matrix keeps operational ownership clear during performance or availability incidents discovered by the monitoring tooling.
 
-| Tier | Responsible team | Contact channel | Trigger conditions | Escalation window |
-| --- | --- | --- | --- | --- |
-| 1 | Runtime SRE (primary on-call) | `#incidents-runtime` (Slack) & on-call rotation pager | Health checks failing for >5 minutes, automated restarts looping, or resource usage exceeding configured limits twice within 10 minutes. | Immediate — acknowledge within 5 minutes. |
-| 2 | Platform Engineering (process automation) | `#platform-escalations` (Slack) & runbook issue tracker | Tier 1 unable to restore service within 15 minutes, repeated MCP pool exhaustion events, or conflicting automation policies. | Engage after 15 minutes of unresolved Tier 1 response. |
-| 3 | Incident Commander & Product Reliability | Direct bridge line + `incident-bridge@brainwav.dev` | Sustained availability below SLO, data integrity risk, or cross-tenant blast radius. | Page after 30 minutes without recovery or when customer impact is confirmed. |
+Tier | Responsible team | Contact channel | Trigger conditions | Escalation window |
+--- | --- | --- | --- | --- |
+1 | Runtime SRE (primary on-call) | `#incidents-runtime` (Slack) & on-call rotation pager | Health checks failing for >5 minutes, automated restarts looping, or resource usage exceeding configured limits twice within 10 minutes. | Immediate — acknowledge within 5 minutes. |
+2 | Platform Engineering (process automation) | `#platform-escalations` (Slack) & runbook issue tracker | Tier 1 unable to restore service within 15 minutes, repeated MCP pool exhaustion events, or conflicting automation policies. | Engage after 15 minutes of unresolved Tier 1 response. |
+3 | Incident Commander & Product Reliability | Direct bridge line + `incident-bridge@brainwav.dev` | Sustained availability below SLO, data integrity risk, or cross-tenant blast radius. | Page after 30 minutes without recovery or when customer impact is confirmed. |
 
 Document escalations in the shared incident channel and link follow-up actions to the [observability package handbook](../packages/observability/README.md) so instrumentation gaps are captured alongside remediation.【F:packages/observability/README.md†L1-L16】
 
