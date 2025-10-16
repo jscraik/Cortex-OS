@@ -89,7 +89,8 @@ export function createFeatureFlagsAdminRouter(
 	// Apply authentication middleware if provided
         if (authenticate) {
                 router.use('*', async (c, next) => {
-                        await authenticate(c, next);
+                        const result = await authenticate(c, next);
+                        if (result !== undefined) return result;
                 });
         }
 
