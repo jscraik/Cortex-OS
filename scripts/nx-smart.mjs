@@ -165,6 +165,12 @@ while (idx < flags.length) {
 const json = flags.includes('--json');
 const verbose = flags.includes('--verbose');
 
+
+if (verbose) {
+        const telemetryStatus = telemetryEnabled ? 'enabled' : 'disabled';
+        log(`[nx-smart] telemetry ${telemetryStatus} (NX_SMART_OTEL=${process.env.NX_SMART_OTEL ?? '0'})`);
+}
+
 if (positionalFocus.length > 0) {
 	const merged = new Set(focusList.length > 0 ? focusList : []);
 	for (const token of positionalFocus) merged.add(token);
@@ -176,8 +182,17 @@ function log(msg) {
 }
 
 function writeMetrics(metaExtra = {}) {
-	const durationMs = Date.now() - startTime;
-	const metrics = { target, durationMs, strategy, ...metaExtra };
+        const durationMs = Date.now() - startTime;
+        const metrics = {
+                target,
+                durationMs,
+                strategy,
+                telemetry: {
+                        enabled: telemetryEnabled,
+                        reason: `NX_SMART_OTEL=${process.env.NX_SMART_OTEL ?? '0'}`,
+                },
+                ...metaExtra,
+        };
 	if (telemetryEnabled && durationHistogram) {
 		try {
 			durationHistogram.record(durationMs, {
