@@ -24,8 +24,11 @@ class MockAgentToolkitMCPTools {
 		];
 	}
 
-        async executeTool(toolName: string, _params: Record<string, unknown>) {
-                // Parameters are intentionally unused for this mock implementation
+        async executeTool(toolName: string, params: Record<string, unknown> = {}) {
+                if (params === null || typeof params !== 'object') {
+                        throw new Error('brAInwav Cortex-OS: Tool parameters must be an object');
+                }
+                const requestSignature = Object.keys(params).sort().join('|');
 		// Simulate brAInwav error handling
 		if (!toolName || typeof toolName !== 'string') {
 			throw new Error('brAInwav Cortex-OS: Tool name is required and must be a string');
@@ -47,13 +50,14 @@ class MockAgentToolkitMCPTools {
 		return {
 			success: true,
 			data: { tool: toolName, results: [] },
-			metadata: {
-				correlationId: `test-${Date.now()}`,
-				timestamp: new Date().toISOString(),
-				tool: toolName,
-			},
-		};
-	}
+                        metadata: {
+                                correlationId: `test-${Date.now()}`,
+                                timestamp: new Date().toISOString(),
+                                tool: toolName,
+                                requestSignature,
+                        },
+                };
+        }
 
 	getCircuitBreakerState(toolName: string) {
 		return (
