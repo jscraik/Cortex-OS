@@ -19,10 +19,11 @@ export default defineConfig({
 		},
 		globals: true,
 	},
-	resolve: {
-		alias: {
-			'@': resolve(__dirname, './src'),
-			'@tests': resolve(__dirname, './tests'),
-		},
-	},
+        resolve: {
+                alias: {
+                        '@': resolve(__dirname, './src'),
+                        '@tests': resolve(__dirname, './tests'),
+                        '@cortex-os/utils': resolve(__dirname, '../../libs/typescript/utils/src/index.ts'),
+                },
+        },
 });
