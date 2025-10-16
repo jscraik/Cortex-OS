@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A2A event schemas and definitions for Cortex-OS",
   "main": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.ts",
   "scripts": {
     "build": "tsup && npx tsc --declaration --emitDeclarationOnly --outDir dist src/index.ts src/types.ts",
     "test": "nx test a2a-events",

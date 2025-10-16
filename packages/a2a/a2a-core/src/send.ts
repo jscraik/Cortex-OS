@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { createEnvelope, type Envelope } from '../../a2a-contracts/src/envelope.js';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { SimpleCircuitBreaker } from './circuitBreaker.js';
 
 const options = {

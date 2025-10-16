@@ -1,4 +1,4 @@
-import type { Envelope } from '../../a2a-contracts/src/envelope.js';
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 
 export interface Transport {
 	publish: (msg: Envelope) => Promise<void>;

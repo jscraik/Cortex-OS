@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HookContext, HookResult } from '../../src/types.js';
 
-const loadHookConfigs = vi.fn<[], Promise<Record<string, unknown>>>();
+const loadHookConfigs = vi.fn<() => Promise<Record<string, unknown>>>();
 const runJS = vi.fn<(code: string, ctx: HookContext, timeout: number) => Promise<HookResult>>();
 
 vi.mock('../../src/loaders.js', () => ({

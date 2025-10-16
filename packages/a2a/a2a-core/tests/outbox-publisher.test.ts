@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type OutboxMessage, OutboxMessageStatus } from '../../a2a-contracts/src/outbox-types.js';
+import { type OutboxMessage, OutboxMessageStatus } from '@cortex-os/a2a-contracts/outbox-types';
 import { ReliableOutboxPublisher } from '../src/outbox.js';
 
 describe('ReliableOutboxPublisher', () => {

@@ -1,4 +1,4 @@
-import { createEnvelope } from '../packages/a2a/a2a-contracts/src/envelope.js';
+import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import { createBus, type Handler } from '../packages/a2a/a2a-core/src/bus.js';
 import { inproc } from '../packages/a2a/a2a-transport/src/inproc.js';
 

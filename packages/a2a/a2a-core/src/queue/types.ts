@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Envelope } from '../../../a2a-contracts/src/envelope.js';
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 
 export const QueueMessageStatus = z.enum(['pending', 'processing', 'completed', 'failed']);
 

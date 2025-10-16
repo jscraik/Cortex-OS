@@ -4,63 +4,63 @@
   "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "src/index.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./src/index.ts"
     },
     "./envelope": {
       "import": "./dist/envelope.js",
-      "types": "./dist/envelope.d.ts"
+      "types": "./src/envelope.ts"
     },
     "./envelope.js": {
       "import": "./dist/envelope.js",
-      "types": "./dist/envelope.d.ts"
+      "types": "./src/envelope.ts"
     },
     "./evidence": {
       "import": "./dist/evidence.js",
-      "types": "./dist/evidence.d.ts"
+      "types": "./src/evidence.ts"
     },
     "./events": {
       "import": "./dist/events.js",
-      "types": "./dist/events.d.ts"
+      "types": "./src/events.ts"
     },
     "./commands": {
       "import": "./dist/commands.js",
-      "types": "./dist/commands.d.ts"
+      "types": "./src/commands.ts"
     },
     "./trace-context": {
       "import": "./dist/trace-context.js",
-      "types": "./dist/trace-context.d.ts"
+      "types": "./src/trace-context.ts"
     },
     "./trace-context.js": {
       "import": "./dist/trace-context.js",
-      "types": "./dist/trace-context.d.ts"
+      "types": "./src/trace-context.ts"
     },
     "./agents": {
       "import": "./dist/agents.js",
-      "types": "./dist/agents.d.ts"
+      "types": "./src/agents.ts"
     },
     "./schema-registry-types": {
       "import": "./dist/schema-registry-types.js",
-      "types": "./dist/schema-registry-types.d.ts"
+      "types": "./src/schema-registry-types.ts"
     },
     "./topic-acl": {
       "import": "./dist/topic-acl.js",
-      "types": "./dist/topic-acl.d.ts"
+      "types": "./src/topic-acl.ts"
     },
     "./topic-acl.js": {
       "import": "./dist/topic-acl.js",
-      "types": "./dist/topic-acl.d.ts"
+      "types": "./src/topic-acl.ts"
     },
     "./outbox-types": {
       "import": "./dist/outbox-types.js",
-      "types": "./dist/outbox-types.d.ts"
+      "types": "./src/outbox-types.ts"
     },
     "./schema-validation-utils": {
       "import": "./dist/schema-validation-utils.js",
-      "types": "./dist/schema-validation-utils.d.ts"
+      "types": "./src/schema-validation-utils.ts"
     }
   },
   "scripts": {

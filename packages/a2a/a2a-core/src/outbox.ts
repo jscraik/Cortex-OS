@@ -1,4 +1,4 @@
-import { createEnvelope, type Envelope } from '../../a2a-contracts/src/envelope.js';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
 import {
 	type OutboxConfig,
 	type OutboxMessage,
@@ -7,8 +7,8 @@ import {
 	type OutboxProcessor,
 	type OutboxPublisher,
 	type OutboxRepository,
-} from '../../a2a-contracts/src/outbox-types.js';
-import { createTraceParent } from '../../a2a-contracts/src/trace-context.js';
+} from '@cortex-os/a2a-contracts/outbox-types';
+import { createTraceParent } from '@cortex-os/a2a-contracts/trace-context';
 import { getCurrentTraceContext } from './trace-context-manager.js';
 import { logWarn, logError } from './lib/logging.js';
 

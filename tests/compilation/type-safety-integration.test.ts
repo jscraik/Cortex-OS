@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Envelope as EnvelopeType } from '../../packages/a2a/a2a-contracts/src/envelope.js';
-import { createEnvelope } from '../../packages/a2a/a2a-contracts/src/envelope.js';
+import type { Envelope as EnvelopeType } from '@cortex-os/a2a-contracts/envelope';
+import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import { createBus } from '../../packages/a2a/a2a-core/src/bus.js';
 import type { Transport } from '../../packages/a2a/a2a-core/src/transport.js';
 

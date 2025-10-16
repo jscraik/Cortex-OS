@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type OutboxMessage, OutboxMessageStatus } from '../a2a-contracts/src/outbox-types.js';
+import { type OutboxMessage, OutboxMessageStatus } from '@cortex-os/a2a-contracts/outbox-types';
 import { InMemoryOutboxRepository } from './in-memory-outbox-repository.js';
 import { replayPending } from './replay.js';
 

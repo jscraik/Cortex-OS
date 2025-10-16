@@ -6,7 +6,7 @@ import type {
 	SchemaRegistryStats,
 	SchemaSearchOptions,
 	ValidationResult,
-} from '../../a2a-contracts/src/schema-registry-types.js';
+} from '@cortex-os/a2a-contracts/schema-registry-types';
 
 /**
  * In-memory schema registry implementation
