@@ -12,6 +12,18 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+const toStringOrEmpty = (value: unknown): string => {
+        if (typeof value === 'string') {
+                return value;
+        }
+
+        if (value instanceof Buffer) {
+                return value.toString();
+        }
+
+        return '';
+};
+
 describe('Phase 3: TypeScript Project References', () => {
 	const packagesWithReferences = [
 		'packages/gateway',
@@ -89,13 +101,22 @@ describe('Phase 3: TypeScript Project References', () => {
 					stdio: 'pipe',
 				});
 				expect(true).toBe(true);
-			} catch (error: any) {
-				// If it fails, check it's not because of missing references
-				const stderr = error.stderr?.toString() || '';
-				expect(stderr).not.toContain('TS6307');
-				expect(stderr).not.toContain('not listed within the file list');
-			}
-		});
+                        } catch (error: unknown) {
+                                // If it fails, check it's not because of missing references
+                                const stderr =
+                                        typeof error === 'object' && error !== null && 'stderr' in error
+                                                ? toStringOrEmpty(error.stderr)
+                                                : '';
+                                const stdout =
+                                        typeof error === 'object' && error !== null && 'stdout' in error
+                                                ? toStringOrEmpty(error.stdout)
+                                                : '';
+                                const output = stderr || stdout;
+
+                                expect(output).not.toContain('TS6307');
+                                expect(output).not.toContain('not listed within the file list');
+                        }
+                });
 	});
 
 	describe('Reference Completeness', () => {
@@ -120,8 +141,8 @@ describe('Phase 3: TypeScript Project References', () => {
 				const tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
 
 				const workspaceDeps = getWorkspaceDependencies(pkgPath);
-				const references = tsconfig.references || [];
-				const referencePaths = references.map((ref: { path: string }) => ref.path);
+                                const references = tsconfig.references || [];
+                                const referencePaths = references.map((ref) => ref.path);
 
 				// Count how many workspace deps have corresponding references
 				let depsWithRefs = 0;
