@@ -42,8 +42,14 @@ export interface ConnectorProxyManagerOptions extends ConnectorServiceMapOptions
         logger: ServerLogger;
         now?: () => number;
         createProxy?: (config: RemoteToolProxyOptions) => RemoteToolProxy;
-	clock?: Clock;
+        clock?: Clock;
+        sleep?: (ms: number) => Promise<void>;
 }
+
+const MAX_REFRESH_ATTEMPTS = 3;
+const BASE_RETRY_DELAY_MS = 50;
+const CIRCUIT_BREAKER_FAILURE_THRESHOLD = 3;
+const CIRCUIT_BREAKER_DURATION_MS = 60_000;
 
 const buildAuthHeaders = (entry: ConnectorEntry, apiKey: string): Record<string, string> => {
         const headers: Record<string, string> = {};
@@ -74,18 +80,21 @@ const buildAuthHeaders = (entry: ConnectorEntry, apiKey: string): Record<string,
 export class ConnectorProxyManager {
         private readonly options: ConnectorProxyManagerOptions;
 	private readonly featureFlags: ConnectorFeatureFlags;
-	private readonly manifestCache: ManifestCache<ServiceMapPayload>;
-	private readonly clock: Clock;
-	private readonly agent: Agent;
-	private readonly scheduler?: RefreshScheduler;
+        private readonly manifestCache: ManifestCache<ServiceMapPayload>;
+        private readonly clock: Clock;
+        private readonly agent: Agent;
+        private readonly scheduler?: RefreshScheduler;
+        private readonly sleep: (ms: number) => Promise<void>;
         private readonly proxies = new Map<string, RemoteToolProxy>();
         private readonly registeredTools = new Set<string>();
         private manifest?: ServiceMapPayload;
         private expiresAtMs = 0;
+        private consecutiveRefreshFailures = 0;
+        private circuitOpenedAtMs?: number;
 
         constructor(options: ConnectorProxyManagerOptions) {
                 this.options = options;
-		this.featureFlags = parseConnectorFeatureFlags();
+                this.featureFlags = parseConnectorFeatureFlags();
 		this.clock =
 			options.clock ??
 			(options.now
@@ -93,13 +102,19 @@ export class ConnectorProxyManager {
 						now: options.now,
 				  }
 				: defaultClock);
-		this.manifestCache = new ManifestCache<ServiceMapPayload>(this.clock);
-		this.agent = new Agent({ connections: 10, pipelining: 1 });
-		if (this.featureFlags.asyncRefresh) {
-			this.scheduler = new RefreshScheduler({
-				intervalMs: this.featureFlags.refreshIntervalMs,
-				onRefresh: () => this.syncInternal(true),
-				logger: this.options.logger,
+                this.manifestCache = new ManifestCache<ServiceMapPayload>(this.clock);
+                this.agent = new Agent({ connections: 10, pipelining: 1 });
+                this.sleep =
+                        options.sleep ??
+                        ((ms: number) =>
+                                new Promise<void>((resolve) => {
+                                        setTimeout(resolve, ms);
+                                }));
+                if (this.featureFlags.asyncRefresh) {
+                        this.scheduler = new RefreshScheduler({
+                                intervalMs: this.featureFlags.refreshIntervalMs,
+                                onRefresh: () => this.syncInternal(true),
+                                logger: this.options.logger,
 				clock: this.clock,
 			});
 			this.scheduler.start();
@@ -110,50 +125,142 @@ export class ConnectorProxyManager {
 		await this.syncInternal(force);
         }
 
-	private async syncInternal(force: boolean): Promise<void> {
-		if (!force) {
-			const cached = this.manifestCache.get();
-			if (cached) {
-				this.manifest = cached;
-				return;
-			}
-		}
+        private async syncInternal(force: boolean): Promise<void> {
+                if (this.isCircuitOpen()) {
+                        const cached = this.manifestCache.get();
+                        if (cached) {
+                                this.manifest = cached;
+                        }
 
-		try {
-			const result = await loadConnectorServiceMap({ ...this.options, agent: this.agent });
-			this.manifest = result.payload;
-			this.expiresAtMs = result.expiresAtMs;
-			const ttlMs = Math.max(0, result.expiresAtMs - this.clock.now());
-			this.manifestCache.set(result.payload, ttlMs);
-			await this.hydrateConnectors(result.payload);
+                        this.options.logger.error(
+                                {
+                                        brand: 'brAInwav',
+                                        failureCount: this.consecutiveRefreshFailures,
+                                },
+                                'Connector manifest circuit open',
+                        );
+
+                        throw new ConnectorManifestError(
+                                'Connector manifest refresh circuit is open after repeated failures',
+                        );
+                }
+
+                if (!force) {
+                        const cached = this.manifestCache.get();
+                        if (cached) {
+                                this.manifest = cached;
+                                return;
+                        }
+                }
+
+                try {
+                        const result = await this.loadManifestWithRetry();
+                        this.manifest = result.payload;
+                        this.expiresAtMs = result.expiresAtMs;
+                        const ttlMs = Math.max(0, result.expiresAtMs - this.clock.now());
+                        this.manifestCache.set(result.payload, ttlMs);
+                        await this.hydrateConnectors(result.payload);
 			this.options.logger.info(
 				{
 					brand: 'brAInwav',
 					connectorCount: result.payload.connectors.length,
 					expiresAtMs: result.expiresAtMs,
-				},
-				'Loaded connectors manifest',
-			);
-		} catch (error) {
-			this.options.logger.warn(
-				{
-					brand: 'brAInwav',
-					error: error instanceof Error ? error.message : error,
-				},
-				'Manifest refresh failed',
-			);
+                                },
+                                'Loaded connectors manifest',
+                        );
+                        this.resetFailureState();
+                } catch (error) {
+                        this.recordRefreshFailure();
+                        this.options.logger.warn(
+                                {
+                                        brand: 'brAInwav',
+                                        error: error instanceof Error ? error.message : error,
+                                        failureCount: this.consecutiveRefreshFailures,
+                                },
+                                'Manifest refresh failed',
+                        );
 
-			const cached = this.manifestCache.get();
-			if (cached) {
-				this.manifest = cached;
-				return;
-			}
+                        const cached = this.manifestCache.get();
+                        if (cached) {
+                                this.manifest = cached;
+                                if (this.isCircuitOpen()) {
+                                        this.options.logger.error(
+                                                {
+                                                        brand: 'brAInwav',
+                                                        failureCount: this.consecutiveRefreshFailures,
+                                                },
+                                                'Connector manifest circuit opened after retries',
+                                        );
 
-			throw error;
-		}
-	}
+                                        throw new ConnectorManifestError(
+                                                'Connector manifest refresh circuit is open after repeated failures',
+                                        );
+                                }
 
-	private async hydrateConnectors(manifest: ServiceMapPayload): Promise<void> {
+                                return;
+                        }
+
+                        throw error;
+                }
+        }
+
+        private async loadManifestWithRetry(): Promise<{ payload: ServiceMapPayload; expiresAtMs: number }> {
+                let attempt = 0;
+                let lastError: unknown;
+
+                while (attempt < MAX_REFRESH_ATTEMPTS) {
+                        attempt += 1;
+                        try {
+                                return await loadConnectorServiceMap({ ...this.options, agent: this.agent });
+                        } catch (error) {
+                                lastError = error;
+                                if (attempt >= MAX_REFRESH_ATTEMPTS) {
+                                        break;
+                                }
+
+                                this.options.logger.debug(
+                                        {
+                                                brand: 'brAInwav',
+                                                attempt,
+                                        },
+                                        'Retrying manifest refresh after failure',
+                                );
+
+                                await this.sleep(BASE_RETRY_DELAY_MS * attempt);
+                        }
+                }
+
+                throw lastError ?? new ConnectorManifestError('Failed to load connector manifest');
+        }
+
+        private resetFailureState(): void {
+                this.consecutiveRefreshFailures = 0;
+                this.circuitOpenedAtMs = undefined;
+        }
+
+        private recordRefreshFailure(): void {
+                this.consecutiveRefreshFailures += 1;
+                if (this.consecutiveRefreshFailures >= CIRCUIT_BREAKER_FAILURE_THRESHOLD) {
+                        this.circuitOpenedAtMs = this.clock.now();
+                }
+        }
+
+        private isCircuitOpen(): boolean {
+                if (this.circuitOpenedAtMs === undefined) {
+                        return false;
+                }
+
+                const elapsed = this.clock.now() - this.circuitOpenedAtMs;
+                if (elapsed >= CIRCUIT_BREAKER_DURATION_MS) {
+                        this.circuitOpenedAtMs = undefined;
+                        this.consecutiveRefreshFailures = 0;
+                        return false;
+                }
+
+                return true;
+        }
+
+        private async hydrateConnectors(manifest: ServiceMapPayload): Promise<void> {
 		for (const entry of manifest.connectors) {
 			setConnectorAvailabilityGauge(entry.id, entry.status === 'enabled');
 		}
@@ -199,14 +306,14 @@ export class ConnectorProxyManager {
                         return existing;
                 }
 
-	const proxyFactory =
-	        this.options.createProxy ?? ((config: RemoteToolProxyOptions) => new RemoteToolProxy(config));
-	const proxy = proxyFactory({
-	        endpoint: entry.endpoint,
-	        enabled: entry.status === 'enabled',
-	        logger: this.options.logger as unknown as import('pino').Logger,
-		agent: this.agent,
-		connectorId: entry.id,
+                const proxyFactory =
+                        this.options.createProxy ?? ((config: RemoteToolProxyOptions) => new RemoteToolProxy(config));
+                const proxy = proxyFactory({
+                        endpoint: entry.endpoint,
+                        enabled: entry.status === 'enabled',
+                        logger: this.options.logger as unknown as import('pino').Logger,
+                        agent: this.agent,
+                        connectorId: entry.id,
                         headers: buildAuthHeaders(entry, this.options.connectorsApiKey),
                         serviceLabel: entry.name,
                         unavailableErrorName: `${entry.id}ConnectorUnavailableError`,
@@ -219,7 +326,7 @@ export class ConnectorProxyManager {
                 return proxy;
         }
 
-	        private async registerRemoteTools(entry: ConnectorEntry, proxy: RemoteToolProxy): Promise<void> {
+        private async registerRemoteTools(entry: ConnectorEntry, proxy: RemoteToolProxy): Promise<void> {
                 const tools: RemoteTool[] = proxy.getTools();
                 if (!tools.length) {
                         return;
@@ -233,23 +340,23 @@ export class ConnectorProxyManager {
                                 continue;
                         }
 
-			const metadataTags = Array.from(
-				new Set([
-					...(normalized.tags ?? []),
-					...(normalized.scopes ?? []).map((scope) => `scope:${scope}`),
-					`connector:${entry.id}`,
-					`connectorName:${entry.name}`,
-					'brand:brAInwav',
-				]),
-			);
+                        const metadataTags = Array.from(
+                                new Set([
+                                        ...(normalized.tags ?? []),
+                                        ...(normalized.scopes ?? []).map((scope) => `scope:${scope}`),
+                                        `connector:${entry.id}`,
+                                        `connectorName:${entry.name}`,
+                                        'brand:brAInwav',
+                                ]),
+                        );
 
-			const metadata =
-				metadataTags.length || entry.metadata?.brand
-					? {
-							tags: metadataTags.length ? metadataTags : undefined,
-							author: entry.metadata?.brand ?? undefined,
-					  }
-					: undefined;
+                        const metadata =
+                                metadataTags.length || entry.metadata?.brand
+                                        ? {
+                                                        tags: metadataTags.length ? metadataTags : undefined,
+                                                        author: entry.metadata?.brand ?? undefined,
+                                          }
+                                        : undefined;
 
                         this.options.registry.registerTool({
                                 name: fullName,
@@ -257,7 +364,7 @@ export class ConnectorProxyManager {
                                 inputSchema: tool.inputSchema,
                                 handler: async (args: Record<string, unknown>) =>
                                         proxy.callTool(normalized.originalName, args),
-				metadata,
+                                metadata,
                         });
 
                         this.registeredTools.add(fullName);
