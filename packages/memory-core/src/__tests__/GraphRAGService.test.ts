@@ -20,28 +20,29 @@ type PrismaMock = {
 	$queryRaw: ReturnType<typeof vi.fn>;
 };
 
-const qdrantMock = {
-	initialize: vi.fn(),
-	hybridSearch: vi.fn(),
-	healthCheck: vi.fn(),
-	close: vi.fn(),
-};
+const qdrantMock = vi.hoisted(() => ({
+        initialize: vi.fn(),
+        hybridSearch: vi.fn(),
+        healthCheck: vi.fn(),
+        close: vi.fn(),
+}));
 
-const expandMock = vi.fn();
-const assembleMock = vi.fn();
-const prismaMock: PrismaMock = {
-	chunkRef: {
-		findMany: vi.fn(),
-		count: vi.fn().mockResolvedValue(0),
-	},
-	graphNode: {
-		groupBy: vi.fn().mockResolvedValue([]),
-	},
-	graphEdge: {
-		groupBy: vi.fn().mockResolvedValue([]),
-	},
-	$queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
-};
+const expandMock = vi.hoisted(() => vi.fn());
+const assembleMock = vi.hoisted(() => vi.fn());
+const prismaMock = vi.hoisted<PrismaMock>(() => ({
+        chunkRef: {
+                findMany: vi.fn(),
+                count: vi.fn().mockResolvedValue(0),
+        },
+        graphNode: {
+                groupBy: vi.fn().mockResolvedValue([]),
+        },
+        graphEdge: {
+                groupBy: vi.fn().mockResolvedValue([]),
+        },
+        $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
+}));
+const shutdownPrismaMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
 vi.mock('../retrieval/QdrantHybrid.js', async () => {
 	const actual = await vi.importActual<typeof import('../retrieval/QdrantHybrid.js')>(
@@ -62,8 +63,8 @@ vi.mock('../retrieval/contextAssembler.js', () => ({
 }));
 
 vi.mock('../db/prismaClient.js', () => ({
-	prisma: prismaMock,
-	shutdownPrisma: vi.fn().mockResolvedValue(undefined),
+        prisma: prismaMock,
+        shutdownPrisma: shutdownPrismaMock,
 }));
 
 describe('GraphRAGService', () => {
@@ -118,9 +119,9 @@ describe('GraphRAGService', () => {
 			],
 		});
 
-		service = createGraphRAGService({
-			limits: { maxConcurrentQueries: 2, maxContextChunks: 10, queryTimeoutMs: 1000 },
-		});
+                service = createGraphRAGService({
+                        limits: { maxConcurrentQueries: 1, maxContextChunks: 10, queryTimeoutMs: 1000 },
+                });
 		await service.initialize(dense, sparse);
 	});
 

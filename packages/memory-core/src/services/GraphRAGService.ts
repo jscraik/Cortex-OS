@@ -59,32 +59,59 @@ const DEFAULT_QDRANT_CONFIG = {
 
 export const GraphRAGServiceConfigSchema = z.object({
 	qdrant: QdrantConfigSchema.default(DEFAULT_QDRANT_CONFIG),
-	expansion: z.object({
-		allowedEdges: z
-			.array(z.nativeEnum(GraphEdgeType))
-			.default([
-				GraphEdgeType.IMPORTS,
-				GraphEdgeType.DEPENDS_ON,
-				GraphEdgeType.IMPLEMENTS_CONTRACT,
-				GraphEdgeType.CALLS_TOOL,
-				GraphEdgeType.EMITS_EVENT,
-				GraphEdgeType.EXPOSES_PORT,
-				GraphEdgeType.REFERENCES_DOC,
-				GraphEdgeType.DECIDES_WITH,
-			]),
-		maxHops: z.number().int().min(1).max(3).default(1),
-		maxNeighborsPerNode: z.number().int().min(1).max(50).default(20),
-	}),
-	limits: z.object({
-		maxContextChunks: z.number().int().min(1).max(100).default(24),
-		queryTimeoutMs: z.number().int().min(1000).max(60000).default(30000),
-		maxConcurrentQueries: z.number().int().min(1).max(20).default(5),
-	}),
-	branding: z.object({
-		enabled: z.boolean().default(true),
-		sourceAttribution: z.string().default('brAInwav Cortex-OS GraphRAG'),
-		emitBrandedEvents: z.boolean().default(true),
-	}),
+        expansion: z
+                .object({
+                        allowedEdges: z
+                                .array(z.nativeEnum(GraphEdgeType))
+                                .default([
+                                        GraphEdgeType.IMPORTS,
+                                        GraphEdgeType.DEPENDS_ON,
+                                        GraphEdgeType.IMPLEMENTS_CONTRACT,
+                                        GraphEdgeType.CALLS_TOOL,
+                                        GraphEdgeType.EMITS_EVENT,
+                                        GraphEdgeType.EXPOSES_PORT,
+                                        GraphEdgeType.REFERENCES_DOC,
+                                        GraphEdgeType.DECIDES_WITH,
+                                ]),
+                        maxHops: z.number().int().min(1).max(3).default(1),
+                        maxNeighborsPerNode: z.number().int().min(1).max(50).default(20),
+                })
+                .default({
+                        allowedEdges: [
+                                GraphEdgeType.IMPORTS,
+                                GraphEdgeType.DEPENDS_ON,
+                                GraphEdgeType.IMPLEMENTS_CONTRACT,
+                                GraphEdgeType.CALLS_TOOL,
+                                GraphEdgeType.EMITS_EVENT,
+                                GraphEdgeType.EXPOSES_PORT,
+                                GraphEdgeType.REFERENCES_DOC,
+                                GraphEdgeType.DECIDES_WITH,
+                        ],
+                        maxHops: 1,
+                        maxNeighborsPerNode: 20,
+                }),
+        limits: z
+                .object({
+                        maxContextChunks: z.number().int().min(1).max(100).default(24),
+                        queryTimeoutMs: z.number().int().min(1000).max(60000).default(30000),
+                        maxConcurrentQueries: z.number().int().min(1).max(20).default(5),
+                })
+                .default({
+                        maxContextChunks: 24,
+                        queryTimeoutMs: 30000,
+                        maxConcurrentQueries: 5,
+                }),
+        branding: z
+                .object({
+                        enabled: z.boolean().default(true),
+                        sourceAttribution: z.string().default('brAInwav Cortex-OS GraphRAG'),
+                        emitBrandedEvents: z.boolean().default(true),
+                })
+                .default({
+                        enabled: true,
+                        sourceAttribution: 'brAInwav Cortex-OS GraphRAG',
+                        emitBrandedEvents: true,
+                }),
 	streaming: z.object({
 		enabled: z.boolean().default(false),
 		defaultOptions: z.object({
