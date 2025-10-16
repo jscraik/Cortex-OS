@@ -150,8 +150,8 @@ export class LocalMemoryProvider implements MemoryProvider {
     const params: string[] = [];
 
     if (query.length > 0) {
-      conditions.push('LOWER(text) LIKE ?');
-      params.push(`%${query}%`);
+      conditions.push('LOWER(text) CONTAINS ?');
+      params.push(query);
     }
 
     if (tags.length > 0) {
