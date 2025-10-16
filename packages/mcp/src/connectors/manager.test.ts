@@ -261,11 +261,11 @@ describe('ConnectorProxyManager', () => {
 		]);
 	});
 
-	it('serves stale manifest when refresh fails after expiry', async () => {
-		const signatureKey = 'stale-key';
-		const manifest = createManifest(signatureKey);
-		const logger = createLogger();
-		const loadSpy = vi
+        it('serves stale manifest when refresh fails after expiry', async () => {
+                const signatureKey = 'stale-key';
+                const manifest = createManifest(signatureKey);
+                const logger = createLogger();
+                const loadSpy = vi
 			.spyOn(serviceMapModule, 'loadConnectorServiceMap')
 			.mockResolvedValueOnce({
 				payload: manifest,
@@ -296,14 +296,91 @@ describe('ConnectorProxyManager', () => {
 			'Manifest refresh failed',
 		);
 
-		loadSpy.mockRestore();
-	});
+                loadSpy.mockRestore();
+        });
 
-	it('forces refresh when force flag is true', async () => {
-		const signatureKey = 'force-key';
-		const manifestInitial = createManifest(signatureKey, [
-			{ ...buildConnectorEntry(), id: 'first' },
-		]);
+        it('retries manifest refresh before succeeding', async () => {
+                const signatureKey = 'retry-key';
+                const manifest = createManifest(signatureKey);
+                const logger = createLogger();
+                const sleep = vi.fn().mockResolvedValue(undefined);
+                const loadSpy = vi
+                        .spyOn(serviceMapModule, 'loadConnectorServiceMap')
+                        .mockRejectedValueOnce(new Error('first failure'))
+                        .mockRejectedValueOnce(new Error('second failure'))
+                        .mockResolvedValue({ payload: manifest, expiresAtMs: 5_000 });
+
+                const manager = new ConnectorProxyManager({
+                        serviceMapUrl: 'https://asbr.invalid/v1/connectors/service-map',
+                        apiKey: 'token',
+                        signatureKey,
+                        connectorsApiKey: 'connectors-token',
+                        registry: createVersionedToolRegistry(new Server()),
+                        logger,
+                        sleep,
+                        createProxy: (options) => new StubProxy(options, []),
+                });
+
+                await manager.sync(true);
+
+                expect(loadSpy).toHaveBeenCalledTimes(3);
+                expect(sleep.mock.calls.map(([delay]) => delay)).toEqual([50, 100]);
+                expect(logger.warn).not.toHaveBeenCalled();
+
+                loadSpy.mockRestore();
+        });
+
+        it('opens circuit after repeated manifest failures and surfaces error', async () => {
+                const signatureKey = 'circuit-key';
+                const manifest = createManifest(signatureKey);
+                const logger = createLogger();
+                const sleep = vi.fn().mockResolvedValue(undefined);
+                const loadSpy = vi
+                        .spyOn(serviceMapModule, 'loadConnectorServiceMap')
+                        .mockResolvedValueOnce({ payload: manifest, expiresAtMs: 5_000 })
+                        .mockRejectedValue(new Error('service unavailable'));
+
+                const manager = new ConnectorProxyManager({
+                        serviceMapUrl: 'https://asbr.invalid/v1/connectors/service-map',
+                        apiKey: 'token',
+                        signatureKey,
+                        connectorsApiKey: 'connectors-token',
+                        registry: createVersionedToolRegistry(new Server()),
+                        logger,
+                        sleep,
+                        createProxy: (options) => new StubProxy(options, []),
+                });
+
+                await manager.sync(true);
+
+                await expect(manager.sync(true)).resolves.toBeUndefined();
+                await expect(manager.sync(true)).resolves.toBeUndefined();
+                await expect(manager.sync(true)).rejects.toThrow(
+                        'Connector manifest refresh circuit is open after repeated failures',
+                );
+
+                expect(logger.warn).toHaveBeenCalledTimes(3);
+                expect(logger.error).toHaveBeenCalledWith(
+                        expect.objectContaining({ brand: 'brAInwav', failureCount: 3 }),
+                        'Connector manifest circuit opened after retries',
+                );
+
+                loadSpy.mockClear();
+                loadSpy.mockRejectedValue(new Error('still down'));
+
+                await expect(manager.sync(true)).rejects.toThrow(
+                        'Connector manifest refresh circuit is open after repeated failures',
+                );
+                expect(loadSpy).not.toHaveBeenCalled();
+
+                loadSpy.mockRestore();
+        });
+
+        it('forces refresh when force flag is true', async () => {
+                const signatureKey = 'force-key';
+                const manifestInitial = createManifest(signatureKey, [
+                        { ...buildConnectorEntry(), id: 'first' },
+                ]);
 		const manifestUpdated = createManifest(signatureKey, [
 			{ ...buildConnectorEntry(), id: 'second' },
 		]);
