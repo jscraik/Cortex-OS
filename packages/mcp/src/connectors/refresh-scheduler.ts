@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import type { ServerLogger } from '../server.js';
 
 export interface Clock {
@@ -9,7 +10,9 @@ export interface RandomSource {
 }
 
 const defaultClock: Clock = { now: () => Date.now() };
-const defaultRandom: RandomSource = { next: () => Math.random() };
+const defaultRandom: RandomSource = {
+        next: () => randomInt(0, 1_000_000) / 1_000_000,
+};
 
 export interface RefreshSchedulerOptions {
 	intervalMs: number;
