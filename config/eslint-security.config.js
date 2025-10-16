@@ -57,7 +57,15 @@ export default [
 			'sonarjs/prefer-single-boolean-return': 'error',
 
 			// TypeScript security rules
-			'@typescript-eslint/no-explicit-any': 'error',
+                        '@typescript-eslint/no-explicit-any': 'error',
+                        '@typescript-eslint/no-unused-vars': [
+                                'error',
+                                {
+                                        argsIgnorePattern: '^_',
+                                        varsIgnorePattern: '^_',
+                                        ignoreRestSiblings: true,
+                                },
+                        ],
 			// Unsafe rules disabled due to project service being disabled
 			// '@typescript-eslint/no-unsafe-assignment': 'warn',
 			// '@typescript-eslint/no-unsafe-call': 'warn',

@@ -22,12 +22,10 @@ describe('Phase 1: TypeScript Build Validation', () => {
 	describe('Build Success', () => {
 		// Note: Full build success requires Phase 3 (project references)
 		// Phase 1 focuses on config correctness, not cross-package compilation
-		// eslint-disable-next-line sonarjs/deprecation
-		for (const packagePath of failingPackages) {
-			// eslint-disable-next-line sonarjs/deprecation
-			it.skip(
-				`should build ${packagePath} without TypeScript errors (requires Phase 3 project references)`,
-				() => {
+                for (const packagePath of failingPackages) {
+                        it.skip(
+                                `should build ${packagePath} without TypeScript errors (requires Phase 3 project references)`,
+                                () => {
 					expect(() => {
 						execSync(`cd ${packagePath} && pnpm build`, {
 							cwd: process.cwd(),
@@ -68,24 +66,21 @@ describe('Phase 1: TypeScript Build Validation', () => {
 			},
 		);
 
-		// eslint-disable-next-line sonarjs/deprecation
-		for (const packagePath of failingPackages) {
-			// eslint-disable-next-line sonarjs/deprecation
-			it.skip(
-				`should not have TS6059 rootDir errors in ${packagePath} (requires Phase 3)`,
-				() => {
-					let result = '';
-					try {
-						execSync(`cd ${packagePath} && pnpm tsc --noEmit`, {
-							cwd: process.cwd(),
-							encoding: 'utf-8',
-							stdio: 'pipe',
-						});
-						result = '';
-					} catch (error: unknown) {
-						const err = error as Error & { stdout?: string; stderr?: string };
-						result = err.stdout || err.stderr || '';
-					}
+                for (const packagePath of failingPackages) {
+                        it.skip(
+                                `should not have TS6059 rootDir errors in ${packagePath} (requires Phase 3)`,
+                                () => {
+                                        let result = '';
+                                        try {
+                                                execSync(`cd ${packagePath} && pnpm tsc --noEmit`, {
+                                                        cwd: process.cwd(),
+                                                        encoding: 'utf-8',
+                                                        stdio: 'pipe',
+                                                });
+                                        } catch (error: unknown) {
+                                                const err = error as Error & { stdout?: string; stderr?: string };
+                                                result = err.stdout || err.stderr || '';
+                                        }
 
 					expect(result).not.toContain('TS6059');
 					expect(result).not.toContain("is not under 'rootDir'");
@@ -94,24 +89,21 @@ describe('Phase 1: TypeScript Build Validation', () => {
 			);
 		}
 
-		// eslint-disable-next-line sonarjs/deprecation
-		for (const packagePath of failingPackages) {
-			// eslint-disable-next-line sonarjs/deprecation
-			it.skip(
-				`should not have TS5056 overwrite errors in ${packagePath} (requires Phase 3)`,
-				() => {
-					let result = '';
-					try {
-						execSync(`cd ${packagePath} && pnpm tsc --noEmit`, {
-							cwd: process.cwd(),
-							encoding: 'utf-8',
-							stdio: 'pipe',
-						});
-						result = '';
-					} catch (error: unknown) {
-						const err = error as Error & { stdout?: string; stderr?: string };
-						result = err.stdout || err.stderr || '';
-					}
+                for (const packagePath of failingPackages) {
+                        it.skip(
+                                `should not have TS5056 overwrite errors in ${packagePath} (requires Phase 3)`,
+                                () => {
+                                        let result = '';
+                                        try {
+                                                execSync(`cd ${packagePath} && pnpm tsc --noEmit`, {
+                                                        cwd: process.cwd(),
+                                                        encoding: 'utf-8',
+                                                        stdio: 'pipe',
+                                                });
+                                        } catch (error: unknown) {
+                                                const err = error as Error & { stdout?: string; stderr?: string };
+                                                result = err.stdout || err.stderr || '';
+                                        }
 
 					expect(result).not.toContain('TS5056');
 					expect(result).not.toContain('would be overwritten');

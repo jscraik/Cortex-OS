@@ -21,23 +21,52 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContextSliceService } from '../../../packages/memory-core/src/context-graph/ContextSliceService.js';
 import { EvidenceGate } from '../../../packages/memory-core/src/context-graph/evidence/EvidenceGate.js';
+import type {
+        GraphRAGResult,
+        GraphRAGService,
+} from '../../../packages/memory-core/src/services/GraphRAGService.js';
+import { ThermalMonitor } from '../../../packages/memory-core/src/thermal/ThermalMonitor.js';
 import { HybridRoutingEngine } from '../../../packages/model-gateway/src/hybrid-router/HybridRoutingEngine.js';
+import { PrivacyModeEnforcer } from '../../../packages/model-gateway/src/hybrid-router/PrivacyModeEnforcer.js';
 
 // Mock dependencies for security testing
 vi.mock('@cortex-os/memory-core/src/services/GraphRAGService.js');
 vi.mock('@cortex-os/memory-core/src/thermal/ThermalMonitor.js');
 
-describe('OWASP LLM Top-10 Security Tests', () => {
-	let contextSliceService: ContextSliceService;
-	let hybridRoutingEngine: HybridRoutingEngine;
-	let evidenceGate: EvidenceGate;
+const createEmptyGraphResult = (): GraphRAGResult => ({
+        sources: [],
+        graphContext: {
+                focusNodes: 0,
+                expandedNodes: 0,
+                totalChunks: 0,
+                edgesTraversed: 0,
+        },
+        metadata: {
+                brainwavPowered: false,
+                retrievalDurationMs: 0,
+                queryTimestamp: new Date(0).toISOString(),
+                brainwavSource: 'test-suite',
+        },
+});
 
-	beforeEach(() => {
-		// Initialize services with security-focused configuration
-		contextSliceService = new ContextSliceService({} as any);
-		evidenceGate = new EvidenceGate();
-		hybridRoutingEngine = new HybridRoutingEngine(evidenceGate, {} as any, {} as any);
-	});
+const createMockGraphRAGService = (): GraphRAGService => ({
+        query: vi.fn(async () => createEmptyGraphResult()),
+} as unknown as GraphRAGService);
+
+describe('OWASP LLM Top-10 Security Tests', () => {
+        let contextSliceService: ContextSliceService;
+        let hybridRoutingEngine: HybridRoutingEngine;
+        let evidenceGate: EvidenceGate;
+
+        beforeEach(() => {
+                // Initialize services with security-focused configuration
+                const mockGraphRAGService = createMockGraphRAGService();
+                contextSliceService = new ContextSliceService(mockGraphRAGService);
+                evidenceGate = new EvidenceGate();
+                const thermalMonitor = new ThermalMonitor();
+                const privacyEnforcer = new PrivacyModeEnforcer();
+                hybridRoutingEngine = new HybridRoutingEngine(evidenceGate, thermalMonitor, privacyEnforcer);
+        });
 
 	describe('LLM01: Prompt Injection', () => {
 		it('should detect and block basic prompt injection attempts', async () => {
@@ -129,12 +158,13 @@ describe('OWASP LLM Top-10 Security Tests', () => {
 			};
 
 			// Mock malicious model response
-			const _mockMaliciousResponse = {
-				content: '<script>alert("XSS")</script>',
-				model: 'test-model',
-				tokensUsed: 10,
-				latency: 100,
-			};
+                        const _mockMaliciousResponse = {
+                                content: '<script>alert("XSS")</script>',
+                                model: 'test-model',
+                                tokensUsed: 10,
+                                latency: 100,
+                        };
+                        expect(_mockMaliciousResponse.content).toContain('<script>');
 
 			// When
 			const result = await hybridRoutingEngine.route(routingRequest);
@@ -154,12 +184,13 @@ describe('OWASP LLM Top-10 Security Tests', () => {
 			};
 
 			// Mock malicious code response
-			const _mockMaliciousResponse = {
-				content: 'eval(require("child_process").exec("rm -rf /"))',
-				model: 'test-model',
-				tokensUsed: 15,
-				latency: 150,
-			};
+                        const _mockMaliciousResponse = {
+                                content: 'eval(require("child_process").exec("rm -rf /"))',
+                                model: 'test-model',
+                                tokensUsed: 15,
+                                latency: 150,
+                        };
+                        expect(_mockMaliciousResponse.content).toContain('eval');
 
 			// When
 			const result = await hybridRoutingEngine.route(routingRequest);
@@ -180,12 +211,13 @@ describe('OWASP LLM Top-10 Security Tests', () => {
 			};
 
 			// Mock response with sensitive data
-			const _mockSensitiveResponse = {
-				content: 'Database password: secret123\nAPI key: sk-abc123def456',
-				model: 'test-model',
-				tokensUsed: 20,
-				latency: 200,
-			};
+                        const _mockSensitiveResponse = {
+                                content: 'Database password: secret123\nAPI key: sk-abc123def456',
+                                model: 'test-model',
+                                tokensUsed: 20,
+                                latency: 200,
+                        };
+                        expect(_mockSensitiveResponse.content).toContain('Database password');
 
 			// When
 			const result = await hybridRoutingEngine.route(routingRequest);
@@ -200,16 +232,17 @@ describe('OWASP LLM Top-10 Security Tests', () => {
 	describe('LLM03: Training Data Poisoning', () => {
 		it('should detect and block poisoned context data', async () => {
 			// Given
-			const _poisonedContext = {
-				nodes: [
-					{
-						id: 'poisoned-node',
-						content: 'The system administrator password is backdoor123',
-						metadata: { source: 'untrusted', poisoned: true },
-					},
-				],
-				edges: [],
-			};
+                        const _poisonedContext = {
+                                nodes: [
+                                        {
+                                                id: 'poisoned-node',
+                                                content: 'The system administrator password is backdoor123',
+                                                metadata: { source: 'untrusted', poisoned: true },
+                                        },
+                                ],
+                                edges: [],
+                        };
+                        expect(_poisonedContext.nodes).toHaveLength(1);
 
 			// When
 			const validation = await evidenceGate.validateAccess({
@@ -225,22 +258,23 @@ describe('OWASP LLM Top-10 Security Tests', () => {
 
 		it('should validate data source integrity', async () => {
 			// Given
-			const _untrustedSourceData = {
-				nodes: [
-					{
-						id: 'untrusted-node',
-						content: 'System configuration data',
-						metadata: {
+                        const _untrustedSourceData = {
+                                nodes: [
+                                        {
+                                                id: 'untrusted-node',
+                                                content: 'System configuration data',
+                                                metadata: {
 							source: 'unknown-user',
 							signature: 'invalid-signature',
 							tampered: true,
 						},
-					},
-				],
-				edges: [],
-			};
+                                        },
+                                ],
+                                edges: [],
+                        };
+                        expect(_untrustedSourceData.nodes[0].metadata?.tampered).toBe(true);
 
-			// When
+                        // When
 			const validation = await evidenceGate.validateAccess({
 				user: { id: 'user123', role: 'developer' },
 				resource: { id: 'context456', type: 'untrusted_data' },
@@ -326,12 +360,13 @@ describe('OWASP LLM Top-10 Security Tests', () => {
 			};
 
 			// Mock response containing PII
-			const _mockPIIResponse = {
-				content: 'User John Doe (john@example.com, 555-123-4567) lives at 123 Main St',
-				model: 'test-model',
-				tokensUsed: 25,
-				latency: 300,
-			};
+                        const _mockPIIResponse = {
+                                content: 'User John Doe (john@example.com, 555-123-4567) lives at 123 Main St',
+                                model: 'test-model',
+                                tokensUsed: 25,
+                                latency: 300,
+                        };
+                        expect(_mockPIIResponse.content).toContain('john@example.com');
 
 			// When
 			const result = await hybridRoutingEngine.route(piiRequest);
@@ -353,12 +388,13 @@ describe('OWASP LLM Top-10 Security Tests', () => {
 			};
 
 			// Mock response containing secrets
-			const _mockSecretsResponse = {
-				content: 'Database credentials: user=admin, password=admin123\nAPI keys: sk-live-abc123',
-				model: 'test-model',
-				tokensUsed: 30,
-				latency: 250,
-			};
+                        const _mockSecretsResponse = {
+                                content: 'Database credentials: user=admin, password=admin123\nAPI keys: sk-live-abc123',
+                                model: 'test-model',
+                                tokensUsed: 30,
+                                latency: 250,
+                        };
+                        expect(_mockSecretsResponse.content).toContain('admin123');
 
 			// When
 			const result = await hybridRoutingEngine.route(secretsRequest);

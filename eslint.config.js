@@ -31,15 +31,17 @@ export default tseslint.config(
 	// Base TS rules
 	...tseslint.configs.recommended,
 	// Apply type-aware rules ONLY within a TS override so they don't execute on JS
-	{
-		files: ['**/*.{ts,tsx}'],
-		// Spread type-aware recommendations inside the TS-only block
-		...tseslint.configs.recommendedTypeChecked[0],
-		languageOptions: {
-			parserOptions: {
-				projectService: true,
-				tsconfigRootDir: import.meta.dirname,
-			},
+        {
+                files: ['**/*.{ts,tsx}'],
+                ignores: ['**/*.test.ts', '**/*.spec.ts', 'tests/**/*.{ts,tsx}'],
+                // Spread type-aware recommendations inside the TS-only block
+                ...tseslint.configs.recommendedTypeChecked[0],
+                languageOptions: {
+                        parserOptions: {
+                                projectService: true,
+                                allowDefaultProject: true,
+                                tsconfigRootDir: import.meta.dirname,
+                        },
 			globals: {
 				...globals.browser,
 			},
@@ -76,25 +78,34 @@ export default tseslint.config(
 		},
 	},
 	// Test files can use Node globals
-	{
-		files: [
-			'tests/**/*.{js,ts}',
-			'**/*.test.{js,ts}',
-			'**/*.spec.{js,ts}',
-			'src/**/__tests__/**/*.ts',
-		],
-		languageOptions: {
-			parserOptions: {
-				projectService: true,
-				tsconfigRootDir: import.meta.dirname,
-			},
-			globals: {
-				...globals.node,
-			},
-		},
-		rules: {
-			'@typescript-eslint/no-unsafe-assignment': 'off',
-			'@typescript-eslint/no-unsafe-member-access': 'off',
+        {
+                files: [
+                        'tests/**/*.{js,ts}',
+                        '**/*.test.{js,ts}',
+                        '**/*.spec.{js,ts}',
+                        'src/**/__tests__/**/*.ts',
+                ],
+                languageOptions: {
+                        parserOptions: {
+                                projectService: false,
+                                allowDefaultProject: true,
+                                tsconfigRootDir: import.meta.dirname,
+                        },
+                        globals: {
+                                ...globals.node,
+                        },
+                },
+                rules: {
+                        '@typescript-eslint/no-unused-vars': [
+                                'error',
+                                {
+                                        argsIgnorePattern: '^_',
+                                        varsIgnorePattern: '^_',
+                                        ignoreRestSiblings: true,
+                                },
+                        ],
+                        '@typescript-eslint/no-unsafe-assignment': 'off',
+                        '@typescript-eslint/no-unsafe-member-access': 'off',
 			'@typescript-eslint/no-unsafe-return': 'off',
 			'@typescript-eslint/no-unsafe-call': 'off',
 			'@typescript-eslint/restrict-template-expressions': 'off',

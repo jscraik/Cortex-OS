@@ -12,10 +12,37 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+type TsConfig = {
+        compilerOptions?: {
+                composite?: boolean;
+                outDir?: string;
+                noEmit?: boolean;
+                module?: string;
+                moduleResolution?: string;
+                rootDir?: string;
+        };
+        include?: string[];
+        exclude?: string[];
+        references?: Array<{ path: string }>;
+};
+
+type PackageJson = {
+        scripts?: Record<string, string>;
+};
+
+const readJsonFile = <T>(filePath: string): T | null => {
+        try {
+                const contents = fs.readFileSync(filePath, 'utf-8');
+                return JSON.parse(contents) as T;
+        } catch {
+                return null;
+        }
+};
+
 // Helper to find packages
 function findPackagesWithTsConfig(): string[] {
-	try {
-		const output = execSync(
+        try {
+                const output = execSync(
 			'find packages -name "tsconfig.json" -not -path "*/node_modules/*" -not -path "*/dist/*"',
 			{ cwd: process.cwd(), encoding: 'utf-8' },
 		);
@@ -90,66 +117,63 @@ describe('Phase 2: TypeScript Configuration Templates', () => {
 describe('Phase 2: Package Conformance Validation', () => {
 	const packages = findPackagesWithTsConfig();
 
-	describe('Composite Flag Compliance', () => {
-		it.each(packages)('%s should have composite: true (if buildable)', (pkg) => {
-			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
+        describe('Composite Flag Compliance', () => {
+                it.each(packages)('%s should have composite: true (if buildable)', (pkg) => {
+                        const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			let tsconfig: any;
-			try {
-				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
-			} catch {
-				// Skip packages with invalid JSON (may have comments)
-				console.log(`⚠️  ${pkg}: Invalid JSON in tsconfig (may have comments) - skipping`);
-				expect(true).toBe(true);
-				return;
-			}
+                        const tsconfig = readJsonFile<TsConfig>(tsconfigPath);
 
-			// Check if package is buildable (has build script)
-			const packageJsonPath = path.join(process.cwd(), pkg, 'package.json');
-			const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+                        if (!tsconfig) {
+                                // Skip packages with invalid JSON (may have comments)
+                                console.log(`⚠️  ${pkg}: Invalid JSON in tsconfig (may have comments) - skipping`);
+                                expect(true).toBe(true);
+                                return;
+                        }
 
-			const isBuildable = packageJson.scripts?.build?.includes('tsc');
+                        // Check if package is buildable (has build script)
+                        const packageJsonPath = path.join(process.cwd(), pkg, 'package.json');
+                        const packageJson = readJsonFile<PackageJson>(packageJsonPath);
 
-			if (isBuildable) {
-				expect(tsconfig.compilerOptions?.composite).toBe(true);
-			}
-		});
-	});
+                        const isBuildable = packageJson?.scripts?.build?.includes('tsc');
 
-	describe('Output Directory Consistency', () => {
-		it.each(packages)('%s should have consistent outDir', (pkg) => {
-			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
+                        if (isBuildable) {
+                                expect(tsconfig.compilerOptions?.composite).toBe(true);
+                        }
+                });
+        });
 
-			let tsconfig: any;
-			try {
-				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
-			} catch {
-				expect(true).toBe(true);
-				return;
-			}
+        describe('Output Directory Consistency', () => {
+                it.each(packages)('%s should have consistent outDir', (pkg) => {
+                        const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			if (tsconfig.compilerOptions?.outDir) {
-				// Should be "dist" or a variant like "dist-spec" for test configs
-				expect(tsconfig.compilerOptions.outDir).toMatch(/^dist/);
+                        const tsconfig = readJsonFile<TsConfig>(tsconfigPath);
+
+                        if (!tsconfig) {
+                                expect(true).toBe(true);
+                                return;
+                        }
+
+                        if (tsconfig.compilerOptions?.outDir) {
+                                // Should be "dist" or a variant like "dist-spec" for test configs
+                                expect(tsconfig.compilerOptions.outDir).toMatch(/^dist/);
 			}
 		});
 	});
 
-	describe('Exclude Array Standards', () => {
-		it.each(packages)('%s should exclude standard directories', (pkg) => {
-			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
+        describe('Exclude Array Standards', () => {
+                it.each(packages)('%s should exclude standard directories', (pkg) => {
+                        const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			let tsconfig: any;
-			try {
-				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
-			} catch {
-				expect(true).toBe(true);
-				return;
-			}
+                        const tsconfig = readJsonFile<TsConfig>(tsconfigPath);
 
-			if (tsconfig.exclude) {
-				const requiredExcludes = ['dist', 'node_modules'];
-				requiredExcludes.forEach((ex) => {
+                        if (!tsconfig) {
+                                expect(true).toBe(true);
+                                return;
+                        }
+
+                        if (tsconfig.exclude) {
+                                const requiredExcludes = ['dist', 'node_modules'];
+                                requiredExcludes.forEach((ex) => {
 					expect(tsconfig.exclude).toContain(ex);
 				});
 			} else {
@@ -177,21 +201,20 @@ describe('Phase 2: Package Conformance Validation', () => {
 		});
 	});
 
-	describe('Module Resolution Standards', () => {
-		it.each(packages)('%s should use NodeNext module resolution', (pkg) => {
-			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
+        describe('Module Resolution Standards', () => {
+                it.each(packages)('%s should use NodeNext module resolution', (pkg) => {
+                        const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			let tsconfig: any;
-			try {
-				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
-			} catch {
-				expect(true).toBe(true);
-				return;
-			}
+                        const tsconfig = readJsonFile<TsConfig>(tsconfigPath);
 
-			if (tsconfig.compilerOptions?.module || tsconfig.compilerOptions?.moduleResolution) {
-				// If module or moduleResolution is set, it should be NodeNext
-				// (Some configs may inherit from base, so this is optional)
+                        if (!tsconfig) {
+                                expect(true).toBe(true);
+                                return;
+                        }
+
+                        if (tsconfig.compilerOptions?.module || tsconfig.compilerOptions?.moduleResolution) {
+                                // If module or moduleResolution is set, it should be NodeNext
+                                // (Some configs may inherit from base, so this is optional)
 				const module = tsconfig.compilerOptions?.module;
 				const moduleResolution = tsconfig.compilerOptions?.moduleResolution;
 
@@ -208,17 +231,16 @@ describe('Phase 2: Package Conformance Validation', () => {
 		});
 	});
 
-	describe('Include/Exclude Patterns', () => {
-		it.each(packages)('%s should have clean include patterns', (pkg) => {
-			const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
+        describe('Include/Exclude Patterns', () => {
+                it.each(packages)('%s should have clean include patterns', (pkg) => {
+                        const tsconfigPath = path.join(process.cwd(), pkg, 'tsconfig.json');
 
-			let tsconfig: any;
-			try {
-				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
-			} catch {
-				expect(true).toBe(true);
-				return;
-			}
+                        const tsconfig = readJsonFile<TsConfig>(tsconfigPath);
+
+                        if (!tsconfig) {
+                                expect(true).toBe(true);
+                                return;
+                        }
 
 			if (tsconfig.include) {
 				// Include should typically be src/**/* or src
@@ -251,13 +273,12 @@ describe('Phase 2: brAInwav Standards Summary', () => {
 		packages.forEach((pkgDir) => {
 			const tsconfigPath = path.join(process.cwd(), pkgDir, 'tsconfig.json');
 
-			let tsconfig: any;
-			try {
-				tsconfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8'));
-			} catch {
-				skippedPackages++;
-				return;
-			}
+                const tsconfig = readJsonFile<TsConfig>(tsconfigPath);
+
+                if (!tsconfig) {
+                        skippedPackages++;
+                        return;
+                }
 
 			const hasComposite = tsconfig.compilerOptions?.composite === true;
 			const hasDistOutDir = tsconfig.compilerOptions?.outDir === 'dist';
