@@ -219,7 +219,7 @@ describe('GraphRAGService', () => {
 
                 const batchCalls: Array<string[]> = [];
                 prismaMock.chunkRef.findMany.mockImplementation(({ where }) => {
-                        const ids = where.qdrantId.in as string[];
+                        const ids = Array.isArray(where?.qdrantId?.in) ? where.qdrantId.in as string[] : [];
                         batchCalls.push(ids);
                         return ids.map((id) => ({
                                 id: `chunk-${id}`,
