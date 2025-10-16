@@ -19,9 +19,9 @@ const prom = new PrometheusExporter({ port: 9464 });
 
 export const meterProvider = new MeterProvider({
   resource,
-  readers: [prom],
 });
 
+meterProvider.addMetricReader(prom);
 void prom.startServer().catch((error) => {
   diag.error("brAInwav: Failed to start Prometheus exporter", error);
 });
