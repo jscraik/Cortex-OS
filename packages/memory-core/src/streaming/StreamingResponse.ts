@@ -434,7 +434,7 @@ export class StreamingResponse {
         }
 
         private generateId(prefix: string): string {
-                return `${prefix}_${Date.now()}_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+                return secureShortId(prefix, 8);
         }
 
 	private delay(ms: number): Promise<void> {
