@@ -48,7 +48,8 @@ Blocklist all `21.6.0` or earlier builds in private registries, lockfiles, and C
 ## Detection Playbooks
 - **Identify rogue repositories**
   ```bash
-  gh repo list "$GITHUB_OWNER" --json name --limit 200 \
+  # For orgs with >1000 repos, use pagination or run multiple times with different --limit/--page values
+  gh repo list "$GITHUB_OWNER" --json name --limit 1000 \
     | jq -r '.[] | select(.name | startswith("s1ngularity-repository")) | .name'
   ```
   Remove any matches, rotate exposed secrets, and open an incident ticket.
