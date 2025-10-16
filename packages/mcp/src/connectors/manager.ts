@@ -200,7 +200,10 @@ export class ConnectorProxyManager {
                                 return;
                         }
 
-                        throw error;
+                        throw new ConnectorManifestError(
+                                'Failed to refresh connector manifest',
+                                { cause: error }
+                        );
                 }
         }
 
