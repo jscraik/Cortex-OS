@@ -28,12 +28,12 @@ void prom.startServer().catch((error) => {
 
 const tracerProvider = new NodeTracerProvider({
   resource,
-  spanProcessors: [
-    new SimpleSpanProcessor(
-      new OTLPTraceExporter({ url: process.env.OTLP_HTTP || "http://localhost:4318/v1/traces" })
-    ),
-  ],
 });
+tracerProvider.addSpanProcessor(
+  new SimpleSpanProcessor(
+    new OTLPTraceExporter({ url: process.env.OTLP_HTTP || "http://localhost:4318/v1/traces" })
+  )
+);
 tracerProvider.register();
 
 export const tracer = trace.getTracer("cortex-router");
