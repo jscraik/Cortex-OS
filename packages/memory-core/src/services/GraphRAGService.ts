@@ -522,6 +522,7 @@ interface QueryReservation {
 }
 
 const MAX_EXTERNAL_CITATIONS = 16;
+const CHUNK_REF_BATCH_SIZE = 500;
 
 export class GraphRAGService {
         private readonly qdrant: QdrantHybridSearch;
@@ -904,8 +905,10 @@ export class GraphRAGService {
 			}
 
 			// Track hybrid search performance
-			const searchStartTime = Date.now();
-			let seeds = await this.hybridSeedSearch(validated);
+                        const searchStartTime = Date.now();
+                        let seeds = await this.hybridSeedSearch(validated);
+                        const { hydratedSeeds, chunkRefs } = await this.hydrateSeedResults(seeds);
+                        seeds = hydratedSeeds;
 			performanceMonitor.recordQuery({
 				queryId: `${reservation.queryId}_search`,
 				startTime: searchStartTime,
@@ -919,7 +922,7 @@ export class GraphRAGService {
 				this.queryPrecomputer.recordQuery(validated, Date.now() - searchStartTime);
 			}
 
-			const focusNodeIds = await this.liftToGraphNodes(seeds);
+                        const focusNodeIds = await this.liftToGraphNodes(seeds, chunkRefs);
 
 			// Track graph expansion performance
 			const expansionStartTime = Date.now();
@@ -1423,25 +1426,158 @@ export class GraphRAGService {
 		});
 	}
 
-	private async liftToGraphNodes(seedResults: GraphRAGSearchResult[]): Promise<string[]> {
-		if (seedResults.length === 0) {
-			return [];
-		}
+        private async liftToGraphNodes(
+                seedResults: GraphRAGSearchResult[],
+                preloadedChunkRefs?: Array<{ nodeId: string; qdrantId: string }>,
+        ): Promise<string[]> {
+                if (seedResults.length === 0) {
+                        return [];
+                }
 
-		const qdrantIds = seedResults.map((result) => result.id);
-		const chunkRefs = await prisma.chunkRef.findMany({
-			where: { qdrantId: { in: qdrantIds } },
-			select: { nodeId: true },
-		});
+                const nodeIds = new Set<string>();
+                for (const result of seedResults) {
+                        if (result.nodeId) {
+                                nodeIds.add(result.nodeId);
+                        }
+                }
 
-		return [...new Set(chunkRefs.map((ref) => ref.nodeId))];
-	}
+                if (preloadedChunkRefs && preloadedChunkRefs.length > 0) {
+                        for (const ref of preloadedChunkRefs) {
+                                if (ref?.nodeId) {
+                                        nodeIds.add(ref.nodeId);
+                                }
+                        }
+                        return [...nodeIds];
+                }
 
-	private buildResult(
-		context: Awaited<ReturnType<typeof assembleContext>>,
-		expansion: Awaited<ReturnType<typeof expandNeighbors>>,
-		startTime: number,
-		seeds: GraphRAGSearchResult[],
+                const qdrantIds = seedResults.map((result) => result.id);
+                const chunkRefs = await prisma.chunkRef.findMany({
+                        where: { qdrantId: { in: qdrantIds } },
+                        select: { nodeId: true },
+                });
+
+                for (const ref of chunkRefs) {
+                        if (ref.nodeId) {
+                                nodeIds.add(ref.nodeId);
+                        }
+                }
+
+                return [...nodeIds];
+        }
+
+        private async hydrateSeedResults(
+                seedResults: GraphRAGSearchResult[],
+        ): Promise<{
+                hydratedSeeds: GraphRAGSearchResult[];
+                chunkRefs: Array<{
+                        qdrantId: string;
+                        nodeId: string;
+                        path: string;
+                        lineStart?: number | null;
+                        lineEnd?: number | null;
+                        meta?: Record<string, unknown> | null;
+                        node?: { type: GraphNodeType; key: string } | null;
+                }>;
+        }> {
+                if (seedResults.length === 0) {
+                        return { hydratedSeeds: [], chunkRefs: [] };
+                }
+
+                const uniqueIds = Array.from(new Set(seedResults.map((result) => result.id)));
+                const chunkRefs = await this.fetchChunkRefs(uniqueIds);
+                const chunkRefById = new Map(chunkRefs.map((ref) => [ref.qdrantId, ref]));
+
+                const hydratedSeeds = seedResults.map((seed) => {
+                        const ref = chunkRefById.get(seed.id);
+                        if (!ref) {
+                                return seed;
+                        }
+
+                        const existingMetadata = seed.metadata ?? ({} as GraphRAGSearchResult['metadata']);
+                        const refMeta = (ref.meta ?? {}) as Record<string, unknown>;
+                        const snippet =
+                                seed.chunkContent ||
+                                (typeof refMeta.snippet === 'string'
+                                        ? refMeta.snippet
+                                        : typeof refMeta.content === 'string'
+                                                ? refMeta.content
+                                                : '');
+                        const relevanceScore =
+                                existingMetadata.relevanceScore ??
+                                seed.score ??
+                                (typeof refMeta.score === 'number' ? refMeta.score : 0);
+
+                        return {
+                                ...seed,
+                                nodeId: ref.nodeId ?? seed.nodeId,
+                                chunkContent: snippet,
+                                metadata: {
+                                        ...existingMetadata,
+                                        path: ref.path ?? existingMetadata.path,
+                                        nodeType: ref.node?.type ?? existingMetadata.nodeType,
+                                        nodeKey: ref.node?.key ?? existingMetadata.nodeKey,
+                                        lineStart: ref.lineStart ?? existingMetadata.lineStart,
+                                        lineEnd: ref.lineEnd ?? existingMetadata.lineEnd,
+                                        brainwavSource:
+                                                existingMetadata.brainwavSource ??
+                                                this.config.branding.sourceAttribution,
+                                        relevanceScore,
+                                        hydrated: true,
+                                },
+                        };
+                });
+
+                return { hydratedSeeds, chunkRefs };
+        }
+
+        private async fetchChunkRefs(
+                qdrantIds: string[],
+        ): Promise<
+                Array<{
+                        qdrantId: string;
+                        nodeId: string;
+                        path: string;
+                        lineStart?: number | null;
+                        lineEnd?: number | null;
+                        meta?: Record<string, unknown> | null;
+                        node?: { type: GraphNodeType; key: string } | null;
+                }>
+        > {
+                if (qdrantIds.length === 0) {
+                        return [];
+                }
+
+                const batches: Promise<
+                        Array<{
+                                qdrantId: string;
+                                nodeId: string;
+                                path: string;
+                                lineStart?: number | null;
+                                lineEnd?: number | null;
+                                meta?: Record<string, unknown> | null;
+                                node?: { type: GraphNodeType; key: string } | null;
+                        }>
+                >[] = [];
+
+                for (let i = 0; i < qdrantIds.length; i += CHUNK_REF_BATCH_SIZE) {
+                        const slice = qdrantIds.slice(i, i + CHUNK_REF_BATCH_SIZE);
+                        batches.push(
+                                prisma.chunkRef.findMany({
+                                        where: { qdrantId: { in: slice } },
+                                        include: { node: true },
+                                }),
+                        );
+                }
+
+                const results = await Promise.all(batches);
+                return results.flat();
+        }
+
+        private buildResult(
+                context: Awaited<ReturnType<typeof assembleContext>>,
+                expansion: Awaited<ReturnType<typeof expandNeighbors>>,
+                startTime: number,
+                seeds: GraphRAGSearchResult[],
 	): GraphRAGResult {
 		return {
 			answer: seeds[0]?.chunkContent,

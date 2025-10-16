@@ -72,10 +72,37 @@ describe('GraphRAGService', () => {
 	const sparse = vi.fn().mockResolvedValue({ indices: [0, 1], values: [0.4, 0.2] });
 	let seeds: GraphRAGSearchResult[];
 
-	beforeEach(async () => {
-		vi.clearAllMocks();
-		prismaMock.chunkRef.findMany.mockReset();
-		prismaMock.chunkRef.findMany.mockResolvedValue([{ nodeId: 'node-a' }, { nodeId: 'node-b' }]);
+        beforeEach(async () => {
+                vi.clearAllMocks();
+                prismaMock.chunkRef.findMany.mockReset();
+                prismaMock.chunkRef.findMany.mockImplementation((args: any = {}) => {
+                        const qdrantFilter = args?.where?.qdrantId?.in;
+                        if (Array.isArray(qdrantFilter)) {
+                                return qdrantFilter.map((id: string, index: number) => ({
+                                        id: `chunk-${index}`,
+                                        qdrantId: id,
+                                        nodeId: index === 0 ? 'node-a' : 'node-b',
+                                        path: 'packages/example.ts',
+                                        lineStart: 1,
+                                        lineEnd: 5,
+                                        meta: { snippet: 'Seed answer', score: 0.9 },
+                                        node: { type: 'PACKAGE', key: 'packages/example' },
+                                }));
+                        }
+
+                        return [
+                                {
+                                        id: 'chunk-ctx',
+                                        qdrantId: 'seed-1',
+                                        nodeId: 'node-a',
+                                        path: 'packages/example.ts',
+                                        lineStart: 1,
+                                        lineEnd: 5,
+                                        meta: { snippet: 'Seed answer', score: 0.9 },
+                                        node: { type: 'PACKAGE', key: 'packages/example' },
+                                },
+                        ];
+                });
 
 		qdrantMock.initialize.mockResolvedValue(undefined);
 		seeds = [
@@ -154,28 +181,68 @@ describe('GraphRAGService', () => {
 		expect(result.metadata.brainwavPowered).toBe(true);
 	});
 
-	it('enforces concurrent query limit', async () => {
-		const blockingSearch = vi
-			.fn()
-			.mockImplementationOnce(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 20));
-				return seeds;
-			})
-			.mockResolvedValue(seeds);
+        it('enforces concurrent query limit', async () => {
+                const blockingSearch = vi
+                        .fn()
+                        .mockImplementationOnce(async () => {
+                                await new Promise((resolve) => setTimeout(resolve, 20));
+                                return seeds;
+                        })
+                        .mockResolvedValue(seeds);
 
-		qdrantMock.hybridSearch.mockImplementation(blockingSearch);
+                qdrantMock.hybridSearch.mockImplementation(blockingSearch);
 
-		const first = service.query({ question: 'first', k: 2 });
-		const second = service.query({ question: 'second', k: 2 });
+                const first = service.query({ question: 'first', k: 2 });
+                const second = service.query({ question: 'second', k: 2 });
 
-		const [, secondResult] = await Promise.allSettled([first, second]);
-		expect(secondResult.status).toBe('rejected');
-		if (secondResult.status === 'rejected') {
-			expect(secondResult.reason.message).toContain('Maximum concurrent queries');
-		}
-	});
+                const [, secondResult] = await Promise.allSettled([first, second]);
+                expect(secondResult.status).toBe('rejected');
+                if (secondResult.status === 'rejected') {
+                        expect(secondResult.reason.message).toContain('Maximum concurrent queries');
+                }
+        });
 
-	it('validates query payloads using schema', () => {
-		expect(() => GraphRAGQueryRequestSchema.parse({ question: '' })).toThrow();
-	});
+        it('hydrates large Qdrant result sets with batched chunk lookups', async () => {
+                const largeSeeds: GraphRAGSearchResult[] = Array.from({ length: 1200 }, (_, index) => ({
+                        id: `seed-${index}`,
+                        score: 0.5,
+                        nodeId: '',
+                        chunkContent: '',
+                        metadata: {
+                                path: '',
+                                nodeType: 'PACKAGE',
+                                nodeKey: `node-${index}`,
+                                brainwavSource: 'test',
+                                relevanceScore: 0,
+                        },
+                }));
+
+                const batchCalls: Array<string[]> = [];
+                prismaMock.chunkRef.findMany.mockImplementation(({ where }) => {
+                        const ids = Array.isArray(where?.qdrantId?.in) ? where.qdrantId.in as string[] : [];
+                        batchCalls.push(ids);
+                        return ids.map((id) => ({
+                                id: `chunk-${id}`,
+                                qdrantId: id,
+                                nodeId: `node-${id}`,
+                                path: `docs/${id}.md`,
+                                lineStart: 1,
+                                lineEnd: 2,
+                                meta: { snippet: `snippet-${id}`, score: 0.4 },
+                                node: { type: 'DOC', key: `doc-${id}` },
+                        }));
+                });
+
+                const { hydratedSeeds, chunkRefs } = await (service as any).hydrateSeedResults(largeSeeds);
+
+                expect(batchCalls.length).toBeGreaterThan(1);
+                expect(batchCalls.every((ids) => ids.length <= 500)).toBe(true);
+                expect(hydratedSeeds[0].nodeId).toBe('node-seed-0');
+                expect(hydratedSeeds[0].metadata.hydrated).toBe(true);
+                expect(chunkRefs).toHaveLength(1200);
+        });
+
+        it('validates query payloads using schema', () => {
+                expect(() => GraphRAGQueryRequestSchema.parse({ question: '' })).toThrow();
+        });
 });
