@@ -24,9 +24,8 @@ class MockAgentToolkitMCPTools {
 		];
 	}
 
-        async executeTool(toolName: string, params: Record<string, unknown>) {
+        async executeTool(toolName: string, _params: Record<string, unknown>) {
                 // Parameters are intentionally unused for this mock implementation
-                JSON.stringify(params);
 		// Simulate brAInwav error handling
 		if (!toolName || typeof toolName !== 'string') {
 			throw new Error('brAInwav Cortex-OS: Tool name is required and must be a string');
