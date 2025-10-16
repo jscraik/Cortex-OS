@@ -23,7 +23,7 @@ export const meterProvider = new MeterProvider({
 });
 
 void prom.startServer().catch((error) => {
-  diag.error("Failed to start Prometheus exporter", error);
+  diag.error("brAInwav: Failed to start Prometheus exporter", error);
 });
 
 const tracerProvider = new NodeTracerProvider({
