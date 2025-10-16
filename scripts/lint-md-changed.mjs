@@ -3,7 +3,7 @@ import { execSync, spawnSync } from 'node:child_process';
 
 function getChangedMarkdownFiles() {
   try {
-    const diffOutput = execSync('git --no-pager diff --name-only', {
+    const diffOutput = execSync('git --no-pager diff --name-only HEAD', {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
