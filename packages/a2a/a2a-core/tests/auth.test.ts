@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createEnvelope } from '../../a2a-contracts/src/envelope.js';
+import { createEnvelope } from '@cortex-os/a2a-contracts/envelope';
 import {
 	AuthenticationError,
 	createSimpleTokenAuthenticator,

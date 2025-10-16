@@ -1,5 +1,5 @@
 import { logWithSpan, withSpan } from '@cortex-os/telemetry';
-import type { Envelope } from '../../a2a-contracts/src/envelope.js';
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 
 /**
  * @file Enhanced Dead Letter Queue Implementation

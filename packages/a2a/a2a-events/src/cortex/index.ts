@@ -1,26 +1,18 @@
 // Cortex-OS A2A Events - Main Export
 export const CORTEX_A2A_EVENTS_VERSION = '1.0.0';
 
-export * from './agent-events';
 // Core Event Types
 export * from './api-events.js';
 export * from './checkpoint-events.js';
 export * from './mcp-events.js';
-export * from './rag-events';
 // Routing and Utilities
-export * from './routing';
 export * from './routing-events.js';
 
 import type {
-	AgentStateChangedEvent,
-	AgentTaskCompletedEvent,
-	AgentTaskCreatedEvent,
-} from './agent-events';
-import type {
-	ApiJobCreatedEvent,
-	ApiRequestReceivedEvent,
-	ApiRequestRoutedEvent,
-	ApiResponseGeneratedEvent,
+        ApiJobCreatedEvent,
+        ApiRequestReceivedEvent,
+        ApiRequestRoutedEvent,
+        ApiResponseGeneratedEvent,
 	ApiWebhookReceivedEvent,
 } from './api-events.js';
 import type {
@@ -37,10 +29,10 @@ import type {
 	McpToolResponseEvent,
 } from './mcp-events.js';
 import type {
-	RagDocumentIndexedEvent,
-	RagEmbeddingGeneratedEvent,
-	RagQueryProcessedEvent,
-} from './rag-events';
+        RoutingDecisionEvent,
+        RoutingFallbackEvent,
+        RoutingPlanEvent,
+} from './routing-events.js';
 
 // Union type for all Cortex-OS events
 export type CortexEvent =
@@ -53,12 +45,9 @@ export type CortexEvent =
 	| McpToolResponseEvent
 	| McpContextCreatedEvent
 	| McpErrorEvent
-	| RagDocumentIndexedEvent
-	| RagQueryProcessedEvent
-	| RagEmbeddingGeneratedEvent
-	| AgentTaskCreatedEvent
-	| AgentTaskCompletedEvent
-	| AgentStateChangedEvent
+        | RoutingPlanEvent
+        | RoutingDecisionEvent
+        | RoutingFallbackEvent
 	| CheckpointSavedEvent
 	| CheckpointRolledBackEvent
 	| CheckpointPrunedEvent
@@ -104,20 +93,14 @@ export type {
 	McpToolResponseEvent,
 	McpContextCreatedEvent,
 	McpErrorEvent,
-	// RAG Events
-	RagDocumentIndexedEvent,
-	RagQueryProcessedEvent,
-	RagEmbeddingGeneratedEvent,
-	// Agent Events
-	AgentTaskCreatedEvent,
-	AgentTaskCompletedEvent,
-	AgentStateChangedEvent,
+        // Routing Events
+        RoutingPlanEvent,
+        RoutingDecisionEvent,
+        RoutingFallbackEvent,
 	// Checkpoint Events
 	CheckpointSavedEvent,
 	CheckpointRolledBackEvent,
 	CheckpointPrunedEvent,
 	CheckpointBranchStartedEvent,
-	CheckpointBranchCompletedEvent,
-	// Union type
-	CortexEvent,
+        CheckpointBranchCompletedEvent,
 };

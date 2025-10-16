@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "types": "src/index.ts",
   "exports": {
     ".": {
       "import": "./dist/src/index.js",
-      "types": "./dist/src/index.d.ts"
+      "types": "./src/index.ts"
     },
     "./skill-events": {
       "import": "./src/skill-events.ts",
@@ -20,7 +20,7 @@
     },
     "./evidence": {
       "import": "./dist/src/evidence.js",
-      "types": "./dist/src/evidence.d.ts"
+      "types": "./src/evidence.ts"
     }
   },
   "scripts": {

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Envelope } from '../../../a2a-contracts/src/envelope.js';
+import type { Envelope } from '@cortex-os/a2a-contracts/envelope';
 import type { DurableQueue, QueueConfig, QueueMessage } from './types.js';
 
 // Mock Pool class since we don't have pg installed

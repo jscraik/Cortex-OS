@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createEnvelope, type Envelope } from '../../a2a-contracts/src/envelope.js';
+import { createEnvelope, type Envelope } from '@cortex-os/a2a-contracts/envelope';
 import { createBus } from '../src/bus.js';
 import type { Transport } from '../src/transport.js';
 

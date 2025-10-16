@@ -65,6 +65,7 @@
       "executor": "@nx/js:tsc",
       "options": {
         "tsConfig": "packages/rag/tsconfig.json",
+        "main": "packages/rag/src/index.ts",
         "noEmit": true
       }
     },

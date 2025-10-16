@@ -4,7 +4,7 @@ vi.mock('axios', () => ({
 	default: { post: vi.fn() },
 }));
 
-vi.mock('../../a2a-contracts/src/envelope.js', () => ({
+vi.mock('@cortex-os/a2a-contracts/envelope', () => ({
 	createEnvelope: vi.fn((params: unknown) => params),
 }));
 
