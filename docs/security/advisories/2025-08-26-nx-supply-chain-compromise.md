@@ -55,8 +55,7 @@ Blocklist all `21.6.0` or earlier builds in private registries, lockfiles, and C
   Remove any matches, rotate exposed secrets, and open an incident ticket.
 - **Scan for malicious shell edits**
   ```bash
-  rg --hidden --line-number 'shutdown -h 0' \
-    ~/.bashrc ~/.zshrc ~/.config/fish/config.fish /etc/profile.d
+  find ~/.bashrc ~/.zshrc ~/.config/fish/config.fish /etc/profile.d -type f 2>/dev/null | xargs rg --hidden --line-number 'shutdown -h 0'
   ```
   Compare diffs to version-controlled dotfiles or golden images before removing malicious lines.
 - **Check Nx installations**
