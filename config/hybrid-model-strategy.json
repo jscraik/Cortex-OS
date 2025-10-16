@@ -61,7 +61,7 @@
         ]
       },
       "documentation_synthesis": {
-        "condition": "requires_documentation || general_reasoning",
+        "condition": { "any": ["requires_documentation", "general_reasoning"] },
         "primary": "ollama_cloud",
         "models": [
           "glm-4.6:cloud"
