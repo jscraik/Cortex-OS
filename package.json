@@ -16,6 +16,8 @@
     "task:status": "node scripts/cortex-task.mjs status",
     "setup:deps": "node scripts/install-deps.mjs",
     "check:deps": "node scripts/install-deps.mjs --check",
+    "dependency:audit": "node scripts/dependencies/audit-dependencies.mjs",
+    "dependency:doctor": "node scripts/dependencies/check-upgrade-readiness.mjs",
     "dependency:watch": "node scripts/dependencies/refresh-dependency-watch.mjs",
     "setup:sudo": "zsh scripts/install-with-sudo.sh",
     "prompts:export": "tsx scripts/export-prompts-registry.ts",
