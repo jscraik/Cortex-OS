@@ -3,7 +3,7 @@
 ## Objective & Methodology
 - **Objective**: Quantify Cortex-OS deployment maturity across governance, platform, services, and operations with a normalized score out of 100%.
 - **Inputs Reviewed**: Architecture primers, deployment guides, package-level implementations, readiness tooling, security documentation, quality metrics, and operational runbooks.
-- **Method**: Applied an eight-dimension rubric covering architecture, infrastructure, security, data services, observability, CI/CD quality, documentation, and incident response. Each dimension is graded on a 0–100 scale; weighted totals produce the overall deployment score.
+- **Method**: Applied an eight-dimensional rubric covering architecture, infrastructure, security, data services, observability, CI/CD quality, documentation, and incident response. Each dimension is graded on a 0–100 scale; weighted totals produce the overall deployment score.
 
 ## Scoring Overview
 | Dimension | Weight | Score | Weighted Contribution |
