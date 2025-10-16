@@ -530,8 +530,19 @@ const importPrpRunnerModule = async () => {
                 return import(pathToFileURL(PRP_DIST_ENTRY).href);
         }
         log.warn('Importing PRP runner directly from TypeScript sources via tsx.');
-        await import('tsx/esm');
-        return import(pathToFileURL(PRP_SRC_ENTRY).href);
+        try {
+                await import('tsx/esm');
+                return import(pathToFileURL(PRP_SRC_ENTRY).href);
+        } catch (err) {
+                log.error(
+                        `Failed to import PRP runner from TypeScript sources. This usually means 'tsx' is not installed or workspace dependencies are unavailable.\n` +
+                        `Remediation steps:\n` +
+                        `  1. Ensure you have built prp-runner: pnpm --filter @cortex-os/prp-runner build\n` +
+                        `  2. Or install tsx: pnpm add -D tsx\n` +
+                        `Error details: ${err.message}`
+                );
+                throw err;
+        }
 };
 
 const runPrpForTask = async ({ slug, batonPath, dryRun }) => {
