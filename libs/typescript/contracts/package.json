@@ -11,12 +11,16 @@
       "types": "./dist/src/index.d.ts"
     },
     "./skill-events": {
-      "import": "./src/skill-events.ts",
-      "types": "./src/skill-events.ts"
+      "import": "./dist/src/skill-events.js",
+      "types": "./dist/src/skill-events.d.ts"
+    },
+    "./skill-events.js": {
+      "import": "./dist/src/skill-events.js",
+      "types": "./dist/src/skill-events.d.ts"
     },
     "./src/skill-events.js": {
-      "import": "./src/skill-events.js",
-      "types": "./src/skill-events.ts"
+      "import": "./dist/src/skill-events.js",
+      "types": "./dist/src/skill-events.d.ts"
     },
     "./evidence": {
       "import": "./dist/src/evidence.js",

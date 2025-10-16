@@ -3,7 +3,7 @@
  * Provides privacy-first data protection with configurable filters
  */
 
-import type { AgentEvent } from './types';
+import type { AgentEvent } from './types.js';
 
 /**
  * Default brAInwav redaction configuration

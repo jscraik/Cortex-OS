@@ -1,6 +1,6 @@
-import type { AgentEvent } from './types';
-import { validateAgentEvent } from './types';
-import { createCompleteEvent, extractErrorMessage, generateCorrelationId } from './utils';
+import type { AgentEvent } from './types.js';
+import { validateAgentEvent } from './types.js';
+import { createCompleteEvent, extractErrorMessage, generateCorrelationId } from './utils.js';
 
 /**
  * brAInwav Bus interface for telemetry event emission

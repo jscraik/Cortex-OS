@@ -118,9 +118,13 @@
         "libs/typescript/utils/dist/*"
       ],
       "@brainwav/telemetry": [
+        "packages/telemetry/dist/index.d.ts",
+        "packages/telemetry/dist/index.js",
         "packages/telemetry/src/index.ts"
       ],
       "@brainwav/telemetry/*": [
+        "packages/telemetry/dist/*.d.ts",
+        "packages/telemetry/dist/*",
         "packages/telemetry/src/*"
       ]
     },

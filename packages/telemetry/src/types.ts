@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { extractErrorMessage } from './utils';
+import { extractErrorMessage } from './utils.js';
 
 /**
  * brAInwav Cortex-OS Phase enumeration for agent workflow tracking
