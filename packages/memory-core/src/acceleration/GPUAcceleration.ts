@@ -846,7 +846,7 @@ export class GPUAccelerationManager {
                         timestamp: new Date().toISOString(),
                         batchId,
                         bufferId,
-                        bytes,
+                        bytes: bytes * 1024 * 1024,
                         trackedBuffers: this.allocatedBuffers.size,
                 });
 
