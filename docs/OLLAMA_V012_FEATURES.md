@@ -109,7 +109,7 @@ This document outlines the new features introduced in Ollama v0.12.0, v0.12.1, a
 {
   "name": "glm-4.6:cloud",
   "model_tag": "glm-4.6:cloud",
-  "context_length": 32768,
+  "context_length": 32768, // Model's native context length. Note: Cortex-OS is configured with a context_threshold of 60,000 tokens for routing purposes (see model-router.ts line 323).
   "mode": "cloud",
   "tier": "ON_DEMAND",
   "notes": "General reasoning / documentation synthesis"
