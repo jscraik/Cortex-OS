@@ -48,14 +48,48 @@ for (const pkg of packages) {
 		failed = true;
 		continue;
 	}
-	const thresholds = doc.thresholds || {
-		statements: 95,
-		branches: 95,
-		functions: 95,
-		lines: 95,
-	};
-	const coverage = loadJsonSummary(pkgPath) ||
-		doc.coverage || { statements: 0, branches: 0, functions: 0, lines: 0 };
+        const thresholdsSource = doc.thresholds || {};
+        const thresholds = {
+                statements: Math.max(95, thresholdsSource.statements ?? 95),
+                branches: Math.max(95, thresholdsSource.branches ?? 95),
+                functions: Math.max(95, thresholdsSource.functions ?? 95),
+                lines: Math.max(95, thresholdsSource.lines ?? 95),
+        };
+        if (
+                thresholdsSource.statements !== undefined &&
+                thresholdsSource.statements < 95
+        ) {
+                console.warn(
+                        `[warn] ${pkg} thresholds.statements < 95 overridden to 95`,
+                );
+        }
+        if (thresholdsSource.branches !== undefined && thresholdsSource.branches < 95) {
+                console.warn(
+                        `[warn] ${pkg} thresholds.branches < 95 overridden to 95`,
+                );
+        }
+        if (
+                thresholdsSource.functions !== undefined &&
+                thresholdsSource.functions < 95
+        ) {
+                console.warn(
+                        `[warn] ${pkg} thresholds.functions < 95 overridden to 95`,
+                );
+        }
+        if (thresholdsSource.lines !== undefined && thresholdsSource.lines < 95) {
+                console.warn(
+                        `[warn] ${pkg} thresholds.lines < 95 overridden to 95`,
+                );
+        }
+
+        const coverage = loadJsonSummary(pkgPath) ||
+                doc.coverage || { statements: 0, branches: 0, functions: 0, lines: 0 };
+
+        if (!loadJsonSummary(pkgPath) && !doc.coverage) {
+                console.warn(
+                        `[warn] ${pkg} coverage summary missing; consider running package tests with coverage to refresh readiness data.`,
+                );
+        }
 
 	const checks = [
 		['statements', coverage.statements, thresholds.statements],
@@ -65,7 +99,7 @@ for (const pkg of packages) {
 	];
 
 	for (const [name, actual, min] of checks) {
-		if (actual < min) {
+                if (actual < min) {
 			console.error(`[fail] ${pkg} ${name} coverage ${actual}% < ${min}%`);
 			failed = true;
 		} else {
