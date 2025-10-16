@@ -164,9 +164,10 @@ while (idx < flags.length) {
 }
 const json = flags.includes('--json');
 const verbose = flags.includes('--verbose');
-const telemetryStatus = telemetryEnabled ? 'enabled' : 'disabled';
+
 
 if (verbose) {
+        const telemetryStatus = telemetryEnabled ? 'enabled' : 'disabled';
         log(`[nx-smart] telemetry ${telemetryStatus} (NX_SMART_OTEL=${process.env.NX_SMART_OTEL ?? '0'})`);
 }
 
