@@ -243,7 +243,7 @@ Routine recovery drills validate both automation and manual fallbacks. Capture o
 3. **Manual verification**
    - Manually stop a monitored process, confirm detection within 60 seconds, and verify automated restart.
    - Hit `/health` endpoints for MCP and local-memory services post-recovery to confirm they surface green states.
-   - Review logs in `/tmp/brainwav-process-monitor.log` for any missed alerts or rate-limited notifications.
+   - Review logs in `/tmp/brAInwav-process-monitor.log` for any missed alerts or rate-limited notifications.
 4. **Observability sign-off** — Confirm latency, error rate, and throughput dashboards recorded the drill, then attach screenshots to the drill report referencing the observability package guidance.【F:packages/observability/README.md†L1-L16】
 5. **Post-drill actions** — File follow-up issues for any gaps, update this runbook if new automation was introduced, and record evidence links alongside SLO metrics breached during the exercise.
 
