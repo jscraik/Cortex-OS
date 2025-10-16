@@ -25,19 +25,19 @@
 ## Dimension Findings
 
 ### Architecture & Governance — 85/100 (Weight 15)
-- Governance principles (contract-first design, event-driven A2A bus, strict import boundaries) are clearly codified and visually reinforced, supporting consistent deployment architecture decisions.【F:docs/architecture/architecture-overview.md†L8-L86】
-- Root README reiterates production-grade expectations (coverage, security scanning, smart Nx execution), aligning contributors on operational guardrails.【F:README.md†L40-L170】
+- Governance principles (contract-first design, event-driven A2A bus, strict import boundaries) are clearly codified and visually reinforced, supporting consistent deployment architecture decisions. [docs/architecture/architecture-overview.md](docs/architecture/architecture-overview.md#L8-L86)
+- Root README reiterates production-grade expectations (coverage, security scanning, smart Nx execution), aligning contributors on operational guardrails. [README.md](README.md#L40-L170)
 - Gap: enforcement evidence (recent CI runs, waiver ledger) is not bundled with documentation, limiting verifiable governance adherence during audits.
 
 ### Platform & Infrastructure — 80/100 (Weight 15)
-- Production deployment guide covers Docker and Kubernetes rollouts with concrete secrets management, health checks, and scaling prerequisites, demonstrating comprehensive platform readiness.【F:docs/deployment-guide.md†L1-L115】【F:docs/deployment-guide.md†L116-L210】
-- Smart Nx wrapper enforces non-interactive CI defaults while optionally emitting OpenTelemetry metrics, enabling efficient platform automation across environments.【F:scripts/nx-smart.mjs†L1-L120】【F:scripts/nx-smart.mjs†L16-L68】
+- Production deployment guide covers Docker and Kubernetes rollouts with concrete secrets management, health checks, and scaling prerequisites, demonstrating comprehensive platform readiness. [docs/deployment-guide.md](docs/deployment-guide.md#L1-L115) [docs/deployment-guide.md](docs/deployment-guide.md#L116-L210)
+- Smart Nx wrapper enforces non-interactive CI defaults while optionally emitting OpenTelemetry metrics, enabling efficient platform automation across environments. [scripts/nx-smart.mjs](scripts/nx-smart.mjs#L1-L120) [scripts/nx-smart.mjs](scripts/nx-smart.mjs#L16-L68)
 - Gap: guide references external tooling but omits validated infrastructure-as-code examples or live cluster manifests beyond overlays, so reproducibility evidence is partial.
 
 ### Security & Compliance — 78/100 (Weight 15)
-- Security package delivers SPIFFE/SPIRE, mTLS orchestration, Semgrep profiles, and ASVS alignment with clear command coverage, showcasing deep defense-in-depth controls.【F:packages/security/README.md†L1-L146】
-- Workspace scripts include comprehensive semgrep/Snyk pipelines and strict security gates for CI execution, evidencing actionable enforcement hooks.【F:package.json†L138-L170】
-- Gap: readiness manifest for the security package sets coverage thresholds to zero, contradicting claimed enforcement and reducing trust in automated compliance gating.【F:packages/security/readiness.yml†L1-L18】
+- Security package delivers SPIFFE/SPIRE, mTLS orchestration, Semgrep profiles, and ASVS alignment with clear command coverage, showcasing deep defense-in-depth controls. [packages/security/README.md](packages/security/README.md#L1-L146)
+- Workspace scripts include comprehensive semgrep/Snyk pipelines and strict security gates for CI execution, evidencing actionable enforcement hooks. [package.json](package.json#L138-L170)
+- Gap: readiness manifest for the security package sets coverage thresholds to zero, contradicting claimed enforcement and reducing trust in automated compliance gating. [packages/security/readiness.yml](packages/security/readiness.yml#L1-L18)
 
 ### Application & Data Services — 82/100 (Weight 12)
 - Memory-core refactor documentation details unified memory orchestration, hybrid local/remote search, and containerized deployment architecture, signaling production-capable service design.【F:packages/memory-core/README.md†L1-L156】
