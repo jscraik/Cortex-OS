@@ -156,7 +156,8 @@ export class LocalMemoryProvider implements MemoryProvider {
 
     if (tags.length > 0) {
       const placeholders = tags.map(() => '?').join(', ');
-      conditions.push(`EXISTS (SELECT 1 FROM json_each(tags) WHERE value IN (${placeholders}))`);
+      // Use a generic SQL-like expression for tags filtering
+      conditions.push(`tags CONTAINS ANY (${placeholders})`);
       params.push(...tags);
     }
 
