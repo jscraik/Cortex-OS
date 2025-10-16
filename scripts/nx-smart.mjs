@@ -355,7 +355,7 @@ function resolveBaseRef() {
                         return {
                                 requestedBaseRef,
                                 resolvedBaseRef: ref,
-                                usedFallback: ref !== (requestedBaseRef || ref),
+                                usedFallback: ref !== requestedBaseRef,
                                 attemptedCandidates,
                         };
                 }
