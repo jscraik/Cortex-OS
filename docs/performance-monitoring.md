@@ -18,6 +18,13 @@ pnpm session:shutdown
 pnpm session:restart-mcp
 ```
 
+## 📡 Observability Adoption Coverage
+
+Telemetry exporters are now tracked in [`packages/observability/README.md`](../packages/observability/README.md#adoption-metrics).
+The `pnpm audit:observability` CI job regenerates `/reports/observability-adoption.json`, allowing SLO dashboards to verify that
+required services (for example, the Memory API at 99.9% availability) actively publish traces and metrics before incident
+reviews.
+
 ## 📊 Implemented Solutions
 
 ### 1. Process Health Monitor (`scripts/process-health-monitor.sh`)
