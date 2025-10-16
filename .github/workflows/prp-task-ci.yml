@@ -37,4 +37,4 @@ jobs:
         run: pnpm --filter @cortex-os/prp-runner typecheck
 
       - name: Test PRP runner
-        run: pnpm --filter @cortex-os/prp-runner test
+        run: pnpm -C packages/prp-runner test
