@@ -113,16 +113,45 @@ export class LocalMemoryProvider implements MemoryProvider {
     if (queueFactory) {
       return queueFactory(concurrency);
     }
-    return this.createDefaultQueue();
+    return this.createDefaultQueue(concurrency);
   }
 
   private resolveQueueConcurrency(config: LocalMemoryProviderResolvedOptions): number {
     return config.queueConcurrency ?? 1;
   }
 
-  private createDefaultQueue(): TaskQueue {
+  private createDefaultQueue(concurrency: number): TaskQueue {
+    // Minimal FIFO queue with concurrency-limited execution
+    let running = 0;
+    const queue: Array<() => void> = [];
+
+    const runNext = () => {
+      if (running >= concurrency || queue.length === 0) {
+        return;
+      }
+      const next = queue.shift();
+      if (next) {
+        running++;
+        next();
+      }
+    };
+
     return {
-      add: async <T>(task: () => Promise<T>) => task(),
+      add: <T>(task: () => Promise<T>): Promise<T> => {
+        return new Promise<T>((resolve, reject) => {
+          const runTask = () => {
+            task()
+              .then(resolve)
+              .catch(reject)
+              .finally(() => {
+                running--;
+                runNext();
+              });
+          };
+          queue.push(runTask);
+          runNext();
+        });
+      },
     } satisfies TaskQueue;
   }
 
