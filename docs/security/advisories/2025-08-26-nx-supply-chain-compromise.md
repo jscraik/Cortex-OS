@@ -60,8 +60,17 @@ Blocklist all `21.6.0` or earlier builds in private registries, lockfiles, and C
   Compare diffs to version-controlled dotfiles or golden images before removing malicious lines.
 - **Check Nx installations**
   ```bash
+  # For pnpm users:
   pnpm why nx
   pnpm store prune
+  
+  # For npm users:
+  npm ls nx
+  
+  # For yarn users:
+  yarn why nx
+  
+  # Search for malicious payload regardless of package manager:
   find node_modules -path '*nx*/telemetry.js' -print
   ```
   Delete any cached tarballs from 26 Aug 2025 and reinstall after confirming the resolved version is ≥ 21.6.1.
