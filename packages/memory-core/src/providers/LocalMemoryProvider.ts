@@ -11,7 +11,7 @@ import type {
   StoreMemoryInput,
   StoreMemoryResult,
 } from '../provider/MemoryProvider.js';
-import type { MemoryCoreConfig } from '../types.js';
+import type { MemoryCoreConfig, QdrantConfig } from '../types.js';
 
 export interface LocalMemoryProviderOptions {
   /** Maximum number of records to retain in memory. */
@@ -32,6 +32,18 @@ function normaliseTags(tags?: string[]): string[] {
   return tags.map((tag) => tag.trim().toLowerCase()).filter((tag) => tag.length > 0);
 }
 
+interface TaskQueue {
+  add<T>(task: () => Promise<T>): Promise<T>;
+}
+
+export interface LocalMemoryProviderDependencies {
+  databaseFactory?: (config: LocalMemoryProviderResolvedOptions) => unknown;
+  qdrantFactory?: (config: QdrantConfig) => unknown;
+  queueFactory?: (concurrency: number) => TaskQueue;
+}
+
+type LocalMemoryProviderResolvedOptions = LocalMemoryProviderOptions & Partial<MemoryCoreConfig>;
+
 /**
  * Lightweight in-memory implementation of the memory provider interface.
  *
@@ -45,43 +57,110 @@ function normaliseTags(tags?: string[]): string[] {
  * behaviour while keeping the public contract identical to the original file.
  */
 export class LocalMemoryProvider implements MemoryProvider {
-  private readonly records = new Map<string, MemoryRecord>();
+  private readonly records: Map<string, MemoryRecord>;
   private readonly maxRecords: number;
+  private readonly database: unknown;
+  private readonly qdrant: unknown;
+  private readonly queue: TaskQueue;
 
-  constructor(options: LocalMemoryProviderOptions | Partial<MemoryCoreConfig> = {}) {
-    const config = options as LocalMemoryProviderOptions;
-    this.maxRecords = config.maxRecords ?? config.maxLimit ?? 1_000;
+  constructor(
+    options: LocalMemoryProviderOptions | Partial<MemoryCoreConfig> = {},
+    dependencies: LocalMemoryProviderDependencies = {},
+  ) {
+    const resolved = this.resolveOptions(options);
+    this.records = this.initializeRecordStore();
+    this.database = this.initializeDatabase(resolved, dependencies.databaseFactory);
+    this.qdrant = this.initializeQdrant(resolved, dependencies.qdrantFactory);
+    this.queue = this.initializeQueue(resolved, dependencies.queueFactory);
+    this.maxRecords = this.resolveMaxRecords(resolved);
+  }
+
+  private resolveOptions(
+    options: LocalMemoryProviderOptions | Partial<MemoryCoreConfig>,
+  ): LocalMemoryProviderResolvedOptions {
+    return { ...options } as LocalMemoryProviderResolvedOptions;
+  }
+
+  private initializeRecordStore(): Map<string, MemoryRecord> {
+    return new Map<string, MemoryRecord>();
+  }
+
+  private initializeDatabase(
+    config: LocalMemoryProviderResolvedOptions,
+    databaseFactory?: LocalMemoryProviderDependencies['databaseFactory'],
+  ): unknown {
+    if (!databaseFactory) {
+      return undefined;
+    }
+    return databaseFactory(config);
+  }
+
+  private initializeQdrant(
+    config: LocalMemoryProviderResolvedOptions,
+    qdrantFactory?: LocalMemoryProviderDependencies['qdrantFactory'],
+  ): unknown {
+    if (!qdrantFactory || !config.qdrant) {
+      return undefined;
+    }
+    return qdrantFactory(config.qdrant);
+  }
+
+  private initializeQueue(
+    config: LocalMemoryProviderResolvedOptions,
+    queueFactory?: LocalMemoryProviderDependencies['queueFactory'],
+  ): TaskQueue {
+    const concurrency = this.resolveQueueConcurrency(config);
+    if (queueFactory) {
+      return queueFactory(concurrency);
+    }
+    return this.createDefaultQueue();
+  }
+
+  private resolveQueueConcurrency(config: LocalMemoryProviderResolvedOptions): number {
+    return config.queueConcurrency ?? 1;
+  }
+
+  private createDefaultQueue(): TaskQueue {
+    return {
+      add: async <T>(task: () => Promise<T>) => task(),
+    } satisfies TaskQueue;
+  }
+
+  private resolveMaxRecords(config: LocalMemoryProviderResolvedOptions): number {
+    return config.maxRecords ?? config.maxLimit ?? 1_000;
   }
 
   async store(input: StoreMemoryInput): Promise<StoreMemoryResult> {
-    const id = input.id ?? randomUUID();
-    const createdAt = new Date().toISOString();
+    return this.queue.add(async () => {
+      const id = input.id ?? randomUUID();
+      const createdAt = new Date().toISOString();
 
-    const record: MemoryRecord = {
-      id,
-      text: input.text,
-      tags: normaliseTags(input.tags),
-      meta: input.meta,
-      createdAt,
-    };
+      const record: MemoryRecord = {
+        id,
+        text: input.text,
+        tags: normaliseTags(input.tags),
+        meta: input.meta,
+        createdAt,
+      };
 
-    if (this.records.size >= this.maxRecords) {
-      // Find the key of the record with the oldest createdAt timestamp
-      let oldestKey: string | undefined;
-      let oldestDate: string | undefined;
-      for (const [key, rec] of this.records.entries()) {
-        if (!oldestDate || rec.createdAt < oldestDate) {
-          oldestDate = rec.createdAt;
-          oldestKey = key;
+      if (this.records.size >= this.maxRecords) {
+        // Find the key of the record with the oldest createdAt timestamp
+        let oldestKey: string | undefined;
+        let oldestDate: string | undefined;
+        for (const [key, rec] of this.records.entries()) {
+          if (!oldestDate || rec.createdAt < oldestDate) {
+            oldestDate = rec.createdAt;
+            oldestKey = key;
+          }
+        }
+        if (oldestKey !== undefined) {
+          this.records.delete(oldestKey);
         }
       }
-      if (oldestKey !== undefined) {
-        this.records.delete(oldestKey);
-      }
-    }
 
-    this.records.set(id, record);
-    return { id, createdAt };
+      this.records.set(id, record);
+      return { id, createdAt };
+    });
   }
 
   async search(input: SearchMemoryInput): Promise<SearchMemoryResult> {
