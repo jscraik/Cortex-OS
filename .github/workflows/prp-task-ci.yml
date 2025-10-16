@@ -1,0 +1,40 @@
+name: PRP Task Integration CI
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/cortex-task.mjs'
+      - 'packages/prp-runner/**'
+      - 'docs/task-prp-integration.md'
+      - '.github/workflows/prp-task-ci.yml'
+      - '.github/instructions/memories.instructions.md'
+
+jobs:
+  prp-runner-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint PRP runner
+        run: pnpm --filter @cortex-os/prp-runner lint
+
+      - name: Type-check PRP runner
+        run: pnpm --filter @cortex-os/prp-runner typecheck
+
+      - name: Test PRP runner
+        run: pnpm --filter @cortex-os/prp-runner test
