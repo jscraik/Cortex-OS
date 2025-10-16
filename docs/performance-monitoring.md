@@ -207,6 +207,46 @@ MEMORY_API_HEALTH="http://localhost:3028/api/v1/health"
 - Orphaned resource cleanup prevents accumulation
 - Pool exhaustion handling with clear error messages
 
+## 🧭 Escalation Path
+
+The following escalation matrix keeps operational ownership clear during performance or availability incidents discovered by the monitoring tooling.
+
+| Tier | Responsible team | Contact channel | Trigger conditions | Escalation window |
+| --- | --- | --- | --- | --- |
+| 1 | Runtime SRE (primary on-call) | `#incidents-runtime` (Slack) & on-call rotation pager | Health checks failing for >5 minutes, automated restarts looping, or resource usage exceeding configured limits twice within 10 minutes. | Immediate — acknowledge within 5 minutes. |
+| 2 | Platform Engineering (process automation) | `#platform-escalations` (Slack) & runbook issue tracker | Tier 1 unable to restore service within 15 minutes, repeated MCP pool exhaustion events, or conflicting automation policies. | Engage after 15 minutes of unresolved Tier 1 response. |
+| 3 | Incident Commander & Product Reliability | Direct bridge line + `incident-bridge@brainwav.dev` | Sustained availability below SLO, data integrity risk, or cross-tenant blast radius. | Page after 30 minutes without recovery or when customer impact is confirmed. |
+
+Document escalations in the shared incident channel and link follow-up actions to the [observability package handbook](../packages/observability/README.md) so instrumentation gaps are captured alongside remediation.【F:packages/observability/README.md†L1-L16】
+
+## 🎯 SLO Targets
+
+Performance monitoring feeds Cortex-OS SLO governance. Targets below align with the reliability and performance expectations in the product charter and readiness checks.
+
+| Metric | Target | Measurement window | Source of record | Operational notes |
+| --- | --- | --- | --- | --- |
+| Availability | ≥ 99.9% service uptime | Rolling 30 days | Product spec reliability objectives | Breaching this threshold automatically pages Tier 3 and triggers a post-incident readiness review.【F:project-documentation/product-spec.yaml†L108-L116】 |
+| API latency (p95) | ≤ 500 ms for core APIs | Rolling 7 days | Product spec performance targets | Latency alarms integrate with the observability exporters described in the package README.【F:project-documentation/product-spec.yaml†L108-L116】【F:packages/observability/README.md†L1-L16】 |
+| Orchestration throughput | Support ≥ 250 concurrent user workflows without queue growth | Rolling 7 days | Product spec scalability targets | Use readiness coverage gates to validate resiliency before enabling higher concurrency.【F:project-documentation/product-spec.yaml†L108-L116】【F:tools/readiness/check-readiness.mjs†L1-L120】 |
+
+Readiness automation enforces ≥95% coverage for every package, ensuring changes that threaten SLO adherence are caught during CI before deployment.【F:tools/readiness/check-readiness.mjs†L1-L120】 See [`tools/readiness/check-readiness.mjs`](../tools/readiness/check-readiness.mjs) for the exact validation workflow.
+
+## 🧪 Recovery Drill Playbook
+
+Routine recovery drills validate both automation and manual fallbacks. Capture outcomes in the incident log and track improvement actions.
+
+1. **Schedule & ownership** — Platform Engineering leads quarterly game days; Runtime SRE signs off on success criteria.
+2. **Automated verification**
+   - Run `pnpm session:manager` in dry-run mode (no destructive actions) to confirm health checks and restart logic.
+   - Use `pnpm session:restart-mcp` to validate MCP pooling resilience and watch the exported metrics in the observability console.【F:packages/observability/README.md†L1-L16】
+   - Execute readiness validation (`pnpm --filter '*' run readiness` or `pnpm lint:readiness`) after the drill to ensure coverage gates remain intact; the script is defined in [`tools/readiness/check-readiness.mjs`](../tools/readiness/check-readiness.mjs).【F:tools/readiness/check-readiness.mjs†L1-L120】
+3. **Manual verification**
+   - Manually stop a monitored process, confirm detection within 60 seconds, and verify automated restart.
+   - Hit `/health` endpoints for MCP and local-memory services post-recovery to confirm they surface green states.
+   - Review logs in `/tmp/brainwav-process-monitor.log` for any missed alerts or rate-limited notifications.
+4. **Observability sign-off** — Confirm latency, error rate, and throughput dashboards recorded the drill, then attach screenshots to the drill report referencing the observability package guidance.【F:packages/observability/README.md†L1-L16】
+5. **Post-drill actions** — File follow-up issues for any gaps, update this runbook if new automation was introduced, and record evidence links alongside SLO metrics breached during the exercise.
+
 ## 🔄 Integration with Existing Systems
 
 ### NPM Scripts Integration
