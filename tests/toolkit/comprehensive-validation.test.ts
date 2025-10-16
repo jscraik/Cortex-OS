@@ -29,10 +29,14 @@ class MockAgentToolkitMCPTools {
                         throw new Error('brAInwav Cortex-OS: Tool parameters must be an object');
                 }
                 const requestSignature = Object.keys(params).sort().join('|');
-		// Simulate brAInwav error handling
-		if (!toolName || typeof toolName !== 'string') {
-			throw new Error('brAInwav Cortex-OS: Tool name is required and must be a string');
-		}
+                // Simulate brAInwav error handling
+                if (!toolName || typeof toolName !== 'string') {
+                        throw new Error('brAInwav Cortex-OS: Tool name is required and must be a string');
+                }
+
+                if (Object.keys(params).length === 0) {
+                        throw new Error('brAInwav Cortex-OS: Tool parameters must include at least one property');
+                }
 
 		// Simulate circuit breaker logic
 		const breakerKey = `toolkit_${toolName}`;
