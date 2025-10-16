@@ -473,7 +473,8 @@ const resolveBatonPath = (slug, overridePath) => {
                 }
         }
         const target = overridePath ?? slug ?? 'unknown';
-        throw new Error(`Unable to locate baton for ${target}`);
+        const triedPaths = candidates.map(expandUserPath);
+        throw new Error(`Unable to locate baton for ${target}. Tried: ${triedPaths.join(', ')}`);
 };
 
 const ensurePrpRunnerBuild = () => {
