@@ -16,7 +16,7 @@
 | CI/CD & Quality Automation | 13 | 70 | 9.1 |
 | Documentation & Knowledge | 10 | 88 | 8.8 |
 | Operations & Incident Response | 10 | 72 | 7.2 |
-| **Total** | **100** | — | **78.9** |
+**Total** | **100** | — | **78.9** |
 
 **Deployment Verdict**: **78.9/100** — Cortex-OS is architecturally ready with strong documentation and mature service foundations, but inconsistent enforcement artifacts (readiness thresholds, CI evidence, telemetry adoption) prevent a higher confidence score.
 
