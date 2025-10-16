@@ -83,22 +83,33 @@ export interface GPUMetrics {
  * Memory reservation tracking for deterministic GPU memory management
  */
 export interface MemoryReservation {
-	device: GPUDeviceInfo;
-	bytes: number;
-	batchId: string;
-	timestamp: number;
+        device: GPUDeviceInfo;
+        bytes: number;
+        batchId: string;
+        timestamp: number;
+}
+
+interface GPUBufferTracker {
+        id: string;
+        batchId: string;
+        device: GPUDeviceInfo;
+        bytes: number;
+        createdAt: number;
+        released: boolean;
+        release: (success: boolean) => void;
 }
 
 /**
  * GPU Acceleration Manager for brAInwav GraphRAG Embeddings
  */
 export class GPUAccelerationManager {
-	private config: GPUAccelerationConfig;
+        private config: GPUAccelerationConfig;
 	private gpuDevices: GPUDeviceInfo[] = [];
 	private isInitialized = false;
-	private requestQueue: EmbeddingRequest[] = [];
-	private processingBatches = new Map<string, Promise<EmbeddingResult[]>>();
-	private activeReservations = new Map<string, MemoryReservation>();
+        private requestQueue: EmbeddingRequest[] = [];
+        private processingBatches = new Map<string, Promise<EmbeddingResult[]>>();
+        private activeReservations = new Map<string, MemoryReservation>();
+        private allocatedBuffers = new Map<string, GPUBufferTracker>();
 	private metrics: GPUMetrics = {
 		totalRequests: 0,
 		gpuRequests: 0,
@@ -500,13 +511,14 @@ export class GPUAccelerationManager {
 		const safetyMarginMultiplier = 1.25; // brAInwav policy: 25% safety margin
 		const requiredMemoryMB = Math.ceil(estimatedMemoryUsage / (1024 * 1024) * safetyMarginMultiplier);
 
-		// Reserve memory with deterministic cleanup
-		const reservation = this.reserveDeviceMemory(device, requiredMemoryMB, batchId);
+                // Reserve memory with deterministic cleanup
+                const reservation = this.reserveDeviceMemory(device, requiredMemoryMB, batchId);
+                const bufferTracker = this.trackGPUBuffer(reservation, device, requiredMemoryMB, batchId);
 
-		try {
-			// Simulate GPU processing (in practice, this would use CUDA/WebGL)
-			if (!this.denseEmbedder) {
-				throw new Error('brAInwav: Dense embedder not initialized');
+                try {
+                        // Simulate GPU processing (in practice, this would use CUDA/WebGL)
+                        if (!this.denseEmbedder) {
+                                throw new Error('brAInwav: Dense embedder not initialized');
 			}
 			
 			const embeddings = await this.denseEmbedder(texts);
@@ -524,18 +536,18 @@ export class GPUAccelerationManager {
 				batchId
 			}));
 
-			// Memory released successfully
-			reservation.release(true);
-			return results;
+                        // Memory and buffer released successfully
+                        bufferTracker.release(true);
+                        return results;
 
-		} catch (error) {
-			// Ensure memory is released even on failure
-			reservation.release(false);
-			
-			console.error('[brAInwav] GPU processing failed', {
-				brand: 'brAInwav',
-				timestamp: new Date().toISOString(),
-				batchId,
+                } catch (error) {
+                        // Ensure memory is released even on failure
+                        bufferTracker.release(false);
+
+                        console.error('[brAInwav] GPU processing failed', {
+                                brand: 'brAInwav',
+                                timestamp: new Date().toISOString(),
+                                batchId,
 				error: error instanceof Error ? error.message : String(error),
 				deviceId: device.id,
 				requiredMemoryMB
@@ -682,19 +694,21 @@ export class GPUAccelerationManager {
 	/**
 	 * Stop GPU acceleration manager with comprehensive cleanup
 	 */
-	async stop(): Promise<void> {
-		console.info('[brAInwav] GPU Acceleration Manager stopping', {
-			brand: 'brAInwav',
-			timestamp: new Date().toISOString(),
-			activeReservations: this.activeReservations.size,
-			processingBatches: this.processingBatches.size
-		});
+        async stop(): Promise<void> {
+                console.info('[brAInwav] GPU Acceleration Manager stopping', {
+                        brand: 'brAInwav',
+                        timestamp: new Date().toISOString(),
+                        activeReservations: this.activeReservations.size,
+                        processingBatches: this.processingBatches.size
+                });
 
-		// Clean up any remaining reservations and log leaks
-		if (this.activeReservations.size > 0) {
-			console.warn('[brAInwav] GPU reservations leaked during shutdown', {
-				brand: 'brAInwav',
-				timestamp: new Date().toISOString(),
+                this.releaseLeakedBuffers();
+
+                // Clean up any remaining reservations and log leaks
+                if (this.activeReservations.size > 0) {
+                        console.warn('[brAInwav] GPU reservations leaked during shutdown', {
+                                brand: 'brAInwav',
+                                timestamp: new Date().toISOString(),
 				leakedCount: this.activeReservations.size,
 				reservations: Array.from(this.activeReservations.keys())
 			});
@@ -768,12 +782,108 @@ export class GPUAccelerationManager {
 
 		this.isInitialized = false;
 
-		console.info('brAInwav GPU Acceleration Manager stopped', {
-			component: 'memory-core',
-			brand: 'brAInwav',
-			finalMetrics: this.metrics,
-		});
-	}
+                console.info('brAInwav GPU Acceleration Manager stopped', {
+                        component: 'memory-core',
+                        brand: 'brAInwav',
+                        finalMetrics: this.metrics,
+                });
+        }
+
+        private trackGPUBuffer(
+                reservation: { release: (success: boolean) => void },
+                device: GPUDeviceInfo,
+                bytes: number,
+                batchId: string,
+        ): GPUBufferTracker {
+                const bufferId = `gpu-buffer-${device.id}-${batchId}-${randomUUID().substring(0, 8)}`;
+
+                let tracker: GPUBufferTracker;
+
+                const release = (success: boolean): void => {
+                        if (tracker.released) {
+                                return;
+                        }
+
+                        tracker.released = true;
+
+                        try {
+                                reservation.release(success);
+                        } catch (error) {
+                                console.error('[brAInwav] GPU buffer release failed', {
+                                        brand: 'brAInwav',
+                                        timestamp: new Date().toISOString(),
+                                        batchId,
+                                        bufferId,
+                                        error: error instanceof Error ? error.message : String(error),
+                                });
+                        } finally {
+                                this.allocatedBuffers.delete(bufferId);
+                                console.debug('[brAInwav] GPU buffer release complete', {
+                                        brand: 'brAInwav',
+                                        timestamp: new Date().toISOString(),
+                                        batchId,
+                                        bufferId,
+                                        success,
+                                        remainingTrackedBuffers: this.allocatedBuffers.size,
+                                });
+                        }
+                };
+
+                tracker = {
+                        id: bufferId,
+                        batchId,
+                        device,
+                        bytes,
+                        createdAt: Date.now(),
+                        released: false,
+                        release,
+                };
+
+                this.allocatedBuffers.set(bufferId, tracker);
+
+                console.debug('[brAInwav] GPU buffer tracked', {
+                        brand: 'brAInwav',
+                        timestamp: new Date().toISOString(),
+                        batchId,
+                        bufferId,
+                        bytes,
+                        trackedBuffers: this.allocatedBuffers.size,
+                });
+
+                return tracker;
+        }
+
+        private releaseLeakedBuffers(): void {
+                if (this.allocatedBuffers.size === 0) {
+                        return;
+                }
+
+                console.warn('[brAInwav] GPU buffers leaked during shutdown', {
+                        brand: 'brAInwav',
+                        timestamp: new Date().toISOString(),
+                        leakedBuffers: this.allocatedBuffers.size,
+                        buffers: Array.from(this.allocatedBuffers.values()).map((buffer) => ({
+                                id: buffer.id,
+                                batchId: buffer.batchId,
+                                bytes: buffer.bytes,
+                                createdAt: buffer.createdAt,
+                                deviceId: buffer.device.id,
+                        })),
+                });
+
+                for (const buffer of Array.from(this.allocatedBuffers.values())) {
+                        try {
+                                buffer.release(false);
+                        } catch (error) {
+                                console.error('[brAInwav] Forced GPU buffer release failed', {
+                                        brand: 'brAInwav',
+                                        timestamp: new Date().toISOString(),
+                                        bufferId: buffer.id,
+                                        error: error instanceof Error ? error.message : String(error),
+                                });
+                        }
+                }
+        }
 }
 
 // Global GPU acceleration manager instance
