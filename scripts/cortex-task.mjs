@@ -564,7 +564,7 @@ const runPrpForTask = async ({ slug, batonPath, dryRun }) => {
         const result = await prpModule.runPRPWorkflow(blueprint, repoInfo, {
                 workingDirectory: ROOT_DIR,
                 projectRoot: ROOT_DIR,
-                actor: process.env.USER ?? process.env.GIT_AUTHOR_NAME ?? 'cortex-task',
+                actor: process.env.USER ?? process.env.USERNAME ?? process.env.GIT_AUTHOR_NAME ?? 'cortex-task',
                 strictMode: true,
         });
         const augmented = prpModule.augmentManifest(result.manifest, metadata);
