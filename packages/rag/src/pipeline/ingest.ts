@@ -137,10 +137,15 @@ async function processChunksWithRefRag(
 					const factResult = await factExtractor.extractFacts(chunk.text, chunk.id);
 					chunkMetadata.structuredFacts = factResult.facts;
                                         const extractionMethod = factResult.metadata.method;
-                                        const normalizedMethod: RefRagChunkMetadata['factExtraction']['method'] =
-                                                extractionMethod === 'parser' || extractionMethod === 'ml'
-                                                        ? extractionMethod
-                                                        : 'regex';
+                                        let normalizedMethod: RefRagChunkMetadata['factExtraction']['method'];
+                                        if (extractionMethod === 'parser' || extractionMethod === 'ml') {
+                                            normalizedMethod = extractionMethod;
+                                        } else {
+                                            console.warn(
+                                                `Unrecognized extraction method '${extractionMethod}' for chunk ${chunk.id}, defaulting to 'regex'.`
+                                            );
+                                            normalizedMethod = 'regex';
+                                        }
                                         chunkMetadata.factExtraction = {
                                                 timestamp: Date.now(),
                                                 method: normalizedMethod,
