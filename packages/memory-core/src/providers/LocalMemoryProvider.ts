@@ -222,7 +222,7 @@ export class LocalMemoryProvider implements MemoryProvider {
     const hasTags = filterTags.length > 0;
 
     if (!hasTenant && !hasDomain && !hasLabels && !hasTags) {
-      throw new Error('Tenant, domain, tags, or labels are required for memory search.');
+      throw new Error('brAInwav memory search requires at least one of: tenant, domain, tags, or labels.');
     }
 
     let hits: SearchMemoryResult['hits'];
