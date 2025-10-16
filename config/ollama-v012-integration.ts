@@ -53,7 +53,7 @@ export interface ModelSpec {
         priority: number;
         supports?: string[];
         version?: string;
-        tier?: string;
+        tier?: 'ON_DEMAND' | 'RESERVED' | 'SPOT';
         notes?: string;
 }
 
