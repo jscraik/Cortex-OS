@@ -26,6 +26,10 @@ Cortex-OS is under active development. The memory subsystem ships with baseline 
 3. **Operational telemetry** – add OpenTelemetry spans and ship audit events to SIEM targets.
 4. **Lifecycle automation** – automate right-to-be-forgotten workflows across SQLite and Qdrant.
 
+## Current Advisories
+
+- [Nx Supply-Chain Compromise Advisory (2025-08-26)](security/advisories/2025-08-26-nx-supply-chain-compromise.md) — outlines the npm package hijack, impacted versions, remediation steps, and detection playbooks Cortex-OS teams must follow immediately.
+
 ## Deployment Recommendations
 
 - Bind Qdrant to private interfaces or service meshes only; never expose it directly to the public Internet.
