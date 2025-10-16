@@ -14,6 +14,7 @@
  * - Adaptive learning from user feedback
  */
 
+import { randomUUID } from 'node:crypto';
 import type { GraphRAGQueryRequest, GraphRAGResult } from '../services/GraphRAGService.js';
 import type { PerformanceMetrics } from '../monitoring/PerformanceMonitor.js';
 
@@ -633,8 +634,8 @@ export class MLOptimizationManager {
 			pattern.successRate = Math.min(1.0, pattern.successRate + 0.01);
 		} else {
 			// Create new pattern
-			const newPattern: QueryPattern = {
-				id: `pattern_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+                        const newPattern: QueryPattern = {
+                                id: `pattern_${Date.now()}_${randomUUID().replace(/-/g, '').slice(0, 8)}`,
 				pattern: patternKey,
 				frequency: 1,
 				averageLatency: latency,

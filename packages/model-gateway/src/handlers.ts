@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer';
+import { randomUUID } from 'node:crypto';
 import { createAttentionBridgeFromEnv } from './kv/attention-bridge.js';
 import type { IModelRouter as ModelRouter } from './model-router.js';
 
@@ -62,8 +63,8 @@ export async function chatHandler(
 	}
 
 	const attentionBridge = createAttentionBridgeFromEnv();
-	const bridgeRun = await attentionBridge.prepareRun(
-		`chat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+        const bridgeRun = await attentionBridge.prepareRun(
+                `chat-${Date.now().toString(36)}-${randomUUID().replace(/-/g, '').slice(0, 8)}`,
 		{ model: body.model },
 	);
 

@@ -3,6 +3,7 @@
  * Integrates with GitHub Models API for intelligent code analysis and automation
  */
 
+import { randomUUID } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import { z } from 'zod';
 import { fetchWithTimeout } from '../lib/fetch-with-timeout.js';
@@ -404,9 +405,9 @@ export class CortexAiGitHubApp extends EventEmitter<AiAppEvents> {
 	}
 
 	private generateTaskId(taskType: AITaskType): string {
-		const timestamp = Date.now().toString(36);
-		const random = Math.random().toString(36).substring(2, 8);
-		return `${taskType}_${timestamp}_${random}`;
+                const timestamp = Date.now().toString(36);
+                const random = randomUUID().replace(/-/g, '').slice(0, 8);
+                return `${taskType}_${timestamp}_${random}`;
 	}
 
 	private updateRateLimitInfo(headers: Headers): void {

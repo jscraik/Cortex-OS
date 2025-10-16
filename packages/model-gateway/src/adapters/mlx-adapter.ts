@@ -3,6 +3,7 @@
  * MLX adapter for model gateway - interfaces with Python MLX embedding generator
  */
 
+import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { z } from 'zod';
@@ -773,7 +774,7 @@ export function createMLXAdapter(): MLXAdapterApi {
 					bandC,
 					virtualTokenMode: request.virtualTokenMode || 'pass-through',
 					enableStructuredOutput: Boolean(request.enableStructuredOutput),
-					request_id: `triband_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                                        request_id: `triband_${Date.now()}_${randomUUID().replace(/-/g, '').slice(0, 9)}`,
 				};
 
 				const result = await runPython(ragScriptPath, [], {

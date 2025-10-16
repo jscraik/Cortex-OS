@@ -10,6 +10,7 @@
  * - Configurable streaming strategies
  */
 
+import { randomUUID } from 'node:crypto';
 import type { GraphRAGResult, GraphRAGQueryRequest } from '../services/GraphRAGService.js';
 import type { GraphRAGSearchResult } from '../retrieval/QdrantHybrid.js';
 
@@ -424,13 +425,17 @@ export class StreamingResponse {
 		});
 	}
 
-	private generateStreamId(): string {
-		return `stream_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-	}
+        private generateStreamId(): string {
+                return this.generateId('stream');
+        }
 
-	private generateChunkId(): string {
-		return `chunk_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-	}
+        private generateChunkId(): string {
+                return this.generateId('chunk');
+        }
+
+        private generateId(prefix: string): string {
+                return `${prefix}_${Date.now()}_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
+        }
 
 	private delay(ms: number): Promise<void> {
 		return new Promise(resolve => setTimeout(resolve, ms));

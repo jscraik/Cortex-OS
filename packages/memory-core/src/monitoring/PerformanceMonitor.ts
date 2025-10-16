@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 /**
  * Performance monitoring system for brAInwav GraphRAG
  *
@@ -302,7 +304,7 @@ export function monitorPerformance(operation: string) {
 		const method = descriptor.value;
 
 		descriptor.value = async function (...args: any[]) {
-			const queryId = `perf_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+                        const queryId = `perf_${Date.now()}_${randomUUID().replace(/-/g, '').slice(0, 8)}`;
 			const startTime = Date.now();
 			let cacheHit = false;
 			let resultCount = 0;
