@@ -11,9 +11,15 @@
 [![pnpm](https://img.shields.io/badge/pnpm-10.3.0-blue)](https://pnpm.io)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9+-blue)](https://www.typescriptlang.org)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/jamiescottcraik/Cortex-OS/actions)
-[![Coverage](https://img.shields.io/badge/coverage-90%25+-brightgreen)](https://github.com/jamiescottcraik/Cortex-OS)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen)](https://github.com/jamiescottcraik/Cortex-OS)
 [![Security](https://img.shields.io/badge/security-0%20vulnerabilities-green)](https://github.com/jamiescottcraik/Cortex-OS/security)
 [![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen)](https://github.com/jamiescottcraik/Cortex-OS)
+
+<p>
+  <img alt="Branch coverage badge" src="reports/badges/branch-coverage.svg" />
+  <img alt="Mutation score badge" src="reports/badges/mutation-score.svg" />
+  <img alt="Quality gate badge" src="reports/badges/quality-gate.svg" />
+</p>
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Architecture](#-architecture) • [Contributing](#-contributing)
 
@@ -45,7 +51,7 @@ Built as a governed monorepo with strict architectural boundaries, Cortex-OS pro
 
 ### Why Cortex-OS?
 
-- **🏗️ Production-Ready**: Battle-tested with comprehensive testing (90%+ coverage), security scanning, and quality gates
+- **🏗️ Production-Ready**: Battle-tested with comprehensive testing (85%+ coverage), security scanning, and quality gates
 - **🔒 Security-First**: OWASP compliant with zero known vulnerabilities, OAuth 2.1 + PKCE, and continuous scanning
 - **📊 Observable**: Full OpenTelemetry instrumentation, distributed tracing, and comprehensive monitoring
 - **🎯 Governed**: Enforced architectural boundaries, import rules, and code quality standards
@@ -69,9 +75,17 @@ Built as a governed monorepo with strict architectural boundaries, Cortex-OS pro
 ### Quality & Security
 
 - **🛡️ Security-First Design** – OWASP compliance, OAuth 2.1 + PKCE, vulnerability scanning, SBOM generation
-- **🧪 Comprehensive Testing** – 90%+ code coverage, mutation testing, TDD enforcement, automated quality gates
+- **🧪 Comprehensive Testing** – 85% line / 80% branch coverage, mutation testing, TDD enforcement, automated quality gates (see [Quality Evidence](#-quality-evidence))
 - **🏗️ Governed Architecture** – Import boundaries via ESLint + Nx, strict dependency rules, validated structure
 - **📈 Quality Metrics** – Automated coverage tracking, mutation score badges, continuous quality monitoring
+
+### 🔍 Quality Evidence
+
+| Signal | Latest Result | Evidence |
+| --- | --- | --- |
+| **Coverage** | Lines: 85.0% (635/747), Branches: 80.75% (55/68) | [`reports/baseline/summary.json`](reports/baseline/summary.json) — generated `2025-10-09T14:16:53.926Z` |
+| **Mutation Score** | 82.5% | [`reports/baseline/summary.json`](reports/baseline/summary.json) → `mutation.percentage` |
+| **Security Scan** | MCP security score 7.2/10 with critical follow-ups tracked | [`reports/security/mcp.security-score.md`](reports/security/mcp.security-score.md) |
 
 ### Developer Experience
 
