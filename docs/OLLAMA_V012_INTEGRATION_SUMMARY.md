@@ -31,6 +31,12 @@ This document summarizes the comprehensive updates made to integrate Ollama v0.1
     "model_tag": "qwen3-vl:235b-cloud",
     "priority": 2,
     "features": ["cloud_multimodal", "high_resolution_reasoning"]
+  },
+  "glm-4.6-cloud": {
+    "name": "glm-4.6:cloud",
+    "model_tag": "glm-4.6:cloud",
+    "priority": 3,
+    "notes": "General reasoning / documentation synthesis"
   }
 }
 ```
@@ -107,6 +113,7 @@ TypeScript configuration defining:
 - **MLX-first verification** for privacy-sensitive tasks
 - **Cloud enhancement** for complex operations
 - **Adaptive fallback chains** for high availability
+- **Documentation synthesis tier** using glm-4.6:cloud bursts with MLX fallbacks
 
 ### 🖼️ Qwen3-VL Cloud Vision Conjunction
 
@@ -136,6 +143,7 @@ brAInwav Cortex-OS Hybrid Model Strategy
 | **Code Generation** | Ollama | deepseek-coder:6.7b | Fast, Reliable |
 | **Architecture** | Ollama | qwen3-coder:30b | Complex reasoning, Large context |
 | **Vision Analysis** | Hybrid | qwen2.5-vl ⇆ qwen3-vl:235b-cloud | Multimodal, Cloud-enhanced |
+| **Documentation Synthesis** | Hybrid | glm-4.6:cloud ⇆ glm-4.5 | General reasoning, Long-context |
 
 ## Performance Improvements
 

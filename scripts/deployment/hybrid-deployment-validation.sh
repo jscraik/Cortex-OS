@@ -117,7 +117,10 @@ check_ollama() {
     
     # Check cloud models
     log "Checking Ollama cloud models access..."
-    if curl -fsS "$OLLAMA_URL/api/tags" 2>/dev/null | grep -q "480b-cloud"; then
+    local cloud_tags
+    cloud_tags=$(curl -fsS "$OLLAMA_URL/api/tags" 2>/dev/null)
+
+    if printf '%s' "$cloud_tags" | grep -q "480b-cloud" && printf '%s' "$cloud_tags" | grep -q "glm-4.6:cloud"; then
         success "Ollama cloud models are accessible"
     else
         log "Cloud models may require signin: ollama signin"
