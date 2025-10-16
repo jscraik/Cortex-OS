@@ -300,7 +300,7 @@ function ensureRefAvailable(ref, { debug } = {}) {
         if (!remoteInfo) return false;
         try {
                 const fetchArgs = ['fetch', '--depth=1', remoteInfo.remote];
-                if (remoteInfo.branch) fetchArgs.push(remoteInfo.branch);
+                if (remoteInfo.branch) fetchArgs.push(`${remoteInfo.branch}:refs/remotes/${remoteInfo.remote}/${remoteInfo.branch}`);
                 const result = spawnSync('git', fetchArgs, {
                         stdio: debug ? 'inherit' : 'ignore',
                 });
