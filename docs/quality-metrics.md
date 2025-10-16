@@ -41,14 +41,25 @@ pnpm badges:generate
 
 ```json
 {
-  "branchCoverage": 92.31,
-  "mutationScore": 76.45,
+  "branchCoverage": 80.75,
+  "mutationScore": 82.5,
   "qualityGate": { "pass": true, "branchMin": 65, "mutationMin": 75 },
   "branchSamples": 42,
   "mutationSamples": 42,
-  "generatedAt": "2025-09-14T02:17:12.345Z"
+  "generatedAt": "2025-10-09T14:16:53.926Z"
 }
 ```
+
+### Embedded Evidence (latest refresh)
+
+The following artifacts are checked into the repo so reviewers can verify the badge claims without re-running CI:
+
+| Signal | Latest Result | Artifact |
+| --- | --- | --- |
+| Branch & Line Coverage | Lines: 85.0% (635/747), Branches: 80.75% (55/68) | [`reports/baseline/summary.json`](../reports/baseline/summary.json) |
+| Mutation Score | 82.5% | [`reports/baseline/summary.json`](../reports/baseline/summary.json) → `mutation.percentage` |
+| Badge Snapshot | SVG snapshots of the latest run | ![Branch coverage badge](../reports/badges/branch-coverage.svg) ![Mutation score badge](../reports/badges/mutation-score.svg) ![Quality gate badge](../reports/badges/quality-gate.svg) |
+| Security Scan | MCP security score 7.2/10, high-priority remediations tracked | [`reports/security/mcp.security-score.md`](../reports/security/mcp.security-score.md) |
 
 ## Scheduled Nightly Refresh
 

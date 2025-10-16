@@ -1,12 +1,12 @@
 {
-  "branchCoverage": 0,
-  "mutationScore": 0,
+  "branchCoverage": 80.75,
+  "mutationScore": 82.5,
   "qualityGate": {
-    "pass": false,
+    "pass": true,
     "branchMin": 65,
     "mutationMin": 75
   },
-  "branchSamples": 0,
-  "mutationSamples": 2,
-  "generatedAt": "2025-09-14T12:27:45.498Z"
+  "branchSamples": 1,
+  "mutationSamples": 1,
+  "generatedAt": "2025-10-09T14:16:53.926Z"
 }
