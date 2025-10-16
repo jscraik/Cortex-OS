@@ -1,18 +1,18 @@
-export type { Bus, EmitterOpts } from './emitter';
-export { Telemetry } from './emitter';
+export type { Bus, EmitterOpts } from './emitter.js';
+export { Telemetry } from './emitter.js';
 export {
 	createAdvancedRedaction,
 	createRedactionFilter,
 	DEFAULT_REDACTION_CONFIG,
-} from './redaction';
-export type { AgentEvent } from './types';
+} from './redaction.js';
+export type { AgentEvent } from './types.js';
 export {
 	AgentEventSchema,
 	EventName,
 	isValidAgentEvent,
 	Phase,
 	validateAgentEvent,
-} from './types';
-export { createCompleteEvent, extractErrorMessage, generateCorrelationId } from './utils';
+} from './types.js';
+export { createCompleteEvent, extractErrorMessage, generateCorrelationId } from './utils.js';
 export { tracer, meter } from './otel-config.js';
 
