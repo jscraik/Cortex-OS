@@ -1,7 +1,7 @@
 import * as React from 'react';
 
-import { ensureAppsClient, type ServiceMapPayload } from '../sdk/appsClient.js';
-import type { ConnectorServiceEntry } from '../sdk/types.js';
+import { ensureAppsClient, type ServiceMapPayload } from '../sdk/appsClient';
+import type { ConnectorServiceEntry } from '../sdk/types';
 
 const CONNECTORS_ROUTE = '/v1/connectors/service-map';
 const AUTO_REFRESH_BUFFER_MS = 5_000;

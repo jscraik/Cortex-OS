@@ -1,0 +1,4 @@
+
+> @cortex-os/mcp@0.1.0 test:coverage /Users/jamiecraik/.Cortex-OS/packages/mcp
+> node ../../scripts/vitest-safe.mjs run --coverage -- --reporter=text-summary
+
