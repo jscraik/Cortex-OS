@@ -1,5 +1,6 @@
 export type { Bus, EmitterOpts } from './emitter.js';
 export { Telemetry } from './emitter.js';
+export { meter, tracer } from './otel-config.js';
 export {
 	createAdvancedRedaction,
 	createRedactionFilter,
@@ -14,5 +15,3 @@ export {
 	validateAgentEvent,
 } from './types.js';
 export { createCompleteEvent, extractErrorMessage, generateCorrelationId } from './utils.js';
-export { tracer, meter } from './otel-config.js';
-

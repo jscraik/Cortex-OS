@@ -99,6 +99,37 @@ This document outlines the new features introduced in Ollama v0.12.0, v0.12.1, a
 - **Preferred for production RAG** implementations
 - **MLX verification support** through hybrid routing
 
+### GLM-4.6 Cloud Documentation Tier (v0.12.23)
+
+**Description**: GLM-4.6:cloud is a general reasoning and documentation synthesis model delivered through Ollama Cloud. It pairs with MLX GLM-4.5 to provide governed bursts for executive briefings, policy updates, and enterprise documentation without sacrificing MLX-first routing guarantees.
+
+**Configuration**:
+
+```json
+{
+  "name": "glm-4.6:cloud",
+  "model_tag": "glm-4.6:cloud",
+  "context_length": 32768, // Model's native context length. Note: Cortex-OS is configured with a context_threshold of 60,000 tokens for routing purposes (see model-router.ts line 323).
+  "mode": "cloud",
+  "tier": "ON_DEMAND",
+  "notes": "General reasoning / documentation synthesis"
+}
+```
+
+**Key Benefits**:
+
+- **High-accuracy narrative synthesis** for technical and executive documentation
+- **Governed cloud bursts** that respect Cortex-OS hybrid routing policies
+- **Long-context reasoning** aligned with enterprise knowledge management
+- **Complementary MLX fallback** via GLM-4.5 to maintain locality when possible
+
+**Usage in Cortex-OS**:
+
+- **Documentation synthesis** for architecture reviews and governance packs
+- **General reasoning escalation** when MLX-only context is insufficient
+- **Knowledge base refreshes** with cloud-assisted summarisation
+- **Hybrid verification** workflows that compare MLX and cloud outputs
+
 ### Enhanced Qwen3-Coder Tool Calling (v0.12.1)
 
 **Description**: Qwen3-Coder now supports advanced tool calling and function calling capabilities with improved parsing.

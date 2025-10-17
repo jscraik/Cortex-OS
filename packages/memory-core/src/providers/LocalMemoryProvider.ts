@@ -194,29 +194,27 @@ export class LocalMemoryProvider implements MemoryProvider {
 
   async search(input: SearchMemoryInput): Promise<SearchMemoryResult> {
     const start = Date.now();
-    const query = input.query.trim().toLowerCase();
-    const tags = normaliseTags(input.filterTags);
+    const plan = this.prepareSearchPlan(input);
+    this.lastSearchPlan = { sql: plan.sql, params: plan.params };
+
+    const limit = Math.max(1, Math.min(this.maxLimit, input.topK ?? 10));
 
     const hits = Array.from(this.records.values())
-      .filter((record) => {
-        if (query.length > 0 && !record.text.toLowerCase().includes(query)) {
-          return false;
-        }
-        if (tags.length > 0) {
-          return tags.some((tag) => record.tags.includes(tag));
-        }
-        return true;
-      })
+      .filter(plan.predicate)
       .map((record) => ({
         id: record.id,
         text: record.text,
-        score: query.length === 0 ? 0.5 : 1.0,
+        score: plan.usesQuery ? 1.0 : 0.5,
         source: 'local' as const,
       }))
-      .slice(0, input.topK ?? 10);
+      .slice(0, limit);
 
     const tookMs = Date.now() - start;
     return { hits, tookMs };
+  }
+
+  getLastSearchPlanForTesting(): { sql: string; params: readonly string[] } | undefined {
+    return this.lastSearchPlan;
   }
 
   async get(input: GetMemoryInput): Promise<GetMemoryResult> {
@@ -240,5 +238,39 @@ export class LocalMemoryProvider implements MemoryProvider {
 
   async health(): Promise<HealthStatus> {
     return { brand: 'brAInwav', ok: true };
+  }
+
+  private prepareSearchPlan(input: SearchMemoryInput): PreparedSearchPlan {
+    const query = input.query.trim().toLowerCase();
+    const tags = normaliseTags(input.filterTags);
+
+    const conditions: string[] = [];
+    const params: string[] = [];
+
+    if (query.length > 0) {
+      conditions.push('LOWER(text) CONTAINS ?');
+      params.push(query);
+    }
+
+    if (tags.length > 0) {
+      const placeholders = tags.map(() => '?').join(', ');
+      // Use a generic SQL-like expression for tags filtering
+      conditions.push(`tags CONTAINS ANY (${placeholders})`);
+      params.push(...tags);
+    }
+
+    const sql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const predicate = (record: MemoryRecord): boolean => {
+      if (query.length > 0 && !record.text.toLowerCase().includes(query)) {
+        return false;
+      }
+      if (tags.length > 0 && !tags.some((tag) => record.tags.includes(tag))) {
+        return false;
+      }
+      return true;
+    };
+
+    return { predicate, sql, params, usesQuery: query.length > 0 };
   }
 }

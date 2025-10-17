@@ -68,6 +68,9 @@ export type StageStatus = z.infer<typeof StageStatusEnum>;
 export const StageCheckStatusEnum = z.enum(['pass', 'fail', 'warn', 'skip']);
 export type StageCheckStatus = z.infer<typeof StageCheckStatusEnum>;
 
+export const TaskPriorityEnum = z.enum(['P0', 'P1', 'P2', 'P3']);
+export type TaskPriority = z.infer<typeof TaskPriorityEnum>;
+
 const StageEvidenceKernelSchema = z.object({
 	type: z.literal('kernel'),
 	evidenceId: z.string(),
@@ -311,15 +314,18 @@ export const RunManifestLinksSchema = z.object({
 export type RunManifestLinks = z.infer<typeof RunManifestLinksSchema>;
 
 export const RunManifestSchema = z.object({
-	schemaVersion: z.literal(CURRENT_SCHEMA_VERSION),
-	manifestId: z.string(),
-	runId: z.string(),
-	generatedAt: ISO8601Schema,
-	actor: z.string(),
-	strictMode: z.boolean().default(false),
-	blueprint: RunManifestBlueprintSchema,
-	repo: RunManifestRepoSchema,
-	enforcementProfile: EnforcementProfileSnapshotSchema.optional(),
+        schemaVersion: z.literal(CURRENT_SCHEMA_VERSION),
+        manifestId: z.string(),
+        runId: z.string(),
+        generatedAt: ISO8601Schema,
+        actor: z.string(),
+        strictMode: z.boolean().default(false),
+        taskId: z.string().optional(),
+        priority: TaskPriorityEnum.optional(),
+        specPath: z.string().optional(),
+        blueprint: RunManifestBlueprintSchema,
+        repo: RunManifestRepoSchema,
+        enforcementProfile: EnforcementProfileSnapshotSchema.optional(),
 	stages: z.array(StageEntrySchema).min(1),
 	summary: RunManifestSummarySchema,
 	telemetry: RunManifestTelemetrySchema,

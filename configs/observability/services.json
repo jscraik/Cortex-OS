@@ -1,0 +1,39 @@
+{
+  "services": [
+    {
+      "name": "Memory API",
+      "slug": "memory-api",
+      "path": "servers/memory-api",
+      "required": true,
+      "expectedExporter": "OpenTelemetry"
+    },
+    {
+      "name": "Agent Health Monitor",
+      "slug": "agents",
+      "path": "services/agents",
+      "required": false,
+      "expectedExporter": "OpenTelemetry"
+    },
+    {
+      "name": "Data Pipeline",
+      "slug": "data-pipeline",
+      "path": "services/data-pipeline",
+      "required": false,
+      "expectedExporter": "Prometheus"
+    },
+    {
+      "name": "ML Inference",
+      "slug": "ml-inference",
+      "path": "services/ml-inference",
+      "required": false,
+      "expectedExporter": "OpenTelemetry"
+    },
+    {
+      "name": "Scaphandre Bridge",
+      "slug": "scaphandre-bridge",
+      "path": "services/scaphandre-bridge",
+      "required": false,
+      "expectedExporter": "Custom"
+    }
+  ]
+}
