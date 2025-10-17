@@ -116,26 +116,18 @@ function sanitiseContent(text: string): string {
         return patterns.reduce((acc, pattern) => acc.replace(pattern, '[REDACTED]'), text);
 }
 
-function normaliseMetadata(
-        meta?: Record<string, unknown>,
-): Record<string, unknown> & {
+type MetadataRecord = Record<string, unknown> & {
         labels?: string[];
         tenant?: string;
         sourceUri?: string;
         contentSha?: string;
-} {
-        if (!meta) return {} as Record<string, unknown> & {
-                labels?: string[];
-                tenant?: string;
-                sourceUri?: string;
-                contentSha?: string;
-        };
-        const metadata = { ...(meta ?? {}) } as Record<string, unknown> & {
-                labels?: string[];
-                tenant?: string;
-                sourceUri?: string;
-                contentSha?: string;
-        };
+};
+
+function normaliseMetadata(
+        meta?: Record<string, unknown>,
+): MetadataRecord {
+        if (!meta) return {} as MetadataRecord;
+        const metadata = { ...(meta ?? {}) } as MetadataRecord;
         const labels = normaliseLabels(metadata.labels);
         if (labels.length > 0) {
                 metadata.labels = labels;
