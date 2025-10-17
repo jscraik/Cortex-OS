@@ -171,8 +171,12 @@ function countPassingChecks(stage: StageEntry): number {
   return stage.gate.automatedChecks.filter((check) => check.status === 'pass').length;
 }
 
-function findStage(manifest: RunManifest, stageKey: StageKey): StageEntry | undefined {
-  return manifest.stages.find((entry) => entry.key === stageKey);
+function findStage(manifest: RunManifest, stageKey: StageKey): StageEntry {
+  const stage = manifest.stages.find((entry) => entry.key === stageKey);
+  if (!stage) {
+    throw new Error(`${BRAND} Stage ${stageKey} not found in manifest`);
+  }
+  return stage;
 }
 
 function isPassingStatus(status: StageStatus): boolean {
