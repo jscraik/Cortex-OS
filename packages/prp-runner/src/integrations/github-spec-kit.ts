@@ -142,7 +142,7 @@ function formatGateTable(gates: GateProjection[]): string {
 function formatAlignment(alignment: BmadAlignmentReport): string {
         const bullet = alignment.issues.length
                 ? alignment.issues.map((issue) => `- ❗ ${issue}`).join('\n')
-                : '- ✅ Blueprint, manifest, and approvals are aligned.';
+                : '- [OK] Blueprint, manifest, and approvals are aligned.';
         return `## Alignment\n${bullet}`;
 }
 
