@@ -193,7 +193,7 @@ async function main() {
                                 .join(', ')}`,
                 );
         } else {
-                console.log('[dependency:audit] Madge warnings: none');
+                console.log('[brAInwav dependency:audit] Madge warnings: none');
         }
 
         const baseline = loadBaseline();
