@@ -60,6 +60,15 @@
           "enhanced_code_generation"
         ]
       },
+      "documentation_synthesis": {
+        "condition": { "any": ["requires_documentation", "general_reasoning"] },
+        "primary": "ollama_cloud",
+        "models": [
+          "glm-4.6:cloud"
+        ],
+        "fallback": "mlx:glm-4.5",
+        "notes": "General reasoning / documentation synthesis"
+      },
       "mixture_of_experts_tasks": {
         "condition": "requires_moe || complex_reasoning || trillion_parameters",
         "primary": "ollama_cloud",
@@ -122,7 +131,9 @@
         "embedding_tasks": "ollama:qwen3-embedding:latest",
         "moe_reasoning_tasks": "cloud:kimi-k2:1t-cloud",
         "trillion_parameter_tasks": "cloud:kimi-k2:1t-cloud",
-        "vision_tasks": "hybrid:qwen2.5-vl+qwen3-vl:235b-cloud"
+        "vision_tasks": "hybrid:qwen2.5-vl+qwen3-vl:235b-cloud",
+        "documentation_tasks": "cloud:glm-4.6:cloud",
+        "general_reasoning": "cloud:glm-4.6:cloud"
       }
     }
   },
@@ -190,6 +201,15 @@
         "document_visual_understanding"
       ],
       "implementation": "mlx_primary_with_cloud_enhancement"
+    },
+    "documentation_synthesis": {
+      "description": "Burst to GLM-4.6 cloud for long-form documentation and reasoning",
+      "use_cases": [
+        "documentation_synthesis",
+        "knowledge_base_updates",
+        "executive_briefings"
+      ],
+      "implementation": "glm46_cloud_with_mlx_support"
     }
   },
   "performance_optimization": {

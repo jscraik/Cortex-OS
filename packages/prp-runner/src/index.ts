@@ -11,6 +11,9 @@ export * from './gates/g6-release-readiness.js';
 export * from './gates/g7-release.js';
 export * from './runner.js';
 export * from './run-manifest/index.js';
+export * from './task-integration.js';
+export * from './bmad/index.js';
+export * from './integrations/github-spec-kit.js';
 
 /**
  * @file packages/prp-runner/src/index.ts
