@@ -5,6 +5,8 @@ import {
   StageKeyEnum,
   StageStatusEnum,
   type RunManifest,
+  type StageEntry,
+  type StageKey,
 } from './prp-schema.js';
 
 const BRAND = '[brAInwav]';
@@ -15,6 +17,9 @@ const StagePolicyRuleSchema = z.object({
   requireApprovals: z.number().int().min(0).optional(),
   requireCompletedChecks: z.number().int().min(0).optional(),
 });
+
+type StagePolicyRule = z.infer<typeof StagePolicyRuleSchema>;
+type StageStatus = z.infer<typeof StageStatusEnum>;
 
 const PolicySchema = z.object({
   version: z.string().default('1.0.0'),
@@ -47,63 +52,133 @@ export async function loadPolicy(policyPath: string): Promise<Policy> {
 }
 
 export function evaluatePolicy(manifest: RunManifest, policy: Policy): PolicyEvaluationResult {
-  const findings: PolicyFinding[] = [];
-
-  if (policy.requireStrictMode && !manifest.strictMode) {
-    findings.push({ level: 'error', message: `${BRAND} Manifest must be generated in strict mode` });
-  }
-
-  const requiredStages = policy.requireCompletedStages ?? PRODUCT_TO_AUTOMATION_PIPELINE.map((stage) => stage.key);
-  for (const stageKey of requiredStages) {
-    const stage = manifest.stages.find((entry) => entry.key === stageKey);
-    if (!stage) {
-      findings.push({ level: 'error', message: `${BRAND} Manifest missing required stage ${stageKey}` });
-      continue;
-    }
-    if (stage.status !== 'passed' && stage.status !== 'skipped') {
-      findings.push({
-        level: 'error',
-        message: `${BRAND} Stage ${stageKey} status ${stage.status} does not satisfy policy`,
-      });
-    }
-  }
-
-  if (policy.stageRules) {
-    for (const [stageKey, rules] of Object.entries(policy.stageRules)) {
-      const stage = manifest.stages.find((entry) => entry.key === stageKey);
-      if (!stage) {
-        findings.push({ level: 'error', message: `${BRAND} Policy rule references missing stage ${stageKey}` });
-        continue;
-      }
-      if (rules.allowStatus && !rules.allowStatus.includes(stage.status)) {
-        findings.push({
-          level: 'error',
-          message: `${BRAND} Stage ${stageKey} status ${stage.status} not allowed (allowed: ${rules.allowStatus.join(', ')})`,
-        });
-      }
-      if (rules.disallowStatus && rules.disallowStatus.includes(stage.status)) {
-        findings.push({
-          level: 'error',
-          message: `${BRAND} Stage ${stageKey} status ${stage.status} is disallowed`,
-        });
-      }
-      if (typeof rules.requireApprovals === 'number' && stage.gate.approvals.length < rules.requireApprovals) {
-        findings.push({
-          level: 'error',
-          message: `${BRAND} Stage ${stageKey} requires at least ${rules.requireApprovals} approvals (found ${stage.gate.approvals.length})`,
-        });
-      }
-      if (
-        typeof rules.requireCompletedChecks === 'number' &&
-        stage.gate.automatedChecks.filter((check) => check.status === 'pass').length < rules.requireCompletedChecks
-      ) {
-        findings.push({
-          level: 'warn',
-          message: `${BRAND} Stage ${stageKey} expected ${rules.requireCompletedChecks} passing checks`,
-        });
-      }
-    }
-  }
+  const findings = [
+    ...evaluateStrictMode(manifest, policy),
+    ...evaluateRequiredStages(manifest, policy),
+    ...evaluateStageRules(manifest, policy),
+  ];
 
   return { ok: !findings.some((finding) => finding.level === 'error'), findings };
+}
+
+const PASSING_STATUSES: ReadonlyArray<StageStatus> = ['passed', 'skipped'];
+
+function evaluateStrictMode(manifest: RunManifest, policy: Policy): PolicyFinding[] {
+  if (policy.requireStrictMode && !manifest.strictMode) {
+    return [{ level: 'error', message: `${BRAND} Manifest must be generated in strict mode` }];
+  }
+  return [];
+}
+
+function evaluateRequiredStages(manifest: RunManifest, policy: Policy): PolicyFinding[] {
+  return (policy.requireCompletedStages ?? PRODUCT_TO_AUTOMATION_PIPELINE.map((stage) => stage.key)).flatMap(
+    (stageKey) => evaluateRequiredStage(manifest, stageKey as StageKey),
+  );
+}
+
+function evaluateRequiredStage(manifest: RunManifest, stageKey: StageKey): PolicyFinding[] {
+  const stage = findStage(manifest, stageKey);
+  if (!stage) {
+    return [{ level: 'error', message: `${BRAND} Manifest missing required stage ${stageKey}` }];
+  }
+  if (!isPassingStatus(stage.status)) {
+    return [
+      {
+        level: 'error',
+        message: `${BRAND} Stage ${stageKey} status ${stage.status} does not satisfy policy`,
+      },
+    ];
+  }
+  return [];
+}
+
+function evaluateStageRules(manifest: RunManifest, policy: Policy): PolicyFinding[] {
+  if (!policy.stageRules) {
+    return [];
+  }
+
+  const ruleEntries = Object.entries(policy.stageRules) as Array<[StageKey, StagePolicyRule]>;
+  return ruleEntries.flatMap(([stageKey, rules]) => evaluateRuleForStage(manifest, stageKey, rules));
+}
+
+function evaluateRuleForStage(manifest: RunManifest, stageKey: StageKey, rules: StagePolicyRule): PolicyFinding[] {
+  const stage = findStage(manifest, stageKey);
+  if (!stage) {
+    return [{ level: 'error', message: `${BRAND} Policy rule references missing stage ${stageKey}` }];
+  }
+
+  return [
+    ...validateAllowedStatuses(stage, stageKey, rules),
+    ...validateDisallowedStatuses(stage, stageKey, rules),
+    ...validateRequiredApprovals(stage, stageKey, rules),
+    ...validateCompletedChecks(stage, stageKey, rules),
+  ];
+}
+
+function validateAllowedStatuses(stage: StageEntry, stageKey: StageKey, rules: StagePolicyRule): PolicyFinding[] {
+  if (!rules.allowStatus || rules.allowStatus.includes(stage.status)) {
+    return [];
+  }
+
+  return [
+    {
+      level: 'error',
+      message: `${BRAND} Stage ${stageKey} status ${stage.status} not allowed (allowed: ${rules.allowStatus.join(', ')})`,
+    },
+  ];
+}
+
+function validateDisallowedStatuses(stage: StageEntry, stageKey: StageKey, rules: StagePolicyRule): PolicyFinding[] {
+  if (!rules.disallowStatus || !rules.disallowStatus.includes(stage.status)) {
+    return [];
+  }
+
+  return [{ level: 'error', message: `${BRAND} Stage ${stageKey} status ${stage.status} is disallowed` }];
+}
+
+function validateRequiredApprovals(stage: StageEntry, stageKey: StageKey, rules: StagePolicyRule): PolicyFinding[] {
+  if (typeof rules.requireApprovals !== 'number' || stage.gate.approvals.length >= rules.requireApprovals) {
+    return [];
+  }
+
+  return [
+    {
+      level: 'error',
+      message: `${BRAND} Stage ${stageKey} requires at least ${rules.requireApprovals} approvals (found ${stage.gate.approvals.length})`,
+    },
+  ];
+}
+
+function validateCompletedChecks(stage: StageEntry, stageKey: StageKey, rules: StagePolicyRule): PolicyFinding[] {
+  if (typeof rules.requireCompletedChecks !== 'number') {
+    return [];
+  }
+
+  const passingChecks = countPassingChecks(stage);
+  if (passingChecks >= rules.requireCompletedChecks) {
+    return [];
+  }
+
+  return [
+    {
+      level: 'warn',
+      message: `${BRAND} Stage ${stageKey} expected ${rules.requireCompletedChecks} passing checks`,
+    },
+  ];
+}
+
+function countPassingChecks(stage: StageEntry): number {
+  return stage.gate.automatedChecks.filter((check) => check.status === 'pass').length;
+}
+
+function findStage(manifest: RunManifest, stageKey: StageKey): StageEntry {
+  const stage = manifest.stages.find((entry) => entry.key === stageKey);
+  if (!stage) {
+    throw new Error(`${BRAND} Stage ${stageKey} not found in manifest`);
+  }
+  return stage;
+}
+
+function isPassingStatus(status: StageStatus): boolean {
+  return PASSING_STATUSES.includes(status);
 }

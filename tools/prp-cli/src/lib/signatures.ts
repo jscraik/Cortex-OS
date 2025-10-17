@@ -70,7 +70,7 @@ function extractStageKey(envelope: ProofEnvelope): string | undefined {
   if (stage && typeof stage.key === 'string') {
     return stage.key;
   }
-  const manifestStage = (envelope.context as any)?.stage;
+  const manifestStage = envelope.context?.stage;
   if (manifestStage && typeof manifestStage.key === 'string') {
     return manifestStage.key;
   }

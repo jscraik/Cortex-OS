@@ -2,25 +2,25 @@ import { z } from 'zod';
 
 // Validation schemas for different types of input
 export const idSchema = z
-	.string()
-	.min(1)
-	.max(100)
-	.regex(/^[a-zA-Z0-9_-]+$/);
+        .string()
+        .min(1)
+        .max(100)
+        .regex(/^[\w-]+$/);
 export const namespaceSchema = z
-	.string()
-	.min(1)
-	.max(100)
-	.regex(/^[a-zA-Z0-9_-]+$/);
+        .string()
+        .min(1)
+        .max(100)
+        .regex(/^[\w-]+$/);
 export const statusSchema = z
-	.string()
-	.min(1)
-	.max(50)
-	.regex(/^[a-zA-Z0-9_-]+$/);
+        .string()
+        .min(1)
+        .max(50)
+        .regex(/^[\w-]+$/);
 export const keySchema = z
-	.string()
-	.min(1)
-	.max(200)
-	.regex(/^[a-zA-Z0-9_-]+$/);
+        .string()
+        .min(1)
+        .max(200)
+        .regex(/^[\w-]+$/);
 
 // Database input validation
 export const validateDatabaseInput = {
@@ -42,7 +42,7 @@ export const validateNeo4jInput = {
 			.string()
 			.min(1)
 			.max(100)
-			.regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
+                        .regex(/^[A-Za-z_]\w*$/);
 		return labelSchema.safeParse(value);
 	},
 	type: (value: string) => {
@@ -51,7 +51,7 @@ export const validateNeo4jInput = {
 			.string()
 			.min(1)
 			.max(100)
-			.regex(/^[A-Za-z_][A-Za-z0-9_]*$/);
+                        .regex(/^[A-Za-z_]\w*$/);
 		return typeSchema.safeParse(value);
 	},
 };

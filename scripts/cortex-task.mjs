@@ -18,14 +18,17 @@
 import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { dirname, join, resolve } from 'node:path';
+import { homedir } from 'node:os';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT_DIR = join(__dirname, '..');
 const TASKS_DIR = join(ROOT_DIR, 'tasks');
 const TEMPLATES_DIR = join(ROOT_DIR, '.cortex', 'templates');
+const PRP_DIST_ENTRY = join(ROOT_DIR, 'packages', 'prp-runner', 'dist', 'index.js');
+const PRP_SRC_ENTRY = join(ROOT_DIR, 'packages', 'prp-runner', 'src', 'index.ts');
 
 // ANSI color codes for terminal output
 const colors = {
@@ -439,12 +442,140 @@ const showStatus = async (taskId) => {
  * Simple prompt for user input
  */
 const promptUser = (question) => {
-	return new Promise((resolve) => {
-		process.stdout.write(question);
-		process.stdin.once('data', (data) => {
-			resolve(data.toString().trim());
-		});
-	});
+        return new Promise((resolve) => {
+                process.stdout.write(question);
+                process.stdin.once('data', (data) => {
+                        resolve(data.toString().trim());
+                });
+        });
+};
+
+const expandUserPath = (input) => {
+        if (!input) return input;
+        if (input.startsWith('~')) {
+                return resolve(homedir(), input.slice(1));
+        }
+        return resolve(input);
+};
+
+const resolveBatonPath = (slug, overridePath) => {
+        const candidates = [];
+        if (overridePath) candidates.push(overridePath);
+        if (slug) {
+                candidates.push(join(ROOT_DIR, 'tasks', slug, 'json', 'baton.v1.json'));
+                candidates.push(join(homedir(), 'tasks', slug, 'json', 'baton.v1.json'));
+                candidates.push(join(homedir(), '.Cortex-OS', 'tasks', slug, 'json', 'baton.v1.json'));
+        }
+        for (const candidate of candidates) {
+                const expanded = expandUserPath(candidate);
+                if (expanded && existsSync(expanded)) {
+                        return expanded;
+                }
+        }
+        const target = overridePath ?? slug ?? 'unknown';
+        const triedPaths = candidates.map(expandUserPath);
+        throw new Error(`Unable to locate baton for ${target}. Tried: ${triedPaths.join(', ')}`);
+};
+
+const ensurePrpRunnerBuild = () => {
+        if (existsSync(PRP_DIST_ENTRY)) return true;
+        log.step('Building @cortex-os/prp-runner (dist missing)...');
+        try {
+                execSync('pnpm --filter @cortex-os/prp-runner build', { stdio: 'inherit' });
+                return existsSync(PRP_DIST_ENTRY);
+        } catch (error) {
+                log.warn(`PRP runner build failed (${error.message}). Using tsx fallback.`);
+                return false;
+        }
+};
+
+const parseGitRemote = (remoteUrl) => {
+        if (!remoteUrl) return { owner: 'unknown', repo: 'unknown' };
+        const cleaned = remoteUrl.replace(/\.git$/u, '');
+        const sshMatch = cleaned.match(/[:/]([^/]+)\/([^/]+)$/u);
+        if (sshMatch) {
+                return { owner: sshMatch[1], repo: sshMatch[2] };
+        }
+        return { owner: 'unknown', repo: 'unknown' };
+};
+
+const getRepoInfo = () => {
+        let owner = 'unknown';
+        let repo = 'unknown';
+        try {
+                const remote = execSync('git config --get remote.origin.url', { encoding: 'utf-8' }).trim();
+                const parsed = parseGitRemote(remote);
+                owner = parsed.owner;
+                repo = parsed.repo;
+        } catch (error) {
+                log.warn(`Remote inspection failed: ${error.message}`);
+        }
+        let commitSha = 'unknown';
+        try {
+                commitSha = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
+        } catch (error) {
+                log.warn(`Commit lookup failed: ${error.message}`);
+        }
+        return {
+                owner,
+                repo,
+                branch: getCurrentBranch(),
+                commitSha,
+        };
+};
+
+const importPrpRunnerModule = async () => {
+        const hasDist = ensurePrpRunnerBuild();
+        if (hasDist && existsSync(PRP_DIST_ENTRY)) {
+                return import(pathToFileURL(PRP_DIST_ENTRY).href);
+        }
+        log.warn('Importing PRP runner directly from TypeScript sources via tsx.');
+        try {
+                await import('tsx/esm');
+                return import(pathToFileURL(PRP_SRC_ENTRY).href);
+        } catch (err) {
+                log.error(
+                        `Failed to import PRP runner from TypeScript sources. This usually means 'tsx' is not installed or workspace dependencies are unavailable.\n` +
+                        `Remediation steps:\n` +
+                        `  1. Ensure you have built prp-runner: pnpm --filter @cortex-os/prp-runner build\n` +
+                        `  2. Or install tsx: pnpm add -D tsx\n` +
+                        `Error details: ${err.message}`
+                );
+                throw err;
+        }
+};
+
+const runPrpForTask = async ({ slug, batonPath, dryRun }) => {
+        const prpModule = await importPrpRunnerModule();
+        const baton = prpModule.loadTaskBaton
+                ? await prpModule.loadTaskBaton(batonPath)
+                : JSON.parse(await readFile(batonPath, 'utf-8'));
+        const { blueprint, metadata } = prpModule.buildPrpBlueprint(baton);
+
+        if (dryRun) {
+                log.header('PRP Runner Dry Run');
+                log.info(`Task: ${metadata.taskId}`);
+                log.info(`Blueprint: ${blueprint.title}`);
+                log.info(`Requirements: ${blueprint.requirements.length}`);
+                return;
+        }
+
+        const repoInfo = getRepoInfo();
+        const result = await prpModule.runPRPWorkflow(blueprint, repoInfo, {
+                workingDirectory: ROOT_DIR,
+                projectRoot: ROOT_DIR,
+                actor: process.env.USER ?? process.env.USERNAME ?? process.env.GIT_AUTHOR_NAME ?? 'cortex-task',
+                strictMode: true,
+        });
+        const augmented = prpModule.augmentManifest(result.manifest, metadata);
+        await writeFile(result.manifestPath, JSON.stringify(augmented, null, 2), 'utf-8');
+        log.success(`PRP Markdown: ${result.prpPath}`);
+        log.success(`Run Manifest: ${result.manifestPath}`);
+        log.info(`Task ID: ${metadata.taskId}`);
+        if (metadata.specPath) {
+                log.info(`Spec Path: ${metadata.specPath}`);
+        }
+        return result.manifestPath;
 };
 
 /**
@@ -464,18 +595,21 @@ ${colors.bright}Usage:${colors.reset}
   pnpm cortex-task plan <task-id>
   pnpm cortex-task list
   pnpm cortex-task status <task-id>
+  pnpm cortex-task prp-run --slug <task-id> [--baton <path>] [--dry-run]
 
 ${colors.bright}Commands:${colors.reset}
   ${colors.cyan}init${colors.reset}      Initialize a new task with spec and research files
   ${colors.cyan}plan${colors.reset}      Create TDD plan from research and spec
   ${colors.cyan}list${colors.reset}      List all tasks
   ${colors.cyan}status${colors.reset}    Show detailed status of a task
+  ${colors.cyan}prp-run${colors.reset}   Execute PRP runner with task baton metadata
 
 ${colors.bright}Examples:${colors.reset}
   pnpm cortex-task init "OAuth authentication" --priority P1
   pnpm cortex-task plan oauth-authentication
   pnpm cortex-task status oauth-authentication
   pnpm cortex-task list
+  pnpm cortex-task prp-run --slug demo-task --dry-run
 
 ${colors.dim}Co-authored-by: brAInwav Development Team${colors.reset}
     `);
@@ -527,20 +661,36 @@ ${colors.dim}Co-authored-by: brAInwav Development Team${colors.reset}
 				break;
 			}
 
-			case 'status': {
-				const taskId = args[1];
-				if (!taskId) {
-					log.error('Task ID required');
-					process.exit(1);
-				}
-				await showStatus(taskId);
-				break;
-			}
+                        case 'status': {
+                                const taskId = args[1];
+                                if (!taskId) {
+                                        log.error('Task ID required');
+                                        process.exit(1);
+                                }
+                                await showStatus(taskId);
+                                break;
+                        }
 
-			default:
-				log.error(`Unknown command: ${command}`);
-				log.info('Run "pnpm cortex-task" for usage information');
-				process.exit(1);
+                        case 'prp-run': {
+                                const slugIndex = args.indexOf('--slug');
+                                const batonIndex = args.indexOf('--baton');
+                                const slug = slugIndex !== -1 ? args[slugIndex + 1] : undefined;
+                                const batonOverride = batonIndex !== -1 ? args[batonIndex + 1] : undefined;
+                                const dryRun = args.includes('--dry-run');
+                                if (!slug && !batonOverride) {
+                                        log.error('Provide --slug <task-id> or --baton <path>');
+                                        process.exit(1);
+                                }
+                                const batonPath = resolveBatonPath(slug, batonOverride);
+                                log.step(`Using baton: ${batonPath}`);
+                                await runPrpForTask({ slug: slug ?? batonOverride ?? 'task', batonPath, dryRun });
+                                break;
+                        }
+
+                        default:
+                                log.error(`Unknown command: ${command}`);
+                                log.info('Run "pnpm cortex-task" for usage information');
+                                process.exit(1);
 		}
 	} catch (error) {
 		log.error(`Error: ${error.message}`);

@@ -11,7 +11,7 @@ import type {
         StoreMemoryInput,
         StoreMemoryResult,
 } from '../provider/MemoryProvider.js';
-import type { MemoryCoreConfig } from '../types.js';
+import type { MemoryCoreConfig, QdrantConfig } from '../types.js';
 
 export interface LocalMemoryProviderOptions {
         /** Maximum number of records to retain in memory. */

@@ -6,6 +6,13 @@
 - LocalMemoryEntryId: 4d9dfe70-8674-4c5f-a75f-b9c9b65ec0c4
 - RESTReference: http://localhost:3028/api/v1/memories/4d9dfe70-8674-4c5f-a75f-b9c9b65ec0c4
 
+## 2025-10-16 Task baton metadata wired into PRP Runner
+- Decision: Connected `cortex-task prp-run` to PRP runner so task batons produce blueprints, augment run manifests with `taskId`/`priority`/`specPath`, and document the workflow for future agents.
+- Impacted Surfaces: scripts/cortex-task.mjs; packages/prp-runner/src/task-integration.ts; packages/prp-runner/src/run-manifest/schema.ts; packages/prp-runner/src/index.ts; packages/prp-runner/src/run-manifest/index.ts; packages/prp-runner/src/__tests__/task-integration.test.ts; packages/prp-runner/README.md; docs/task-prp-integration.md; .github/workflows/prp-task-ci.yml.
+- Evidence: `pnpm --filter @cortex-os/prp-runner test`; `pnpm cortex-task prp-run --slug demo-task --dry-run` (dry run output persisted in task logs).
+- LocalMemoryEntryId: [Pending] integrate-task-management-prp-runner
+- RESTReference: [Pending]
+
 ## 2025-10-14 prp-runner Run Manifest Emission Implemented
 - Decision: Persist run-manifest JSON alongside prp.md with spool telemetry, Product→Automation stage aggregation, and public exports so downstream tooling can inspect manifest state.
 - Impacted Surfaces: packages/prp-runner/src/run-manifest/builder.ts; packages/prp-runner/src/run-manifest/schema.ts; packages/prp-runner/src/runner.ts; packages/prp-runner/src/documentation/prp-generator.ts; packages/prp-runner/tests/integration/run-manifest.integration.test.ts; packages/prp-runner/src/run-manifest/__tests__/manifest-builder.test.ts; packages/prp-runner/__tests__/public-exports.snapshot.test.ts
