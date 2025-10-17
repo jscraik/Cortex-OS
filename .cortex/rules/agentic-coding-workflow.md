@@ -29,7 +29,7 @@
    ```
    Save raw response to `logs/vibe-check/<task>.json`; missing logs block merge. See `/.cortex/rules/vibe-check.md`.
 3. **Local Memory Parity** — Append key decisions to `.github/instructions/memories.instructions.md` and persist via Local Memory MCP/REST.
-4. **Knowledge Connectors Live-Check** — Verify `${WIKIDATA_MCP_URL}/healthz` and `${ARXIV_MCP_URL}/healthz`. Store timestamps/responses in `research/connectors-health.log`. Planning is blocked if down.
+4. **Knowledge Connectors Live-Check** — Verify `${WIKIDATA_MCP_URL}/healthz` and `${ARXIV_MCP_URL}/healthz`. Store timestamps/responses in `research/connectors-health.log`. Planning is blocked if down, except where tier-based cached health fallback is permitted (see "Toolchain Resilience", lines 281–283).
 5. **Secrets via 1Password CLI** — Fetch with `op`; never persist secrets in repo or long-lived env vars.
 6. **Hybrid Model Live-Only Rule** — Embeddings, rerankers, generations must use live engines (MLX, Ollama, Frontier). No stubs, dry-runs, or recorded outputs.
    ```bash
