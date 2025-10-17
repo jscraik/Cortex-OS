@@ -54,7 +54,7 @@
     "postinstall": "bash -lc 'if [ \"${CI:-}\" != \"true\" ] && [ \"${GITHUB_ACTIONS:-}\" != \"true\" ] && [ \"${CORTEX_EFFICIENCY_SETUP_SKIP:-}\" != \"1\" ] && [ \"${CORTEX_EFFICIENCY_SETUP_SKIP:-}\" != \"true\" ]; then if command -v git >/dev/null 2>&1 && [ -d .git ]; then git config --local core.hooksPath .husky/_ || true; fi; scripts/ensure-efficiency-tools.sh || true; fi'",
     "docs:lint": "markdownlint-cli2 \"README.md\" \"CONTRIBUTING.md\" \"docs/quick-start.md\" \"docs/python-integration.md\" \"docs/architecture-overview.md\" --config .markdownlint-cli2.yaml",
     "lint:md": "node scripts/lint-markdown-changed.mjs",
-    "lint:md:changed": "bash -lc \"changed=$(git --no-pager diff --name-only | grep -E '\\\\.(md|MD)$' | sort -u); if [ -n \\\"$changed\\\" ]; then echo 'Linting changed markdown files...'; echo \\\"$changed\\\" | xargs -n 50 -I{} markdownlint-cli2 {} --config .markdownlint-cli2.yaml; else echo 'No changed markdown files.'; fi\"",
+    "lint:md:changed": "node scripts/lint-markdown-changed.mjs",
     "docs:lint:all": "markdownlint-cli2 \"README.md\" \"CONTRIBUTING.md\" \"docs/**/*.md\" \"!docs/legacy/**\" \"!docs/archive/**\" \"!**/node_modules/**\" \"!**/CHANGELOG.md\" \"!**/History.md\" \"!**/HISTORY.md\" --config .markdownlint-cli2.yaml",
     "docs:site:start": "cd website && npm start",
     "docs:site:build": "cd website && npm run build",
