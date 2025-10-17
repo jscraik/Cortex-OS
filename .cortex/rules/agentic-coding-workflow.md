@@ -287,7 +287,7 @@ CLI behavior (expected):
 ## Onboarding Quickstart (new contributors and agents)
 
 1. Run `pnpm task:new --slug "<slug>" --tier "<fix|feature|refactor>"`.
-2. Write the North-Star acceptance test in `tests/acceptance/<slug>.spec.ts`.
+2. Write the North-Star acceptance test in `tests/acceptance/<slug>.spec.[ts|js|py|http]`.
 3. Draft a ≤ 7-step plan in `implementation-plan.md`.
 4. Run `pnpm oversight:vibe-check` and commit the JSON log.
 5. Scaffold failing tests (G3) and begin short red → green loops (G4).
