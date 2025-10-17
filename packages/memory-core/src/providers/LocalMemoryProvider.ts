@@ -367,7 +367,7 @@ export class LocalMemoryProvider implements MemoryProvider {
                         limit,
                         offset,
                 });
-                return hits.map((hit) => ({ ...hit, score: Math.max(hit.score, threshold) }));
+                return hits.filter((hit) => hit.score >= threshold);
         }
 
         private async indexRecord(record: MemoryRecord, sanitisedContent: string): Promise<boolean> {
