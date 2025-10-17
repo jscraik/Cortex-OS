@@ -108,7 +108,7 @@ export class ContextPackService {
                                 return {
                                         subgraph,
                                         packedContext: '',
-                                        citations: options.includeCitations ? [] : [],
+                                        citations: [],
                                         metadata: {
                                                 totalNodes: 0,
                                                 totalEdges: 0,
