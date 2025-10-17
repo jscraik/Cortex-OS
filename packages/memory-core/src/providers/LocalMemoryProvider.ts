@@ -11,12 +11,16 @@ import type {
         StoreMemoryInput,
         StoreMemoryResult,
 } from '../provider/MemoryProvider.js';
-import type { MemoryCoreConfig, QdrantConfig } from '../types.js';
+import type { MemoryCoreConfig, MemoryMetadata, QdrantConfig } from '../types.js';
 
 export interface LocalMemoryProviderOptions {
         /** Maximum number of records to retain in memory. */
         maxRecords?: number;
         maxLimit?: number;
+}
+
+interface TaskQueue {
+  add<T>(task: () => Promise<T>): Promise<T>;
 }
 
 interface MemoryRecord {
@@ -80,6 +84,72 @@ class TaskQueue {
                         next();
                 }
         }
+}
+
+type ExtendedStoreInput = StoreMemoryInput & {
+  content?: string;
+  importance?: number;
+  domain?: string;
+  metadata?: MemoryMetadata;
+  tags?: string[];
+};
+
+type ExtendedSearchInput = SearchMemoryInput & {
+  search_type?: 'semantic' | 'keyword' | 'hybrid';
+  limit?: number;
+  offset?: number;
+  domain?: string;
+  session_filter_mode?: string;
+  score_threshold?: number;
+  hybrid_weight?: number;
+  tenant?: string;
+  metadata?: MemoryMetadata;
+  labels?: string[];
+  tags?: string[];
+};
+
+class SimpleTaskQueue implements TaskQueue {
+  private readonly concurrency: number;
+  private active = 0;
+  private readonly pending: Array<() => void> = [];
+
+  constructor(concurrency: number) {
+    this.concurrency = Math.max(1, concurrency);
+  }
+
+  add<T>(task: () => Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const run = () => {
+        this.active += 1;
+        Promise.resolve()
+          .then(task)
+          .then(
+            (value) => {
+              resolve(value);
+              this.finish();
+            },
+            (error) => {
+              reject(error);
+              this.finish();
+            },
+          );
+      };
+
+      if (this.active < this.concurrency) {
+        run();
+      } else {
+        this.pending.push(run);
+      }
+    });
+  }
+
+  private finish() {
+    this.active = Math.max(0, this.active - 1);
+    const next = this.pending.shift();
+    if (next) {
+      next();
+    }
+  }
 }
 
 function normaliseTags(tags?: string[]): string[] {
@@ -512,3 +582,4 @@ export class LocalMemoryProvider implements MemoryProvider {
                 return Math.min(Math.max(value, 0), 1);
         }
 }
+

@@ -543,10 +543,18 @@ export interface GraphRAGResult {
 }
 
 interface QueryReservation {
-	queryId: string;
-	startTime: number;
-	release: () => void;
+        queryId: string;
+        startTime: number;
+        release: () => void;
 }
+
+type QueryPipelineState = {
+        seeds: GraphRAGSearchResult[];
+        focusNodeIds: string[];
+        expansion: Awaited<ReturnType<typeof expandNeighbors>>;
+        context: Awaited<ReturnType<typeof assembleContext>>;
+        result: GraphRAGResult;
+};
 
 const MAX_EXTERNAL_CITATIONS = 16;
 const CHUNK_REF_BATCH_SIZE = 500;
@@ -850,249 +858,34 @@ export class GraphRAGService {
 		}
 	}
 
-	async query(params: GraphRAGQueryRequest): Promise<GraphRAGResult> {
-		const reservation = this.reserveQuerySlot();
-		const overallStartTime = Date.now();
+        async query(params: GraphRAGQueryRequest): Promise<GraphRAGResult> {
+                const reservation = this.reserveQuerySlot();
+                const overallStartTime = Date.now();
 
-		try {
-			const validated = GraphRAGQueryRequestSchema.parse(params);
+                try {
+                        const validated = GraphRAGQueryRequestSchema.parse(params);
 
-			// Analyze query with ML optimization if enabled
-			let queryFeatures;
-			let mlPrediction;
-			if (this.config.mlOptimization.enabled) {
-				try {
-					queryFeatures = await this.mlOptimizationManager.analyzeQuery(validated);
-					mlPrediction = await this.mlOptimizationManager.predictPerformance(validated, queryFeatures);
+                        const { queryFeatures } = await this.analyzeQueryWithMlOptimization(validated, reservation.queryId);
 
-					// Log ML insights
-					if (mlPrediction.confidence > 0.7) {
-						console.debug('brAInwav GraphRAG ML prediction', {
-							component: 'memory-core',
-							brand: 'brAInwav',
-							queryId: reservation.queryId,
-							predictedLatency: mlPrediction.predictedLatency,
-							confidence: mlPrediction.confidence,
-							bottlenecks: mlPrediction.bottlenecks,
-						});
-					}
-				} catch (error) {
-					console.warn('brAInwav GraphRAG ML analysis failed', {
-						component: 'memory-core',
-						brand: 'brAInwav',
-						queryId: reservation.queryId,
-						error: error instanceof Error ? error.message : String(error),
-					});
-				}
-			}
+                        const precomputedResult = await this.tryServePrecomputedResult(validated, reservation);
+                        if (precomputedResult) {
+                                return precomputedResult;
+                        }
 
-			// Check precomputed results first
-			if (this.config.precomputation.enabled) {
-				const precomputedStart = Date.now();
-				const precomputedResults = await this.queryPrecomputer.getPrecomputedResult(validated);
+                        const pipelineState = await this.runCoreQueryPipeline(validated, reservation);
 
-				if (precomputedResults) {
-					// Build result from precomputed data
-					const precomputedDuration = Date.now() - precomputedStart;
+                        await this.enrichWithExternalCitations(validated, pipelineState);
 
-					performanceMonitor.recordQuery({
-						queryId: `${reservation.queryId}_precomputed`,
-						startTime: precomputedStart,
-						operation: 'hybrid_search',
-						cacheHit: true,
-						resultCount: precomputedResults.length,
-					});
+                        await this.finalizeQuery(
+                                validated,
+                                pipelineState,
+                                reservation,
+                                overallStartTime,
+                                queryFeatures,
+                        );
 
-					// Lift precomputed results to graph nodes
-					const focusNodeIds = await this.liftToGraphNodes(precomputedResults);
-
-					// Minimal context assembly for precomputed results
-					const context = await assembleContext(
-						focusNodeIds,
-						Math.min(validated.maxChunks, this.config.limits.maxContextChunks),
-						precomputedResults,
-					);
-
-					const result = this.buildResult(context, { neighborIds: [], edges: [] }, reservation.startTime, precomputedResults);
-
-					if (validated.includeCitations) {
-						result.citations = this.formatCitations(context.chunks);
-					}
-
-					console.info('brAInwav GraphRAG precomputed result used', {
-						component: 'memory-core',
-						brand: 'brAInwav',
-						queryId: reservation.queryId,
-						resultCount: precomputedResults.length,
-						duration: precomputedDuration,
-					});
-
-					return result;
-				}
-			}
-
-			// Track hybrid search performance
-                        const searchStartTime = Date.now();
-                        let seeds = await this.hybridSeedSearch(validated);
-                        const { hydratedSeeds, chunkRefs } = await this.hydrateSeedResults(seeds);
-                        seeds = hydratedSeeds;
-			performanceMonitor.recordQuery({
-				queryId: `${reservation.queryId}_search`,
-				startTime: searchStartTime,
-				operation: 'hybrid_search',
-				cacheHit: false, // Would need to be determined from cache implementation
-				resultCount: seeds.length,
-			});
-
-			// Record query for precomputation analysis
-			if (this.config.precomputation.enabled) {
-				this.queryPrecomputer.recordQuery(validated, Date.now() - searchStartTime);
-			}
-
-                        const focusNodeIds = await this.liftToGraphNodes(seeds, chunkRefs);
-
-			// Track graph expansion performance
-			const expansionStartTime = Date.now();
-			const expansion = await expandNeighbors(focusNodeIds, {
-				allowedEdges: this.config.expansion.allowedEdges as GraphEdgeType[],
-				maxNeighborsPerNode: this.config.expansion.maxNeighborsPerNode,
-			});
-			performanceMonitor.recordQuery({
-				queryId: `${reservation.queryId}_expansion`,
-				startTime: expansionStartTime,
-				operation: 'graph_expansion',
-				cacheHit: false,
-				resultCount: expansion.neighborIds.length,
-			});
-
-			// Track context assembly performance
-			const contextStartTime = Date.now();
-			const allNodeIds = [...focusNodeIds, ...expansion.neighborIds];
-			const context = await assembleContext(
-				allNodeIds,
-				Math.min(validated.maxChunks, this.config.limits.maxContextChunks),
-				seeds,
-			);
-			performanceMonitor.recordQuery({
-				queryId: `${reservation.queryId}_context`,
-				startTime: contextStartTime,
-				operation: 'context_assembly',
-				cacheHit: false,
-				resultCount: context.chunks.length,
-			});
-
-			const result = this.buildResult(context, expansion, reservation.startTime, seeds);
-
-			if (validated.includeCitations) {
-				result.citations = this.formatCitations(context.chunks);
-			}
-
-			// Fetch external citations from Neo4j if configured
-			if (this.externalKg && focusNodeIds.length > 0) {
-				const kgCitations = await this.fetchExternalCitations(focusNodeIds);
-				if (kgCitations.length > 0) {
-					const existing = result.citations ?? [];
-					const combined = [...existing];
-					for (const citation of kgCitations) {
-						if (
-							!combined.some((c) => c.path === citation.path && c.nodeType === citation.nodeType)
-						) {
-							combined.push(citation);
-						}
-					}
-					result.citations = combined;
-					result.metadata.externalKgEnriched = true;
-				}
-			}
-
-			// Fetch external citations from MCP provider if configured
-			if (this.externalProvider && this.config.externalKg.provider === 'mcp') {
-				try {
-					const mcpStartTime = Date.now();
-					const mcpCitations = await this.fetchMcpCitations(validated.question, seeds);
-
-					// Record MCP provider performance
-					performanceMonitor.recordExternalProviderCall(
-						'mcp',
-						Date.now() - mcpStartTime,
-						mcpCitations.length > 0,
-					);
-
-					if (mcpCitations.length > 0) {
-						const existing = result.citations ?? [];
-						const combined = [...existing];
-
-						// Merge citations without duplicating paths
-						const seenPaths = new Set(combined.map((c) => c.path));
-						for (const citation of mcpCitations) {
-							if (!seenPaths.has(citation.path)) {
-								combined.push({
-									path: citation.path,
-									nodeType: GraphNodeType.DOC,
-									relevanceScore: 0,
-									brainwavIndexed: false,
-								});
-								seenPaths.add(citation.path);
-							}
-						}
-
-						result.citations = combined;
-						result.metadata.externalKgEnriched = true;
-					}
-				} catch (error) {
-					performanceMonitor.recordExternalProviderCall('mcp', 0, false);
-
-					console.warn('brAInwav GraphRAG failed to fetch MCP citations', {
-						component: 'memory-core',
-						brand: 'brAInwav',
-						question: validated.question,
-						error: error instanceof Error ? error.message : String(error),
-					});
-				}
-			}
-
-			// Record overall query performance
-			const queryLatency = Date.now() - overallStartTime;
-			performanceMonitor.recordQuery({
-				queryId: reservation.queryId,
-				startTime: overallStartTime,
-				operation: 'hybrid_search', // Use overall operation type
-				cacheHit: false,
-				resultCount: context.chunks.length,
-			});
-
-			// Record query result for ML learning if enabled
-			if (this.config.mlOptimization.enabled && queryFeatures) {
-				try {
-					await this.mlOptimizationManager.recordQueryResult(
-						validated,
-						queryFeatures,
-						result,
-						queryLatency
-					);
-				} catch (error) {
-					console.warn('brAInwav GraphRAG ML result recording failed', {
-						component: 'memory-core',
-						brand: 'brAInwav',
-						queryId: reservation.queryId,
-						error: error instanceof Error ? error.message : String(error),
-					});
-				}
-			}
-
-			if (this.config.branding.emitBrandedEvents) {
-				await this.emitQueryEvent('completed', {
-					queryId: reservation.queryId,
-					question: validated.question,
-					focusNodes: focusNodeIds.length,
-					expandedNodes: expansion.neighborIds.length,
-					totalChunks: context.chunks.length,
-					durationMs: Date.now() - reservation.startTime,
-				});
-			}
-
-			return result;
-		} catch (error) {
+                        return pipelineState.result;
+                } catch (error) {
 			// Record error in performance monitor
 			performanceMonitor.recordQuery({
 				queryId: reservation.queryId,
@@ -1112,16 +905,275 @@ export class GraphRAGService {
 				});
 			}
 			throw error;
-		} finally {
-			reservation.release();
-		}
-	}
+                } finally {
+                        reservation.release();
+                }
+        }
 
-	async healthCheck(): Promise<{
-		status: 'healthy' | 'unhealthy' | 'degraded';
-		components: { qdrant: boolean; prisma: boolean; gpu?: boolean; autoScaling?: boolean; mlOptimization?: boolean };
-		brainwavSource: string;
-		performance?: {
+        private async analyzeQueryWithMlOptimization(
+                validated: GraphRAGQueryRequest,
+                queryId: string,
+        ): Promise<{ queryFeatures?: unknown }> {
+                if (!this.config.mlOptimization.enabled) {
+                        return {};
+                }
+
+                try {
+                        const queryFeatures = await this.mlOptimizationManager.analyzeQuery(validated);
+                        const mlPrediction = await this.mlOptimizationManager.predictPerformance(validated, queryFeatures);
+
+                        if (mlPrediction.confidence > 0.7) {
+                                console.debug('brAInwav GraphRAG ML prediction', {
+                                        component: 'memory-core',
+                                        brand: 'brAInwav',
+                                        queryId,
+                                        predictedLatency: mlPrediction.predictedLatency,
+                                        confidence: mlPrediction.confidence,
+                                        bottlenecks: mlPrediction.bottlenecks,
+                                });
+                        }
+
+                        return { queryFeatures };
+                } catch (error) {
+                        console.warn('brAInwav GraphRAG ML analysis failed', {
+                                component: 'memory-core',
+                                brand: 'brAInwav',
+                                queryId,
+                                error: error instanceof Error ? error.message : String(error),
+                        });
+
+                        return {};
+                }
+        }
+
+        private async tryServePrecomputedResult(
+                validated: GraphRAGQueryRequest,
+                reservation: QueryReservation,
+        ): Promise<GraphRAGResult | null> {
+                if (!this.config.precomputation.enabled) {
+                        return null;
+                }
+
+                const precomputedStart = Date.now();
+                const precomputedResults = await this.queryPrecomputer.getPrecomputedResult(validated);
+
+                if (!precomputedResults) {
+                        return null;
+                }
+
+                const precomputedDuration = Date.now() - precomputedStart;
+
+                performanceMonitor.recordQuery({
+                        queryId: `${reservation.queryId}_precomputed`,
+                        startTime: precomputedStart,
+                        operation: 'hybrid_search',
+                        cacheHit: true,
+                        resultCount: precomputedResults.length,
+                });
+
+                const focusNodeIds = await this.liftToGraphNodes(precomputedResults);
+                const context = await assembleContext(
+                        focusNodeIds,
+                        Math.min(validated.maxChunks, this.config.limits.maxContextChunks),
+                        precomputedResults,
+                );
+
+                const result = this.buildResult(
+                        context,
+                        { neighborIds: [], edges: [] },
+                        reservation.startTime,
+                        precomputedResults,
+                );
+
+                if (validated.includeCitations) {
+                        result.citations = this.formatCitations(context.chunks);
+                }
+
+                console.info('brAInwav GraphRAG precomputed result used', {
+                        component: 'memory-core',
+                        brand: 'brAInwav',
+                        queryId: reservation.queryId,
+                        resultCount: precomputedResults.length,
+                        duration: precomputedDuration,
+                });
+
+                return result;
+        }
+
+        private async runCoreQueryPipeline(
+                validated: GraphRAGQueryRequest,
+                reservation: QueryReservation,
+        ): Promise<QueryPipelineState> {
+                const searchStartTime = Date.now();
+                const seeds = await this.hybridSeedSearch(validated);
+                performanceMonitor.recordQuery({
+                        queryId: `${reservation.queryId}_search`,
+                        startTime: searchStartTime,
+                        operation: 'hybrid_search',
+                        cacheHit: false,
+                        resultCount: seeds.length,
+                });
+
+                if (this.config.precomputation.enabled) {
+                        this.queryPrecomputer.recordQuery(validated, Date.now() - searchStartTime);
+                }
+
+                const focusNodeIds = await this.liftToGraphNodes(seeds);
+
+                const expansionStartTime = Date.now();
+                const expansion = await expandNeighbors(focusNodeIds, {
+                        allowedEdges: this.config.expansion.allowedEdges as GraphEdgeType[],
+                        maxNeighborsPerNode: this.config.expansion.maxNeighborsPerNode,
+                });
+                performanceMonitor.recordQuery({
+                        queryId: `${reservation.queryId}_expansion`,
+                        startTime: expansionStartTime,
+                        operation: 'graph_expansion',
+                        cacheHit: false,
+                        resultCount: expansion.neighborIds.length,
+                });
+
+                const contextStartTime = Date.now();
+                const allNodeIds = [...focusNodeIds, ...expansion.neighborIds];
+                const context = await assembleContext(
+                        allNodeIds,
+                        Math.min(validated.maxChunks, this.config.limits.maxContextChunks),
+                        seeds,
+                );
+                performanceMonitor.recordQuery({
+                        queryId: `${reservation.queryId}_context`,
+                        startTime: contextStartTime,
+                        operation: 'context_assembly',
+                        cacheHit: false,
+                        resultCount: context.chunks.length,
+                });
+
+                const result = this.buildResult(context, expansion, reservation.startTime, seeds);
+
+                if (validated.includeCitations) {
+                        result.citations = this.formatCitations(context.chunks);
+                }
+
+                return { seeds, focusNodeIds, expansion, context, result };
+        }
+
+        private async enrichWithExternalCitations(
+                validated: GraphRAGQueryRequest,
+                pipelineState: QueryPipelineState,
+        ): Promise<void> {
+                const { focusNodeIds, result, seeds } = pipelineState;
+
+                if (this.externalKg && focusNodeIds.length > 0) {
+                        const kgCitations = await this.fetchExternalCitations(focusNodeIds);
+                        if (kgCitations.length > 0) {
+                                const existing = result.citations ?? [];
+                                const combined = [...existing];
+                                for (const citation of kgCitations) {
+                                        if (!combined.some((c) => c.path === citation.path && c.nodeType === citation.nodeType)) {
+                                                combined.push(citation);
+                                        }
+                                }
+                                result.citations = combined;
+                                result.metadata.externalKgEnriched = true;
+                        }
+                }
+
+                if (this.externalProvider && this.config.externalKg.provider === 'mcp') {
+                        try {
+                                const mcpStartTime = Date.now();
+                                const mcpCitations = await this.fetchMcpCitations(validated.question, seeds);
+
+                                performanceMonitor.recordExternalProviderCall(
+                                        'mcp',
+                                        Date.now() - mcpStartTime,
+                                        mcpCitations.length > 0,
+                                );
+
+                                if (mcpCitations.length > 0) {
+                                        const existing = result.citations ?? [];
+                                        const combined = [...existing];
+                                        const seenPaths = new Set(combined.map((c) => c.path));
+                                        for (const citation of mcpCitations) {
+                                                if (!seenPaths.has(citation.path)) {
+                                                        combined.push({
+                                                                path: citation.path,
+                                                                nodeType: GraphNodeType.DOC,
+                                                                relevanceScore: 0,
+                                                                brainwavIndexed: false,
+                                                        });
+                                                        seenPaths.add(citation.path);
+                                                }
+                                        }
+
+                                        result.citations = combined;
+                                        result.metadata.externalKgEnriched = true;
+                                }
+                        } catch (error) {
+                                performanceMonitor.recordExternalProviderCall('mcp', 0, false);
+
+                                console.warn('brAInwav GraphRAG failed to fetch MCP citations', {
+                                        component: 'memory-core',
+                                        brand: 'brAInwav',
+                                        question: validated.question,
+                                        error: error instanceof Error ? error.message : String(error),
+                                });
+                        }
+                }
+        }
+
+        private async finalizeQuery(
+                validated: GraphRAGQueryRequest,
+                pipelineState: QueryPipelineState,
+                reservation: QueryReservation,
+                overallStartTime: number,
+                queryFeatures?: unknown,
+        ): Promise<void> {
+                const { context, expansion, focusNodeIds, result } = pipelineState;
+                const queryLatency = Date.now() - overallStartTime;
+
+                performanceMonitor.recordQuery({
+                        queryId: reservation.queryId,
+                        startTime: overallStartTime,
+                        operation: 'hybrid_search',
+                        cacheHit: false,
+                        resultCount: context.chunks.length,
+                });
+
+                if (this.config.mlOptimization.enabled && queryFeatures) {
+                        try {
+                                await this.mlOptimizationManager.recordQueryResult(
+                                        validated,
+                                        queryFeatures,
+                                        result,
+                                        queryLatency,
+                                );
+                        } catch (error) {
+                                console.warn('brAInwav GraphRAG ML result recording failed', {
+                                        component: 'memory-core',
+                                        brand: 'brAInwav',
+                                        queryId: reservation.queryId,
+                                        error: error instanceof Error ? error.message : String(error),
+                                });
+                        }
+                }
+
+                if (this.config.branding.emitBrandedEvents) {
+                        await this.emitQueryEvent('completed', {
+                                queryId: reservation.queryId,
+                                question: validated.question,
+                                focusNodes: focusNodeIds.length,
+                                expandedNodes: expansion.neighborIds.length,
+                                totalChunks: context.chunks.length,
+                                durationMs: Date.now() - reservation.startTime,
+                        });
+                }
+        }
+
+        async healthCheck(): Promise<{
+                status: 'healthy' | 'unhealthy' | 'degraded';
+                components: { qdrant: boolean; prisma: boolean; gpu?: boolean; autoScaling?: boolean; mlOptimization?: boolean };
+                brainwavSource: string;
+                performance?: {
 			averageLatency: number;
 			cacheHitRatio: number;
 			memoryUsageMB: number;
