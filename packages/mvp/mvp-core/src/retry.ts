@@ -15,7 +15,7 @@ export async function retry<T>(fn: () => Promise<T>, policy: RetryPolicy): Promi
                 } catch (e) {
                         lastErr = e;
                         if (attempt++ === policy.maxRetries) break;
-                        const jitterMs = policy.jitter ? randomInt(0, Math.max(policy.backoffMs, 1)) : 0;
+                        const jitterMs = policy.jitter ? randomInt(0, Math.max(policy.backoffMs, 2)) : 0;
                         await new Promise((resolve) => setTimeout(resolve, policy.backoffMs + jitterMs));
                 }
         }
