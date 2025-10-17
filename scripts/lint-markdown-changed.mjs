@@ -81,7 +81,7 @@ async function runMarkdownlint(files) {
 async function main() {
   const files = await gatherMarkdownFiles();
   if (files.length === 0) {
-    console.log('No changed markdown files.');
+    console.log('brAInwav markdownlint: No changed markdown files.');
     return;
   }
 
