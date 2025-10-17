@@ -308,19 +308,27 @@ export class ModelRouter implements IModelRouter {
 
 			// Add cloud models for specialized delegation
 			if (!this.privacyModeEnabled) {
-				const cloudModels = [
-					{
-						name: 'qwen3-coder:480b-cloud',
-						priority: 105, // Higher than local for enterprise tasks
-						fallback: ['qwen3-coder:30b'],
-						context_threshold: 100000,
-						complexity_threshold: 'enterprise' as const,
-					},
-					{
-						name: 'gpt-oss:120b-cloud',
-						priority: 102,
-						fallback: ['gpt-oss:20b'],
-						context_threshold: 80000,
+                                const cloudModels = [
+                                        {
+                                                name: 'qwen3-coder:480b-cloud',
+                                                priority: 105, // Higher than local for enterprise tasks
+                                                fallback: ['qwen3-coder:30b'],
+                                                context_threshold: 100000,
+                                                complexity_threshold: 'enterprise' as const,
+                                        },
+                                        {
+                                                name: 'glm-4.6:cloud',
+                                                priority: 103,
+                                                fallback: ['glm-4.5'],
+                                                context_threshold: 60000,
+                                                complexity_threshold: 'complex' as const,
+                                                // General reasoning / documentation synthesis tier
+                                        },
+                                        {
+                                                name: 'gpt-oss:120b-cloud',
+                                                priority: 102,
+                                                fallback: ['gpt-oss:20b'],
+                                                context_threshold: 80000,
 						complexity_threshold: 'complex' as const,
 					},
 					{
@@ -333,16 +341,16 @@ export class ModelRouter implements IModelRouter {
 				];
 
 				for (const cloudModel of cloudModels) {
-					chatModels.push({
-						name: cloudModel.name,
-						provider: 'ollama-cloud',
-						capabilities: ['chat'],
-						priority: cloudModel.priority,
-						fallback: cloudModel.fallback,
-						context_threshold: cloudModel.context_threshold,
-						complexity_threshold: cloudModel.complexity_threshold,
-					});
-				}
+                                        chatModels.push({
+                                                name: cloudModel.name,
+                                                provider: 'ollama-cloud',
+                                                capabilities: ['chat'],
+                                                priority: cloudModel.priority,
+                                                fallback: cloudModel.fallback,
+                                                context_threshold: cloudModel.context_threshold,
+                                                complexity_threshold: cloudModel.complexity_threshold,
+                                        });
+                                }
 			}
 
 			// Only include MCP if privacy mode is disabled

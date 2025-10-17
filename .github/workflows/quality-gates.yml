@@ -102,6 +102,9 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
         run: pnpm test:smart
 
+      - name: Audit observability adoption
+        run: pnpm audit:observability
+
       - name: Build affected packages
         if: inputs.run-build
         env:

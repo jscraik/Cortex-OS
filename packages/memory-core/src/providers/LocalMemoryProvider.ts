@@ -105,12 +105,24 @@ function normaliseTags(tags?: string[]): string[] {
   return tags.map((tag) => tag.trim().toLowerCase()).filter((tag) => tag.length > 0);
 }
 
+interface TaskQueue {
+  add<T>(task: () => Promise<T>): Promise<T>;
+}
+
+export interface LocalMemoryProviderDependencies {
+  databaseFactory?: (config: LocalMemoryProviderResolvedOptions) => unknown;
+  qdrantFactory?: (config: QdrantConfig) => unknown;
+  queueFactory?: (concurrency: number) => TaskQueue;
+}
+
+type LocalMemoryProviderResolvedOptions = LocalMemoryProviderOptions & Partial<MemoryCoreConfig>;
+
 /**
  * Lightweight in-memory implementation of the memory provider interface with
  * basic security hardening to satisfy integration tests.
  */
 export class LocalMemoryProvider implements MemoryProvider {
-  private readonly records = new Map<string, MemoryRecord>();
+  private readonly records: Map<string, MemoryRecord>;
   private readonly maxRecords: number;
   private readonly maxLimit: number;
   private readonly maxOffset: number;
@@ -174,10 +186,6 @@ export class LocalMemoryProvider implements MemoryProvider {
           oldestKey = key;
         }
       }
-      if (oldestKey !== undefined) {
-        this.records.delete(oldestKey);
-      }
-    }
 
     this.records.set(id, record);
 
@@ -234,6 +242,10 @@ export class LocalMemoryProvider implements MemoryProvider {
 
     const tookMs = Date.now() - start;
     return { hits, tookMs };
+  }
+
+  getLastSearchPlanForTesting(): { sql: string; params: readonly string[] } | undefined {
+    return this.lastSearchPlan;
   }
 
   async get(input: GetMemoryInput): Promise<GetMemoryResult> {
