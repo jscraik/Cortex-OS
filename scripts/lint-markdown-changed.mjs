@@ -30,9 +30,32 @@ function isMarkdown(file) {
 }
 
 async function gatherMarkdownFiles() {
-  const tracked = await listFiles('git', ['--no-pager', 'diff', '--name-only']);
+  // Detect if running in CI
+  const isCI = !!process.env.CI || !!process.env.GITHUB_ACTIONS;
+  let changed = [];
+
+  if (isCI) {
+    // In CI, diff against the merge-base (e.g., origin/main or GITHUB_BASE_REF)
+    let baseRef = process.env.GITHUB_BASE_REF || 'origin/main';
+    // Find the merge-base commit
+    let mergeBase = '';
+    try {
+      const { stdout } = await execFileAsync('git', ['merge-base', 'HEAD', baseRef], { cwd: process.cwd() });
+      mergeBase = stdout.trim();
+    } catch (e) {
+      // fallback: just use baseRef directly
+      mergeBase = baseRef;
+    }
+    changed = await listFiles('git', ['--no-pager', 'diff', '--name-only', `${mergeBase}...HEAD`]);
+  } else {
+    // Locally, include unstaged and staged changes
+    const unstaged = await listFiles('git', ['--no-pager', 'diff', '--name-only']);
+    const staged = await listFiles('git', ['--no-pager', 'diff', '--name-only', '--cached']);
+    changed = [...unstaged, ...staged];
+  }
+  // Always include untracked files
   const untracked = await listFiles('git', ['ls-files', '--others', '--exclude-standard']);
-  const unique = new Set([...tracked, ...untracked].filter(isMarkdown));
+  const unique = new Set([...changed, ...untracked].filter(isMarkdown));
   return Array.from(unique);
 }
 
