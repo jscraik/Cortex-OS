@@ -242,7 +242,7 @@ async function main() {
         }
 
         if (diff.resolvedCircular.length > 0 || diff.resolvedOrphans.length > 0) {
-                console.log('[dependency:audit] ✅ Some baseline issues were resolved.');
+                console.log('[brAInwav][dependency:audit] ✅ Some baseline issues were resolved.');
                 if (diff.resolvedCircular.length > 0) {
                         logList('Resolved circular dependencies:', diff.resolvedCircular, (cycle) => cycleKey(cycle));
                 }
