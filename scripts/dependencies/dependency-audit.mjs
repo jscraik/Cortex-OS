@@ -233,7 +233,7 @@ async function main() {
         }
 
         if (!failed) {
-                console.log('[dependency:audit] No new dependency structural issues detected.');
+                console.log('[brAInwav][dependency:audit] No new dependency structural issues detected.');
         } else {
                 console.error(
                         '🚫 Dependency audit failed. Resolve the issues above or refresh the baseline once they are triaged.',
