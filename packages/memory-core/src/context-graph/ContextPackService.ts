@@ -412,7 +412,11 @@ export class ContextPackService {
 
                 if (evidence) {
                         markdown += `## Evidence Summary\n\n`;
-                        markdown += `*Sources:* ${evidence.sources.join(', ')}\n\n`;
+                        if (evidence.sources && evidence.sources.length > 0) {
+                            markdown += `*Sources:* ${evidence.sources.join(', ')}\n\n`;
+                        } else {
+                            markdown += `*Sources:* No sources available.\n\n`;
+                        }
                         markdown += `*Confidence:* ${(evidence.confidence * 100).toFixed(0)}%\n\n`;
                 }
 
