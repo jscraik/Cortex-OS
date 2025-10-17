@@ -222,7 +222,12 @@ export class LocalMemoryProvider implements MemoryProvider {
         async store(input: StoreMemoryInput): Promise<StoreMemoryResult> {
                 const now = new Date();
                 const createdAt = now.toISOString();
-                const content = typeof input.content === 'string' ? input.content : typeof input.text === 'string' ? input.text : '';
+                let content = '';
+                if (typeof input.content === 'string') {
+                        content = input.content;
+                } else if (typeof input.text === 'string') {
+                        content = input.text;
+                }
                 const tags = normaliseTags(input.tags ?? []);
                 const metadata = normaliseMetadata(input.metadata ?? input.meta);
                 const id = input.id ?? randomUUID();
