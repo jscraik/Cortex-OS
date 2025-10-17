@@ -26,7 +26,7 @@ const qdrantMock = {
 
 const expandMock = vi.hoisted(() => vi.fn());
 const assembleMock = vi.hoisted(() => vi.fn());
-const prismaMock = vi.hoisted<PrismaMock>(() => ({
+const prismaMock = vi.hoisted(() => ({
         chunkRef: {
                 findMany: vi.fn(),
                 count: vi.fn().mockResolvedValue(0),
