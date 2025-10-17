@@ -165,6 +165,12 @@ while (idx < flags.length) {
 const json = flags.includes('--json');
 const verbose = flags.includes('--verbose');
 
+
+if (verbose) {
+        const telemetryStatus = telemetryEnabled ? 'enabled' : 'disabled';
+        log(`[nx-smart] telemetry ${telemetryStatus} (NX_SMART_OTEL=${process.env.NX_SMART_OTEL ?? '0'})`);
+}
+
 if (positionalFocus.length > 0) {
 	const merged = new Set(focusList.length > 0 ? focusList : []);
 	for (const token of positionalFocus) merged.add(token);
@@ -176,8 +182,17 @@ function log(msg) {
 }
 
 function writeMetrics(metaExtra = {}) {
-	const durationMs = Date.now() - startTime;
-	const metrics = { target, durationMs, strategy, ...metaExtra };
+        const durationMs = Date.now() - startTime;
+        const metrics = {
+                target,
+                durationMs,
+                strategy,
+                telemetry: {
+                        enabled: telemetryEnabled,
+                        reason: `NX_SMART_OTEL=${process.env.NX_SMART_OTEL ?? '0'}`,
+                },
+                ...metaExtra,
+        };
 	if (telemetryEnabled && durationHistogram) {
 		try {
 			durationHistogram.record(durationMs, {
@@ -233,21 +248,125 @@ async function finalizeAndExit(code, metaExtra = {}) {
 }
 
 function getBaseRef() {
-	// Preference order: explicit env -> GitHub base -> UPSTREAM_REF file -> default
-	if (process.env.NX_BASE) return process.env.NX_BASE;
-	if (process.env.GITHUB_BASE_REF)
-		return process.env.GITHUB_BASE_REF.startsWith('origin/')
-			? process.env.GITHUB_BASE_REF
-			: `origin/${process.env.GITHUB_BASE_REF}`;
-	if (fs.existsSync('UPSTREAM_REF')) {
-		try {
-			const val = fs.readFileSync('UPSTREAM_REF', 'utf8').trim();
-			if (val) return val;
-		} catch {
-			/* ignore */
-		}
-	}
-	return 'origin/main';
+        // Preference order: explicit env -> GitHub base -> UPSTREAM_REF file -> configured default -> origin/main
+        const nxBase = process.env.NX_BASE?.trim();
+        if (nxBase) return nxBase;
+        const smartBase = process.env.NX_SMART_BASE?.trim();
+        if (smartBase) return smartBase;
+        if (process.env.GITHUB_BASE_REF) {
+                const ref = process.env.GITHUB_BASE_REF.trim();
+                if (ref.length > 0)
+                        return ref.startsWith('origin/') ? ref : `origin/${ref}`;
+        }
+        if (fs.existsSync('UPSTREAM_REF')) {
+                try {
+                        const val = fs.readFileSync('UPSTREAM_REF', 'utf8').trim();
+                        if (val) return val;
+                } catch {
+                        /* ignore */
+                }
+        }
+        const defaultBase = process.env.NX_SMART_DEFAULT_BASE?.trim();
+        if (defaultBase) return defaultBase;
+        return 'origin/main';
+}
+
+function parseRemoteRef(ref) {
+        if (!ref || ref.startsWith('refs/')) return null;
+        const slash = ref.indexOf('/');
+        if (slash <= 0) return null;
+        const remote = ref.slice(0, slash);
+        const branch = ref.slice(slash + 1);
+        if (!remote || !branch) return null;
+        return { remote, branch };
+}
+
+function refExists(ref) {
+        if (!ref) return false;
+        if (!gitAvailable()) return false;
+        try {
+                execSync(`git rev-parse --verify --quiet ${ref}^{commit}`, { stdio: 'ignore' });
+                return true;
+        } catch {
+                return false;
+        }
+}
+
+function ensureRefAvailable(ref, { debug } = {}) {
+        if (!ref || !gitAvailable()) return false;
+        if (refExists(ref)) return true;
+        if (process.env.NX_SMART_NO_FETCH === '1') return false;
+        const remoteInfo = parseRemoteRef(ref);
+        if (!remoteInfo) return false;
+        try {
+                const fetchArgs = ['fetch', '--depth=1', remoteInfo.remote];
+                if (remoteInfo.branch) fetchArgs.push(`${remoteInfo.branch}:refs/remotes/${remoteInfo.remote}/${remoteInfo.branch}`);
+                const result = spawnSync('git', fetchArgs, {
+                        stdio: debug ? 'inherit' : 'ignore',
+                });
+                if (result.status !== 0 && debug) {
+                        console.error('[nx-smart][git] fetch failed:', result.status);
+                }
+        } catch (e) {
+                if (debug) console.error('[nx-smart][git] fetch error:', e.message);
+        }
+        return refExists(ref);
+}
+
+function getHeadParentCommit() {
+        if (!gitAvailable()) return null;
+        try {
+                return execSync('git rev-parse --verify --quiet HEAD^', { encoding: 'utf8' }).trim();
+        } catch {
+                return null;
+        }
+}
+
+function resolveBaseRef() {
+        const requestedBaseRef = getBaseRef();
+        const fallbackEnv = process.env.NX_SMART_FALLBACK_BASE?.trim();
+        const debug = !!process.env.NX_SMART_DEBUG_BOOT;
+        const candidates = [];
+        if (requestedBaseRef) candidates.push(requestedBaseRef);
+        if (fallbackEnv) candidates.push(fallbackEnv);
+        const defaults = ['origin/main', 'main'];
+        for (const candidate of defaults) {
+                if (!candidates.includes(candidate)) candidates.push(candidate);
+        }
+        const parentCommit = getHeadParentCommit();
+        if (parentCommit && !candidates.includes(parentCommit)) candidates.push(parentCommit);
+        if (!candidates.includes('HEAD')) candidates.push('HEAD');
+
+        const attemptedCandidates = [];
+        if (!gitAvailable()) {
+                return {
+                        requestedBaseRef,
+                        resolvedBaseRef: requestedBaseRef || 'HEAD',
+                        usedFallback: false,
+                        attemptedCandidates: candidates,
+                };
+        }
+
+        for (const candidate of candidates) {
+                const ref = candidate?.trim();
+                if (!ref) continue;
+                if (!attemptedCandidates.includes(ref)) attemptedCandidates.push(ref);
+                if (ensureRefAvailable(ref, { debug })) {
+                        return {
+                                requestedBaseRef,
+                                resolvedBaseRef: ref,
+                                usedFallback: ref !== requestedBaseRef,
+                                attemptedCandidates,
+                        };
+                }
+        }
+
+        return {
+                requestedBaseRef,
+                resolvedBaseRef: 'HEAD',
+                usedFallback: true,
+                attemptedCandidates,
+        };
 }
 
 function getHeadRef() {
@@ -259,47 +378,34 @@ function getHeadRef() {
 	}
 }
 
+let cachedGitAvailable;
 function gitAvailable() {
-	try {
-		execSync('git rev-parse --is-inside-work-tree', { stdio: 'ignore' });
-		return true;
-	} catch {
-		return false;
-	}
+        if (cachedGitAvailable !== undefined) return cachedGitAvailable;
+        try {
+                execSync('git rev-parse --is-inside-work-tree', { stdio: 'ignore' });
+                cachedGitAvailable = true;
+        } catch {
+                cachedGitAvailable = false;
+        }
+        return cachedGitAvailable;
 }
 
 function changedFiles(baseRef) {
-	if (!gitAvailable()) return [];
-	// Attempt to ensure the base ref exists locally, but avoid hanging on fetch in restricted environments.
-	// If NX_SMART_NO_FETCH is set, skip fetch entirely.
-	const remote = baseRef.split('/')[0] || 'origin';
-	const branch = baseRef.split('/')[1] || 'main';
-	const fullRef = `${remote}/${branch}`;
-	const debug = !!process.env.NX_SMART_DEBUG_BOOT;
-	let haveRef = false;
-	try {
-		execSync(`git rev-parse --verify ${fullRef}`, { stdio: 'ignore' });
-		haveRef = true;
-	} catch {
-		haveRef = false;
-	}
-	if (!process.env.NX_SMART_NO_FETCH && !haveRef) {
-		try {
-			if (debug) console.error(`[nx-smart][git] fetching ${remote} ${branch}`);
-			execSync(`git fetch --depth=1 ${remote} ${branch}`, { stdio: 'ignore' });
-		} catch (e) {
-			if (debug) console.error('[nx-smart][git] fetch failed:', e.message);
-		}
-	}
-	try {
-		if (debug) console.error(`[nx-smart][git] diff against ${baseRef}`);
-		const diff = execSync(`git --no-pager diff --name-only ${baseRef} --`, {
-			encoding: 'utf8',
-		});
-		return diff.split('\n').filter(Boolean);
-	} catch {
-		return [];
-	}
+        if (!gitAvailable()) return [];
+        const debug = !!process.env.NX_SMART_DEBUG_BOOT;
+        if (!refExists(baseRef)) {
+                if (debug) console.error(`[nx-smart][git] base ref '${baseRef}' unavailable for diff.`);
+                return [];
+        }
+        try {
+                if (debug) console.error(`[nx-smart][git] diff against ${baseRef}`);
+                const diff = execSync(`git --no-pager diff --name-only ${baseRef} --`, {
+                        encoding: 'utf8',
+                });
+                return diff.split('\n').filter(Boolean);
+        } catch {
+                return [];
+        }
 }
 
 function run(command) {
@@ -356,10 +462,26 @@ function composeNxCommand(baseParts, forwarded, executor) {
 	return command;
 }
 
-const baseRef = getBaseRef();
+const baseResolution = resolveBaseRef();
+const baseRef = baseResolution.resolvedBaseRef;
 const headRef = getHeadRef();
 const files = changedFiles(baseRef);
-const meta = { baseRef, headRef, changedCount: files.length, target };
+const meta = {
+        baseRef,
+        headRef,
+        changedCount: files.length,
+        target,
+        baseRefRequested: baseResolution.requestedBaseRef,
+        baseRefCandidates: baseResolution.attemptedCandidates,
+        baseFallbackUsed: baseResolution.usedFallback,
+};
+
+if (baseResolution.usedFallback && !json) {
+        const requested = baseResolution.requestedBaseRef || 'origin/main';
+        console.warn(
+                `[nx-smart] base ref '${requested}' unavailable. Using fallback '${baseRef}'.`,
+        );
+}
 
 // If no git, or no changed files (e.g., full clone or new branch), fallback to full run-many.
 let strategy = 'affected';

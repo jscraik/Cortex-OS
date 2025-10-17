@@ -134,7 +134,8 @@
         "kimi-k2:1t-cloud",
         "qwen3-coder:480b-cloud",
         "gpt-oss:120b-cloud",
-        "deepseek-v3.1:671b-cloud"
+        "deepseek-v3.1:671b-cloud",
+        "glm-4.6:cloud"
       ]
     },
     "health_checks": {
@@ -155,7 +156,8 @@
         "mlx:qwen3-coder-30b",
         "ollama:deepseek-coder",
         "ollama:qwen3-coder",
-        "cloud:qwen3-coder-480b"
+        "cloud:qwen3-coder-480b",
+        "cloud:glm-4.6:cloud"
       ],
       "rerank": [
         "mlx:qwen3-reranker",
@@ -179,6 +181,11 @@
       "vision": [
         "mlx:qwen2.5-vl",
         "cloud:qwen3-vl:235b-cloud"
+      ],
+      "documentation": [
+        "ollama:gemma3n:e4b",
+        "cloud:glm-4.6:cloud",
+        "ollama:qwen3-coder"
       ]
     }
   },

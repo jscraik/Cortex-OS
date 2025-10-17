@@ -19,10 +19,24 @@ export default defineConfig({
 		},
 		globals: true,
 	},
-	resolve: {
-		alias: {
-			'@': resolve(__dirname, './src'),
-			'@tests': resolve(__dirname, './tests'),
-		},
-	},
+        resolve: {
+                alias: {
+                        '@': resolve(__dirname, './src'),
+                        '@cortex-os/utils': resolve(
+                                __dirname,
+                                '../../libs/typescript/utils/src',
+                        ),
+                        '@cortex-os/mcp-core': resolve(__dirname, '../mcp-core/src'),
+                        '@cortex-os/mcp-core/': resolve(
+                                __dirname,
+                                '../mcp-core/src/',
+                        ),
+                        '@cortex-os/mcp-registry': resolve(__dirname, '../mcp-registry/src'),
+                        '@cortex-os/mcp-registry/': resolve(
+                                __dirname,
+                                '../mcp-registry/src/',
+                        ),
+                        '@tests': resolve(__dirname, './tests'),
+                },
+        },
 });

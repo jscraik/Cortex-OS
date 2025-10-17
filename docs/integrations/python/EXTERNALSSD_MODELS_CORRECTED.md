@@ -59,6 +59,8 @@ task_routing: {
   refactoring: 'glm-4.5',
   debugging: 'glm-4.5',
   documentation: 'glm-4.5',
+  documentation_synthesis: 'glm-4.6-cloud',
+  general_reasoning: 'glm-4.6-cloud',
 
   // Large context/architecture - Qwen3-Coder-30B  
   architecture: 'qwen3-coder-30b',
@@ -91,7 +93,7 @@ From your `ollama-models.json`:
 
 - **Chat Models**: `deepseek-coder:6.7b`, `gpt-oss:20b`, `qwen3-coder:30b`, `phi4-mini-reasoning`, `gemma3n:e4b`
 - **Embedding Models**: `nomic-embed-text:v1.5`, `granite-embedding:278m`
-- **Cloud Models**: `qwen3-coder:480b-cloud` (for massive context)
+- **Cloud Models**: `qwen3-coder:480b-cloud` (massive context), `glm-4.6:cloud` (documentation synthesis)
 
 ### Hybrid Routing Strategy
 
@@ -104,6 +106,7 @@ hybrid_routing: {
     chat_lightweight: "mlx:smollm-135m",
     chat_balanced: "mlx:glm-4.5", 
     chat_enterprise: "qwen3-coder:480b-cloud",
+    chat_documentation: "glm-4.6-cloud",
     vision_tasks: "mlx:qwen2.5-vl"
   }
 }

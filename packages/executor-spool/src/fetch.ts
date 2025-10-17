@@ -16,9 +16,9 @@ interface PreparedRequest {
 }
 
 interface BodyBundle {
-	buffer: Uint8Array;
-	contentType?: string;
-	payload: string | Uint8Array;
+        buffer: Uint8Array;
+        contentType?: string;
+        payload: string | Uint8Array;
 }
 
 const rateState = new Map<string, RateBucket>();
@@ -59,23 +59,16 @@ const takeToken = (key: string, rpm: number, burst: number): void => {
 	rateState.set(key, bucket);
 };
 
-const chooseResponseBody = (
-	buffer: Uint8Array,
-	contentType: string | undefined,
-): string | Uint8Array => {
-	// eslint-disable-line sonarjs/function-return-type
-	if (!contentType) {
-		return buffer;
-	}
-	const normalized = contentType.toLowerCase();
-	if (
-		normalized.includes('json') ||
-		normalized.startsWith('text/') ||
-		normalized.includes('yaml')
-	) {
-		return new TextDecoder().decode(buffer);
-	}
-	return buffer;
+const shouldDecodeAsText = (contentType: string | undefined): boolean => {
+        if (!contentType) {
+                return false;
+        }
+        const normalized = contentType.toLowerCase();
+        return (
+                normalized.includes('json') ||
+                normalized.startsWith('text/') ||
+                normalized.includes('yaml')
+        );
 };
 
 const enforceContentType = (contentType: string | undefined, allowed?: string[]): void => {
@@ -120,7 +113,10 @@ const collectBody = async (
 	if (buffer.byteLength > maxBytes) {
 		throw new Error(`Response size ${buffer.byteLength} exceeds limit`);
 	}
-	return { buffer, contentType, payload: chooseResponseBody(buffer, contentType) };
+        const payload = shouldDecodeAsText(contentType)
+                ? new TextDecoder().decode(buffer)
+                : buffer;
+        return { buffer, contentType, payload };
 };
 
 const buildResult = (response: Response, bundle: BodyBundle): FetchResult => ({

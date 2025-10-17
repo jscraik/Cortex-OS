@@ -54,13 +54,14 @@ class MockAgentToolkitMCPTools {
 		return {
 			success: true,
 			data: { tool: toolName, results: [] },
-			metadata: {
-				correlationId: `test-${Date.now()}`,
-				timestamp: new Date().toISOString(),
-				tool: toolName,
-			},
-		};
-	}
+                        metadata: {
+                                correlationId: `test-${Date.now()}`,
+                                timestamp: new Date().toISOString(),
+                                tool: toolName,
+                                requestSignature,
+                        },
+                };
+        }
 
 	getCircuitBreakerState(toolName: string) {
 		return (
