@@ -49,33 +49,35 @@ export interface PackOptions {
 }
 
 export interface PackedContext {
-	subgraph: ContextSubgraph;
-	packedContext: string;
-	citations?: Array<{
-		path: string;
-		lines?: string;
-		nodeType: GraphNodeType;
-		relevanceScore: number;
-		brainwavIndexed: boolean;
-		externalSource?: string;
-	}>;
-	evidence?: {
-		sources: string[];
-		confidence: number;
+        subgraph: ContextSubgraph;
+        packedContext: string;
+        citations?: Array<{
+                path: string;
+                lines?: string;
+                nodeType: GraphNodeType;
+                relevanceScore: number;
+                brainwavIndexed: boolean;
+                brainwavSource: string;
+                externalSource?: string;
+        }>;
+        evidence?: {
+                sources: string[];
+                confidence: number;
 		brainwavValidated: boolean;
 	};
 	metadata: {
 		totalNodes: number;
-		totalEdges: number;
-		totalTokens: number;
-		packDuration: number;
-		format?: string;
-		tokenLimitEnforced?: boolean;
-		nodesFiltered?: number;
-		filterReason?: string;
-		privacyModeEnforced?: boolean;
-		evidenceAggregated?: boolean;
-		externalKnowledgeIncluded?: boolean;
+                totalEdges: number;
+                totalTokens: number;
+                packDuration: number;
+                format?: string;
+                tokenLimitEnforced?: boolean;
+                nodesIncluded?: number;
+                nodesFiltered?: number;
+                filterReason?: string;
+                privacyModeEnforced?: boolean;
+                evidenceAggregated?: boolean;
+                externalKnowledgeIncluded?: boolean;
 		brainwavBranded: boolean;
 		error?: string;
 	};
@@ -88,69 +90,102 @@ export interface PackValidationResult {
 }
 
 export class ContextPackService {
-	async pack(subgraph: ContextSubgraph, options: PackOptions): Promise<PackedContext> {
-		const startTime = Date.now();
+        async pack(subgraph: ContextSubgraph, options: PackOptions): Promise<PackedContext> {
+                const startTime = Date.now();
 
-		try {
-			// Validate options
+                try {
+                        // Validate options
                         const validation = await this.validatePackOptions(options);
                         if (!validation.valid) {
-                                return this.createErrorResult(subgraph, validation.errors[0], startTime);
+                                const errorMessage =
+                                        validation.errors.length > 0
+                                                ? `Invalid pack options: ${validation.errors.join(', ')}`
+                                                : 'Invalid pack options';
+                                return this.createErrorResult(subgraph, errorMessage, startTime, options);
                         }
 
-			// Apply privacy mode filtering if enabled
-			let filteredSubgraph = subgraph;
-			if (options.privacyMode) {
-				const privacyResult = await this.applyPrivacyMode(subgraph, options.sensitivityThreshold);
-				filteredSubgraph = privacyResult.subgraph;
-			}
+                        if (subgraph.nodes.length === 0 && subgraph.edges.length === 0) {
+                                return {
+                                        subgraph,
+                                        packedContext: '',
+                                        citations: options.includeCitations ? [] : [],
+                                        metadata: {
+                                                totalNodes: 0,
+                                                totalEdges: 0,
+                                                totalTokens: 0,
+                                                packDuration: Date.now() - startTime,
+                                                format: options.format || 'markdown',
+                                                tokenLimitEnforced: false,
+                                                nodesIncluded: 0,
+                                                nodesFiltered: 0,
+                                                privacyModeEnforced: Boolean(options.privacyMode),
+                                                evidenceAggregated: false,
+                                                externalKnowledgeIncluded: false,
+                                                brainwavBranded: options.branding !== false,
+                                        },
+                                };
+                        }
 
-			// Enforce token limits by prioritizing high-scoring content
-			const tokenLimitedSubgraph = this.enforceTokenLimits(filteredSubgraph, options.maxTokens);
+                        // Apply privacy mode filtering if enabled
+                        const privacyResult = options.privacyMode
+                                ? await this.applyPrivacyMode(subgraph, options.sensitivityThreshold)
+                                : {
+                                          subgraph,
+                                          filteredNodes: 0,
+                                          filterReason: 'Privacy mode disabled',
+                                  };
+                        const filteredSubgraph = privacyResult.subgraph;
 
-			// Generate packed context
-			const packedContext = this.generatePackedContext(tokenLimitedSubgraph, options);
+                        // Enforce token limits by prioritizing high-scoring content
+                        const tokenResult = this.enforceTokenLimits(filteredSubgraph, options.maxTokens);
+                        const tokenLimitedSubgraph = tokenResult.subgraph;
 
-			// Generate citations if requested
-                        let citations;
-			if (options.includeCitations) {
-				citations = this.generateCitations(tokenLimitedSubgraph.nodes, options.citationFormat);
-			}
+                        // Generate packed context
+                        const citations: NonNullable<PackedContext['citations']> = options.includeCitations
+                                ? this.generateCitations(tokenLimitedSubgraph.nodes, options.citationFormat)
+                                : [];
 
-			// Aggregate evidence if requested
-			let evidence;
-			if (options.includeEvidence) {
-				evidence = this.aggregateEvidence(tokenLimitedSubgraph.nodes);
-			}
+                        const evidence = options.includeEvidence
+                                ? this.aggregateEvidence(tokenLimitedSubgraph.nodes)
+                                : undefined;
 
-			const packDuration = Date.now() - startTime;
+                        const packedContext = this.generatePackedContext(
+                                tokenLimitedSubgraph,
+                                options,
+                                citations,
+                                evidence,
+                        );
 
-			return {
-				subgraph: tokenLimitedSubgraph,
-				packedContext,
-				citations,
-				evidence,
-				metadata: {
-					totalNodes: tokenLimitedSubgraph.nodes.length,
-					totalEdges: tokenLimitedSubgraph.edges.length,
-					totalTokens: this.calculateTokens(tokenLimitedSubgraph),
-					packDuration,
-					format: options.format || 'markdown',
-					tokenLimitEnforced: options.maxTokens
-						? tokenLimitedSubgraph.nodes.length < subgraph.nodes.length
-						: false,
-					nodesFiltered: options.privacyMode
-						? subgraph.nodes.length - filteredSubgraph.nodes.length
-						: 0,
-					filterReason: options.privacyMode ? 'Privacy mode filtering applied' : undefined,
-					privacyModeEnforced: options.privacyMode || false,
-					evidenceAggregated: options.includeEvidence || false,
-					externalKnowledgeIncluded: this.hasExternalKnowledge(tokenLimitedSubgraph),
-					brainwavBranded: options.branding !== false,
-				},
-			};
-		} catch (error) {
-			return this.createErrorResult(
+                        const packDuration = Date.now() - startTime;
+
+                        return {
+                                subgraph: tokenLimitedSubgraph,
+                                packedContext,
+                                citations: options.includeCitations ? citations : undefined,
+                                evidence,
+                                metadata: {
+                                        totalNodes: tokenLimitedSubgraph.nodes.length,
+                                        totalEdges: tokenLimitedSubgraph.edges.length,
+                                        totalTokens: tokenResult.totalTokens,
+                                        packDuration,
+                                        format: options.format || 'markdown',
+                                        tokenLimitEnforced: tokenResult.tokenLimitEnforced,
+                                        nodesIncluded: tokenLimitedSubgraph.nodes.length,
+                                        nodesFiltered: options.privacyMode ? privacyResult.filteredNodes : 0,
+                                        filterReason:
+                                                options.privacyMode && privacyResult.filteredNodes > 0
+                                                        ? privacyResult.filterReason
+                                                        : undefined,
+                                        privacyModeEnforced: Boolean(options.privacyMode),
+                                        evidenceAggregated: Boolean(evidence),
+                                        externalKnowledgeIncluded:
+                                                options.includeExternalKnowledge &&
+                                                this.hasExternalKnowledge(tokenLimitedSubgraph),
+                                        brainwavBranded: options.branding !== false,
+                                },
+                        };
+                } catch (error) {
+                        return this.createErrorResult(
 				subgraph,
 				`Packing error: ${error instanceof Error ? error.message : String(error)}`,
 				startTime,
@@ -201,120 +236,167 @@ export class ContextPackService {
                 };
         }
 
-	private async applyPrivacyMode(
-		subgraph: ContextSubgraph,
-		threshold?: string,
-	): Promise<{ subgraph: ContextSubgraph; filteredNodes: number; filterReason: string }> {
-		const sensitivityLevels = { low: 1, medium: 2, high: 3, critical: 4 };
-		const requiredLevel = sensitivityLevels[threshold as keyof typeof sensitivityLevels] || 2;
+        private async applyPrivacyMode(
+                subgraph: ContextSubgraph,
+                threshold?: string,
+        ): Promise<{ subgraph: ContextSubgraph; filteredNodes: number; filterReason: string }> {
+                const sensitivityLevels = { low: 1, medium: 2, high: 3, critical: 4 };
+                const requiredLevel = sensitivityLevels[threshold as keyof typeof sensitivityLevels] || 2;
 
-		const filteredNodes = subgraph.nodes.filter((node) => {
-			const nodeSensitivity = node.metadata.sensitivity || 'low';
-			const nodeLevel = sensitivityLevels[nodeSensitivity as keyof typeof sensitivityLevels] || 1;
-			return nodeLevel <= requiredLevel;
-		});
+                const allowedNodes: ContextSubgraph['nodes'] = [];
+                const filteredOut: ContextSubgraph['nodes'] = [];
 
-		const filteredEdges = subgraph.edges.filter(
-			(edge) =>
-				filteredNodes.some((node) => node.id === edge.from) &&
-				filteredNodes.some((node) => node.id === edge.to),
-		);
+                for (const node of subgraph.nodes) {
+                        const nodeSensitivity = node.metadata.sensitivity || 'low';
+                        const nodeLevel = sensitivityLevels[nodeSensitivity as keyof typeof sensitivityLevels] || 1;
+                        if (nodeLevel <= requiredLevel) {
+                                allowedNodes.push(node);
+                        } else {
+                                filteredOut.push(node);
+                        }
+                }
 
-		const filteredCount = subgraph.nodes.length - filteredNodes.length;
+                const allowedNodeIds = new Set(allowedNodes.map((node) => node.id));
+                const filteredEdges = subgraph.edges.filter(
+                        (edge) => allowedNodeIds.has(edge.from) && allowedNodeIds.has(edge.to),
+                );
 
-		return {
-			subgraph: {
-				nodes: filteredNodes,
-				edges: filteredEdges,
-			},
-			filteredNodes: filteredCount,
-			filterReason:
-				filteredCount > 0
-					? `Filtered ${filteredCount} nodes due to privacy mode (threshold: ${threshold || 'medium'})`
-					: 'No filtering applied',
-		};
-	}
+                const filteredCount = filteredOut.length;
+                const containsHighSensitivity = filteredOut.some((node) => node.metadata.sensitivity === 'high');
+                const filterReason =
+                        filteredCount > 0
+                                ? containsHighSensitivity
+                                        ? `High sensitivity content filtered (${filteredCount} node${
+                                                  filteredCount === 1 ? '' : 's'
+                                          }) with threshold ${threshold || 'medium'}`
+                                        : `Filtered ${filteredCount} nodes to enforce privacy mode (threshold: ${
+                                                  threshold || 'medium'
+                                          })`
+                                : 'No privacy filtering required';
 
-	private enforceTokenLimits(subgraph: ContextSubgraph, maxTokens?: number): ContextSubgraph {
-		if (!maxTokens) return subgraph;
+                return {
+                        subgraph: {
+                                nodes: allowedNodes,
+                                edges: filteredEdges,
+                        },
+                        filteredNodes: filteredCount,
+                        filterReason,
+                };
+        }
 
-		// Sort nodes by score (highest first)
-		const sortedNodes = [...subgraph.nodes].sort(
-			(a, b) => (b.metadata.score || 0) - (a.metadata.score || 0),
-		);
+        private enforceTokenLimits(
+                subgraph: ContextSubgraph,
+                maxTokens?: number,
+        ): { subgraph: ContextSubgraph; totalTokens: number; tokenLimitEnforced: boolean } {
+                if (!maxTokens) {
+                        return {
+                                subgraph,
+                                totalTokens: this.calculateTokens(subgraph),
+                                tokenLimitEnforced: false,
+                        };
+                }
 
-		const selectedNodes = [];
-		let totalTokens = 0;
+                const sortedNodes = [...subgraph.nodes].sort(
+                        (a, b) => (b.metadata.score || 0) - (a.metadata.score || 0),
+                );
 
-		for (const node of sortedNodes) {
-			const nodeTokens = this.estimateTokens(node.content);
-			if (totalTokens + nodeTokens <= maxTokens) {
-				selectedNodes.push(node);
-				totalTokens += nodeTokens;
-			} else {
-				break;
-			}
-		}
+                const selectedNodes: ContextSubgraph['nodes'] = [];
+                let totalTokens = 0;
 
-		// Filter edges to only include those between selected nodes
-		const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
-		const filteredEdges = subgraph.edges.filter(
-			(edge) => selectedNodeIds.has(edge.from) && selectedNodeIds.has(edge.to),
-		);
+                for (const node of sortedNodes) {
+                        const nodeTokens = this.getNodeTokens(node);
+                        if (totalTokens + nodeTokens <= maxTokens) {
+                                selectedNodes.push(node);
+                                totalTokens += nodeTokens;
+                        }
+                }
 
-		return {
-			nodes: selectedNodes,
-			edges: filteredEdges,
-		};
-	}
+                const selectedNodeIds = new Set(selectedNodes.map((n) => n.id));
+                const filteredEdges = subgraph.edges.filter(
+                        (edge) => selectedNodeIds.has(edge.from) && selectedNodeIds.has(edge.to),
+                );
 
-	private generatePackedContext(subgraph: ContextSubgraph, options: PackOptions): string {
-		const format = options.format || 'markdown';
-		const branding = options.branding !== false;
+                const tokenLimitEnforced =
+                        selectedNodes.length !== subgraph.nodes.length || totalTokens >= maxTokens;
 
-		if (format === 'json') {
-			return this.generateJSONContext(subgraph, branding);
-		} else {
-			return this.generateMarkdownContext(subgraph, branding);
-		}
-	}
+                return {
+                        subgraph: {
+                                nodes: selectedNodes,
+                                edges: filteredEdges,
+                        },
+                        totalTokens,
+                        tokenLimitEnforced,
+                };
+        }
 
-	private generateJSONContext(subgraph: ContextSubgraph, branding: boolean): string {
-		const context = {
-			content: subgraph.nodes.map((node) => ({
-				id: node.id,
-				type: node.type,
-				key: node.key,
+        private generatePackedContext(
+                subgraph: ContextSubgraph,
+                options: PackOptions,
+                citations: NonNullable<PackedContext['citations']>,
+                evidence?: PackedContext['evidence'],
+        ): string {
+                const format = options.format || 'markdown';
+                const branding = options.branding !== false;
+
+                if (format === 'json') {
+                        return this.generateJSONContext(subgraph, branding, citations, evidence);
+                }
+
+                return this.generateMarkdownContext(subgraph, branding, citations, evidence);
+        }
+
+        private generateJSONContext(
+                subgraph: ContextSubgraph,
+                branding: boolean,
+                citations: NonNullable<PackedContext['citations']>,
+                evidence?: PackedContext['evidence'],
+        ): string {
+                const context = {
+                        content: subgraph.nodes.map((node) => ({
+                                id: node.id,
+                                type: node.type,
+                                key: node.key,
 				label: node.label,
 				path: node.path,
 				content: node.content,
 				lines: node.lineStart && node.lineEnd ? `${node.lineStart}-${node.lineEnd}` : undefined,
-				metadata: node.metadata,
-			})),
-			edges: subgraph.edges.map((edge) => ({
-				id: edge.id,
-				from: edge.from,
-				to: edge.to,
-				type: edge.type,
-				metadata: edge.metadata,
-			})),
-			...(branding && {
-				brainwavGenerated: true,
-				brainwavSource: 'brAInwav Cortex-OS Context Pack Service',
-				generatedAt: new Date().toISOString(),
-			}),
-		};
+                                metadata: node.metadata,
+                        })),
+                        edges: subgraph.edges.map((edge) => ({
+                                id: edge.id,
+                                from: edge.from,
+                                to: edge.to,
+                                type: edge.type,
+                                metadata: edge.metadata,
+                        })),
+                        citations,
+                        ...(evidence ? { evidence } : {}),
+                        ...(branding && {
+                                brainwavGenerated: true,
+                                brainwavSource: 'brAInwav Cortex-OS Context Pack Service',
+                                generatedAt: new Date().toISOString(),
+                        }),
+                };
 
-		return JSON.stringify(context, null, 2);
-	}
+                return JSON.stringify(context, null, 2);
+        }
 
-	private generateMarkdownContext(subgraph: ContextSubgraph, branding: boolean): string {
-		let markdown = '';
+        private generateMarkdownContext(
+                subgraph: ContextSubgraph,
+                branding: boolean,
+                citations: NonNullable<PackedContext['citations']>,
+                evidence?: PackedContext['evidence'],
+        ): string {
+                if (subgraph.nodes.length === 0 && subgraph.edges.length === 0) {
+                        return '';
+                }
 
-		if (branding) {
-			markdown += `# brAInwav Cortex-OS Context\n\n`;
-			markdown += `*Generated by brAInwav Context Pack Service*\n\n`;
-		}
+                let markdown = '';
+
+                if (branding) {
+                        markdown += `# brAInwav Cortex-OS Context\n\n`;
+                        markdown += `*Generated by brAInwav Context Pack Service*\n\n`;
+                }
 
 		markdown += `## Context Content\n\n`;
 
@@ -325,84 +407,119 @@ export class ContextPackService {
 			if (node.lineStart && node.lineEnd) {
 				markdown += `**Lines:** ${node.lineStart}-${node.lineEnd}\n`;
 			}
-			markdown += `\n\`\`\`${this.getFileExtension(node.path)}\n${node.content}\n\`\`\`\n\n`;
-		}
+                        markdown += `\n\`\`\`${this.getFileExtension(node.path)}\n${node.content}\n\`\`\`\n\n`;
+                }
 
-		if (branding) {
-			markdown += `---\n\n*brAInwav Cortex-OS - Context Graph Packing Service*\n`;
-		}
+                if (evidence) {
+                        markdown += `## Evidence Summary\n\n`;
+                        markdown += `*Sources:* ${evidence.sources.join(', ')}\n\n`;
+                        markdown += `*Confidence:* ${(evidence.confidence * 100).toFixed(0)}%\n\n`;
+                }
 
-		return markdown;
-	}
+                markdown += `## Citations\n\n`;
+                if (citations.length === 0) {
+                        markdown += `_No citations available._\n\n`;
+                } else {
+                        for (const citation of citations) {
+                                const lineInfo = citation.lines ? ` (lines ${citation.lines})` : '';
+                                markdown += `- ${citation.path}${lineInfo} — ${citation.brainwavSource}\n`;
+                        }
+                        markdown += '\n';
+                }
 
-	private generateCitations(
-		nodes: ContextSubgraph['nodes'],
-		_format?: string,
-	): PackedContext['citations'] {
-		return nodes.map((node) => ({
-			path: node.path,
-			lines: node.lineStart && node.lineEnd ? `${node.lineStart}-${node.lineEnd}` : undefined,
-			nodeType: node.type,
-			relevanceScore: node.metadata.score || 0,
-			brainwavIndexed: node.metadata.brainwavIndexed !== false,
-			externalSource: node.metadata.externalSource,
-		}));
-	}
+                if (branding) {
+                        markdown += `---\n\n*brAInwav Cortex-OS - Context Graph Packing Service*\n`;
+                }
 
-	private aggregateEvidence(nodes: ContextSubgraph['nodes']): PackedContext['evidence'] {
-		const allSources = new Set<string>();
-		let totalConfidence = 0;
+                return markdown;
+        }
 
-		for (const node of nodes) {
-			if (node.metadata.evidence) {
-				for (const source of node.metadata.evidence) {
-					allSources.add(source);
-				}
-				totalConfidence += node.metadata.score || 0;
-			}
-		}
+        private generateCitations(
+                nodes: ContextSubgraph['nodes'],
+                _format?: string,
+        ): NonNullable<PackedContext['citations']> {
+                return nodes.map((node) => ({
+                        path: node.path,
+                        lines: node.lineStart && node.lineEnd ? `${node.lineStart}-${node.lineEnd}` : undefined,
+                        nodeType: node.type,
+                        relevanceScore: node.metadata.score || 0,
+                        brainwavIndexed: node.metadata.brainwavIndexed !== false,
+                        brainwavSource: 'brAInwav Context Graph',
+                        externalSource: node.metadata.externalSource,
+                }));
+        }
 
-		return {
-			sources: Array.from(allSources),
-			confidence: nodes.length > 0 ? totalConfidence / nodes.length : 0,
-			brainwavValidated: true,
-		};
-	}
+        private aggregateEvidence(nodes: ContextSubgraph['nodes']): PackedContext['evidence'] {
+                const allSources = new Set<string>();
+                let totalConfidence = 0;
+                let contributingNodes = 0;
 
-	private hasExternalKnowledge(subgraph: ContextSubgraph): boolean {
-		return subgraph.nodes.some((node) => node.metadata.externalSource);
-	}
+                for (const node of nodes) {
+                        if (node.metadata.evidence) {
+                                for (const source of node.metadata.evidence) {
+                                        allSources.add(source);
+                                }
+                                totalConfidence += node.metadata.score || 0;
+                                contributingNodes += 1;
+                        }
+                }
 
-	private calculateTokens(subgraph: ContextSubgraph): number {
-		return subgraph.nodes.reduce((total, node) => total + this.estimateTokens(node.content), 0);
-	}
+                const averageConfidence = contributingNodes > 0 ? totalConfidence / contributingNodes : 0;
 
-	private estimateTokens(text: string): number {
-		// Simple token estimation - approximately 4 characters per token
-		return Math.ceil(text.length / 4);
-	}
+                return {
+                        sources: Array.from(allSources),
+                        confidence: Number(averageConfidence.toFixed(2)),
+                        brainwavValidated: true,
+                };
+        }
+
+        private hasExternalKnowledge(subgraph: ContextSubgraph): boolean {
+                return subgraph.nodes.some((node) => node.metadata.externalSource);
+        }
+
+        private calculateTokens(subgraph: ContextSubgraph): number {
+                return subgraph.nodes.reduce((total, node) => total + this.getNodeTokens(node), 0);
+        }
+
+        private getNodeTokens(node: ContextSubgraph['nodes'][number]): number {
+                const metadataTokens = node.metadata?.tokens;
+                if (typeof metadataTokens === 'number' && metadataTokens >= 0) {
+                        return metadataTokens;
+                }
+
+                return this.estimateTokens(node.content);
+        }
+
+        private estimateTokens(text: string): number {
+                // Simple token estimation - approximately 4 characters per token
+                return Math.ceil(text.length / 4);
+        }
 
 	private getFileExtension(path: string): string {
 		const match = path.match(/\.([^.]+)$/);
 		return match ? match[1] : 'text';
 	}
 
-	private createErrorResult(
-		_subgraph: ContextSubgraph,
-		error: string,
-		startTime: number,
-	): PackedContext {
-		return {
-			subgraph: { nodes: [], edges: [] },
-			packedContext: '',
-			metadata: {
-				totalNodes: 0,
-				totalEdges: 0,
-				totalTokens: 0,
-				packDuration: Date.now() - startTime,
-				brainwavBranded: true,
-				error,
-			},
-		};
-	}
+        private createErrorResult(
+                _subgraph: ContextSubgraph,
+                error: string,
+                startTime: number,
+                options?: PackOptions,
+        ): PackedContext {
+                return {
+                        subgraph: { nodes: [], edges: [] },
+                        packedContext: '',
+                        metadata: {
+                                totalNodes: 0,
+                                totalEdges: 0,
+                                totalTokens: 0,
+                                packDuration: Date.now() - startTime,
+                                format: options?.format || 'markdown',
+                                nodesIncluded: 0,
+                                nodesFiltered: 0,
+                                brainwavBranded: true,
+                                error,
+                        },
+                };
+        }
 }
