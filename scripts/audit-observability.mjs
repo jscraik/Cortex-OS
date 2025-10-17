@@ -114,7 +114,7 @@ async function inspectService(service) {
   const telemetryEnabled = matches.length > 0;
   const exporterType = telemetryEnabled
     ? [...exporterSignals][0] ?? service.expectedExporter ?? 'Custom'
-    : service.expectedExporter ?? null;
+    : null;
 
   return {
     ...service,
