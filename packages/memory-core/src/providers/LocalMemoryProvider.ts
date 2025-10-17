@@ -338,9 +338,13 @@ export class LocalMemoryProvider implements MemoryProvider {
                 for (let i = 0; i < length; i += 1) {
                         const charCode = text.charCodeAt(i);
                         const index = i % dim;
-                        embedding[index] = (embedding[index] + charCode) / 255;
+                        embedding[index] += charCode;
                 }
 
+                // Scale embedding values by dividing by 255
+                for (let i = 0; i < dim; i += 1) {
+                        embedding[i] /= 255;
+                }
                 const norm = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
                 if (norm === 0) {
                         return embedding;
