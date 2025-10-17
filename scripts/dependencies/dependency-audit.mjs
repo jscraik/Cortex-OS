@@ -250,7 +250,7 @@ async function main() {
                         logList('Resolved orphan modules:', diff.resolvedOrphans);
                 }
                 console.log(
-                        '[dependency:audit] Run "pnpm dependency:audit --update-baseline" after verifying the fixes to refresh baseline data.',
+                        '[brAInwav][dependency:audit] Run "pnpm dependency:audit --update-baseline" after verifying the fixes to refresh baseline data.',
                 );
         }
 }
