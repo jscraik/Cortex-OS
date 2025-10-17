@@ -85,7 +85,7 @@ async function main() {
     return;
   }
 
-  console.log('Linting markdown files:', files.join(', '));
+  console.log('brAInwav markdownlint: Linting markdown files:', files.join(', '));
   await runMarkdownlint(files);
 }
 
