@@ -209,7 +209,7 @@ async function main() {
 
         if (updateBaseline) {
                 writeBaseline(current);
-                console.log(`[dependency:audit] Baseline updated at ${normalizePath(baselinePath)}.`);
+                console.log(`[brAInwav dependency:audit] Baseline updated at ${normalizePath(baselinePath)}.`);
                 return;
         }
 
