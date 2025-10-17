@@ -146,7 +146,7 @@ function normaliseConfig(
 ): NormalisedConfig {
         const config = options as LocalMemoryProviderOptions & Partial<MemoryCoreConfig>;
         const maxLimit = Math.max(1, config.maxLimit ?? 100);
-        const queueConcurrency = Math.max(1, Math.trunc(config.queueConcurrency ?? 1));
+        const queueConcurrency = Math.max(1, Math.trunc(config.queueConcurrency ?? 0));
         const embedDimCandidate = config.qdrant?.embedDim ?? config.embedDim ?? 384;
         const embedDim = Math.min(Math.max(Math.trunc(embedDimCandidate), 1), 10_000);
 
