@@ -154,16 +154,16 @@ async function main() {
   await fs.writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
 
   const coverageLine = `Required telemetry coverage: ${requiredEnabled.length}/${requiredServices.length || 0} (${coveragePercentage}%)`;
-  console.log(coverageLine);
-  console.log(`Report written to ${path.relative(repoRoot, reportPath)}`);
+  console.log(`brAInwav observability audit: ${coverageLine}`);
+  console.log(`brAInwav observability audit: Report written to ${path.relative(repoRoot, reportPath)}`);
 
   if (requiredServices.length > 0 && requiredEnabled.length < requiredServices.length) {
-    console.error('Observability adoption audit failed: not all required services have telemetry enabled.');
+    console.error('brAInwav observability audit: Observability adoption audit failed: not all required services have telemetry enabled.');
     process.exitCode = 1;
   }
 }
 
 main().catch((error) => {
-  console.error(`Observability adoption audit encountered an error: ${error.message}`);
+  console.error(`brAInwav observability audit: Observability adoption audit encountered an error: ${error.message}`);
   process.exitCode = 1;
 });
