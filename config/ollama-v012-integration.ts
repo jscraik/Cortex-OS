@@ -37,6 +37,7 @@ export interface ToolCallingModelConfig {
 export interface ChatModelConfig {
         coding: ModelSpec;
         general: ModelSpec;
+        documentation: ModelSpec;
         lightweight: ModelSpec;
 }
 
@@ -46,12 +47,14 @@ export interface VisionModelConfig {
 }
 
 export interface ModelSpec {
-	provider: 'ollama' | 'mlx' | 'cloud';
-	model: string;
-	features: string[];
-	priority: number;
-	supports?: string[];
-	version?: string;
+        provider: 'ollama' | 'mlx' | 'cloud';
+        model: string;
+        features: string[];
+        priority: number;
+        supports?: string[];
+        version?: string;
+        tier?: 'ON_DEMAND' | 'RESERVED' | 'SPOT';
+        notes?: string;
 }
 
 export interface RoutingConfig {
@@ -140,6 +143,14 @@ export const OLLAMA_V012_INTEGRATION: OllamaV012IntegrationConfig = {
                                 features: ['local_execution', 'general_purpose', 'fast'],
                                 priority: 95,
                         },
+                        documentation: {
+                                provider: 'cloud',
+                                model: 'glm-4.6:cloud',
+                                features: ['documentation_synthesis', 'general_reasoning', 'long_context'],
+                                priority: 92,
+                                tier: 'ON_DEMAND',
+                                notes: 'General reasoning / documentation synthesis burst tier',
+                        },
                         lightweight: {
                                 provider: 'ollama',
                                 model: 'phi4-mini-reasoning:latest',
@@ -176,11 +187,12 @@ export const OLLAMA_V012_INTEGRATION: OllamaV012IntegrationConfig = {
 			toolCallingRequired: 'ollama_qwen3_coder_primary',
 			highAccuracyEmbedding: 'ollama_qwen3_embedding_primary',
 			contextLarge: 'cloud_primary_mlx_fallback',
-			performanceCritical: 'mlx_primary_cloud_verification',
-			enterpriseScale: 'cloud_primary_mlx_support',
-			stateOfArtEmbedding: 'qwen3_embedding_with_mlx_verification',
-			functionCalling: 'qwen3_coder_tool_calling_mode',
-		},
+                        performanceCritical: 'mlx_primary_cloud_verification',
+                        enterpriseScale: 'cloud_primary_mlx_support',
+                        stateOfArtEmbedding: 'qwen3_embedding_with_mlx_verification',
+                        functionCalling: 'qwen3_coder_tool_calling_mode',
+                        documentationSynthesis: 'glm46_cloud_with_mlx_support',
+                },
 
 		// Enhanced task routing with new capabilities
                 taskRouting: {
@@ -197,6 +209,11 @@ export const OLLAMA_V012_INTEGRATION: OllamaV012IntegrationConfig = {
                                 apiIntegration: 'qwen3-coder:30b',
                                 orchestration: 'qwen3-coder:30b',
                                 verification: 'mlx:qwen3-coder-30b',
+                        },
+                        documentation: {
+                                synthesis: 'glm-4.6:cloud',
+                                generalReasoning: 'glm-4.6:cloud',
+                                fallback: 'glm-4.5',
                         },
                         coding: {
                                 architecture: 'qwen3-coder:30b',
@@ -233,6 +250,7 @@ export const OLLAMA_V012_INTEGRATION: OllamaV012IntegrationConfig = {
                                 'ollama:qwen3-coder:30b',
                                 'ollama:deepseek-coder:6.7b',
                                 'ollama:phi4-mini-reasoning:latest',
+                                'cloud:glm-4.6:cloud',
                         ],
                         vision: [
                                 'mlx:qwen2.5-vl',
@@ -292,22 +310,35 @@ export const OLLAMA_V012_MODEL_CAPABILITIES = {
 			resourceUsage: 'moderate',
 		},
 	},
-	'qwen3-coder:30b': {
-		type: 'chat',
-		provider: 'ollama',
-		features: ['tool_calling', 'function_calling', 'code_generation', 'enhanced_parsing'],
-		contextLength: 32768,
-		supportsToolCalling: true,
-		version: 'v0.12.1+',
-		performance: {
-			accuracy: 0.92,
-			latency: 'moderate',
-			resourceUsage: 'high',
-		},
-	},
-	'mlx:qwen3-4b': {
-		type: 'embedding',
-		provider: 'mlx',
+        'qwen3-coder:30b': {
+                type: 'chat',
+                provider: 'ollama',
+                features: ['tool_calling', 'function_calling', 'code_generation', 'enhanced_parsing'],
+                contextLength: 32768,
+                supportsToolCalling: true,
+                version: 'v0.12.1+',
+                performance: {
+                        accuracy: 0.92,
+                        latency: 'moderate',
+                        resourceUsage: 'high',
+                },
+        },
+        'glm-4.6:cloud': {
+                type: 'chat',
+                provider: 'cloud',
+                features: ['general_reasoning', 'documentation_synthesis', 'long_context'],
+                contextLength: 32768,
+                tier: 'ON_DEMAND',
+                notes: 'General reasoning / documentation synthesis burst tier',
+                performance: {
+                        accuracy: 0.9,
+                        latency: 'moderate',
+                        resourceUsage: 'elastic',
+                },
+        },
+        'mlx:qwen3-4b': {
+                type: 'embedding',
+                provider: 'mlx',
 		features: ['local_execution', 'privacy_mode', 'verification'],
 		dimensions: 768,
 		maxTokens: 8192,

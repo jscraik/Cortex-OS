@@ -17,12 +17,12 @@ type PrismaMock = {
 	$queryRaw: ReturnType<typeof vi.fn>;
 };
 
-const qdrantMock = {
-	initialize: vi.fn(),
-	hybridSearch: vi.fn(),
-	healthCheck: vi.fn(),
-	close: vi.fn(),
-};
+const qdrantMock = vi.hoisted(() => ({
+        initialize: vi.fn(),
+        hybridSearch: vi.fn(),
+        healthCheck: vi.fn(),
+        close: vi.fn(),
+}));
 
 const expandMock = vi.hoisted(() => vi.fn());
 const assembleMock = vi.hoisted(() => vi.fn());
@@ -323,10 +323,37 @@ describe('GraphRAGService', () => {
 	const sparse = vi.fn().mockResolvedValue({ indices: [0, 1], values: [0.4, 0.2] });
 	let seeds: GraphRAGSearchResult[];
 
-	beforeEach(async () => {
-		vi.clearAllMocks();
-		prismaMock.chunkRef.findMany.mockReset();
-		prismaMock.chunkRef.findMany.mockResolvedValue([{ nodeId: 'node-a' }, { nodeId: 'node-b' }]);
+        beforeEach(async () => {
+                vi.clearAllMocks();
+                prismaMock.chunkRef.findMany.mockReset();
+                prismaMock.chunkRef.findMany.mockImplementation((args: any = {}) => {
+                        const qdrantFilter = args?.where?.qdrantId?.in;
+                        if (Array.isArray(qdrantFilter)) {
+                                return qdrantFilter.map((id: string, index: number) => ({
+                                        id: `chunk-${index}`,
+                                        qdrantId: id,
+                                        nodeId: index === 0 ? 'node-a' : 'node-b',
+                                        path: 'packages/example.ts',
+                                        lineStart: 1,
+                                        lineEnd: 5,
+                                        meta: { snippet: 'Seed answer', score: 0.9 },
+                                        node: { type: 'PACKAGE', key: 'packages/example' },
+                                }));
+                        }
+
+                        return [
+                                {
+                                        id: 'chunk-ctx',
+                                        qdrantId: 'seed-1',
+                                        nodeId: 'node-a',
+                                        path: 'packages/example.ts',
+                                        lineStart: 1,
+                                        lineEnd: 5,
+                                        meta: { snippet: 'Seed answer', score: 0.9 },
+                                        node: { type: 'PACKAGE', key: 'packages/example' },
+                                },
+                        ];
+                });
 
 		qdrantMock.initialize.mockResolvedValue(undefined);
 		seeds = [
