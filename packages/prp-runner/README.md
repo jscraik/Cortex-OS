@@ -10,21 +10,37 @@ PRP Runner orchestrates the Product→Automation gating pipeline for Cortex-OS. 
 - Augments run manifests with task metadata (`taskId`, `priority`, `specPath`).
 - Exposes `loadTaskBaton` for CLI tooling and automation.
 - Writes PRP markdown plus run-manifest JSON under `.cortex/run-manifests/`.
+- Wraps the workflow with the BMAD guardrail (`runBmadLoop`) to ensure blueprint ⇄ manifest alignment before hand-off.
+- Projects BMAD results into GitHub Spec Kit issues via `buildGitHubSpecKitPlan` and `createGitHubSpecKitIssuePayload`.
 
 ## Usage
 
 ### Programmatic
 
 ```ts
-import { buildPrpBlueprint, augmentManifest, loadTaskBaton, runPRPWorkflow } from '@cortex-os/prp-runner';
+import {
+        buildPrpBlueprint,
+        augmentManifest,
+        loadTaskBaton,
+        runPRPWorkflow,
+        runBmadLoop,
+        buildGitHubSpecKitPlan,
+        createGitHubSpecKitIssuePayload,
+} from '@cortex-os/prp-runner';
 
 const baton = await loadTaskBaton('~/tasks/example/json/baton.v1.json');
 const { blueprint, metadata } = buildPrpBlueprint(baton);
 const { manifest, manifestPath } = await runPRPWorkflow(blueprint, repoInfo, options);
 const enriched = augmentManifest(manifest, metadata);
+
+const bmad = await runBmadLoop(blueprint, repoInfo, { ...options, reviewHook });
+const specKitPlan = buildGitHubSpecKitPlan(blueprint, bmad.manifest, bmad.alignment);
+const issueDraft = createGitHubSpecKitIssuePayload(specKitPlan);
 ```
 
 `enriched` now carries task identifiers so downstream tools (proof artifacts, dashboards) can trace evidence back to the originating plan.
+
+`issueDraft` mirrors the GitHub Spec Kit format so the automation layer can open or update issues without additional mapping code.
 
 ### CLI via `cortex-task`
 
