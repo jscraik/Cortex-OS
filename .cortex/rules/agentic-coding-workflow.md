@@ -64,7 +64,7 @@ Select tier at task creation; it is recorded in `run-manifest.json`.
 
 ### G0 Initialize
 
-- Create `~/tasks/<slug>/{notes.md, plan.md, risks.md, decisions.md, evidence/}`.
+- Create `~/tasks/<slug>/{notes.md, implementation-plan.md, risks.md, decisions.md, evidence/}`.
 - Define scope and “done”; write `baton/json/baton.v1.json` including the selected tier.
 - Evidence: `notes.md`, `json/baton.v1.json`.
 
