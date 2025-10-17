@@ -203,7 +203,7 @@ async function main() {
                         `[dependency:audit] Baseline created at ${normalizePath(baselinePath)}. ` +
                                 'Existing cycles/orphans recorded for follow-up triage.',
                 );
-                console.log('[dependency:audit] Re-run after addressing issues to fail on regressions.');
+                console.log('[brAInwav][dependency:audit] Re-run after addressing issues to fail on regressions.');
                 return;
         }
 
