@@ -87,14 +87,20 @@ export function computeBmadAlignment(state: PRPState, manifest: RunManifest): Bm
 
         const approvalsByGate = new Map<GateId, GateResult['humanApproval']>();
         for (const approval of state.approvals) {
-                approvalsByGate.set(approval.gateId as GateId, {
-                        gateId: approval.gateId as GateResult['id'],
-                        actor: approval.actor,
-                        decision: approval.decision,
-                        timestamp: approval.timestamp,
-                        commitSha: approval.commitSha,
-                        rationale: approval.rationale,
-                });
+                // Ensure approval.gateId is a string (or whatever type GateId is)
+                if (typeof approval.gateId === 'string') {
+                        approvalsByGate.set(approval.gateId, {
+                                gateId: approval.gateId,
+                                actor: approval.actor,
+                                decision: approval.decision,
+                                timestamp: approval.timestamp,
+                                commitSha: approval.commitSha,
+                                rationale: approval.rationale,
+                        });
+                } else {
+                        // Optionally, handle the error case
+                        // throw new Error(`Invalid gateId type: ${typeof approval.gateId}`);
+                }
         }
 
         const stageSummaries = manifest.stages.map((stage) =>
