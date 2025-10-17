@@ -256,6 +256,6 @@ async function main() {
 }
 
 main().catch((error) => {
-        console.error('[dependency:audit] Unexpected failure:', error?.stack || error);
+        console.error('[brAInwav dependency:audit] Unexpected failure:', error?.stack || error);
         process.exitCode = 2;
 });
