@@ -6,15 +6,17 @@
 import { randomUUID } from 'node:crypto';
 import type { GateResult, PRPState } from '@cortex-os/kernel';
 import type { RepoInfo } from '../runner.js';
+import type { ChainIoDeliverableDefinition } from '../gates/chain-io-profiles.js';
 import {
-	PRODUCT_TO_AUTOMATION_PIPELINE,
-	RunManifestSchema,
-	type EnforcementProfileSnapshot,
-	type RunManifest,
-	type RunManifestTelemetry,
-	type StageAutomatedCheck,
-	type StageEntry,
-	type StageKey,
+        PRODUCT_TO_AUTOMATION_PIPELINE,
+        RunManifestSchema,
+        type EnforcementProfileSnapshot,
+        type RunManifest,
+        type RunManifestTelemetry,
+        type StageAutomatedCheck,
+        type StageDeliverable,
+        type StageEntry,
+        type StageKey,
 } from './schema.js';
 
 export interface BuildRunManifestArtifacts {
@@ -122,15 +124,74 @@ function snapshotEnforcementProfile(state: PRPState): EnforcementProfileSnapshot
 }
 
 function cloneEnforcementProfile(profile: EnforcementProfileSnapshot): EnforcementProfileSnapshot {
-	if (typeof globalThis.structuredClone === 'function') {
-		return globalThis.structuredClone(profile);
-	}
-	// Fallback for runtimes without structuredClone (e.g., older Node.js versions used in tests)
-	return JSON.parse(JSON.stringify(profile)) as EnforcementProfileSnapshot;
+        if (typeof globalThis.structuredClone === 'function') {
+                return globalThis.structuredClone(profile);
+        }
+        // Fallback for runtimes without structuredClone (e.g., older Node.js versions used in tests)
+        return JSON.parse(JSON.stringify(profile)) as EnforcementProfileSnapshot;
 }
 
 function mapEvidenceIds(evidenceIds: string[]): StageEntry['evidence'] {
-	return [...new Set(evidenceIds)].map((id) => ({ type: 'kernel' as const, evidenceId: id }));
+        return [...new Set(evidenceIds)].map((id) => ({ type: 'kernel' as const, evidenceId: id }));
+}
+
+function extractPlanPaths(metadata: PRPState['blueprint']['metadata']): Record<string, string> | undefined {
+        if (!metadata || typeof metadata !== 'object') return undefined;
+        const task = (metadata as Record<string, unknown>).task;
+        if (!task || typeof task !== 'object') return undefined;
+        const planPaths = (task as { planPaths?: Record<string, unknown> }).planPaths;
+        if (!planPaths || typeof planPaths !== 'object') return undefined;
+
+        const entries = Object.entries(planPaths).filter(([, value]) => typeof value === 'string' && value.length > 0) as Array<
+                [string, string]
+        >;
+        if (entries.length === 0) return undefined;
+        return Object.fromEntries(entries);
+}
+
+function lookupPlanPath(planPaths: Record<string, string> | undefined, key?: string): string | undefined {
+        if (!planPaths || !key) return undefined;
+        if (planPaths[key]) return planPaths[key];
+        const lowerKey = key.toLowerCase();
+        for (const [candidateKey, value] of Object.entries(planPaths)) {
+                if (candidateKey.toLowerCase() === lowerKey) {
+                        return value;
+                }
+        }
+        return undefined;
+}
+
+function evaluateStageDeliverables(
+        requiredArtifacts: ChainIoDeliverableDefinition[],
+        planPaths: Record<string, string> | undefined,
+        gates: GateResult[],
+): StageDeliverable[] {
+        const gateArtifacts = gates.flatMap((gate) => gate.artifacts ?? []);
+        return requiredArtifacts.map((definition) => {
+                const planReference = lookupPlanPath(planPaths, definition.planPathKey);
+                const artifactReference = definition.artifactMatch
+                        ? gateArtifacts.find((artifact) =>
+                                  artifact.toLowerCase().includes(definition.artifactMatch.toLowerCase()),
+                          )
+                        : undefined;
+
+                let status: StageDeliverable['status'] = 'pending';
+                if (planReference) {
+                        status = 'fulfilled';
+                } else if (artifactReference) {
+                        status = 'fulfilled';
+                } else if (definition.planPathKey) {
+                        status = 'missing';
+                }
+
+                return {
+                        name: definition.name,
+                        description: definition.description,
+                        planPathKey: definition.planPathKey,
+                        status,
+                        reference: planReference ?? artifactReference,
+                };
+        });
 }
 
 function collectEvidenceFromGates(gates: GateResult[]): string[] {
@@ -205,42 +266,55 @@ function validateStageDependencies(stages: StageEntry[]): void {
 }
 
 function buildStageEntries(
-	state: PRPState,
-	strictMode: boolean,
+        state: PRPState,
+        strictMode: boolean,
 ): BuildStageEntriesResult {
-	const blockers: StageBlocker[] = [];
-	const stages: StageEntry[] = PRODUCT_TO_AUTOMATION_PIPELINE.map((definition) => {
-		const gates = definition.sourceGateIds
-			.map((gateId) => state.gates[gateId])
-			.filter((gate): gate is GateResult => !!gate);
+        const blockers: StageBlocker[] = [];
+        const planPaths = extractPlanPaths(state.blueprint.metadata);
+        const stages: StageEntry[] = PRODUCT_TO_AUTOMATION_PIPELINE.map((definition) => {
+                const gates = definition.sourceGateIds
+                        .map((gateId) => state.gates[gateId])
+                        .filter((gate): gate is GateResult => !!gate);
 
-		const approvals = collectApprovals(gates);
-		const missingApprovals = definition.requiresHumanApproval && gates.some((gate) => gate.requiresHumanApproval && !gate.humanApproval);
+                const approvals = collectApprovals(gates);
+                const missingApprovals = definition.requiresHumanApproval && gates.some((gate) => gate.requiresHumanApproval && !gate.humanApproval);
 
-		const automatedChecks = gates.flatMap((gate) => normalizeAutomatedChecks(gate));
-		const evidenceIds = collectEvidenceFromGates(gates);
-		const stage: StageEntry = {
-			key: definition.key,
-			title: definition.title,
-			category: definition.category,
-			sequence: definition.sequence,
+                const automatedChecks = gates.flatMap((gate) => normalizeAutomatedChecks(gate));
+                const evidenceIds = collectEvidenceFromGates(gates);
+                const deliverables = evaluateStageDeliverables(
+                        definition.handoff.requiredArtifacts,
+                        planPaths,
+                        gates,
+                );
+                const stage: StageEntry = {
+                        key: definition.key,
+                        title: definition.title,
+                        category: definition.category,
+                        sequence: definition.sequence,
 			status: 'pending',
 			summary: gates.length > 0 ? gates.map((gate) => `${gate.id}:${gate.status}`).join(', ') : 'No gate data recorded',
 			dependencies: definition.dependencies,
 			timings: deriveStageTimings(gates),
 			telemetry: undefined,
-			gate: {
-				sourceGateIds: definition.sourceGateIds,
-				requiresHumanApproval: definition.requiresHumanApproval,
-				approvals,
-				automatedChecks,
-			},
-			artifacts: [],
-			evidence: mapEvidenceIds(evidenceIds),
-			nextSteps: collectNextSteps(gates),
-			proof: undefined,
-			policy: undefined,
-		};
+                        gate: {
+                                sourceGateIds: definition.sourceGateIds,
+                                requiresHumanApproval: definition.requiresHumanApproval,
+                                approvals,
+                                automatedChecks,
+                        },
+                        artifacts: [],
+                        evidence: mapEvidenceIds(evidenceIds),
+                        nextSteps: collectNextSteps(gates),
+                        handoff: {
+                                persona: definition.handoff.persona,
+                                chainRole: definition.handoff.chainRole,
+                                description: definition.handoff.description,
+                                requiredArtifacts: deliverables,
+                                batonCheckpoints: definition.handoff.batonCheckpoints,
+                        },
+                        proof: undefined,
+                        policy: undefined,
+                };
 
 		stage.status = deriveStageStatusFromGates(gates, strictMode, missingApprovals);
 		if (stage.status === 'failed' || (stage.status === 'blocked' && missingApprovals)) {

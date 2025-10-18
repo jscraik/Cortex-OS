@@ -8,12 +8,13 @@
 
 import { nanoid } from 'nanoid';
 import {
-	type AutomatedCheck,
-	BaseGate,
-	type Evidence,
-	type GateContext,
-	type HumanApprovalSpec,
+        type AutomatedCheck,
+        BaseGate,
+        type Evidence,
+        type GateContext,
+        type HumanApprovalSpec,
 } from './base.js';
+import { getGateChainIoProfile } from './chain-io-profiles.js';
 
 /**
  * Validates that blueprint has required elements
@@ -175,10 +176,11 @@ class PolicyQuickCheck implements AutomatedCheck {
  */
 export class G0IdeationGate extends BaseGate {
 	readonly id = 'G0' as const;
-	readonly name = 'Ideation & Scope';
-	readonly purpose =
-		'Validate problem definition and confirm product owner approval for measurable outcome';
-	readonly requiresHumanApproval = true;
+        readonly name = 'Ideation & Scope';
+        readonly purpose =
+                'Validate problem definition and confirm product owner approval for measurable outcome';
+        readonly requiresHumanApproval = true;
+        readonly chainIo = getGateChainIoProfile('G0');
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
 		role: 'product-owner',

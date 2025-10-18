@@ -8,6 +8,7 @@
 
 // Canonical types are provided by @cortex-os/kernel. Import as type-only to avoid runtime cycles.
 import type { EnforcementProfile, Evidence, GateResult, PRPState } from '@cortex-os/kernel';
+import type { GateChainIoProfile } from './chain-io-profiles.js';
 
 // Re-export the types for convenience
 export type { EnforcementProfile, Evidence, GateResult, PRPState };
@@ -58,12 +59,13 @@ export interface HumanApprovalSpec {
  * Base abstract gate implementing common functionality
  */
 export abstract class BaseGate {
-	abstract readonly id: GateId;
-	abstract readonly name: string;
-	abstract readonly purpose: string;
-	abstract readonly requiresHumanApproval: boolean;
-	abstract readonly humanApprovalSpec?: HumanApprovalSpec;
-	abstract readonly automatedChecks: AutomatedCheck[];
+        abstract readonly id: GateId;
+        abstract readonly name: string;
+        abstract readonly purpose: string;
+        abstract readonly requiresHumanApproval: boolean;
+        abstract readonly humanApprovalSpec?: HumanApprovalSpec;
+        abstract readonly automatedChecks: AutomatedCheck[];
+        abstract readonly chainIo: GateChainIoProfile;
 
 	/**
 	 * Execute the gate with validation and evidence collection

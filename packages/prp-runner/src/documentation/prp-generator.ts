@@ -8,6 +8,7 @@
 
 import { promises as fs } from 'node:fs';
 import type { Evidence, GateResult, HumanApproval, PRPState } from '@cortex-os/kernel';
+import type { RunManifest, StageDeliverable } from '../run-manifest/schema.js';
 
 export interface PRPDocument {
 	id: string;
@@ -45,21 +46,22 @@ export interface ReviewJSON {
  * Generate prp.md markdown document from PRP state
  */
 export function generatePRPMarkdown(
-	state: PRPState,
-	document: PRPDocument,
-	reviewJson?: ReviewJSON,
+        state: PRPState,
+        document: PRPDocument,
+        reviewJson?: ReviewJSON,
 ): string {
-	const sections = [
-		generateHeader(document),
-		generateObjective(state),
-		generateScopeAndNonGoals(state),
-		generateConstraints(state),
-		generateDesignSummary(state),
-		generateInterfacesAndContracts(state),
-		generateTestPlan(state),
-		generateVerificationResults(state),
-		generateReviewerSummary(reviewJson),
-		generateDecisionsAndApprovals(state),
+        const sections = [
+                generateHeader(document),
+                generateObjective(state),
+                generateScopeAndNonGoals(state),
+                generateConstraints(state),
+                generateDesignSummary(state),
+                generateChainIoHandoffs(state),
+                generateInterfacesAndContracts(state),
+                generateTestPlan(state),
+                generateVerificationResults(state),
+                generateReviewerSummary(reviewJson),
+                generateDecisionsAndApprovals(state),
 		generateReleaseNotes(state),
 		generateArtifacts(state),
 		generateFollowUps(state),
@@ -145,10 +147,10 @@ No enforcement profile loaded - using default constraints.`;
 }
 
 function generateDesignSummary(state: PRPState): string {
-	// Look for design evidence in the state
-	const designEvidence = state.evidence.filter(
-		(e: Evidence) => e.type === 'analysis' && e.source.includes('design'),
-	);
+        // Look for design evidence in the state
+        const designEvidence = state.evidence.filter(
+                (e: Evidence) => e.type === 'analysis' && e.source.includes('design'),
+        );
 
 	const designContent =
 		designEvidence.length > 0
@@ -172,8 +174,49 @@ ${designContent}
 **Sequence Flows:** To be documented in /docs/`;
 }
 
+function formatDeliverableStatus(deliverable: StageDeliverable): string {
+        const symbol =
+                deliverable.status === 'fulfilled'
+                        ? '✅'
+                        : deliverable.status === 'missing'
+                        ? '⚠️'
+                        : '⏳';
+        const reference = deliverable.reference ? ` — ${deliverable.reference}` : '';
+        return `  - ${symbol} ${deliverable.name}${reference}`;
+}
+
+function generateChainIoHandoffs(state: PRPState): string {
+        const manifest = state.outputs?.runManifest as RunManifest | undefined;
+        if (!manifest?.stages?.length) {
+                return `## 5. Chain I/O Handoffs
+
+Chain I/O persona deliverables will populate after the run manifest is generated.`;
+        }
+
+        const stageSections = manifest.stages.map((stage) => {
+                const deliverables = stage.handoff.requiredArtifacts.length
+                        ? stage.handoff.requiredArtifacts.map((deliverable) => formatDeliverableStatus(deliverable)).join('\n')
+                        : '  - ⏳ No declared artifacts';
+                const checkpoints =
+                        stage.handoff.batonCheckpoints.length > 0
+                                ? `Baton checkpoints: ${stage.handoff.batonCheckpoints.join(', ')}`
+                                : 'Baton checkpoints: (none)';
+
+                return `### ${stage.title} (${stage.handoff.persona})
+${stage.handoff.description}
+
+${deliverables}
+
+${checkpoints}`;
+        });
+
+        return `## 5. Chain I/O Handoffs
+
+${stageSections.join('\n\n')}`;
+}
+
 function generateInterfacesAndContracts(_state: PRPState): string {
-	return `## 5. Interfaces & Contracts
+        return `## 6. Interfaces & Contracts
 
 **API Specifications:** To be defined during specification phase
 **Type Definitions:** To be generated during implementation
@@ -187,7 +230,7 @@ function generateTestPlan(state: PRPState): string {
 			? testEvidence.map((e: Evidence) => `- ${e.source}: ${e.content.slice(0, 100)}...`).join('\n')
 			: '- Unit tests for core logic\n- Integration tests for API endpoints\n- End-to-end tests for user workflows';
 
-	return `## 6. Test Plan
+        return `## 7. Test Plan
 
 ${testContent}
 
@@ -205,7 +248,7 @@ function generateVerificationResults(state: PRPState): string {
 	);
 
 	if (completedGates.length === 0) {
-		return `## 7. Verification Results
+                return `## 8. Verification Results
 
 No gates have been executed yet.`;
 	}
@@ -223,14 +266,14 @@ No gates have been executed yet.`;
 		})
 		.join('\n\n');
 
-	return `## 7. Verification Results
+        return `## 8. Verification Results
 
 ${results}`;
 }
 
 function generateReviewerSummary(reviewJson?: ReviewJSON): string {
 	if (!reviewJson) {
-		return `## 8. Reviewer Summary
+                return `## 9. Reviewer Summary
 
 Review JSON will be generated upon completion of verification gates.`;
 	}
@@ -239,7 +282,7 @@ Review JSON will be generated upon completion of verification gates.`;
 		.map((finding) => `- **${finding.id}** (${finding.severity}): ${finding.recommendation}`)
 		.join('\n');
 
-	return `## 8. Reviewer Summary
+        return `## 9. Reviewer Summary
 
 \`\`\`json
 {
@@ -270,7 +313,7 @@ function generateDecisionsAndApprovals(state: PRPState): string {
 	);
 
 	if (approvals.length === 0) {
-		return `## 9. Decisions & Approvals
+                return `## 10. Decisions & Approvals
 
 No approvals recorded yet.`;
 	}
@@ -295,7 +338,7 @@ No approvals recorded yet.`;
 		})
 		.join('\n');
 
-	return `## 9. Decisions & Approvals
+        return `## 10. Decisions & Approvals
 
 ${approvalText}
 
@@ -308,7 +351,7 @@ function generateReleaseNotes(state: PRPState): string {
 	const highlights = (state.outputs.highlights as string[]) || ['Initial implementation'];
 	const breakingChanges = (state.outputs.breakingChanges as string[]) || ['None'];
 
-	return `## 10. Release Notes
+        return `## 11. Release Notes
 
 **Version:** ${version}
 
@@ -344,7 +387,7 @@ function generateArtifacts(state: PRPState): string {
 			.join('\n')
 		: '**Run Manifest:** Pending generation';
 
-	return `## 11. Artifacts
+        return `## 12. Artifacts
 
 ${artifactText}
 
@@ -364,7 +407,7 @@ function generateFollowUps(state: PRPState): string {
 			? followUps.map((step) => `- ${step}`).join('\n')
 			: '- No follow-up actions required';
 
-	return `## 12. Follow-ups
+        return `## 13. Follow-ups
 
 ${followUpText}
 

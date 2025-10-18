@@ -8,12 +8,13 @@
 
 import { nanoid } from 'nanoid';
 import {
-	type AutomatedCheck,
-	BaseGate,
-	type Evidence,
-	type GateContext,
-	type HumanApprovalSpec,
+        type AutomatedCheck,
+        BaseGate,
+        type Evidence,
+        type GateContext,
+        type HumanApprovalSpec,
 } from './base.js';
+import { getGateChainIoProfile } from './chain-io-profiles.js';
 
 /**
  * Validate architecture policy presence and basics from enforcement profile
@@ -144,10 +145,11 @@ class RepoLayoutHintsCheck implements AutomatedCheck {
  * Purpose: Validate the proposed architecture aligns with enforcement profile and capture architect approval
  */
 export class G1ArchitectureGate extends BaseGate {
-	readonly id = 'G1' as const;
-	readonly name = 'Architecture & Specification';
-	readonly purpose = 'Validate architecture against policy and capture architect approval';
-	readonly requiresHumanApproval = true;
+        readonly id = 'G1' as const;
+        readonly name = 'Architecture & Specification';
+        readonly purpose = 'Validate architecture against policy and capture architect approval';
+        readonly requiresHumanApproval = true;
+        readonly chainIo = getGateChainIoProfile('G1');
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
 		role: 'architect',

@@ -15,12 +15,13 @@ import {
 	getDefaultSecurityRequirements,
 } from '../integrations/task-management-adapter.js';
 import {
-	type AutomatedCheck,
-	BaseGate,
-	type Evidence,
-	type GateContext,
-	type HumanApprovalSpec,
+        type AutomatedCheck,
+        BaseGate,
+        type Evidence,
+        type GateContext,
+        type HumanApprovalSpec,
 } from './base.js';
+import { getGateChainIoProfile } from './chain-io-profiles.js';
 
 /**
  * Coverage validation check using shared workflow-common validation
@@ -173,11 +174,12 @@ class SecurityValidationCheck implements AutomatedCheck {
 }
 
 export class G4VerificationGate extends BaseGate {
-	readonly id = 'G4' as const;
-	readonly name = 'Verification';
-	readonly purpose =
-		'Verify that implemented solution meets the planned quality budgets using shared validation';
-	readonly requiresHumanApproval = true;
+        readonly id = 'G4' as const;
+        readonly name = 'Verification';
+        readonly purpose =
+                'Verify that implemented solution meets the planned quality budgets using shared validation';
+        readonly requiresHumanApproval = true;
+        readonly chainIo = getGateChainIoProfile('G4');
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
 		role: 'qa-lead',

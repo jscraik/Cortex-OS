@@ -264,27 +264,25 @@ export async function runPRPWorkflow(
 	metadata.endTime = new Date().toISOString();
 
 	// Generate review JSON and prp.md
-	const review = generateReviewJSON(state);
-	// Calculate final document status
-	const allPassed = ['G0', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'].every(
-		(id) => state.gates[id]?.status === 'passed',
-	);
-	const status = allPassed ? 'ready-for-release' : 'in-progress';
-	const prpDoc: PRPDocument = {
-		id: state.id,
-		title: state.blueprint.title,
-		repo: `${repoInfo.owner}/${repoInfo.repo}`,
-		branch: repoInfo.branch,
-		owner: repoInfo.owner,
-		created: state.metadata.startTime,
-		updated: new Date().toISOString(),
-		version: '0.1.0',
-		status,
-		links: {},
-	};
-	const markdown = generatePRPMarkdown(state, prpDoc, review);
-	const prpPath = options.outputPath || `${options.projectRoot}/prp.md`;
-	await writePRPDocument(markdown, prpPath);
+        const review = generateReviewJSON(state);
+        // Calculate final document status
+        const allPassed = ['G0', 'G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7'].every(
+                (id) => state.gates[id]?.status === 'passed',
+        );
+        const status = allPassed ? 'ready-for-release' : 'in-progress';
+        const prpDoc: PRPDocument = {
+                id: state.id,
+                title: state.blueprint.title,
+                repo: `${repoInfo.owner}/${repoInfo.repo}`,
+                branch: repoInfo.branch,
+                owner: repoInfo.owner,
+                created: state.metadata.startTime,
+                updated: new Date().toISOString(),
+                version: '0.1.0',
+                status,
+                links: {},
+        };
+        const prpPath = options.outputPath || `${options.projectRoot}/prp.md`;
 
 	const manifestDirectory = join(options.projectRoot, '.cortex', 'run-manifests');
 	const manifestPath = join(manifestDirectory, `${state.runId}.json`);
@@ -338,9 +336,12 @@ export async function runPRPWorkflow(
 	});
 
 	await mkdir(manifestDirectory, { recursive: true });
-	await writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
-	state.exports.runManifestPath = manifestPath;
-	state.outputs.runManifest = manifest;
+        await writeFile(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+        state.exports.runManifestPath = manifestPath;
+        state.outputs.runManifest = manifest;
 
-	return { state, prpPath, markdown, manifestPath, manifest };
+        const markdown = generatePRPMarkdown(state, prpDoc, review);
+        await writePRPDocument(markdown, prpPath);
+
+        return { state, prpPath, markdown, manifestPath, manifest };
 }

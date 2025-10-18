@@ -5,12 +5,13 @@
 
 import { nanoid } from 'nanoid';
 import {
-	type AutomatedCheck,
-	BaseGate,
-	type Evidence,
-	type GateContext,
-	type HumanApprovalSpec,
+        type AutomatedCheck,
+        BaseGate,
+        type Evidence,
+        type GateContext,
+        type HumanApprovalSpec,
 } from './base.js';
+import { getGateChainIoProfile } from './chain-io-profiles.js';
 
 class ReleaseArtifactsPresentCheck implements AutomatedCheck {
 	name = 'release-artifacts-present';
@@ -39,9 +40,10 @@ class ReleaseArtifactsPresentCheck implements AutomatedCheck {
 
 export class G7ReleaseGate extends BaseGate {
 	readonly id = 'G7' as const;
-	readonly name = 'Release';
-	readonly purpose = 'Perform release (stub) and sign final artifact';
-	readonly requiresHumanApproval = true;
+        readonly name = 'Release';
+        readonly purpose = 'Perform release (stub) and sign final artifact';
+        readonly requiresHumanApproval = true;
+        readonly chainIo = getGateChainIoProfile('G7');
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
 		role: 'release-manager',

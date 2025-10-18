@@ -61,13 +61,24 @@ const repoInfo: RepoInfo = {
 };
 
 describe('buildRunManifest', () => {
-	it('creates manifest with aggregated Product→Automation stages', () => {
-		const blueprint = {
-			title: 'Sample Feature',
-			description: 'Implement new manifest workflow',
-			requirements: ['Capture Product→Automation stage data'],
-		};
-		const state = createState(blueprint, { id: 'prp-test', runId: 'run-test' });
+        it('creates manifest with aggregated Product→Automation stages', () => {
+                const blueprint = {
+                        title: 'Sample Feature',
+                        description: 'Implement new manifest workflow',
+                        requirements: ['Capture Product→Automation stage data'],
+                        metadata: {
+                                task: {
+                                        planPaths: {
+                                                spec_md: 'docs/feature.prp.md',
+                                                implementation_plan_md: 'docs/architecture.md',
+                                                tdd_plan_md: 'docs/tdd-plan.md',
+                                                checklist_md: 'docs/review-checklist.md',
+                                                summary_md: 'docs/rollout-notes.md',
+                                        },
+                                },
+                        },
+                };
+                const state = createState(blueprint, { id: 'prp-test', runId: 'run-test' });
 
 		state.gates['G0'] = createGateResult({
 			id: 'G0',
@@ -142,10 +153,16 @@ describe('buildRunManifest', () => {
 
 		expect(() => RunManifestSchema.parse(manifest)).not.toThrow();
 		expect(manifest.stages).toHaveLength(PRODUCT_TO_AUTOMATION_PIPELINE.length);
-		const firstStage = manifest.stages[0];
-		expect(firstStage.key).toBe('product-foundation');
-		expect(firstStage.gate.sourceGateIds).toEqual(['G0', 'G1']);
-		expect(firstStage.gate.approvals).toHaveLength(2);
+                const firstStage = manifest.stages[0];
+                expect(firstStage.key).toBe('product-foundation');
+                expect(firstStage.gate.sourceGateIds).toEqual(['G0', 'G1']);
+                expect(firstStage.handoff.persona).toContain('Product Manager');
+                expect(firstStage.handoff.requiredArtifacts.map((artifact) => artifact.status)).toEqual([
+                        'fulfilled',
+                        'fulfilled',
+                ]);
+                expect(firstStage.gate.approvals).toHaveLength(2);
+                expect(manifest.stages[1].handoff.requiredArtifacts[0].status).toBe('fulfilled');
 		expect(manifest.summary.completedStageKeys).toEqual(
 			PRODUCT_TO_AUTOMATION_PIPELINE.map((stage) => stage.key),
 		);
