@@ -6,6 +6,8 @@
 **Priority**: High
 **Timeline**: 6-8 weeks
 
+> **Update 2025-10-18**: Detailed machine-validated skills registry work has been carved out into `tasks/skills-registry-v1/`. This plan now references that sub-initiative for schema, tooling, and CI enforcement deliverables.
+
 ## Software Requirements Specification (SRS)
 
 ### Functional Requirements

@@ -10,6 +10,9 @@
 
 This directory contains skill files that provide reference knowledge and best practices for agents. Skills complement experiential learning (Local Memory) with structured guidance.
 
+> **Skills Registry Initiative (skills-registry-v1)**  
+> The next iteration of this directory will be managed by the machine-validated registry described in `tasks/skills-registry-v1/implementation-plan.md`. Contributors SHOULD review that plan before authoring new skills to ensure upcoming schema and tooling requirements are met. Track execution progress via the checklist in `tasks/skills-registry-v1/implementation-checklist.md`.
+
 ### Skills vs Local Memory
 
 | Component | Purpose | Storage | Usage |

@@ -75,6 +75,7 @@ The Skills System is now properly documented and ready for agents to use. While 
 1. **RAG Integration** - Semantic search via Qdrant
 2. **MCP Tools** - `skill_search`, `skill_get`, `skill_apply`
 3. **A2A Events** - Skill lifecycle notifications
+4. **Skills Registry v1** - See `tasks/skills-registry-v1/` for machine-validated schema rollout plan (ADR, tooling, CI gates)
 
 ### 📋 Planned
 
