@@ -461,58 +461,63 @@ export class GraphRAGService {
     activeQueries = new Set();
     externalKg;
     externalProvider;
-    queryPrecomputer = getQueryPrecomputer({
-        enabled: this.config.precomputation.enabled,
-        maxPrecomputedQueries: this.config.precomputation.maxPrecomputedQueries,
-        patternAnalysis: this.config.precomputation.patternAnalysis,
-        scheduling: this.config.precomputation.scheduling,
-        freshness: this.config.precomputation.freshness,
-        cache: {
-            distributedCacheNamespace: 'precompute',
-            compressionEnabled: true,
-        },
-    });
-    gpuAccelerationManager = getGPUAccelerationManager({
-        enabled: this.config.gpuAcceleration.enabled,
-        cuda: this.config.gpuAcceleration.cuda,
-        fallback: this.config.gpuAcceleration.fallback,
-        monitoring: this.config.gpuAcceleration.monitoring,
-        optimization: this.config.gpuAcceleration.optimization,
-    });
-    autoScalingManager = getAutoScalingManager({
-        enabled: this.config.autoScaling.enabled,
-        metrics: this.config.autoScaling.metrics,
-        scaling: this.config.autoScaling.scaling,
-        prediction: this.config.autoScaling.prediction,
-        emergency: this.config.autoScaling.emergency,
-        monitoring: this.config.autoScaling.monitoring,
-    });
-    mlOptimizationManager = getMLOptimizationManager({
-        enabled: this.config.mlOptimization.enabled,
-        patternAnalysis: this.config.mlOptimization.patternAnalysis,
-        mlModels: this.config.mlOptimization.mlModels,
-        optimization: this.config.mlOptimization.optimization,
-        monitoring: this.config.mlOptimization.monitoring,
-    });
-    cdnCacheManager = getCDNCacheManager({
-        enabled: this.config.cdnCaching.enabled,
-        provider: this.config.cdnCaching.provider,
-        zoneId: this.config.cdnCaching.zoneId,
-        apiToken: this.config.cdnCaching.apiToken,
-        distributionId: this.config.cdnCaching.distributionId,
-        customEndpoint: this.config.cdnCaching.customEndpoint,
-        cacheKeyPrefix: this.config.cdnCaching.cacheKeyPrefix,
-        defaultTTL: this.config.cdnCaching.defaultTTL,
-        maxTTL: this.config.cdnCaching.maxTTL,
-        staleWhileRevalidate: this.config.cdnCaching.staleWhileRevalidate,
-        staleIfError: this.config.cdnCaching.staleIfError,
-        compression: this.config.cdnCaching.compression,
-        optimization: this.config.cdnCaching.optimization,
-        monitoring: this.config.cdnCaching.monitoring,
-        geographic: this.config.cdnCaching.geographic,
-    });
+    queryPrecomputer;
+    gpuAccelerationManager;
+    autoScalingManager;
+    mlOptimizationManager;
+    cdnCacheManager;
     constructor(config) {
         this.config = GraphRAGServiceConfigSchema.parse(config);
+        this.queryPrecomputer = getQueryPrecomputer({
+            enabled: this.config.precomputation.enabled,
+            maxPrecomputedQueries: this.config.precomputation.maxPrecomputedQueries,
+            patternAnalysis: this.config.precomputation.patternAnalysis,
+            scheduling: this.config.precomputation.scheduling,
+            freshness: this.config.precomputation.freshness,
+            cache: {
+                distributedCacheNamespace: 'precompute',
+                compressionEnabled: true,
+            },
+        });
+        this.gpuAccelerationManager = getGPUAccelerationManager({
+            enabled: this.config.gpuAcceleration.enabled,
+            cuda: this.config.gpuAcceleration.cuda,
+            fallback: this.config.gpuAcceleration.fallback,
+            monitoring: this.config.gpuAcceleration.monitoring,
+            optimization: this.config.gpuAcceleration.optimization,
+        });
+        this.autoScalingManager = getAutoScalingManager({
+            enabled: this.config.autoScaling.enabled,
+            metrics: this.config.autoScaling.metrics,
+            scaling: this.config.autoScaling.scaling,
+            prediction: this.config.autoScaling.prediction,
+            emergency: this.config.autoScaling.emergency,
+            monitoring: this.config.autoScaling.monitoring,
+        });
+        this.mlOptimizationManager = getMLOptimizationManager({
+            enabled: this.config.mlOptimization.enabled,
+            patternAnalysis: this.config.mlOptimization.patternAnalysis,
+            mlModels: this.config.mlOptimization.mlModels,
+            optimization: this.config.mlOptimization.optimization,
+            monitoring: this.config.mlOptimization.monitoring,
+        });
+        this.cdnCacheManager = getCDNCacheManager({
+            enabled: this.config.cdnCaching.enabled,
+            provider: this.config.cdnCaching.provider,
+            zoneId: this.config.cdnCaching.zoneId,
+            apiToken: this.config.cdnCaching.apiToken,
+            distributionId: this.config.cdnCaching.distributionId,
+            customEndpoint: this.config.cdnCaching.customEndpoint,
+            cacheKeyPrefix: this.config.cdnCaching.cacheKeyPrefix,
+            defaultTTL: this.config.cdnCaching.defaultTTL,
+            maxTTL: this.config.cdnCaching.maxTTL,
+            staleWhileRevalidate: this.config.cdnCaching.staleWhileRevalidate,
+            staleIfError: this.config.cdnCaching.staleIfError,
+            compression: this.config.cdnCaching.compression,
+            optimization: this.config.cdnCaching.optimization,
+            monitoring: this.config.cdnCaching.monitoring,
+            geographic: this.config.cdnCaching.geographic,
+        });
         this.qdrant = new QdrantHybridSearch(this.config.qdrant);
         if (this.config.externalKg.enabled) {
             const { provider } = this.config.externalKg;

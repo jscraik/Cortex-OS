@@ -24,6 +24,14 @@ export default defineConfig({
                         '@': resolve(__dirname, './src'),
                         '@tests': resolve(__dirname, './tests'),
                         '@cortex-os/utils': resolve(__dirname, '../../libs/typescript/utils/src/index.ts'),
+                        '@cortex-os/contracts/skill-events': resolve(
+                                __dirname,
+                                '../../libs/typescript/contracts/src/skill-events.ts',
+                        ),
+                        '@cortex-os/contracts': resolve(
+                                __dirname,
+                                '../../libs/typescript/contracts/src/index.ts',
+                        ),
                 },
         },
 });
