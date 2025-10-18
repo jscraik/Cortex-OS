@@ -30,7 +30,7 @@
 **Gaps & Recommendations**
 - Ensure `GraphRuntime` TDD coverage meets package thresholds (≥95% changed lines). Add fuzz/edge tests for retry and checkpoint logic.
 - Define contracts for A2A messages (`skill:request`, `skill:result`) under `packages/a2a/contracts/` with versioning metadata.
-- Update `packages/orchestration/docs/datasheet.md` (or add) to capture runtime SLO/A11y impacts.
+- Update `packages/orchestration/docs/datasheet.md` (or add) to capture runtime SLO/a11y impacts.
 
 ### Phase C — CLI & UI Surfacing
 
