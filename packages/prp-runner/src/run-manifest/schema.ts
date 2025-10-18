@@ -381,15 +381,24 @@ interface StageHandoffDefinition {
         batonCheckpoints: string[];
 }
 
+// Helper to join profile fields with fallback
+function joinProfileField<T extends keyof GateChainIoProfile>(
+    profiles: GateChainIoProfile[],
+    field: T,
+    joiner: string,
+    fallback: string
+): string {
+    return profiles.length > 0
+        ? profiles.map((profile) => profile[field]).join(joiner)
+        : fallback;
+}
+
 function aggregateChainIoMetadata(sourceGateIds: GateId[]): StageHandoffDefinition {
         const profiles = sourceGateIds
                 .map((gateId) => GATE_CHAIN_IO_PROFILES[gateId])
                 .filter((profile): profile is GateChainIoProfile => Boolean(profile));
-        const persona = profiles.length > 0 ? profiles.map((profile) => profile.persona).join(' → ') : 'Unassigned Persona';
-        const chainRole =
-                profiles.length > 0
-                        ? profiles.map((profile) => profile.chainRole).join(' → ')
-                        : 'unassigned-role';
+        const persona = joinProfileField(profiles, 'persona', ' → ', 'Unassigned Persona');
+        const chainRole = joinProfileField(profiles, 'chainRole', ' → ', 'unassigned-role');
         const description = profiles.length > 0 ? profiles.map((profile) => profile.description).join(' ') : '';
         const requiredArtifacts = profiles.flatMap((profile) => profile.requiredArtifacts);
         const batonCheckpoints = Array.from(
