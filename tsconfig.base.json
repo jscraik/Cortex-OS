@@ -91,6 +91,12 @@
       "@cortex-os/tool-spec/*": [
         "packages/tool-spec/src/*"
       ],
+      "@cortex-os/skills-schema": [
+        "packages/skills-schema/src/index.ts"
+      ],
+      "@cortex-os/skills-schema/*": [
+        "packages/skills-schema/src/*"
+      ],
       "@cortex-os/proof-artifacts": [
         "packages/proof-artifacts/src/index.ts"
       ],
