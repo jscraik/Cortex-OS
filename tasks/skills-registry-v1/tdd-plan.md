@@ -20,7 +20,7 @@
 ## 2. Red Stage (Write Failing Tests)
 
 1. **Schema Contract**
-   - Invalid semver versions should throw descriptive error (`AGENTS` branded message).
+   - Invalid semver versions should throw descriptive error (`brAInwav` branded message).
    - Missing required fields (e.g., `impl`, `inputs`) cause failure.
    - Deprecation metadata requires `sunsetDate` ≥ `deprecatedSince` (use fixed clock injection).
    - Inputs/outputs JSON schema round-trip preserved.
