@@ -112,7 +112,30 @@ const applyOptionality = (schema: z.ZodTypeAny, field: SkillIOField): z.ZodTypeA
   }
 
   if (field.default !== undefined) {
-    result = result.default(field.default as never);
+    // Safely cast default value based on field type
+    switch (field.type) {
+      case 'string':
+        result = result.default(String(field.default));
+        break;
+      case 'integer':
+      case 'number':
+        result = result.default(Number(field.default));
+        break;
+      case 'boolean':
+        result = result.default(Boolean(field.default));
+        break;
+      case 'array':
+        result = result.default(Array.isArray(field.default) ? field.default : []);
+        break;
+      case 'object':
+        result = result.default(
+          typeof field.default === 'object' && field.default !== null ? field.default : {}
+        );
+        break;
+      default:
+        result = result.default(field.default);
+        break;
+    }
   }
 
   return result;
