@@ -1,0 +1,41 @@
+{
+  "version": "1.1",
+  "slug": "cortex-memory-core",
+  "planner": {
+    "plan_paths": {
+      "implementation_plan_md": "implementation-plan.md",
+      "tdd_plan_md": "tdd-plan.md",
+      "checklist_md": "implementation-checklist.md",
+      "summary_md": "SUMMARY.md"
+    },
+    "file_tree": [
+      "apps/memory-core/src/**",
+      "packages/asbr-schemas/src/memory/snapshot.schema.ts",
+      "policies/mem_snapshot.rego",
+      "scripts/a11y-ci.ts"
+    ],
+    "commands": {
+      "install": "pnpm i",
+      "lint": "pnpm lint:smart",
+      "typecheck": "pnpm typecheck:smart",
+      "test": "pnpm test:smart -- --coverage"
+    },
+    "coverage_target": "≥ repo threshold",
+    "conventional_commits": true
+  },
+  "parallel": {
+    "concurrency_report": "json/concurrency-report.json"
+  },
+  "evidence": {
+    "connectors_health": "logs/research/connectors-health.log",
+    "repo_notes": "research/repo-notes.md",
+    "memory_findings": "research/memory-findings.md",
+    "wikidata_logs_dir": "logs/wikidata/",
+    "arxiv_logs_dir": "logs/arxiv/",
+    "citations": {
+      "wikidata_qids": [],
+      "wikidata_claims": [],
+      "arxiv_ids": []
+    }
+  }
+}
