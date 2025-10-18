@@ -171,7 +171,7 @@ function evaluateStageDeliverables(
                 const planReference = lookupPlanPath(planPaths, definition.planPathKey);
                 const artifactReference = definition.artifactMatch
                         ? gateArtifacts.find((artifact) =>
-                                  artifact.toLowerCase().includes(definition.artifactMatch!.toLowerCase()),
+                                  artifact.toLowerCase().includes(definition.artifactMatch.toLowerCase()),
                           )
                         : undefined;
 
