@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "slug": "cortex-memory-core",
+  "parallelizable_tasks": ["Task 1", "Task 2", "Task 4", "Task 6"],
+  "serial_tasks": ["Task 3", "Task 5"],
+  "suggested_execution_order": ["Task 1", "Task 2", "Task 3", "Task 4", "Task 5", "Task 6"],
+  "scheduling_hints": {
+    "max_parallel_jobs": 2,
+    "codex_cloud_labels": ["pgvector", "opa", "fastify"]
+  }
+}
