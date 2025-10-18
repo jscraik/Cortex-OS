@@ -49,6 +49,19 @@ describe('task integration', () => {
                         artifacts: [],
                         evidence: [],
                         nextSteps: [],
+                        handoff: {
+                                persona: stageDefinition.handoff.persona,
+                                chainRole: stageDefinition.handoff.chainRole,
+                                description: stageDefinition.handoff.description,
+                                requiredArtifacts: stageDefinition.handoff.requiredArtifacts.map((artifact) => ({
+                                        name: artifact.name,
+                                        description: artifact.description,
+                                        planPathKey: artifact.planPathKey,
+                                        status: 'pending',
+                                        reference: undefined,
+                                })),
+                                batonCheckpoints: stageDefinition.handoff.batonCheckpoints,
+                        },
                 };
 
                 const manifest: RunManifest = {

@@ -9,6 +9,11 @@
 import { z } from 'zod';
 import type { EnforcementProfile } from '@cortex-os/kernel';
 import type { ProofArtifactDescriptor, ProofPolicyReceipt } from '@cortex-os/proof-artifacts';
+import {
+        GATE_CHAIN_IO_PROFILES,
+        type ChainIoDeliverableDefinition,
+        type GateChainIoProfile,
+} from '../gates/chain-io-profiles.js';
 
 /**
  * ISO 8601 timestamp validation schema
@@ -70,6 +75,27 @@ export type StageCheckStatus = z.infer<typeof StageCheckStatusEnum>;
 
 export const TaskPriorityEnum = z.enum(['P0', 'P1', 'P2', 'P3']);
 export type TaskPriority = z.infer<typeof TaskPriorityEnum>;
+
+const StageDeliverableStatusEnum = z.enum(['pending', 'fulfilled', 'missing']);
+export type StageDeliverableStatus = z.infer<typeof StageDeliverableStatusEnum>;
+
+export const StageDeliverableSchema = z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        planPathKey: z.string().optional(),
+        status: StageDeliverableStatusEnum.default('pending'),
+        reference: z.string().optional(),
+});
+export type StageDeliverable = z.infer<typeof StageDeliverableSchema>;
+
+export const StageHandoffSchema = z.object({
+        persona: z.string(),
+        chainRole: z.string(),
+        description: z.string(),
+        requiredArtifacts: z.array(StageDeliverableSchema).default([]),
+        batonCheckpoints: z.array(z.string()).default([]),
+});
+export type StageHandoff = z.infer<typeof StageHandoffSchema>;
 
 const StageEvidenceKernelSchema = z.object({
 	type: z.literal('kernel'),
@@ -206,13 +232,14 @@ export const StageEntrySchema = z.object({
 	summary: z.string().optional(),
 	dependencies: z.array(StageKeyEnum).default([]),
 	timings: StageTimingsSchema.default({}),
-	telemetry: StageTelemetrySchema.optional(),
-	gate: StageGateSnapshotSchema,
-	artifacts: z.array(StageArtifactRefSchema).default([]),
-	evidence: z.array(StageEvidenceSchema).default([]),
-	nextSteps: z.array(z.string()).default([]),
-	proof: StageProofReferenceSchema.optional(),
-	policy: z.array(StagePolicyCheckSchema).optional(),
+        telemetry: StageTelemetrySchema.optional(),
+        gate: StageGateSnapshotSchema,
+        artifacts: z.array(StageArtifactRefSchema).default([]),
+        evidence: z.array(StageEvidenceSchema).default([]),
+        nextSteps: z.array(z.string()).default([]),
+        handoff: StageHandoffSchema,
+        proof: StageProofReferenceSchema.optional(),
+        policy: z.array(StagePolicyCheckSchema).optional(),
 });
 export type StageEntry = z.infer<typeof StageEntrySchema>;
 
@@ -335,67 +362,105 @@ export const RunManifestSchema = z.object({
 export type RunManifest = z.infer<typeof RunManifestSchema>;
 
 export interface StageDefinition {
-	key: StageKey;
-	title: string;
-	description: string;
-	category: StageCategory;
-	sequence: number;
-	sourceGateIds: GateId[];
-	requiresHumanApproval: boolean;
-	dependencies: StageKey[];
+        key: StageKey;
+        title: string;
+        description: string;
+        category: StageCategory;
+        sequence: number;
+        sourceGateIds: GateId[];
+        requiresHumanApproval: boolean;
+        dependencies: StageKey[];
+        handoff: StageHandoffDefinition;
+}
+
+interface StageHandoffDefinition {
+        persona: string;
+        chainRole: string;
+        description: string;
+        requiredArtifacts: ChainIoDeliverableDefinition[];
+        batonCheckpoints: string[];
+}
+
+function aggregateChainIoMetadata(sourceGateIds: GateId[]): StageHandoffDefinition {
+        const profiles = sourceGateIds
+                .map((gateId) => GATE_CHAIN_IO_PROFILES[gateId])
+                .filter((profile): profile is GateChainIoProfile => Boolean(profile));
+        const persona = profiles.length > 0 ? profiles.map((profile) => profile.persona).join(' → ') : 'Unassigned Persona';
+        const chainRole =
+                profiles.length > 0
+                        ? profiles.map((profile) => profile.chainRole).join(' → ')
+                        : 'unassigned-role';
+        const description = profiles.length > 0 ? profiles.map((profile) => profile.description).join(' ') : '';
+        const requiredArtifacts = profiles.flatMap((profile) => profile.requiredArtifacts);
+        const batonCheckpoints = Array.from(
+                new Set(profiles.flatMap((profile) => profile.batonCheckpoints ?? [])),
+        );
+
+        return {
+                persona,
+                chainRole,
+                description,
+                requiredArtifacts,
+                batonCheckpoints,
+        };
 }
 
 export const PRODUCT_TO_AUTOMATION_PIPELINE: readonly StageDefinition[] = [
-	{
-		key: 'product-foundation',
-		title: 'Product Foundation',
-		description: 'Validate blueprint intent, measurable outcomes, and architectural handshake.',
-		category: 'product',
-		sequence: 1,
-		sourceGateIds: ['G0', 'G1'],
-		requiresHumanApproval: true,
-		dependencies: [],
-	},
-	{
-		key: 'product-test-strategy',
-		title: 'Product Test Strategy',
-		description: 'Establish acceptance criteria, coverage budgets, and test strategy alignment.',
-		category: 'product',
-		sequence: 2,
-		sourceGateIds: ['G2'],
-		requiresHumanApproval: true,
-		dependencies: ['product-foundation'],
-	},
-	{
-		key: 'engineering-execution',
-		title: 'Engineering Execution',
-		description: 'Implement solution slices, code review results, and verification evidence.',
-		category: 'engineering',
-		sequence: 3,
-		sourceGateIds: ['G3', 'G4'],
-		requiresHumanApproval: true,
-		dependencies: ['product-test-strategy'],
-	},
-	{
-		key: 'quality-triage',
-		title: 'Quality Triage',
-		description: 'Surface risk triage, outstanding issues, and stabilization actions.',
-		category: 'quality',
-		sequence: 4,
-		sourceGateIds: ['G5'],
-		requiresHumanApproval: true,
-		dependencies: ['engineering-execution'],
-	},
-	{
-		key: 'automation-release',
-		title: 'Automation Release',
-		description: 'Confirm release readiness, automation hooks, and deployment sign-off.',
-		category: 'automation',
-		sequence: 5,
-		sourceGateIds: ['G6', 'G7'],
-		requiresHumanApproval: true,
-		dependencies: ['quality-triage'],
-	},
+        {
+                key: 'product-foundation',
+                title: 'Product Foundation',
+                description: 'Validate blueprint intent, measurable outcomes, and architectural handshake.',
+                category: 'product',
+                sequence: 1,
+                sourceGateIds: ['G0', 'G1'],
+                requiresHumanApproval: true,
+                dependencies: [],
+                handoff: aggregateChainIoMetadata(['G0', 'G1']),
+        },
+        {
+                key: 'product-test-strategy',
+                title: 'Product Test Strategy',
+                description: 'Establish acceptance criteria, coverage budgets, and test strategy alignment.',
+                category: 'product',
+                sequence: 2,
+                sourceGateIds: ['G2'],
+                requiresHumanApproval: true,
+                dependencies: ['product-foundation'],
+                handoff: aggregateChainIoMetadata(['G2']),
+        },
+        {
+                key: 'engineering-execution',
+                title: 'Engineering Execution',
+                description: 'Implement solution slices, code review results, and verification evidence.',
+                category: 'engineering',
+                sequence: 3,
+                sourceGateIds: ['G3', 'G4'],
+                requiresHumanApproval: true,
+                dependencies: ['product-test-strategy'],
+                handoff: aggregateChainIoMetadata(['G3', 'G4']),
+        },
+        {
+                key: 'quality-triage',
+                title: 'Quality Triage',
+                description: 'Surface risk triage, outstanding issues, and stabilization actions.',
+                category: 'quality',
+                sequence: 4,
+                sourceGateIds: ['G5'],
+                requiresHumanApproval: true,
+                dependencies: ['engineering-execution'],
+                handoff: aggregateChainIoMetadata(['G5']),
+        },
+        {
+                key: 'automation-release',
+                title: 'Automation Release',
+                description: 'Confirm release readiness, automation hooks, and deployment sign-off.',
+                category: 'automation',
+                sequence: 5,
+                sourceGateIds: ['G6', 'G7'],
+                requiresHumanApproval: true,
+                dependencies: ['quality-triage'],
+                handoff: aggregateChainIoMetadata(['G6', 'G7']),
+        },
 ] as const;
 
 export const PRODUCT_TO_AUTOMATION_STAGE_MAP: ReadonlyMap<StageKey, StageDefinition> = new Map(

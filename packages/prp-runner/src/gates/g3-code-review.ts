@@ -5,12 +5,13 @@
 
 import { nanoid } from 'nanoid';
 import {
-	type AutomatedCheck,
-	BaseGate,
-	type Evidence,
-	type GateContext,
-	type HumanApprovalSpec,
+        type AutomatedCheck,
+        BaseGate,
+        type Evidence,
+        type GateContext,
+        type HumanApprovalSpec,
 } from './base.js';
+import { getGateChainIoProfile } from './chain-io-profiles.js';
 
 class LintAndTypesConfiguredCheck implements AutomatedCheck {
 	name = 'lint-and-types-configured';
@@ -73,10 +74,11 @@ class CodeownersPresentCheck implements AutomatedCheck {
 }
 
 export class G3CodeReviewGate extends BaseGate {
-	readonly id = 'G3' as const;
-	readonly name = 'Code Review';
-	readonly purpose = 'Ensure code quality gates configured and codeowners present';
-	readonly requiresHumanApproval = true;
+        readonly id = 'G3' as const;
+        readonly name = 'Code Review';
+        readonly purpose = 'Ensure code quality gates configured and codeowners present';
+        readonly requiresHumanApproval = true;
+        readonly chainIo = getGateChainIoProfile('G3');
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
 		role: 'code-reviewer',

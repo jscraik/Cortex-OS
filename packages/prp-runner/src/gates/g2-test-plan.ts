@@ -5,12 +5,13 @@
 
 import { nanoid } from 'nanoid';
 import {
-	type AutomatedCheck,
-	BaseGate,
-	type Evidence,
-	type GateContext,
-	type HumanApprovalSpec,
+        type AutomatedCheck,
+        BaseGate,
+        type Evidence,
+        type GateContext,
+        type HumanApprovalSpec,
 } from './base.js';
+import { getGateChainIoProfile } from './chain-io-profiles.js';
 
 class CoverageTargetsCheck implements AutomatedCheck {
 	name = 'coverage-targets';
@@ -124,11 +125,12 @@ class TestCategoriesPlanCheck implements AutomatedCheck {
 }
 
 export class G2TestPlanGate extends BaseGate {
-	readonly id = 'G2' as const;
-	readonly name = 'Test Plan';
-	readonly purpose =
-		'Validate that test strategy meets coverage, performance, and accessibility requirements';
-	readonly requiresHumanApproval = true;
+        readonly id = 'G2' as const;
+        readonly name = 'Test Plan';
+        readonly purpose =
+                'Validate that test strategy meets coverage, performance, and accessibility requirements';
+        readonly requiresHumanApproval = true;
+        readonly chainIo = getGateChainIoProfile('G2');
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
 		role: 'qa-lead',

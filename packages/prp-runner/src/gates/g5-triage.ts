@@ -4,6 +4,7 @@
  */
 
 import { type AutomatedCheck, BaseGate, type GateContext, type HumanApprovalSpec } from './base.js';
+import { getGateChainIoProfile } from './chain-io-profiles.js';
 
 class NoRedFindingsCheck implements AutomatedCheck {
 	name = 'no-red-findings';
@@ -21,9 +22,10 @@ class NoRedFindingsCheck implements AutomatedCheck {
 
 export class G5TriageGate extends BaseGate {
 	readonly id = 'G5' as const;
-	readonly name = 'Triage';
-	readonly purpose = 'Confirm no blockers remain before release readiness';
-	readonly requiresHumanApproval = true;
+        readonly name = 'Triage';
+        readonly purpose = 'Confirm no blockers remain before release readiness';
+        readonly requiresHumanApproval = true;
+        readonly chainIo = getGateChainIoProfile('G5');
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
 		role: 'maintainer',

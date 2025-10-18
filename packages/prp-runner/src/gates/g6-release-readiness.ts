@@ -4,6 +4,7 @@
  */
 
 import { type AutomatedCheck, BaseGate, type GateContext, type HumanApprovalSpec } from './base.js';
+import { getGateChainIoProfile } from './chain-io-profiles.js';
 
 class AllPriorGatesPassedCheck implements AutomatedCheck {
 	name = 'all-prior-gates-passed';
@@ -27,9 +28,10 @@ class AllPriorGatesPassedCheck implements AutomatedCheck {
 
 export class G6ReleaseReadinessGate extends BaseGate {
 	readonly id = 'G6' as const;
-	readonly name = 'Release Readiness';
-	readonly purpose = 'Final checks before release manager approval';
-	readonly requiresHumanApproval = true;
+        readonly name = 'Release Readiness';
+        readonly purpose = 'Final checks before release manager approval';
+        readonly requiresHumanApproval = true;
+        readonly chainIo = getGateChainIoProfile('G6');
 
 	readonly humanApprovalSpec: HumanApprovalSpec = {
 		role: 'release-manager',
