@@ -13,12 +13,53 @@ import type { RunnableConfig } from '@langchain/core/runnables';
 import { Annotation, END, MessagesAnnotation, START, StateGraph } from '@langchain/langgraph';
 import type { AGUIBusIntegration } from '../integrations/AGUIBusIntegration.js';
 import { createAGUIBusIntegration } from '../integrations/AGUIBusIntegration.js';
-import { createPrefixedId, secureDelay, secureInt, secureRatio } from '../lib/secure-random.js';
+import { createPrefixedId } from '../lib/secure-random.js';
 import { type AGUIMCPTools, createAGUIMCPTools } from '../mcp/AGUIMCPTools.js';
 import { AgentToolkitMCPTools } from '../mcp/AgentToolkitMCPTools.js';
 import { ArxivMCPTools } from '../mcp/ArxivMCPTools.js';
 
 // Tool Layer State with AGUI integration
+type ToolExecutionRecord = {
+        tool: string;
+        status: 'success' | 'error';
+        duration: number;
+        timestamp: string;
+        metadata?: Record<string, unknown>;
+};
+
+type ExecutionMetricsSnapshot = {
+        generatedAt: string;
+        totals: {
+                executions: number;
+                successes: number;
+                failures: number;
+                successRate: number;
+                averageDurationMs: number;
+        };
+        perTool: Array<{
+                tool: string;
+                executions: number;
+                successes: number;
+                failures: number;
+                successRate: number;
+                averageDurationMs: number;
+        }>;
+        recentExecutions: ToolExecutionRecord[];
+};
+
+type DashboardSnapshot = {
+        metrics: {
+                successRate: number;
+                averageDuration: number;
+                totalExecutions: number;
+        };
+        status: string;
+        activeTools: number;
+        generatedAt: string;
+        perTool: ExecutionMetricsSnapshot['perTool'];
+        recentExecutions: ToolExecutionRecord[];
+};
+
 export const ToolLayerStateAnnotation = Annotation.Root({
 	...MessagesAnnotation.spec,
 	currentStep: Annotation<string>,
@@ -39,14 +80,7 @@ export const ToolLayerStateAnnotation = Annotation.Root({
 				duration: number;
 			}>
 		>(),
-	dashboard: Annotation<
-		| {
-				metrics: Record<string, number>;
-				status: string;
-				activeTools: number;
-		  }
-		| undefined
-	>(),
+        dashboard: Annotation<DashboardSnapshot | undefined>(),
 	// AGUI-specific state
 	uiComponents:
 		Annotation<
@@ -83,13 +117,14 @@ export type ToolLayerState = typeof ToolLayerStateAnnotation.State;
 
 // Configuration for Tool Layer Agent with AGUI support
 export interface ToolLayerConfig {
-	name: string;
-	maxConcurrentTools: number;
-	toolTimeout: number;
-	enableDashboard: boolean;
-	allowedTools: string[];
-	// AGUI-specific configuration
-	enableAGUI: boolean;
+        name: string;
+        maxConcurrentTools: number;
+        toolTimeout: number;
+        enableDashboard: boolean;
+        allowedTools: string[];
+        executionHistoryLimit?: number;
+        // AGUI-specific configuration
+        enableAGUI: boolean;
 	defaultLayout: 'grid' | 'flex' | 'stack';
 	maxUIComponents: number;
 	// Agent Toolkit configuration
@@ -108,20 +143,25 @@ export interface ToolLayerConfig {
  * Tool Layer Agent - Handles tool execution, dashboard management, and AGUI integration
  */
 export class ToolLayerAgent extends EventEmitter {
-	private graph: ReturnType<typeof createToolLayerGraph>;
-	private config: ToolLayerConfig;
-	private availableTools: Map<string, { execute: (params: unknown) => Promise<unknown> }>;
-	private aguiBusIntegration?: AGUIBusIntegration;
-	private aguiMCPTools?: AGUIMCPTools;
-	private agentToolkitMCPTools?: AgentToolkitMCPTools;
-	private arxivMCPTools?: ArxivMCPTools;
+        private graph: ReturnType<typeof createToolLayerGraph>;
+        private config: ToolLayerConfig;
+        private availableTools: Map<string, { execute: (params: unknown) => Promise<unknown> }>;
+        private aguiBusIntegration?: AGUIBusIntegration;
+        private aguiMCPTools?: AGUIMCPTools;
+        private agentToolkitMCPTools?: AgentToolkitMCPTools;
+        private arxivMCPTools?: ArxivMCPTools;
+        private executionHistory: ToolExecutionRecord[] = [];
+        private executionMetrics: Map<
+                string,
+                { executions: number; successes: number; failures: number; totalDuration: number }
+        > = new Map();
 
 	constructor(config: ToolLayerConfig) {
 		super();
-		this.config = config;
-		this.availableTools = new Map();
-		this.initializeTools();
-		this.graph = createToolLayerGraph(this);
+                this.config = config;
+                this.availableTools = new Map();
+                this.initializeTools();
+                this.graph = createToolLayerGraph(this);
 
 		// Initialize AGUI bus integration if enabled
 		if (this.config.enableAGUI) {
@@ -173,41 +213,63 @@ export class ToolLayerAgent extends EventEmitter {
 			duration: number;
 		}>
 	> {
-		const results = await Promise.allSettled(
-			tools.map(async (tool) => {
-				const startTime = Date.now();
-				try {
-					// Execute tool via registered handler
-					const toolHandler = this.availableTools.get(tool.name);
-					if (!toolHandler) {
-						throw new Error(`[brAInwav] Tool not found: ${tool.name}`);
-					}
+                const results = await Promise.allSettled(
+                        tools.map(async (tool) => {
+                                const startTime = Date.now();
+                                try {
+                                        const toolHandler = this.availableTools.get(tool.name);
+                                        if (!toolHandler) {
+                                                throw new Error(`[brAInwav] Tool not found: ${tool.name}`);
+                                        }
 
-					const result = await toolHandler.execute(tool.parameters);
-					return {
-						tool: tool.name,
-						result,
-						status: 'success' as const,
-						duration: Date.now() - startTime,
-					};
-				} catch (error) {
-					console.error('brAInwav Tool execution failed', {
-						component: 'agents',
-						brand: 'brAInwav',
-						tool: tool.name,
-						error: error instanceof Error ? error.message : String(error),
-						parameters: tool.parameters,
-					});
+                                        const result = await toolHandler.execute(tool.parameters);
+                                        const duration = Date.now() - startTime;
+                                        this.recordExecutionTelemetry({
+                                                tool: tool.name,
+                                                status: 'success',
+                                                duration,
+                                                timestamp: new Date().toISOString(),
+                                                metadata: { parameters: tool.parameters },
+                                        });
 
-					return {
-						tool: tool.name,
-						result: error instanceof Error ? error.message : String(error),
-						status: 'error' as const,
-						duration: Date.now() - startTime,
-					};
-				}
-			}),
-		);
+                                        return {
+                                                tool: tool.name,
+                                                result,
+                                                status: 'success' as const,
+                                                duration,
+                                        };
+                                } catch (error) {
+                                        const duration = Date.now() - startTime;
+                                        const message = error instanceof Error ? error.message : String(error);
+
+                                        console.error('brAInwav Tool execution failed', {
+                                                component: 'agents',
+                                                brand: 'brAInwav',
+                                                tool: tool.name,
+                                                error: message,
+                                                parameters: tool.parameters,
+                                        });
+
+                                        this.recordExecutionTelemetry({
+                                                tool: tool.name,
+                                                status: 'error',
+                                                duration,
+                                                timestamp: new Date().toISOString(),
+                                                metadata: {
+                                                        parameters: tool.parameters,
+                                                        error: message,
+                                                },
+                                        });
+
+                                        return {
+                                                tool: tool.name,
+                                                result: message,
+                                                status: 'error' as const,
+                                                duration,
+                                        };
+                                }
+                        }),
+                );
 
 		return results.map((result) => {
 			if (result.status === 'fulfilled') {
@@ -261,36 +323,94 @@ export class ToolLayerAgent extends EventEmitter {
 	 */
 	private initializeTools(): void {
 		// Register default tools
-		this.availableTools.set('validator', {
-			execute: async (params: unknown) => ({
-				valid: true,
-				details: `Validated: ${JSON.stringify(params)}`,
-			}),
-		});
+                this.availableTools.set('validator', {
+                        execute: async (params: unknown) => {
+                                const agentToolkit = this.ensureAgentToolkit();
+                                const files = this.resolveValidationTargets(params);
 
-		this.availableTools.set('monitor', {
-			execute: async (params: unknown) => ({
-				status: 'healthy',
-				metrics: { cpu: 45, memory: 60 },
-				monitored: JSON.stringify(params),
-			}),
-		});
+                                console.info('brAInwav ToolLayer validation requested', {
+                                        component: 'agents',
+                                        brand: 'brAInwav',
+                                        files,
+                                });
 
-		this.availableTools.set('dashboard', {
-			execute: async (params: unknown) => ({
-				dashboard: 'updated',
-				widgets: 5,
-				data: JSON.stringify(params),
-			}),
-		});
+                                const response = await agentToolkit.executeTool('agent_toolkit_validate', { files });
 
-		this.availableTools.set('tool-executor', {
-			execute: async (params: unknown) => ({
-				executed: true,
-				output: `Executed with: ${JSON.stringify(params)}`,
-				timestamp: new Date().toISOString(),
-			}),
-		});
+                                return {
+                                        success: response.success,
+                                        report: response,
+                                        files,
+                                        generatedAt: new Date().toISOString(),
+                                };
+                        },
+                });
+
+                this.availableTools.set('monitor', {
+                        execute: async () => {
+                                const snapshot = this.getExecutionMetricsSnapshot();
+                                console.info('brAInwav ToolLayer monitor snapshot generated', {
+                                        component: 'agents',
+                                        brand: 'brAInwav',
+                                        totals: snapshot.totals,
+                                });
+
+                                return snapshot;
+                        },
+                });
+
+                this.availableTools.set('dashboard', {
+                        execute: async () => {
+                                const snapshot = this.buildDashboardSnapshot([]);
+                                console.info('brAInwav ToolLayer dashboard snapshot generated', {
+                                        component: 'agents',
+                                        brand: 'brAInwav',
+                                        status: snapshot.status,
+                                        successRate: snapshot.metrics.successRate,
+                                });
+
+                                return snapshot;
+                        },
+                });
+
+                this.availableTools.set('tool-executor', {
+                        execute: async (params: unknown) => {
+                                const payload = params as {
+                                        tools?: Array<{
+                                                name?: string;
+                                                description?: string;
+                                                parameters?: Record<string, unknown>;
+                                        }>;
+                                };
+
+                                const delegated = (payload?.tools ?? [])
+                                        .filter((tool) => typeof tool?.name === 'string' && tool.name !== 'tool-executor')
+                                        .map((tool) => ({
+                                                name: tool.name as string,
+                                                description:
+                                                        tool.description ??
+                                                        `Delegated execution for ${tool.name as string}`,
+                                                parameters: tool.parameters ?? {},
+                                        }));
+
+                                if (delegated.length === 0) {
+                                        throw new Error('brAInwav ToolLayer: tool-executor requires at least one executable tool');
+                                }
+
+                                console.info('brAInwav ToolLayer delegated execution dispatched', {
+                                        component: 'agents',
+                                        brand: 'brAInwav',
+                                        tools: delegated.map((tool) => tool.name),
+                                });
+
+                                const results = await this.executeToolsInParallel(delegated);
+                                const dashboard = this.buildDashboardSnapshot(results);
+
+                                return {
+                                        results,
+                                        dashboard,
+                                };
+                        },
+                });
 
 		// AGUI tools
 		if (this.config.enableAGUI) {
@@ -553,17 +673,16 @@ function createToolLayerGraph(agent: ToolLayerAgent) {
 	/**
 	 * Dashboard Update Node - Update dashboard with results
 	 */
-	const dashboardUpdate = async (state: ToolLayerState): Promise<Partial<ToolLayerState>> => {
-		const { toolResults } = state;
+        const dashboardUpdate = async (state: ToolLayerState): Promise<Partial<ToolLayerState>> => {
+                const { toolResults } = state;
+                const results = toolResults || [];
+                const dashboard = agent.createDashboardSnapshot(results);
 
-		// Update dashboard metrics
-		const dashboard = updateDashboard(toolResults || []);
-
-		return {
-			currentStep: 'response_generation',
-			dashboard,
-		};
-	};
+                return {
+                        currentStep: 'response_generation',
+                        dashboard,
+                };
+        };
 
 	/**
 	 * Response Generation Node - Generate final response
@@ -808,11 +927,149 @@ function selectToolsForTask(content: string): Array<{
                 }
         }
 
+        private recordExecutionTelemetry(entry: ToolExecutionRecord): void {
+                this.executionHistory.unshift(entry);
+                const historyLimit = this.config.executionHistoryLimit ?? 50;
+                if (this.executionHistory.length > historyLimit) {
+                        this.executionHistory.length = historyLimit;
+                }
+
+                const previous =
+                        this.executionMetrics.get(entry.tool) ??
+                        ({ executions: 0, successes: 0, failures: 0, totalDuration: 0 } as const);
+
+                const next = {
+                        executions: previous.executions + 1,
+                        successes: previous.successes + (entry.status === 'success' ? 1 : 0),
+                        failures: previous.failures + (entry.status === 'error' ? 1 : 0),
+                        totalDuration: previous.totalDuration + entry.duration,
+                };
+
+                this.executionMetrics.set(entry.tool, next);
+        }
+
+        private getExecutionMetricsSnapshot(): ExecutionMetricsSnapshot {
+                const generatedAt = new Date().toISOString();
+                let totalExecutions = 0;
+                let totalSuccesses = 0;
+                let totalFailures = 0;
+                let totalDuration = 0;
+
+                const perTool = Array.from(this.executionMetrics.entries()).map(([tool, metrics]) => {
+                        totalExecutions += metrics.executions;
+                        totalSuccesses += metrics.successes;
+                        totalFailures += metrics.failures;
+                        totalDuration += metrics.totalDuration;
+
+                        const averageDurationMs =
+                                metrics.executions > 0 ? metrics.totalDuration / metrics.executions : 0;
+                        const successRate = metrics.executions > 0 ? metrics.successes / metrics.executions : 0;
+
+                        return {
+                                tool,
+                                executions: metrics.executions,
+                                successes: metrics.successes,
+                                failures: metrics.failures,
+                                successRate,
+                                averageDurationMs,
+                        };
+                });
+
+                const averageDurationMs = totalExecutions > 0 ? totalDuration / totalExecutions : 0;
+                const successRate = totalExecutions > 0 ? totalSuccesses / totalExecutions : 0;
+
+                return {
+                        generatedAt,
+                        totals: {
+                                executions: totalExecutions,
+                                successes: totalSuccesses,
+                                failures: totalFailures,
+                                successRate,
+                                averageDurationMs,
+                        },
+                        perTool,
+                        recentExecutions: this.executionHistory.slice(0, 50),
+                };
+        }
+
+        private buildDashboardSnapshot(
+                toolResults: Array<{
+                        tool: string;
+                        result: unknown;
+                        status: 'success' | 'error';
+                        duration: number;
+                }>,
+        ): DashboardSnapshot {
+                const snapshot = this.getExecutionMetricsSnapshot();
+                const totalTools = toolResults.length;
+                const successCount = toolResults.filter((result) => result.status === 'success').length;
+
+                const status =
+                        totalTools === 0
+                                ? 'idle'
+                                : successCount === totalTools
+                                        ? 'healthy'
+                                        : 'degraded';
+
+                return {
+                        metrics: {
+                                successRate: snapshot.totals.successRate * 100,
+                                averageDuration: snapshot.totals.averageDurationMs,
+                                totalExecutions: snapshot.totals.executions,
+                        },
+                        status,
+                        activeTools: totalTools,
+                        generatedAt: snapshot.generatedAt,
+                        perTool: snapshot.perTool,
+                        recentExecutions: snapshot.recentExecutions.slice(0, 10),
+                };
+        }
+
+        createDashboardSnapshot(
+                toolResults: Array<{
+                        tool: string;
+                        result: unknown;
+                        status: 'success' | 'error';
+                        duration: number;
+                }>,
+        ): DashboardSnapshot {
+                return this.buildDashboardSnapshot(toolResults);
+        }
+
+        private resolveValidationTargets(params: unknown): string[] {
+                if (params && typeof params === 'object') {
+                        const candidate = (params as { files?: unknown }).files;
+                        if (Array.isArray(candidate)) {
+                                const files = candidate
+                                        .map((file) => (typeof file === 'string' ? file.trim() : ''))
+                                        .filter((file) => file.length > 0);
+                                if (files.length > 0) {
+                                        return files;
+                                }
+                        }
+
+                        const path = (params as { path?: unknown }).path;
+                        if (typeof path === 'string' && path.trim().length > 0) {
+                                return [path.trim()];
+                        }
+                }
+
+                return this.config.codeSearchPaths;
+        }
+
+        private ensureAgentToolkit(): AgentToolkitMCPTools {
+                if (!this.agentToolkitMCPTools || !this.config.enableAgentToolkit) {
+                        throw new Error('brAInwav ToolLayer: Agent Toolkit integration is disabled');
+                }
+
+                return this.agentToolkitMCPTools;
+        }
+
 	// Default to validator if no specific tools identified
 	if (tools.length === 0) {
 		tools.push({
 			name: 'validator',
-			description: 'Default validation tool',
+			description: 'Run Agent Toolkit validation across configured paths',
 			parameters: { input: content },
 		});
 	}
@@ -820,37 +1077,9 @@ function selectToolsForTask(content: string): Array<{
 	return tools;
 }
 
-function updateDashboard(
-	toolResults: Array<{
-		tool: string;
-		result: unknown;
-		status: 'success' | 'error';
-		duration: number;
-	}>,
-): {
-	metrics: Record<string, number>;
-	status: string;
-	activeTools: number;
-} {
-	const successCount = toolResults.filter((r) => r.status === 'success').length;
-	const totalTools = toolResults.length;
-	const avgDuration =
-		totalTools > 0 ? toolResults.reduce((sum, r) => sum + r.duration, 0) / totalTools : 0;
-
-	return {
-		metrics: {
-			successRate: totalTools > 0 ? (successCount / totalTools) * 100 : 0,
-			averageDuration: avgDuration,
-			totalExecutions: totalTools,
-		},
-		status: successCount === totalTools ? 'healthy' : 'degraded',
-		activeTools: totalTools,
-	};
-}
-
 function generateToolSummary(
-	toolResults: Array<{
-		tool: string;
+        toolResults: Array<{
+                tool: string;
 		result: unknown;
 		status: 'success' | 'error';
 		duration: number;
@@ -877,12 +1106,12 @@ function generateToolLayerResponse(result: {
  * Factory function to create Tool Layer Agent
  */
 export function createToolLayerAgent(config?: Partial<ToolLayerConfig>): ToolLayerAgent {
-	const defaultConfig: ToolLayerConfig = {
-		name: 'tool-layer-agent',
-		maxConcurrentTools: 5,
-		toolTimeout: 30000,
-		enableDashboard: true,
-		allowedTools: [
+        const defaultConfig: ToolLayerConfig = {
+                name: 'tool-layer-agent',
+                maxConcurrentTools: 5,
+                toolTimeout: 30000,
+                enableDashboard: true,
+                allowedTools: [
 			'validator',
 			'monitor',
 			'dashboard',
@@ -904,9 +1133,10 @@ export function createToolLayerAgent(config?: Partial<ToolLayerConfig>): ToolLay
 			// arXiv research tools
 			'arxiv_search',
 			'arxiv_download',
-		],
-		// AGUI defaults
-		enableAGUI: true,
+                ],
+                executionHistoryLimit: config?.executionHistoryLimit ?? 50,
+                // AGUI defaults
+                enableAGUI: true,
 		defaultLayout: 'flex',
 		maxUIComponents: 10,
 		// Agent Toolkit defaults

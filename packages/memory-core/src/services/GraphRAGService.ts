@@ -11,7 +11,6 @@
  */
 
 import { SecureNeo4j } from '@cortex-os/utils';
-import { randomUUID } from 'node:crypto';
 import { GraphEdgeType, GraphNodeType } from '../db/prismaEnums.js';
 import { z } from 'zod';
 import { prisma, shutdownPrisma } from '../db/prismaClient.js';
@@ -39,11 +38,7 @@ import {
 import { getAutoScalingManager, type AutoScalingConfig } from '../scaling/AutoScalingManager.js';
 import { getMLOptimizationManager, type MLOptimizationConfig } from '../ml/MLOptimizationManager.js';
 import { getCDNCacheManager, type CDNConfig } from '../cdn/CDNCacheManager.js';
-
-const createPrefixedId = (prefix: string): string => {
-	const core = randomUUID().replace(/-/g, '');
-	return `${prefix}-${core}`;
-};
+import { createPrefixedId } from '../lib/secure-random.js';
 
 type NodeGroupStat = { type: GraphNodeType; _count: { type: number } };
 type EdgeGroupStat = { type: GraphEdgeType; _count: { type: number } };
