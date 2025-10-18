@@ -465,6 +465,9 @@ export class GraphRAGService {
     gpuAccelerationManager;
     autoScalingManager;
     mlOptimizationManager;
+    /**
+     * @type {ReturnType<typeof getCDNCacheManager>}
+     */
     cdnCacheManager;
     constructor(config) {
         this.config = GraphRAGServiceConfigSchema.parse(config);
