@@ -1066,13 +1066,13 @@ function selectToolsForTask(content: string): Array<{
         }
 
 	// Default to validator if no specific tools identified
-        if (tools.length === 0) {
-                tools.push({
-                        name: 'validator',
-                        description: 'Run Agent Toolkit validation across configured paths',
-                        parameters: { input: content },
-                });
-        }
+	if (tools.length === 0) {
+		tools.push({
+			name: 'validator',
+			description: 'Run Agent Toolkit validation across configured paths',
+			parameters: { input: content },
+		});
+	}
 
 	return tools;
 }
