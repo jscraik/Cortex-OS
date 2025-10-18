@@ -1,0 +1,16 @@
+{
+  "name": "@cortex-os/skills-schema",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/skills-schema/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{projectRoot}/dist"],
+      "options": {
+        "tsConfig": "packages/skills-schema/tsconfig.json",
+        "outputPath": "packages/skills-schema/dist"
+      }
+    }
+  }
+}
