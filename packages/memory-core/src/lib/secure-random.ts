@@ -11,7 +11,7 @@ export const createSecureId = (prefix?: string): string => {
 /**
  * Generate a secure identifier that MUST include the provided prefix.
  */
-export const createPrefixedId = (prefix: string): string => `${prefix}-${createSecureId()}`;
+export const createPrefixedId = (prefix: string): string => createSecureId(prefix);
 
 /**
  * Generate a secure integer in the half-open interval [min, max).
