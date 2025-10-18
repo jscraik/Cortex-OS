@@ -64,7 +64,25 @@
 - Commit: `docs: adr for skills registry v1`.
 
 ### Task 2 — `skills-schema` Package (Zod Contract)
-- Create `SkillMetadata` schema with required fields: `name`, `version` (semver), `category`, `description`, `impl`, `inputs`, `outputs`, `preconditions`, `sideEffects`, `estimatedCost`, optional deprecation metadata, `calls`, `requiresContext`, `providesContext`, `monitoring`, optional `i18n`.
+- Create `SkillMetadata` schema with the following fields:
+  - **Required:**
+    - `name`
+    - `version` (semver)
+    - `category`
+    - `description`
+    - `impl`
+    - `inputs`
+    - `outputs`
+    - `preconditions`
+    - `sideEffects`
+    - `estimatedCost`
+  - **Optional:**
+    - Deprecation metadata
+    - `calls`
+    - `requiresContext`
+    - `providesContext`
+    - `monitoring`
+    - `i18n`
 - Author tests first (`__tests__/schema.test.ts`), covering invalid front-matter, semver enforcement, schema round-trips, deprecation parsing.
 - Commit: `feat(skills-schema): add SkillMetadata zod schema with tests`.
 
